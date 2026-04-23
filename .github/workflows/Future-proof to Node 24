@@ -48,10 +48,11 @@ jobs:
         run: |
           git config user.name "atlas-bot"
           git config user.email "actions@github.com"
-          if ! git diff --quiet -- data/countries.json; then
-            git add data/countries.json
+          # Stage the file first so `git diff --cached` detects new AND modified files.
+          git add data/countries.json
+          if git diff --cached --quiet -- data/countries.json; then
+            echo "No changes — data is already up to date."
+          else
             git commit -m "chore(data): weekly refresh $(date -u +%Y-%m-%d)"
             git push
-          else
-            echo "No changes — data is already up to date."
           fi
