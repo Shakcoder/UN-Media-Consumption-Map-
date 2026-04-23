@@ -42,17 +42,38 @@ jobs:
           python-version: "3.12"
 
       - name: Run refresh script
-        run: python scripts/refresh_data.py
+        run: |
+          python scripts/refresh_data.py
+          echo ""
+          echo "=================================================="
+          echo "=== After-script diagnostic: contents of data/ ==="
+          echo "=================================================="
+          ls -la data/
+          if [ -f data/countries.json ]; then
+            echo ""
+            echo "countries.json was produced, size $(wc -c < data/countries.json) bytes."
+            echo "First 300 characters:"
+            head -c 300 data/countries.json
+            echo ""
+          else
+            echo "::error::countries.json was NOT produced by the script"
+            exit 1
+          fi
 
       - name: Commit updated data (if changed)
         run: |
+          set -e
           git config user.name "atlas-bot"
           git config user.email "actions@github.com"
-          # Stage the file first so `git diff --cached` detects new AND modified files.
           git add data/countries.json
-          if git diff --cached --quiet -- data/countries.json; then
+          echo "=== git status ==="
+          git status
+          echo "=== git diff --cached summary ==="
+          git diff --cached --stat
+          if git diff --cached --quiet; then
             echo "No changes — data is already up to date."
           else
-            git commit -m "chore(data): weekly refresh $(date -u +%Y-%m-%d)"
+            git commit -m "chore(data): refresh $(date -u +%Y-%m-%d)"
             git push
+            echo "=== Pushed. ==="
           fi
