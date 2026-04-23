@@ -1,0 +1,53 @@
+name: Refresh country data
+
+# Runs the refresh script on a schedule and commits any changes back to the
+# repository. GitHub Pages automatically rebuilds the site on commit, so this
+# is the entire "automated weekly update" pipeline.
+#
+# The schedule below runs every Monday at 03:00 UTC (off-peak for World Bank
+# and most of Europe/Americas). Change the cron string below to adjust cadence.
+# Cron format: minute hour day-of-month month day-of-week
+# Cheat-sheet: https://crontab.guru/
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"   # every Monday 03:00 UTC
+  workflow_dispatch:       # allows a manual "Run workflow" button in GitHub
+  push:
+    paths:
+      - "data/static_countries.json"   # re-run immediately when the human-curated file changes
+      - "scripts/refresh_data.py"
+      - ".github/workflows/refresh-data.yml"
+
+# This workflow writes back to the repo, so it needs contents:write.
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run refresh script
+        run: python scripts/refresh_data.py
+
+      - name: Commit updated data (if changed)
+        run: |
+          git config user.name "atlas-bot"
+          git config user.email "actions@github.com"
+          if ! git diff --quiet -- data/countries.json; then
+            git add data/countries.json
+            git commit -m "chore(data): weekly refresh $(date -u +%Y-%m-%d)"
+            git push
+          else
+            echo "No changes — data is already up to date."
+          fi
