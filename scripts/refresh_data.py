@@ -80,6 +80,7 @@ ISO3_TO_ISO2: dict[str, str] = {
     "CAN": "CA", "RUS": "RU", "EGY": "EG", "ETH": "ET", "TUR": "TR",
     "PAK": "PK", "BGD": "BD", "VNM": "VN", "PHL": "PH", "KOR": "KR",
     "THA": "TH", "ESP": "ES", "ITA": "IT", "POL": "PL", "NLD": "NL",
+    "COD": "CD", "IRN": "IR", "COL": "CO", "SAU": "SA",
 }
 
 # Smartphone penetration is NOT in the World Bank API; DataReportal
@@ -88,6 +89,10 @@ ISO3_TO_ISO2: dict[str, str] = {
 SMARTPHONE_PCT_2024: dict[str, float] = {
     "USA": 91, "GBR": 92, "BRA": 84, "NGA": 52, "KEN": 62,
     "IND": 71, "CHN": 68, "IDN": 74, "DEU": 88, "MEX": 79,
+    "PAK": 54, "BGD": 53, "RUS": 78, "ETH": 25, "JPN": 91,
+    "PHL": 78, "EGY": 72, "COD": 25, "VNM": 80, "IRN": 76,
+    "TUR": 85, "THA": 89, "FRA": 88, "ZAF": 84, "ITA": 88,
+    "COL": 75, "ARG": 85, "CAN": 89, "SAU": 93, "AUS": 91,
 }
 
 # RSF Press Freedom Index 2024 ranks, manually curated.
@@ -98,6 +103,7 @@ RSF_RANK_2024: dict[str, int] = {
     "CAN": 14, "RUS": 162, "EGY": 170, "ETH": 141, "TUR": 158,
     "PAK": 152, "BGD": 165, "VNM": 174, "PHL": 134, "KOR": 62,
     "THA": 87, "ESP": 30, "ITA": 46, "POL": 47, "NLD": 3,
+    "COD": 123, "IRN": 176, "COL": 139, "SAU": 166,
 }
 
 
