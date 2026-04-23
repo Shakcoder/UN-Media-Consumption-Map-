@@ -1,0 +1,1053 @@
+{
+  "_comment": "Human-curated country metadata. Quantitative indicators (population, GDP, internet %, etc.) are fetched automatically into countries.json. This file holds things that don't live in APIs: overviews, industries, media outlets, focus areas. Add new countries here to expand coverage; the refresh script will fill in their numbers on the next run.",
+
+  "USA": {
+    "name": "United States of America",
+    "capital": "Washington, D.C.",
+    "region": "Americas",
+    "subregion": "Northern America",
+    "flag": "🇺🇸",
+    "overview": "The world's largest economy and the primary exporter of global media and digital platforms. Home to the companies that define much of the world's online information environment.",
+    "currency": "United States Dollar (USD)",
+    "languages": ["English (de facto)", "Spanish (widely spoken)"],
+    "government": "Federal presidential republic",
+    "dominant_industries": ["Technology & software", "Financial services", "Healthcare", "Manufacturing", "Entertainment & media", "Aerospace & defense"],
+    "focus_areas": ["AI and semiconductor policy", "Energy transition", "Re-shoring of manufacturing", "Regulation of large platforms"],
+    "media": {
+      "top_tv": "CBS, NBC, ABC, Fox, CNN, MSNBC",
+      "top_radio": "NPR, iHeartRadio network, SiriusXM",
+      "top_online_news": "New York Times, CNN, Washington Post, Fox News",
+      "top_social": "YouTube, Facebook, Instagram, TikTok, X"
+    },
+    "topics_of_interest": ["Politics", "Business", "Sports", "Entertainment", "Technology"]
+  },
+
+  "GBR": {
+    "name": "United Kingdom",
+    "capital": "London",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "flag": "🇬🇧",
+    "overview": "Globally influential media market historically anchored by the BBC. Strong public-service broadcasting tradition sits alongside one of the world's most competitive commercial press markets.",
+    "currency": "Pound Sterling (GBP)",
+    "languages": ["English", "Welsh", "Scottish Gaelic"],
+    "government": "Parliamentary constitutional monarchy",
+    "dominant_industries": ["Financial services", "Creative industries", "Aerospace", "Pharmaceuticals", "Professional services", "Tech"],
+    "focus_areas": ["Post-Brexit trade", "Net zero by 2050", "AI safety leadership", "Public-service broadcasting reform"],
+    "media": {
+      "top_tv": "BBC, ITV, Channel 4, Sky",
+      "top_radio": "BBC Radio (1/2/4), Global Radio (Capital, Heart)",
+      "top_online_news": "BBC News, The Guardian, Mail Online, Sky News",
+      "top_social": "WhatsApp, Facebook, YouTube, Instagram, TikTok"
+    },
+    "topics_of_interest": ["Politics", "International news", "Sports", "Business", "Climate"]
+  },
+
+  "BRA": {
+    "name": "Brazil",
+    "capital": "Brasilia",
+    "region": "Americas",
+    "subregion": "South America",
+    "flag": "🇧🇷",
+    "overview": "Latin America's largest media market, with television and WhatsApp both playing outsized roles in news distribution. Portuguese-language cohesion makes it one of the most unified large media markets in the world.",
+    "currency": "Brazilian Real (BRL)",
+    "languages": ["Portuguese"],
+    "government": "Federal presidential republic",
+    "dominant_industries": ["Agribusiness", "Mining", "Manufacturing", "Oil & gas", "Services", "Renewable energy"],
+    "focus_areas": ["Amazon conservation", "Green hydrogen", "Disinformation regulation", "Digital inclusion"],
+    "media": {
+      "top_tv": "Globo, SBT, Record, Band",
+      "top_radio": "Jovem Pan, Bandeirantes, CBN",
+      "top_online_news": "G1 (Globo), UOL, Folha de Sao Paulo, Estadao",
+      "top_social": "WhatsApp, Instagram, YouTube, TikTok, Facebook"
+    },
+    "topics_of_interest": ["Politics", "Sports (football)", "Entertainment", "Local news", "Religion"]
+  },
+
+  "NGA": {
+    "name": "Nigeria",
+    "capital": "Abuja",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "flag": "🇳🇬",
+    "overview": "Africa's most populous country and the continent's largest media and entertainment market. Home to Nollywood, Afrobeats, and some of Africa's most influential digital journalism platforms.",
+    "currency": "Naira (NGN)",
+    "languages": ["English (official)", "Hausa", "Yoruba", "Igbo", "500+ others"],
+    "government": "Federal presidential republic",
+    "dominant_industries": ["Oil & gas", "Agriculture", "Telecommunications", "Film (Nollywood)", "Financial services", "Fintech"],
+    "focus_areas": ["Economic diversification away from oil", "Fintech and digital payments growth", "Security in the north", "Youth unemployment"],
+    "media": {
+      "top_tv": "NTA, Channels TV, Arise News, TVC",
+      "top_radio": "Wazobia FM, Cool FM, BBC Hausa",
+      "top_online_news": "Premium Times, Sahara Reporters, Punch, Vanguard",
+      "top_social": "WhatsApp, Facebook, Instagram, TikTok, X"
+    },
+    "topics_of_interest": ["Politics", "Religion", "Entertainment (Afrobeats/Nollywood)", "Sports (football)", "Business"]
+  },
+
+  "KEN": {
+    "name": "Kenya",
+    "capital": "Nairobi",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "flag": "🇰🇪",
+    "overview": "East Africa's digital hub and a pioneer of mobile money (M-Pesa). A vibrant independent press coexists with government pressure that has grown in recent years.",
+    "currency": "Kenyan Shilling (KES)",
+    "languages": ["Swahili", "English"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Agriculture (tea, coffee, horticulture)", "Tourism", "Financial services", "Telecommunications", "Manufacturing", "Technology"],
+    "focus_areas": ["Digital ID and e-government", "Affordable housing", "Climate adaptation", "Regional trade via AfCFTA"],
+    "media": {
+      "top_tv": "Citizen TV, KTN, NTV, K24",
+      "top_radio": "Radio Citizen, Radio Maisha, Classic 105",
+      "top_online_news": "Nation.Africa, Standard Media, Tuko, The Star",
+      "top_social": "WhatsApp, Facebook, TikTok, X, Instagram"
+    },
+    "topics_of_interest": ["Politics", "Sports (athletics, football)", "Religion", "Business", "Local news"]
+  },
+
+  "IND": {
+    "name": "India",
+    "capital": "New Delhi",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "flag": "🇮🇳",
+    "overview": "The world's most populous country and its fastest-growing major media market. Extraordinary linguistic diversity drives a multi-language news ecosystem unmatched anywhere else.",
+    "currency": "Indian Rupee (INR)",
+    "languages": ["Hindi", "English", "+22 scheduled languages"],
+    "government": "Federal parliamentary republic",
+    "dominant_industries": ["Information technology & services", "Pharmaceuticals", "Textiles & apparel", "Agriculture", "Film (Bollywood + regional)", "Automotive"],
+    "focus_areas": ["Digital Public Infrastructure (Aadhaar, UPI)", "Manufacturing via Make in India", "Green energy transition", "Press freedom concerns"],
+    "media": {
+      "top_tv": "Doordarshan, Star India, Zee, Sun TV, Republic, NDTV",
+      "top_radio": "All India Radio, Radio Mirchi, Red FM",
+      "top_online_news": "Times of India, Hindustan Times, The Hindu, NDTV.com",
+      "top_social": "WhatsApp, YouTube, Instagram, Facebook, X"
+    },
+    "topics_of_interest": ["Politics", "Cricket", "Bollywood & regional cinema", "Religion", "Business"]
+  },
+
+  "CHN": {
+    "name": "China",
+    "capital": "Beijing",
+    "region": "Asia",
+    "subregion": "Eastern Asia",
+    "flag": "🇨🇳",
+    "overview": "The world's second-largest economy and a uniquely self-contained digital ecosystem. Major global platforms (Google, Facebook, Twitter) are inaccessible; domestic super-apps dominate every aspect of media consumption.",
+    "currency": "Renminbi (CNY)",
+    "languages": ["Mandarin (official)", "Cantonese", "Shanghainese", "many regional"],
+    "government": "One-party socialist republic",
+    "dominant_industries": ["Manufacturing", "Technology & telecommunications", "Construction", "Automotive (including EV)", "E-commerce", "Clean energy"],
+    "focus_areas": ["Semiconductor self-sufficiency", "Common Prosperity policy", "Domestic consumption growth", "AI and advanced manufacturing"],
+    "media": {
+      "top_tv": "CCTV, provincial satellite channels",
+      "top_radio": "China National Radio (CNR)",
+      "top_online_news": "People's Daily, Xinhua, Sina, Toutiao",
+      "top_social": "WeChat, Douyin, Weibo, Xiaohongshu, Kuaishou (domestic)"
+    },
+    "topics_of_interest": ["National news", "Economy", "Entertainment (drama, variety)", "Sports", "Technology"]
+  },
+
+  "IDN": {
+    "name": "Indonesia",
+    "capital": "Jakarta (Nusantara being developed as successor capital)",
+    "region": "Asia",
+    "subregion": "South-eastern Asia",
+    "flag": "🇮🇩",
+    "overview": "The world's fourth-most-populous country, spread across 17,000+ islands. One of the world's heaviest social-media-using populations, with TikTok and Instagram central to daily media diets.",
+    "currency": "Rupiah (IDR)",
+    "languages": ["Indonesian (Bahasa Indonesia)", "Javanese", "Sundanese"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Palm oil & agriculture", "Mining (nickel, coal)", "Manufacturing", "Tourism", "Textiles", "Digital economy"],
+    "focus_areas": ["Capital relocation to Nusantara", "EV battery supply chain (nickel)", "Digital economy growth", "Disaster resilience"],
+    "media": {
+      "top_tv": "SCTV, Indosiar, RCTI, TransTV, MetroTV",
+      "top_radio": "RRI, Prambors, Elshinta",
+      "top_online_news": "Detik.com, Kompas.com, Tribunnews, CNN Indonesia",
+      "top_social": "WhatsApp, Instagram, TikTok, Facebook, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Entertainment", "Religion (Islam)", "Sports (football, badminton)", "Lifestyle"]
+  },
+
+  "DEU": {
+    "name": "Germany",
+    "capital": "Berlin",
+    "region": "Europe",
+    "subregion": "Western Europe",
+    "flag": "🇩🇪",
+    "overview": "Europe's largest economy, with one of the world's strongest public-service broadcasters (ARD and ZDF) funded by a household media levy. High trust in traditional news relative to most peer democracies.",
+    "currency": "Euro (EUR)",
+    "languages": ["German"],
+    "government": "Federal parliamentary republic",
+    "dominant_industries": ["Automotive & engineering", "Chemicals & pharmaceuticals", "Electrical equipment", "Machinery", "Finance", "IT & software"],
+    "focus_areas": ["Energy transition (Energiewende)", "Industrial competitiveness", "Migration policy", "Defense modernization"],
+    "media": {
+      "top_tv": "ARD, ZDF, RTL, ProSieben, Sat.1",
+      "top_radio": "Deutschlandfunk, regional ARD stations, Antenne Bayern",
+      "top_online_news": "Bild, Der Spiegel, Sueddeutsche Zeitung, Tagesschau",
+      "top_social": "WhatsApp, Instagram, Facebook, YouTube, TikTok"
+    },
+    "topics_of_interest": ["Politics", "Business", "Sports (football)", "Climate", "International news"]
+  },
+
+  "MEX": {
+    "name": "Mexico",
+    "capital": "Mexico City",
+    "region": "Americas",
+    "subregion": "Central America",
+    "flag": "🇲🇽",
+    "overview": "Latin America's second-largest economy, with a media market historically dominated by a small number of large broadcasters. One of the most dangerous countries in the world to practice journalism.",
+    "currency": "Mexican Peso (MXN)",
+    "languages": ["Spanish", "68 recognised indigenous languages"],
+    "government": "Federal presidential republic",
+    "dominant_industries": ["Manufacturing (automotive, electronics)", "Oil & gas", "Agriculture", "Tourism", "Financial services", "Remittances from abroad"],
+    "focus_areas": ["Nearshoring from USMCA trade", "Energy sovereignty", "Security and cartel violence", "Journalist safety"],
+    "media": {
+      "top_tv": "Televisa, TV Azteca, Imagen TV",
+      "top_radio": "Grupo Formula, Radio Centro, MVS Radio",
+      "top_online_news": "El Universal, Milenio, Reforma, Animal Politico",
+      "top_social": "WhatsApp, Facebook, TikTok, Instagram, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Sports (football)", "Entertainment (telenovelas)", "Local news", "Crime"]
+  },
+
+  "PAK": {
+    "name": "Pakistan",
+    "capital": "Islamabad",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "flag": "🇵🇰",
+    "overview": "South Asia's second-most-populous country and one of the world's largest Urdu-language media markets. Television remains dominant for news; private cable news channels have proliferated since the 2000s liberalisation.",
+    "currency": "Pakistani Rupee (PKR)",
+    "languages": ["Urdu (official)", "English (official)", "Punjabi", "Sindhi", "Pashto", "Balochi"],
+    "government": "Federal parliamentary republic",
+    "dominant_industries": ["Textiles & apparel", "Agriculture (cotton, wheat, rice)", "Telecommunications", "Construction", "Cement", "Automotive"],
+    "focus_areas": ["IMF programme", "Power sector reform", "Flood resilience", "Press-freedom concerns"],
+    "media": {
+      "top_tv": "Geo News, ARY News, Dunya News, PTV, Samaa TV",
+      "top_radio": "Radio Pakistan (PBC), FM100, FM101, Mast FM",
+      "top_online_news": "Dawn.com, Geo.tv, The News International, Express Tribune",
+      "top_social": "WhatsApp, YouTube, Facebook, TikTok, Instagram"
+    },
+    "topics_of_interest": ["Politics", "Cricket", "Religion", "Entertainment (dramas)", "International news"]
+  },
+
+  "BGD": {
+    "name": "Bangladesh",
+    "capital": "Dhaka",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "flag": "🇧🇩",
+    "overview": "South Asia's most densely populated country and one of its fastest-growing mobile internet markets. Bangla-language news dominates domestic consumption, and Facebook functions as the de facto public square.",
+    "currency": "Bangladeshi Taka (BDT)",
+    "languages": ["Bengali (Bangla)"],
+    "government": "Parliamentary republic",
+    "dominant_industries": ["Ready-made garments", "Agriculture", "Remittances from abroad", "Pharmaceuticals", "Leather", "ICT services"],
+    "focus_areas": ["LDC graduation pathway", "Climate vulnerability", "Rohingya displacement", "Digital Bangladesh strategy"],
+    "media": {
+      "top_tv": "BTV (state), Channel i, ATN Bangla, Somoy TV, Jamuna TV",
+      "top_radio": "Bangladesh Betar (state), Radio Foorti, ABC Radio",
+      "top_online_news": "Prothom Alo, The Daily Star, bdnews24, Kaler Kantho",
+      "top_social": "Facebook, WhatsApp, YouTube, Messenger, TikTok"
+    },
+    "topics_of_interest": ["Politics", "Cricket", "Religion", "Entertainment", "Weather & climate"]
+  },
+
+  "RUS": {
+    "name": "Russia",
+    "capital": "Moscow",
+    "region": "Europe",
+    "subregion": "Eastern Europe",
+    "flag": "🇷🇺",
+    "overview": "A geographically vast media market where state-aligned television still drives national news reach. Western social platforms have been largely blocked since 2022; VKontakte and Telegram now anchor online conversation.",
+    "currency": "Russian Rouble (RUB)",
+    "languages": ["Russian", "100+ recognised minority languages"],
+    "government": "Federal semi-presidential republic",
+    "dominant_industries": ["Oil & gas", "Mining & metals", "Defence manufacturing", "Agriculture (wheat)", "Nuclear energy", "Chemicals"],
+    "focus_areas": ["War in Ukraine", "Sanctions adaptation", "Import substitution", "Domestic platform build-out"],
+    "media": {
+      "top_tv": "Channel One (Pervyi), Rossiya-1, NTV, REN TV",
+      "top_radio": "Radio Rossii, Vesti FM, Mayak, Business FM",
+      "top_online_news": "RIA Novosti, TASS, Lenta.ru, RBC, Meduza (in exile)",
+      "top_social": "VKontakte, Telegram, YouTube, WhatsApp, Odnoklassniki"
+    },
+    "topics_of_interest": ["Politics", "International news", "Economy", "Sports (football, hockey)", "Culture"]
+  },
+
+  "ETH": {
+    "name": "Ethiopia",
+    "capital": "Addis Ababa",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "flag": "🇪🇹",
+    "overview": "Africa's second-most-populous country and host of the African Union. A state-dominated broadcasting landscape coexists with rapidly growing diaspora-run digital media, especially during periods of domestic conflict.",
+    "currency": "Ethiopian Birr (ETB)",
+    "languages": ["Amharic (federal)", "Afaan Oromo", "Tigrinya", "Somali", "80+ others"],
+    "government": "Federal parliamentary republic",
+    "dominant_industries": ["Agriculture (coffee, livestock)", "Manufacturing (textiles, leather)", "Construction", "Aviation (Ethiopian Airlines)", "Hydropower", "Floriculture"],
+    "focus_areas": ["Post-Tigray reconciliation", "GERD dam and Nile diplomacy", "Digital ID rollout", "Economic liberalisation"],
+    "media": {
+      "top_tv": "EBC (state), Fana, Walta, Kana TV",
+      "top_radio": "EBC Radio, Sheger FM, Fana FM",
+      "top_online_news": "Addis Standard, Ethiopian News Agency, Borkena, Capital Ethiopia",
+      "top_social": "Facebook, TikTok, Telegram, YouTube, X"
+    },
+    "topics_of_interest": ["Politics", "Religion (Orthodox Christianity, Islam)", "Sports (athletics, football)", "Ethnic & regional news", "Business"]
+  },
+
+  "JPN": {
+    "name": "Japan",
+    "capital": "Tokyo",
+    "region": "Asia",
+    "subregion": "Eastern Asia",
+    "flag": "🇯🇵",
+    "overview": "One of the world's most print-intensive media markets — the Yomiuri Shimbun remains the largest-circulation paid daily on earth. Television and newspapers retain high trust, while X (Twitter) dominates real-time news discussion.",
+    "currency": "Japanese Yen (JPY)",
+    "languages": ["Japanese"],
+    "government": "Parliamentary constitutional monarchy",
+    "dominant_industries": ["Automotive", "Electronics & semiconductors", "Machinery", "Financial services", "Gaming & anime", "Chemicals"],
+    "focus_areas": ["Demographic decline", "Defence spending increase", "Yen stability", "Semiconductor industry revival"],
+    "media": {
+      "top_tv": "NHK (public), Nippon TV, TV Asahi, TBS, Fuji TV, TV Tokyo",
+      "top_radio": "NHK Radio, J-WAVE, TOKYO FM, Nippon Cultural Broadcasting",
+      "top_online_news": "Yomiuri, Asahi, Nikkei, Mainichi, NHK News Web",
+      "top_social": "LINE, X (Twitter), YouTube, Instagram, TikTok"
+    },
+    "topics_of_interest": ["Politics", "Economy", "Sports (baseball, football)", "Entertainment (anime, J-pop)", "International news"]
+  },
+
+  "PHL": {
+    "name": "Philippines",
+    "capital": "Manila",
+    "region": "Asia",
+    "subregion": "South-eastern Asia",
+    "flag": "🇵🇭",
+    "overview": "Routinely ranked among the world's heaviest social-media-using populations. Facebook functions as the primary news source for most Filipinos, making the platform central to every election cycle.",
+    "currency": "Philippine Peso (PHP)",
+    "languages": ["Filipino (Tagalog)", "English (co-official)", "Cebuano", "Ilocano", "170+ languages"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Business process outsourcing", "Electronics", "Agriculture", "Remittances from abroad", "Tourism", "Mining"],
+    "focus_areas": ["West Philippine Sea tensions", "Disinformation regulation", "Infrastructure (Build, Better, More)", "Typhoon resilience"],
+    "media": {
+      "top_tv": "GMA, ABS-CBN (restricted), TV5, PTV (state), CNN Philippines",
+      "top_radio": "DZBB, DZMM, DZRH",
+      "top_online_news": "Rappler, Inquirer.net, GMA News Online, ABS-CBN News",
+      "top_social": "Facebook, YouTube, TikTok, Messenger, Instagram"
+    },
+    "topics_of_interest": ["Politics", "Entertainment", "Religion (Catholicism)", "Sports (basketball, boxing)", "Weather"]
+  },
+
+  "EGY": {
+    "name": "Egypt",
+    "capital": "Cairo",
+    "region": "Africa",
+    "subregion": "Northern Africa",
+    "flag": "🇪🇬",
+    "overview": "The Arab world's largest media producer and home of Al-Ahram, the region's oldest major daily. State-aligned satellite broadcasting dominates, while independent journalism faces significant constraints.",
+    "currency": "Egyptian Pound (EGP)",
+    "languages": ["Arabic (the Egyptian dialect carries broad regional influence)"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Tourism", "Hydrocarbons", "Suez Canal revenues", "Agriculture", "Construction", "Textiles"],
+    "focus_areas": ["IMF programme", "Gaza & regional diplomacy", "New Administrative Capital", "Red Sea shipping security"],
+    "media": {
+      "top_tv": "ERTU (state), ON TV, DMC, Al Hayat, CBC",
+      "top_radio": "ERTU Radio, Nogoum FM, Nile FM",
+      "top_online_news": "Al-Ahram, Youm7, Al-Masry Al-Youm, Mada Masr (blocked domestically)",
+      "top_social": "Facebook, WhatsApp, TikTok, Instagram, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Religion", "Football", "Entertainment (drama, music)", "Regional news"]
+  },
+
+  "COD": {
+    "name": "Democratic Republic of the Congo",
+    "capital": "Kinshasa",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "flag": "🇨🇩",
+    "overview": "Francophone Africa's most populous country. Radio remains the most widely-reaching medium given vast geography and uneven electricity access, while urban youth drive rapidly-growing mobile internet adoption.",
+    "currency": "Congolese Franc (CDF)",
+    "languages": ["French (official)", "Lingala", "Swahili", "Kikongo", "Tshiluba"],
+    "government": "Semi-presidential republic",
+    "dominant_industries": ["Mining (cobalt, copper, coltan)", "Agriculture", "Hydropower", "Forestry", "Artisanal mining", "Diamonds"],
+    "focus_areas": ["Eastern DRC conflict (M23)", "Critical-minerals governance", "Inga hydropower expansion", "Public-health preparedness"],
+    "media": {
+      "top_tv": "RTNC (state), Digital Congo, Molière TV, B-One",
+      "top_radio": "Radio Okapi (UN-backed), RTNC Radio, Top Congo FM",
+      "top_online_news": "Actualite.cd, Radio Okapi, 7sur7.cd, Politico.cd",
+      "top_social": "Facebook, WhatsApp, TikTok, YouTube, Instagram"
+    },
+    "topics_of_interest": ["Politics", "Football", "Music (Congolese rumba)", "Regional security", "Religion"]
+  },
+
+  "VNM": {
+    "name": "Vietnam",
+    "capital": "Hanoi",
+    "region": "Asia",
+    "subregion": "South-eastern Asia",
+    "flag": "🇻🇳",
+    "overview": "A tightly regulated media environment under a single-party state, paired with one of Asia's most digitally active populations. Zalo, a domestic messaging app, competes with global platforms for daily user time.",
+    "currency": "Vietnamese Dong (VND)",
+    "languages": ["Vietnamese"],
+    "government": "One-party socialist republic",
+    "dominant_industries": ["Manufacturing (electronics, textiles)", "Agriculture (rice, coffee)", "Tourism", "Oil & gas", "IT services", "Automotive"],
+    "focus_areas": ["US–China hedging", "FDI magnet role", "Cybersecurity law enforcement", "Doi Moi reforms extension"],
+    "media": {
+      "top_tv": "VTV (state), HTV, VTC",
+      "top_radio": "VOV (Voice of Vietnam)",
+      "top_online_news": "VnExpress, Tuoi Tre, Thanh Nien, Vietnamnet",
+      "top_social": "Facebook, Zalo, YouTube, TikTok, Instagram"
+    },
+    "topics_of_interest": ["Economy", "Politics", "Football", "Entertainment", "Technology"]
+  },
+
+  "IRN": {
+    "name": "Iran",
+    "capital": "Tehran",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "flag": "🇮🇷",
+    "overview": "A state-controlled broadcast landscape running parallel to a sprawling shadow ecosystem of VPN-accessed platforms. Satellite channels from diaspora outlets reach broad audiences despite legal restrictions.",
+    "currency": "Iranian Rial (IRR)",
+    "languages": ["Persian (Farsi)", "Azeri", "Kurdish", "Arabic", "Balochi"],
+    "government": "Theocratic Islamic republic",
+    "dominant_industries": ["Oil & gas", "Petrochemicals", "Automotive", "Carpets & handicrafts", "Agriculture", "Mining"],
+    "focus_areas": ["Sanctions and nuclear diplomacy", "Regional proxy dynamics", "Women's rights protest legacy", "Inflation management"],
+    "media": {
+      "top_tv": "IRIB (state), Manoto (London-based), Iran International (London-based)",
+      "top_radio": "IRIB Radio, Radio Farda (VOA, blocked domestically)",
+      "top_online_news": "Tasnim, Fars, ISNA, IRNA, BBC Persian (blocked)",
+      "top_social": "Instagram (partial), Eitaa (domestic), WhatsApp (blocked), Telegram (blocked), YouTube (blocked)"
+    },
+    "topics_of_interest": ["Politics", "Religion", "International news", "Sports (football, wrestling)", "Poetry & culture"]
+  },
+
+  "TUR": {
+    "name": "Türkiye",
+    "capital": "Ankara",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "flag": "🇹🇷",
+    "overview": "Straddling Europe and Asia, with a media landscape reshaped by heavy ownership consolidation under government-aligned conglomerates. YouTube and X remain critical channels for opposition voices.",
+    "currency": "Turkish Lira (TRY)",
+    "languages": ["Turkish", "Kurdish"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Automotive", "Textiles", "Tourism", "Construction", "Defence manufacturing", "Agriculture"],
+    "focus_areas": ["Inflation management", "Syria policy", "EU accession stasis", "Post-earthquake reconstruction"],
+    "media": {
+      "top_tv": "TRT (state), ATV, Show TV, Kanal D, Fox Türkiye, NTV, Halk TV",
+      "top_radio": "TRT FM, Radyo D, Kral FM",
+      "top_online_news": "Hürriyet, Sabah, Sözcü, T24, BBC Türkçe",
+      "top_social": "WhatsApp, Instagram, YouTube, TikTok, X"
+    },
+    "topics_of_interest": ["Politics", "Football", "Economy", "Entertainment (dizi dramas)", "Regional affairs"]
+  },
+
+  "THA": {
+    "name": "Thailand",
+    "capital": "Bangkok",
+    "region": "Asia",
+    "subregion": "South-eastern Asia",
+    "flag": "🇹🇭",
+    "overview": "A mobile-first media market where LINE, Facebook, and TikTok dominate daily news consumption. Royal defamation (lèse-majesté) laws significantly shape what can be reported and debated.",
+    "currency": "Thai Baht (THB)",
+    "languages": ["Thai", "regional Tai languages", "Chinese"],
+    "government": "Parliamentary constitutional monarchy",
+    "dominant_industries": ["Tourism", "Automotive", "Electronics", "Agriculture (rice)", "Petrochemicals", "Food processing"],
+    "focus_areas": ["Tourism recovery", "Ageing population", "Digital economy push", "Political reform debates"],
+    "media": {
+      "top_tv": "Thai PBS, Channel 3, Channel 7, Thai Rath TV, Workpoint",
+      "top_radio": "MCOT Radio, Thai PBS Radio",
+      "top_online_news": "Thairath, Matichon, Bangkok Post, Khaosod",
+      "top_social": "Facebook, LINE, TikTok, Instagram, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Entertainment (lakorn, K-pop)", "Football", "Religion (Buddhism)", "Lifestyle"]
+  },
+
+  "FRA": {
+    "name": "France",
+    "capital": "Paris",
+    "region": "Europe",
+    "subregion": "Western Europe",
+    "flag": "🇫🇷",
+    "overview": "A UN Security Council permanent member and one of Europe's largest media markets. Public-service broadcasting is influential, and state subsidies for pluralistic print journalism are among the world's highest.",
+    "currency": "Euro (EUR)",
+    "languages": ["French"],
+    "government": "Semi-presidential republic",
+    "dominant_industries": ["Aerospace", "Luxury goods", "Agriculture & wine", "Nuclear energy", "Tourism", "Automotive"],
+    "focus_areas": ["Energy sovereignty", "EU defence autonomy", "Pension reform aftermath", "Sahel disengagement"],
+    "media": {
+      "top_tv": "France 2, TF1, M6, BFM TV, CNews, France 3",
+      "top_radio": "France Inter, RTL, Europe 1, France Info",
+      "top_online_news": "Le Monde, Le Figaro, Libération, Mediapart",
+      "top_social": "WhatsApp, Instagram, Facebook, YouTube, TikTok"
+    },
+    "topics_of_interest": ["Politics", "International news", "Culture", "Football", "Climate"]
+  },
+
+  "ZAF": {
+    "name": "South Africa",
+    "capital": "Pretoria (executive), Cape Town (legislative), Bloemfontein (judicial)",
+    "region": "Africa",
+    "subregion": "Southern Africa",
+    "flag": "🇿🇦",
+    "overview": "The continent's most developed media infrastructure and an English-language publishing hub for Africa. Constitutional press-freedom protections are strong; economic pressures on newsrooms are acute.",
+    "currency": "South African Rand (ZAR)",
+    "languages": ["Zulu", "Xhosa", "Afrikaans", "English", "Sesotho", "Setswana", "11 official"],
+    "government": "Parliamentary republic",
+    "dominant_industries": ["Mining (gold, platinum, chromium)", "Financial services", "Agriculture", "Tourism", "Manufacturing", "Automotive"],
+    "focus_areas": ["Electricity crisis (load-shedding)", "Land reform debate", "BRICS expansion role", "Unemployment"],
+    "media": {
+      "top_tv": "SABC (public), eTV, MultiChoice (DStv), Newzroom Afrika",
+      "top_radio": "SAfm, Ukhozi FM, Metro FM, 702, Radio 2000",
+      "top_online_news": "News24, Daily Maverick, TimesLIVE, Mail & Guardian, IOL",
+      "top_social": "WhatsApp, Facebook, TikTok, Instagram, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Sports (rugby, football, cricket)", "Crime", "Business", "Entertainment"]
+  },
+
+  "ITA": {
+    "name": "Italy",
+    "capital": "Rome",
+    "region": "Europe",
+    "subregion": "Southern Europe",
+    "flag": "🇮🇹",
+    "overview": "A television-centric media market where the legacy of the Berlusconi-era Mediaset empire still shapes prime-time news. Regional newspapers remain an important news source for many Italians.",
+    "currency": "Euro (EUR)",
+    "languages": ["Italian", "regional languages (Sardinian, Venetian, Sicilian)"],
+    "government": "Parliamentary republic",
+    "dominant_industries": ["Manufacturing (luxury goods, machinery)", "Fashion", "Tourism", "Automotive", "Agriculture (wine, olives)", "Pharmaceuticals"],
+    "focus_areas": ["Ageing population", "Public debt management", "Migration flows", "EU NextGen funding delivery"],
+    "media": {
+      "top_tv": "RAI (public), Mediaset (Canale 5, Italia 1, Rete 4), La7, Sky TG24",
+      "top_radio": "Rai Radio, RTL 102.5, Radio Deejay, Radio 24",
+      "top_online_news": "Corriere della Sera, La Repubblica, La Stampa, Il Sole 24 Ore, ANSA",
+      "top_social": "WhatsApp, Instagram, Facebook, TikTok, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Football", "Culture", "Food & lifestyle", "International news"]
+  },
+
+  "COL": {
+    "name": "Colombia",
+    "capital": "Bogotá",
+    "region": "Americas",
+    "subregion": "South America",
+    "flag": "🇨🇴",
+    "overview": "One of Latin America's most dynamic media markets, with strong investigative journalism traditions. Reporters operating in conflict-affected rural regions face continuing safety risks.",
+    "currency": "Colombian Peso (COP)",
+    "languages": ["Spanish", "68 indigenous languages"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Oil & gas", "Coffee & agriculture", "Mining (coal, gold)", "Tourism", "Financial services", "Flowers"],
+    "focus_areas": ["Total Peace negotiations", "Energy transition away from oil", "Venezuelan migration", "Rural development"],
+    "media": {
+      "top_tv": "Caracol TV, RCN, Canal 1, Señal Colombia",
+      "top_radio": "Caracol Radio, RCN Radio, W Radio, Blu Radio",
+      "top_online_news": "El Tiempo, El Espectador, Semana, La Silla Vacía",
+      "top_social": "WhatsApp, Facebook, Instagram, TikTok, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Football", "Entertainment (reggaeton, telenovelas)", "Crime & security", "Business"]
+  },
+
+  "ARG": {
+    "name": "Argentina",
+    "capital": "Buenos Aires",
+    "region": "Americas",
+    "subregion": "South America",
+    "flag": "🇦🇷",
+    "overview": "Latin America's third-largest economy and historically one of its most newspaper-rich democracies. A deeply polarised political press is balanced by very high social-media engagement.",
+    "currency": "Argentine Peso (ARS)",
+    "languages": ["Spanish", "Italian (heritage)", "indigenous languages"],
+    "government": "Federal presidential republic",
+    "dominant_industries": ["Agriculture (soy, beef, wheat)", "Energy (Vaca Muerta shale)", "Automotive", "Services", "Mining (lithium)", "Wine"],
+    "focus_areas": ["Hyperinflation & dollarisation debate", "IMF programme", "Lithium supply chain", "Vaca Muerta development"],
+    "media": {
+      "top_tv": "Telefe, El Trece, América TV, TV Pública, Canal 9",
+      "top_radio": "Radio Nacional, Radio Mitre, La 100, Radio 10",
+      "top_online_news": "Clarín, La Nación, Infobae, Página 12",
+      "top_social": "WhatsApp, Instagram, Facebook, TikTok, X"
+    },
+    "topics_of_interest": ["Politics", "Football", "Economy (inflation)", "Entertainment", "Culture"]
+  },
+
+  "CAN": {
+    "name": "Canada",
+    "capital": "Ottawa",
+    "region": "Americas",
+    "subregion": "Northern America",
+    "flag": "🇨🇦",
+    "overview": "A bilingual media landscape with CBC/Radio-Canada as a central public-service institution. Proximity to the US drives high consumption of American content alongside domestic journalism in both English and French.",
+    "currency": "Canadian Dollar (CAD)",
+    "languages": ["English (official)", "French (official)"],
+    "government": "Federal parliamentary constitutional monarchy",
+    "dominant_industries": ["Energy (oil sands, hydro)", "Mining", "Financial services", "Manufacturing", "Agriculture", "Technology"],
+    "focus_areas": ["Energy transition", "Indigenous reconciliation", "Housing affordability", "US trade relations"],
+    "media": {
+      "top_tv": "CBC / Radio-Canada, CTV, Global, TVA, Citytv",
+      "top_radio": "CBC Radio One, ICI Première (Radio-Canada), Chorus stations",
+      "top_online_news": "CBC News, Globe and Mail, Toronto Star, National Post, La Presse, Le Devoir",
+      "top_social": "Facebook, Instagram, YouTube, TikTok, WhatsApp"
+    },
+    "topics_of_interest": ["Politics", "Hockey", "Business", "International news", "Climate"]
+  },
+
+  "SAU": {
+    "name": "Saudi Arabia",
+    "capital": "Riyadh",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "flag": "🇸🇦",
+    "overview": "The Arab world's largest economy and a major funder of pan-Arab media via MBC, Al Arabiya, and related groups. State-aligned broadcasters set much of the region's daily news agenda.",
+    "currency": "Saudi Riyal (SAR)",
+    "languages": ["Arabic"],
+    "government": "Absolute monarchy",
+    "dominant_industries": ["Oil & gas", "Petrochemicals", "Construction", "Tourism (emerging)", "Financial services", "Mining"],
+    "focus_areas": ["Vision 2030 diversification", "NEOM and giga-projects", "Regional normalisation", "Sports & entertainment build-out"],
+    "media": {
+      "top_tv": "Saudi TV (state), MBC 1, Al Arabiya, Rotana",
+      "top_radio": "Saudi Radio, MBC FM",
+      "top_online_news": "Al Arabiya, Asharq Al-Awsat, Arab News (English), Al Riyadh",
+      "top_social": "WhatsApp, Snapchat, TikTok, X, Instagram"
+    },
+    "topics_of_interest": ["Religion (Islam)", "Politics", "Football", "Entertainment (concerts, sport)", "Business"]
+  },
+
+  "AUS": {
+    "name": "Australia",
+    "capital": "Canberra",
+    "region": "Oceania",
+    "subregion": "Australia and New Zealand",
+    "flag": "🇦🇺",
+    "overview": "A concentrated media market long dominated by a handful of legacy conglomerates (News Corp, Nine, Seven). The 2021 News Media Bargaining Code shaped global debates over Big Tech and journalism funding.",
+    "currency": "Australian Dollar (AUD)",
+    "languages": ["English", "250+ Indigenous languages"],
+    "government": "Federal parliamentary constitutional monarchy",
+    "dominant_industries": ["Mining (iron ore, coal, lithium)", "Agriculture", "Financial services", "Education (international students)", "Tourism", "Renewable energy"],
+    "focus_areas": ["AUKUS submarine partnership", "China trade recalibration", "Energy transition", "Indigenous Voice legacy debate"],
+    "media": {
+      "top_tv": "ABC (public), Seven, Nine, Ten, SBS",
+      "top_radio": "ABC Radio, ARN network, SCA network, Triple J",
+      "top_online_news": "ABC News, news.com.au, Sydney Morning Herald, The Guardian Australia, The Australian",
+      "top_social": "Facebook, Instagram, YouTube, TikTok, Snapchat"
+    },
+    "topics_of_interest": ["Politics", "Sports (AFL, rugby, cricket)", "Climate", "Business", "International news"]
+  },
+
+  "UGA": {
+    "name": "Uganda",
+    "capital": "Kampala",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "flag": "🇺🇬",
+    "overview": "A youthful East African media market where radio — particularly in local languages — remains the dominant news medium. Political coverage operates under recurring government pressure, including periodic social-media shutdowns around elections.",
+    "currency": "Ugandan Shilling (UGX)",
+    "languages": ["English (official)", "Swahili (official)", "Luganda", "40+ others"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Agriculture (coffee, tea)", "Oil (emerging)", "Fisheries", "Tourism", "Telecommunications", "Construction"],
+    "focus_areas": ["Oil production start-up (Tilenga/EACOP)", "Regional refugee hosting", "Digital ID rollout", "Anti-Homosexuality Act fallout"],
+    "media": {
+      "top_tv": "UBC (state), NBS TV, NTV Uganda, Bukedde TV",
+      "top_radio": "CBS FM, Radio Simba, Capital FM, UBC Radio",
+      "top_online_news": "Daily Monitor, New Vision, The Observer, ChimpReports",
+      "top_social": "WhatsApp, Facebook, TikTok, Instagram, X"
+    },
+    "topics_of_interest": ["Politics", "Football", "Religion", "Agriculture & weather", "Local news"]
+  },
+
+  "SDN": {
+    "name": "Sudan",
+    "capital": "Khartoum",
+    "region": "Africa",
+    "subregion": "Northern Africa",
+    "flag": "🇸🇩",
+    "overview": "An Arabic-language media market reshaped by civil war since April 2023. Many newsrooms have been destroyed or displaced; diaspora outlets and social media now carry much of the remaining independent reporting.",
+    "currency": "Sudanese Pound (SDG)",
+    "languages": ["Arabic (official)", "English (official)", "Nuer", "Fur", "Beja", "Nubian"],
+    "government": "Federal republic (under transitional / military authority)",
+    "dominant_industries": ["Agriculture (sesame, livestock, gum arabic)", "Oil & gas", "Gold mining", "Manufacturing (disrupted)", "Services", "Remittances"],
+    "focus_areas": ["Civil war and humanitarian crisis", "Regional spillover", "Journalist safety", "Displacement of media infrastructure"],
+    "media": {
+      "top_tv": "Sudan TV (state), Blue Nile TV, Sudania 24",
+      "top_radio": "Sudan National Radio, Radio Dabanga (in exile)",
+      "top_online_news": "Sudan Tribune, Radio Dabanga, Al-Taghyeer, Al Rakoba",
+      "top_social": "Facebook, WhatsApp, X, TikTok, Telegram"
+    },
+    "topics_of_interest": ["War & conflict", "Politics", "Religion", "Humanitarian news", "Regional affairs"]
+  },
+
+  "DZA": {
+    "name": "Algeria",
+    "capital": "Algiers",
+    "region": "Africa",
+    "subregion": "Northern Africa",
+    "flag": "🇩🇿",
+    "overview": "Africa's largest country by area and one of the Maghreb's biggest media markets. Arabic- and French-language broadcasting both have broad reach; an assertive state presence constrains independent journalism.",
+    "currency": "Algerian Dinar (DZD)",
+    "languages": ["Arabic (official)", "Tamazight (official)", "French (widely used)"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Hydrocarbons (oil & gas)", "Mining", "Agriculture", "Manufacturing", "Construction", "Services"],
+    "focus_areas": ["Gas exports to Europe", "Post-hydrocarbon diversification", "Hirak protest legacy", "Sahel security"],
+    "media": {
+      "top_tv": "EPTV (state), Ennahar TV, Echorouk TV, El Bilad",
+      "top_radio": "Radio Algérienne (state), Chaîne 1, Chaîne 3",
+      "top_online_news": "El Watan, Liberté (closed 2022), TSA, El Khabar",
+      "top_social": "Facebook, WhatsApp, TikTok, Instagram, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Football", "Religion", "Economy (oil/gas)", "Regional news"]
+  },
+
+  "MAR": {
+    "name": "Morocco",
+    "capital": "Rabat",
+    "region": "Africa",
+    "subregion": "Northern Africa",
+    "flag": "🇲🇦",
+    "overview": "A trilingual media landscape (Arabic, French, Amazigh) sitting at the crossroads of North Africa and Europe. Public-service broadcasting is strong; independent press faces red lines on the monarchy and security issues.",
+    "currency": "Moroccan Dirham (MAD)",
+    "languages": ["Arabic (official)", "Tamazight (official)", "French (widely used)", "Spanish (north)"],
+    "government": "Parliamentary constitutional monarchy",
+    "dominant_industries": ["Automotive (export)", "Aerospace", "Tourism", "Agriculture", "Phosphates", "Renewable energy"],
+    "focus_areas": ["2030 FIFA World Cup co-hosting", "Green hydrogen ambitions", "Western Sahara diplomacy", "Earthquake reconstruction"],
+    "media": {
+      "top_tv": "2M, Al Aoula (SNRT), Medi 1 TV",
+      "top_radio": "SNRT Radio, Medi 1 Radio, Hit Radio",
+      "top_online_news": "Hespress, Le360, Yabiladi, TelQuel",
+      "top_social": "WhatsApp, Facebook, Instagram, TikTok, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Football", "Religion", "Economy", "Culture"]
+  },
+
+  "AGO": {
+    "name": "Angola",
+    "capital": "Luanda",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "flag": "🇦🇴",
+    "overview": "A Portuguese-language media market in Southern-Central Africa historically dominated by state-aligned outlets. Oil-dependent economy; mobile internet adoption is reshaping news consumption among urban youth.",
+    "currency": "Kwanza (AOA)",
+    "languages": ["Portuguese (official)", "Umbundu", "Kimbundu", "Kikongo"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Oil & gas", "Diamonds", "Agriculture", "Construction", "Fisheries", "Telecommunications"],
+    "focus_areas": ["Economic diversification away from oil", "Lobito Corridor rail project", "Public-finance reform", "Youth unemployment"],
+    "media": {
+      "top_tv": "TPA (state), TV Zimbo, TV Palanca",
+      "top_radio": "Rádio Nacional de Angola, Rádio Mais, LAC",
+      "top_online_news": "Jornal de Angola, Novo Jornal, Maka Angola, Angola24Horas",
+      "top_social": "WhatsApp, Facebook, Instagram, TikTok, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Football", "Music (kuduro, kizomba)", "Economy (oil)", "Religion"]
+  },
+
+  "GHA": {
+    "name": "Ghana",
+    "capital": "Accra",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "flag": "🇬🇭",
+    "overview": "West Africa's most open media environment by several indices. A lively commercial radio scene in English and local languages coexists with strong digital newspapers and vibrant talk-radio culture.",
+    "currency": "Ghanaian Cedi (GHS)",
+    "languages": ["English (official)", "Akan (Twi, Fante)", "Ewe", "Ga", "Dagbani"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Gold & mining", "Cocoa", "Oil & gas", "Agriculture", "Banking", "Telecommunications"],
+    "focus_areas": ["IMF programme", "Cedi stabilisation", "Illegal mining (galamsey)", "Regional democratic role"],
+    "media": {
+      "top_tv": "GTV (state), TV3, UTV, Joy News, Citi TV",
+      "top_radio": "Joy FM, Peace FM, Citi FM, Adom FM",
+      "top_online_news": "GhanaWeb, MyJoyOnline, Graphic Online, Citi Newsroom",
+      "top_social": "WhatsApp, Facebook, TikTok, Instagram, X"
+    },
+    "topics_of_interest": ["Politics", "Football", "Religion", "Business", "Entertainment"]
+  },
+
+  "MOZ": {
+    "name": "Mozambique",
+    "capital": "Maputo",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "flag": "🇲🇿",
+    "overview": "A Portuguese-language media market along Africa's south-eastern coast where radio retains the widest reach. Security challenges in northern Cabo Delgado and post-election unrest have recently shaped the news agenda.",
+    "currency": "Mozambican Metical (MZN)",
+    "languages": ["Portuguese (official)", "Makhuwa", "Changana", "Sena", "Lomwe"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Agriculture (cashew, cotton)", "Mining (coal, graphite)", "Natural gas (LNG)", "Fisheries", "Tourism", "Aluminium"],
+    "focus_areas": ["Cabo Delgado insurgency", "LNG project restart", "Post-election political stability", "Cyclone resilience"],
+    "media": {
+      "top_tv": "TVM (state), STV, Miramar, TV Sucesso",
+      "top_radio": "Rádio Moçambique, Rádio Miramar, SFM",
+      "top_online_news": "O País, Jornal Notícias, Carta de Moçambique, Zitamar News",
+      "top_social": "WhatsApp, Facebook, Instagram, TikTok, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Football", "Religion", "Security & conflict", "Weather/cyclones"]
+  },
+
+  "MMR": {
+    "name": "Myanmar",
+    "capital": "Naypyidaw",
+    "region": "Asia",
+    "subregion": "South-eastern Asia",
+    "flag": "🇲🇲",
+    "overview": "One of the world's most constrained media environments since the 2021 military coup. Most independent outlets now operate from exile; Facebook remains the de facto primary news source inside the country despite heavy surveillance.",
+    "currency": "Kyat (MMK)",
+    "languages": ["Burmese (Myanmar)", "Shan", "Karen", "Rakhine", "100+ minority languages"],
+    "government": "Military junta (contested)",
+    "dominant_industries": ["Agriculture (rice)", "Natural gas", "Jade & gems", "Textiles", "Timber", "Tourism (disrupted)"],
+    "focus_areas": ["Civil war", "Sanctions and isolation", "Journalist safety", "Rohingya displacement"],
+    "media": {
+      "top_tv": "MRTV (state), MWD (military), Myawaddy, Mizzima (in exile)",
+      "top_radio": "Myanmar Radio, RFA Burmese (in exile), DVB Radio",
+      "top_online_news": "Myanmar Now, Irrawaddy, Frontier Myanmar, DVB",
+      "top_social": "Facebook, Telegram, TikTok, Viber, WhatsApp"
+    },
+    "topics_of_interest": ["War & conflict", "Politics", "Religion (Buddhism)", "Human rights", "Regional news"]
+  },
+
+  "KOR": {
+    "name": "South Korea",
+    "capital": "Seoul",
+    "region": "Asia",
+    "subregion": "Eastern Asia",
+    "flag": "🇰🇷",
+    "overview": "One of the world's most digitally saturated media markets, built around the KakaoTalk/Naver ecosystem and a fiercely competitive 24-hour cable news scene. K-content is now a major cultural export globally.",
+    "currency": "South Korean Won (KRW)",
+    "languages": ["Korean"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Electronics & semiconductors", "Automotive", "Shipbuilding", "Steel", "Cultural exports (K-pop, K-drama)", "Petrochemicals"],
+    "focus_areas": ["Semiconductor competition", "Demographic decline", "North Korea policy", "K-culture diplomacy"],
+    "media": {
+      "top_tv": "KBS (public), MBC, SBS, JTBC, YTN, TV Chosun",
+      "top_radio": "KBS Radio, MBC Radio, SBS Radio",
+      "top_online_news": "Chosun Ilbo, JoongAng Ilbo, Dong-A Ilbo, Hankyoreh, Yonhap",
+      "top_social": "KakaoTalk, YouTube, Instagram, Naver, TikTok"
+    },
+    "topics_of_interest": ["Politics", "Entertainment (K-pop, K-drama)", "Economy", "North Korea & security", "Sports (football, baseball)"]
+  },
+
+  "IRQ": {
+    "name": "Iraq",
+    "capital": "Baghdad",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "flag": "🇮🇶",
+    "overview": "A plural but politically fragmented Arabic- and Kurdish-language media market, with many major outlets aligned to political parties or religious factions. Social media plays an outsized role in news discovery among a young population.",
+    "currency": "Iraqi Dinar (IQD)",
+    "languages": ["Arabic (official)", "Kurdish (official)", "Turkmen", "Assyrian"],
+    "government": "Federal parliamentary republic",
+    "dominant_industries": ["Oil & gas", "Agriculture (dates, wheat)", "Construction", "Electricity", "Telecommunications", "Religious tourism"],
+    "focus_areas": ["Post-ISIS reconstruction", "Iran–US balancing", "Electricity shortages", "Kurdish region relations"],
+    "media": {
+      "top_tv": "Al-Iraqiya (state), Al Sharqiya, Al Sumaria, Rudaw (Kurdish), Kurdistan 24",
+      "top_radio": "Republic of Iraq Radio, Monte Carlo Doualiya (Arabic), BBC Arabic",
+      "top_online_news": "Al-Sabaah, Shafaq News, Rudaw, Kurdistan 24",
+      "top_social": "WhatsApp, Facebook, TikTok, Instagram, Telegram"
+    },
+    "topics_of_interest": ["Politics", "Religion", "Football", "Security", "Regional affairs"]
+  },
+
+  "AFG": {
+    "name": "Afghanistan",
+    "capital": "Kabul",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "flag": "🇦🇫",
+    "overview": "A media landscape almost entirely reshaped after the 2021 Taliban takeover. Many professional outlets closed or relocated; independent reporting now relies heavily on diaspora newsrooms and VPN-accessed platforms.",
+    "currency": "Afghani (AFN)",
+    "languages": ["Dari (Persian)", "Pashto", "Uzbek", "Turkmen"],
+    "government": "Islamic Emirate (Taliban-led, internationally unrecognised)",
+    "dominant_industries": ["Agriculture", "Mining (lithium, rare earths — largely untapped)", "Handicrafts", "Services", "Informal economy", "Remittances"],
+    "focus_areas": ["Humanitarian crisis", "Women's rights restrictions", "International recognition", "Food security"],
+    "media": {
+      "top_tv": "RTA (state, Taliban-controlled), TOLO TV, ATN, 1TV, Shamshad TV",
+      "top_radio": "RTA Radio, Azadi (RFE/RL), BBC Persian/Pashto",
+      "top_online_news": "Etilaat-e-Roz, TOLOnews, Pajhwok, Hasht-e-Subh (in exile)",
+      "top_social": "WhatsApp, Facebook, Telegram, X, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Religion", "Human rights", "Humanitarian news", "Regional security"]
+  },
+
+  "MYS": {
+    "name": "Malaysia",
+    "capital": "Kuala Lumpur (Putrajaya is administrative)",
+    "region": "Asia",
+    "subregion": "South-eastern Asia",
+    "flag": "🇲🇾",
+    "overview": "A multilingual media market (Malay, Mandarin, Tamil, English) reflecting the country's ethnic diversity. A legacy of tight licensing sits alongside a lively digital press — most notably Malaysiakini.",
+    "currency": "Malaysian Ringgit (MYR)",
+    "languages": ["Malay (official)", "English", "Mandarin", "Tamil", "Indigenous languages"],
+    "government": "Federal parliamentary constitutional monarchy",
+    "dominant_industries": ["Electronics (semiconductors assembly)", "Palm oil", "Oil & gas", "Tourism", "Financial services", "Rubber"],
+    "focus_areas": ["Semiconductor supply-chain role", "Political coalition stability", "Energy transition", "Cost of living"],
+    "media": {
+      "top_tv": "RTM (public), TV3, Astro, NTV7, 8TV",
+      "top_radio": "RTM Radio, Hot FM, Era FM, Suria FM",
+      "top_online_news": "Malaysiakini, The Star, New Straits Times, Free Malaysia Today, Sin Chew Daily",
+      "top_social": "WhatsApp, Facebook, TikTok, Instagram, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Football", "Religion", "Business", "Entertainment"]
+  },
+
+  "NPL": {
+    "name": "Nepal",
+    "capital": "Kathmandu",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "flag": "🇳🇵",
+    "overview": "A resilient, pluralistic media environment relative to its regional neighbours. FM radio remains crucial for reaching rural mountain populations; Nepali-language online news is growing rapidly alongside Facebook penetration.",
+    "currency": "Nepalese Rupee (NPR)",
+    "languages": ["Nepali (official)", "Maithili", "Bhojpuri", "Tharu", "Newari", "123 recognised"],
+    "government": "Federal parliamentary republic",
+    "dominant_industries": ["Tourism", "Agriculture", "Hydropower", "Remittances", "Carpets & handicrafts", "Cement"],
+    "focus_areas": ["Hydropower exports to India", "Post-federalism governance", "Earthquake preparedness", "Migration & remittances"],
+    "media": {
+      "top_tv": "Nepal Television (state), Kantipur TV, Image Channel, ABC Nepal",
+      "top_radio": "Radio Nepal, Kantipur FM, Ujyaalo, BBC Nepali",
+      "top_online_news": "Kantipur, Online Khabar, Setopati, The Kathmandu Post, Nagarik",
+      "top_social": "Facebook, TikTok, WhatsApp, Instagram, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Religion", "Earthquake/climate", "Migration", "Football & cricket"]
+  },
+
+  "YEM": {
+    "name": "Yemen",
+    "capital": "Sana'a (Houthi-controlled), Aden (internationally recognised government)",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "flag": "🇾🇪",
+    "overview": "A media market fractured along civil-war lines since 2015, with separate broadcasting ecosystems in Houthi-held and government-held areas. Regional outlets (Al Jazeera, Al Arabiya) fill much of the gap; journalism is among the world's most dangerous here.",
+    "currency": "Yemeni Rial (YER)",
+    "languages": ["Arabic"],
+    "government": "Disputed (internationally recognised government in Aden; Houthi authorities in Sana'a)",
+    "dominant_industries": ["Oil & gas (disrupted)", "Agriculture (qat, coffee)", "Fisheries", "Humanitarian economy", "Remittances", "Port services"],
+    "focus_areas": ["Civil war and ceasefire talks", "Humanitarian crisis", "Red Sea shipping security", "Journalist safety"],
+    "media": {
+      "top_tv": "Yemen TV (multiple factional variants), Al-Masirah (Houthi), Suhail TV, Belqees",
+      "top_radio": "Sana'a Radio, Aden Radio",
+      "top_online_news": "Al Masdar Online, Yemen Times, Al-Thawra, Debriefer",
+      "top_social": "WhatsApp, Facebook, X, Telegram, YouTube"
+    },
+    "topics_of_interest": ["War & conflict", "Humanitarian news", "Religion", "Regional affairs", "Politics"]
+  },
+
+  "UKR": {
+    "name": "Ukraine",
+    "capital": "Kyiv",
+    "region": "Europe",
+    "subregion": "Eastern Europe",
+    "flag": "🇺🇦",
+    "overview": "A wartime media landscape since Russia's 2022 full-scale invasion. A unified national telethon anchors TV news; independent digital outlets and Telegram channels are central for real-time information and frontline reporting.",
+    "currency": "Ukrainian Hryvnia (UAH)",
+    "languages": ["Ukrainian (official)", "Russian (widely spoken)"],
+    "government": "Semi-presidential republic (under martial law)",
+    "dominant_industries": ["Agriculture (grain, sunflower)", "Metals & mining", "IT services", "Defence manufacturing (wartime)", "Energy", "Machinery"],
+    "focus_areas": ["War with Russia", "EU accession process", "Reconstruction planning", "Air-defence integration"],
+    "media": {
+      "top_tv": "Suspilne (public), 1+1, ICTV, STB, Inter (all feeding the unified news telethon)",
+      "top_radio": "Ukrainian Radio (public), Radio NV, Hromadske Radio",
+      "top_online_news": "Ukrainska Pravda, NV.ua, Hromadske, Kyiv Independent (English), LB.ua",
+      "top_social": "Telegram, YouTube, TikTok, Facebook, Instagram"
+    },
+    "topics_of_interest": ["War", "Politics", "International news", "Energy & security", "Culture"]
+  },
+
+  "POL": {
+    "name": "Poland",
+    "capital": "Warsaw",
+    "region": "Europe",
+    "subregion": "Eastern Europe",
+    "flag": "🇵🇱",
+    "overview": "Central Europe's largest media market. A high-turnover political landscape drives intense news competition; public broadcasting is undergoing reform after years of political capture.",
+    "currency": "Polish Złoty (PLN)",
+    "languages": ["Polish"],
+    "government": "Parliamentary republic",
+    "dominant_industries": ["Manufacturing (automotive, appliances)", "IT services", "Agriculture", "Financial services", "Defence industry", "Logistics"],
+    "focus_areas": ["Support for Ukraine", "EU rule-of-law disputes", "Defence spending ramp-up", "Energy transition (coal phase-out)"],
+    "media": {
+      "top_tv": "TVP (public, reform in progress), TVN, Polsat, TVN24",
+      "top_radio": "Polskie Radio (public), RMF FM, Radio ZET",
+      "top_online_news": "Gazeta Wyborcza, Onet, Rzeczpospolita, Wirtualna Polska, Polityka",
+      "top_social": "WhatsApp, Facebook, Instagram, TikTok, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Football", "International news", "EU affairs", "Economy"]
+  },
+
+  "PER": {
+    "name": "Peru",
+    "capital": "Lima",
+    "region": "Americas",
+    "subregion": "South America",
+    "flag": "🇵🇪",
+    "overview": "An Andean media market with one of Latin America's most politically volatile news cycles in recent years. Traditional print titles remain influential alongside rapidly growing digital-first outlets.",
+    "currency": "Peruvian Sol (PEN)",
+    "languages": ["Spanish (official)", "Quechua (official)", "Aymara (official)"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Mining (copper, gold, silver)", "Agriculture (coffee, fruit)", "Fisheries", "Tourism", "Textiles", "Construction"],
+    "focus_areas": ["Political instability", "Copper export dependency", "Informal economy", "Indigenous rights"],
+    "media": {
+      "top_tv": "TV Perú (state), América TV, Latina, ATV, Panamericana",
+      "top_radio": "RPP, Radio Nacional, Exitosa",
+      "top_online_news": "El Comercio, La República, RPP, Gestión, Ojo Público",
+      "top_social": "WhatsApp, Facebook, TikTok, Instagram, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Football", "Economy", "Crime & security", "Culture"]
+  },
+
+  "VEN": {
+    "name": "Venezuela",
+    "capital": "Caracas",
+    "region": "Americas",
+    "subregion": "South America",
+    "flag": "🇻🇪",
+    "overview": "A heavily restricted Spanish-language media environment, with many independent outlets shut, sold, or pushed to operate from exile. Citizens rely on VPNs, WhatsApp chains, and diaspora journalism for independent news.",
+    "currency": "Bolívar Soberano (VES)",
+    "languages": ["Spanish", "30+ indigenous languages"],
+    "government": "Presidential republic (disputed)",
+    "dominant_industries": ["Oil & gas", "Mining (gold, iron, bauxite)", "Agriculture", "Remittances from diaspora", "Informal economy", "Pharmaceuticals"],
+    "focus_areas": ["Political crisis & sanctions", "Mass emigration", "Oil production recovery", "Regional diplomacy (Essequibo dispute)"],
+    "media": {
+      "top_tv": "VTV (state), Televen, Venevisión, Globovisión",
+      "top_radio": "Radio Nacional de Venezuela, Circuito FM Center, Unión Radio",
+      "top_online_news": "Efecto Cocuyo, Armando.info, El Pitazo, TalCual (all independent, partly in exile)",
+      "top_social": "WhatsApp, Instagram, Facebook, X, TikTok"
+    },
+    "topics_of_interest": ["Politics", "Economy (crisis)", "Migration", "Football & baseball", "Entertainment"]
+  },
+
+  "CMR": {
+    "name": "Cameroon",
+    "capital": "Yaoundé",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "flag": "🇨🇲",
+    "overview": "A bilingual (French / English) media landscape in Central Africa where radio remains the widest-reaching medium. Journalism in the Anglophone regions has faced severe pressure amid an ongoing separatist conflict.",
+    "currency": "Central African CFA Franc (XAF)",
+    "languages": ["French (official)", "English (official)", "250+ indigenous languages"],
+    "government": "Presidential republic",
+    "dominant_industries": ["Oil & gas", "Agriculture (cocoa, coffee, cotton)", "Forestry", "Aluminium", "Services", "Telecommunications"],
+    "focus_areas": ["Anglophone crisis", "Boko Haram spillover in the north", "Presidential succession", "Economic diversification"],
+    "media": {
+      "top_tv": "CRTV (state), Canal 2, Équinoxe TV, Vision 4",
+      "top_radio": "CRTV Radio, Radio Equinoxe, Balafon FM",
+      "top_online_news": "Cameroon Tribune, Journal du Cameroun, Actu Cameroun, Mimi Mefo Info",
+      "top_social": "WhatsApp, Facebook, TikTok, Instagram, YouTube"
+    },
+    "topics_of_interest": ["Politics", "Football", "Religion", "Security & conflict", "Music"]
+  },
+
+  "MDG": {
+    "name": "Madagascar",
+    "capital": "Antananarivo",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "flag": "🇲🇬",
+    "overview": "An island media market where Malagasy- and French-language radio dominates rural news consumption. Ownership of major outlets is closely tied to political and business families.",
+    "currency": "Malagasy Ariary (MGA)",
+    "languages": ["Malagasy (official)", "French (official)"],
+    "government": "Semi-presidential republic",
+    "dominant_industries": ["Agriculture (vanilla, rice, cloves)", "Mining (nickel, cobalt, graphite)", "Textiles", "Tourism", "Fisheries", "Light manufacturing"],
+    "focus_areas": ["Cyclone resilience", "Vanilla market volatility", "Biodiversity protection", "Poverty reduction"],
+    "media": {
+      "top_tv": "TVM (state), TV Plus, Viva TV, Dream'In TV",
+      "top_radio": "Radio Nationale Malagasy, RFI Madagascar, Radio Don Bosco",
+      "top_online_news": "L'Express de Madagascar, Midi Madagasikara, Madagascar Tribune, Newsmada",
+      "top_social": "Facebook, WhatsApp, TikTok, Instagram, Messenger"
+    },
+    "topics_of_interest": ["Politics", "Agriculture & weather", "Football", "Religion", "Culture"]
+  }
+}
