@@ -1,0 +1,1968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="An interactive, source-cited global map of media consumption patterns. A public research resource prepared for the United Nations.">
+<title>Global Media Consumption Atlas</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<style>
+  :root {
+    --un-blue: #009EDB;
+    --un-blue-dark: #0072BC;
+    --un-blue-ink: #003D6B;
+    --accent-soft: #E6F4FB;
+    --ink: #0F1A2B;
+    --muted: #5C6B7E;
+    --muted-2: #94A3B8;
+    --bg: #F7FAFC;
+    --surface: #FFFFFF;
+    --border: #E3EBF1;
+    --border-soft: #EEF3F7;
+    --positive: #16A34A;
+    --warn: #F59E0B;
+    --danger: #DC2626;
+    --shadow: 0 1px 2px rgba(15,26,43,0.04), 0 4px 14px rgba(15,26,43,0.06);
+    --shadow-lg: 0 8px 32px rgba(15,26,43,0.12);
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Noto Sans Arabic", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  header.site {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 22px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    height: 60px;
+  }
+  header.site .brand { display: flex; align-items: center; gap: 12px; }
+  header.site .logo { width: 36px; height: 36px; display: block; flex-shrink: 0; }
+  header.site .title { font-weight: 600; font-size: 15px; letter-spacing: 0.1px; }
+  header.site .subtitle { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  header.site .spacer { flex: 1; }
+  header.site .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    background: var(--accent-soft);
+    color: var(--un-blue-ink);
+    border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+  }
+  header.site .badge::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--un-blue);
+    box-shadow: 0 0 0 3px rgba(0,158,219,0.18);
+  }
+  header.site nav { display: flex; gap: 4px; align-items: center; }
+  header.site nav a, header.site nav button {
+    padding: 6px 12px; font-size: 13px; color: var(--muted);
+    text-decoration: none; border-radius: 6px;
+    background: none; border: none; cursor: pointer; font-family: inherit;
+  }
+  header.site nav a:hover, header.site nav button:hover { background: var(--border-soft); color: var(--ink); }
+
+  /* Language selector */
+  .lang-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--un-blue-dark);
+    background: var(--accent-soft);
+    border: 1px solid rgba(0,158,219,0.2);
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .lang-select:hover { background: #fff; border-color: var(--un-blue); }
+  .lang-menu {
+    position: absolute;
+    top: 54px; right: 22px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    z-index: 1500;
+    min-width: 200px;
+    padding: 6px;
+    display: none;
+  }
+  .lang-menu.open { display: block; }
+  .lang-menu button {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 13px;
+    background: none; border: none; cursor: pointer;
+    border-radius: 6px;
+    color: var(--ink);
+    text-align: start;
+    font-family: inherit;
+  }
+  .lang-menu button:hover { background: var(--border-soft); }
+  .lang-menu button.current { background: var(--accent-soft); color: var(--un-blue-dark); font-weight: 600; }
+  .lang-menu .native { font-weight: 500; }
+  .lang-menu .latin { color: var(--muted); font-size: 11px; }
+
+  .error-banner {
+    display: none;
+    padding: 10px 22px;
+    background: #FFF1F0; color: #8B1A14;
+    border-bottom: 1px solid #FECACA;
+    font-size: 13px;
+  }
+  .error-banner.show { display: block; }
+
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .stat { background: var(--surface); padding: 12px 18px; min-width: 0; }
+  .stat .label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--muted); font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .stat .value {
+    font-size: 18px; font-weight: 700; color: var(--ink); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .stat .delta {
+    font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .stat.highlight .value { color: var(--un-blue-dark); }
+
+  main.app {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    height: calc(100vh - 60px - 70px - 37px);
+  }
+
+  aside.sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar .search-box { padding: 14px; border-bottom: 1px solid var(--border-soft); }
+  .sidebar .search-box input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    background: var(--bg);
+    transition: border-color 0.15s, background 0.15s;
+    font-family: inherit;
+  }
+  .sidebar .search-box input:focus {
+    border-color: var(--un-blue);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(0,158,219,0.12);
+  }
+  .sidebar .filter-chips {
+    padding: 10px 14px 14px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .chip {
+    padding: 5px 10px; font-size: 11px; font-weight: 600;
+    border: 1px solid var(--border); border-radius: 999px;
+    background: #fff; color: var(--muted);
+    cursor: pointer; transition: all 0.12s;
+    font-family: inherit;
+  }
+  .chip:hover { border-color: var(--un-blue); color: var(--un-blue-dark); }
+  .chip.active { background: var(--un-blue); color: #fff; border-color: var(--un-blue); }
+
+  .country-list { flex: 1; overflow-y: auto; padding: 6px 8px 20px; }
+  .country-list .section-heading {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--muted-2); font-weight: 700;
+    padding: 14px 10px 6px;
+  }
+  .country-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px; border-radius: 8px;
+    cursor: pointer; transition: background 0.12s;
+    border: 1px solid transparent;
+  }
+  .country-card:hover { background: var(--border-soft); }
+  .country-card.active { background: var(--accent-soft); border-color: rgba(0,158,219,0.25); }
+  .country-card .flag { font-size: 22px; }
+  .country-card .meta { flex: 1; min-width: 0; }
+  .country-card .meta .name {
+    font-size: 13px; font-weight: 600; color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .country-card .meta .sub {
+    font-size: 11px; color: var(--muted); margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .country-card .tag {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 2px 6px; border-radius: 4px;
+    background: var(--accent-soft); color: var(--un-blue-dark);
+  }
+
+  .map-wrap { position: relative; overflow: hidden; }
+  #map { width: 100%; height: 100%; background: #DFE8F0; }
+  .map-legend {
+    position: absolute;
+    bottom: 16px; inset-inline-start: 16px;
+    background: rgba(255,255,255,0.96);
+    padding: 10px 14px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    font-size: 12px;
+    z-index: 400;
+    border: 1px solid var(--border);
+  }
+  .map-legend .legend-title {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--muted); font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .map-legend .row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .map-legend .swatch {
+    width: 14px; height: 14px; border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  .map-hint {
+    position: absolute;
+    top: 16px; inset-inline-start: 16px;
+    background: rgba(255,255,255,0.96);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px; color: var(--muted);
+    box-shadow: var(--shadow);
+    z-index: 400;
+    border: 1px solid var(--border);
+    pointer-events: none;
+  }
+
+  .detail-panel {
+    position: fixed;
+    inset-inline-end: 0; top: 60px; bottom: 37px;
+    width: min(540px, 100vw);
+    background: var(--surface);
+    box-shadow: -12px 0 40px rgba(15,26,43,0.14);
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(.2,.7,.2,1);
+    z-index: 1000;
+    display: flex; flex-direction: column;
+    border-inline-start: 1px solid var(--border);
+  }
+  [dir="rtl"] .detail-panel {
+    transform: translateX(-100%);
+    box-shadow: 12px 0 40px rgba(15,26,43,0.14);
+  }
+  .detail-panel.open { transform: translateX(0); }
+
+  .detail-header {
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    background: linear-gradient(180deg, var(--accent-soft) 0%, #fff 100%);
+  }
+  .detail-header .flag-big { font-size: 44px; line-height: 1; margin-bottom: 10px; }
+  .detail-header h2 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
+  .detail-header .subline { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .detail-header .close {
+    position: absolute; top: 16px; inset-inline-end: 16px;
+    background: #fff; border: 1px solid var(--border);
+    width: 32px; height: 32px; border-radius: 50%;
+    font-size: 16px; cursor: pointer;
+    display: grid; place-items: center;
+    color: var(--muted); transition: all 0.15s;
+    font-family: inherit;
+  }
+  .detail-header .close:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .detail-tabs {
+    display: flex; gap: 2px;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+    overflow-x: auto;
+  }
+  .detail-tabs button {
+    background: none; border: none; cursor: pointer;
+    padding: 12px; font-size: 13px; font-weight: 500;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .detail-tabs button:hover { color: var(--ink); }
+  .detail-tabs button.active {
+    color: var(--un-blue-dark);
+    border-bottom-color: var(--un-blue);
+    font-weight: 600;
+  }
+
+  .detail-body { flex: 1; overflow-y: auto; padding: 22px 24px 40px; }
+  .detail-body h3 {
+    font-size: 11px;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--muted); font-weight: 700;
+    margin: 22px 0 10px;
+  }
+  .detail-body h3:first-of-type { margin-top: 0; }
+  .detail-body p { margin: 0 0 12px; font-size: 14px; color: var(--ink); }
+
+  .translation-notice {
+    background: #F0F7FB;
+    border: 1px solid rgba(0,158,219,0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--un-blue-ink);
+    margin-bottom: 14px;
+    display: none;
+  }
+  body:not([data-lang="en"]) .translation-notice { display: block; }
+
+  .kv-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .kv { background: #fff; padding: 12px 14px; }
+  .kv .label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--muted); font-weight: 600;
+  }
+  .kv .value { font-size: 15px; font-weight: 600; color: var(--ink); margin-top: 3px; }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .pill {
+    background: var(--accent-soft); color: var(--un-blue-ink);
+    padding: 5px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+  }
+  .pill.neutral { background: var(--border-soft); color: var(--ink); }
+
+  .data-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 14px;
+  }
+  .data-row:last-child { border-bottom: none; }
+  .data-row .label { color: var(--muted); }
+  .data-row .value { font-weight: 600; }
+
+  .bar {
+    position: relative;
+    background: var(--border-soft);
+    border-radius: 4px;
+    height: 6px; overflow: hidden;
+    margin-top: 6px;
+  }
+  .bar-fill {
+    position: absolute; inset-inline-start: 0; top: 0; bottom: 0;
+    background: var(--un-blue);
+    border-radius: 4px;
+  }
+
+  .confidence-banner {
+    background: #FFF4E5;
+    border: 1px solid #FFE0B2;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #8B5A14;
+    margin-bottom: 16px;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .confidence-banner strong { color: #6B4510; }
+
+  .sources-list { font-size: 12px; color: var(--muted); }
+  .sources-list div { padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .sources-list div:last-child { border-bottom: none; }
+  .sources-list a { color: var(--un-blue-dark); text-decoration: none; word-break: break-all; }
+  .sources-list a:hover { text-decoration: underline; }
+
+  .no-data { padding: 32px 16px; text-align: center; color: var(--muted); font-size: 14px; }
+  .no-data .icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
+
+  /* Methodology modal */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(15, 26, 43, 0.55);
+    z-index: 2000; display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 14px;
+    max-width: 640px; width: 100%;
+    max-height: 85vh; overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-header {
+    padding: 22px 26px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-header h2 { margin: 0; font-size: 20px; }
+  .modal-body { padding: 22px 26px 28px; font-size: 14px; color: var(--ink); }
+  .modal-body .mini-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 16px 0 24px;
+  }
+  .modal-body .mini-stats .stat { background: #fff; padding: 14px 16px; }
+  .modal-body .mini-stats .label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--muted); font-weight: 600;
+  }
+  .modal-body .mini-stats .value { font-size: 18px; font-weight: 700; color: var(--ink); margin-top: 2px; }
+  .modal-body .mini-stats .delta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .modal .close {
+    background: var(--border-soft); border: none;
+    width: 30px; height: 30px; border-radius: 50%;
+    cursor: pointer; font-size: 15px; color: var(--muted);
+    font-family: inherit;
+  }
+
+  footer.site {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 10px 22px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 37px;
+    z-index: 500;
+  }
+  footer.site a { color: var(--un-blue-dark); text-decoration: none; cursor: pointer; }
+  footer.site a:hover { text-decoration: underline; }
+
+  .leaflet-container { font-family: inherit; background: #DFE8F0; }
+  .leaflet-interactive:focus { outline: none; }
+  /* Ensure Leaflet zoom controls stay LTR even in RTL mode */
+  [dir="rtl"] .leaflet-control-zoom { direction: ltr; }
+
+  @media (max-width: 780px) {
+    main.app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    aside.sidebar { max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border); }
+    .stats-strip { grid-template-columns: repeat(2, 1fr); }
+    .detail-panel { width: 100vw; }
+    header.site .subtitle { display: none; }
+    header.site nav a, header.site nav button { padding: 6px 8px; font-size: 12px; }
+  }
+</style>
+</head>
+<body data-lang="en">
+
+<header class="site">
+  <div class="brand">
+    <!-- UN-styled placeholder logo (blue circle with polar-projection-style gridlines + olive branch underline).
+         Swap the SVG below for the official UN emblem once the project is formally adopted by the UN. -->
+    <svg class="logo" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Project emblem">
+      <defs><clipPath id="globeClip"><circle cx="20" cy="18" r="12"/></clipPath></defs>
+      <circle cx="20" cy="18" r="13" fill="#009EDB"/>
+      <g clip-path="url(#globeClip)" stroke="#FFFFFF" stroke-width="0.5" fill="none" opacity="0.85">
+        <circle cx="20" cy="18" r="3.5"/>
+        <circle cx="20" cy="18" r="7"/>
+        <circle cx="20" cy="18" r="10.5"/>
+        <line x1="8" y1="18" x2="32" y2="18"/>
+        <line x1="20" y1="6" x2="20" y2="30"/>
+        <line x1="11" y1="9" x2="29" y2="27"/>
+        <line x1="11" y1="27" x2="29" y2="9"/>
+      </g>
+      <!-- Stylised olive branches curving below the globe -->
+      <path d="M9,33 Q20,38 31,33" fill="none" stroke="#009EDB" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="12" cy="33" r="0.8" fill="#009EDB"/>
+      <circle cx="15.5" cy="35" r="0.8" fill="#009EDB"/>
+      <circle cx="20" cy="36" r="0.8" fill="#009EDB"/>
+      <circle cx="24.5" cy="35" r="0.8" fill="#009EDB"/>
+      <circle cx="28" cy="33" r="0.8" fill="#009EDB"/>
+    </svg>
+    <div>
+      <div class="title" data-i18n="brand_title">Global Media Consumption Atlas</div>
+      <div class="subtitle" data-i18n="brand_subtitle">An open, source-cited public research resource</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <nav>
+    <a href="#" data-i18n="nav_map">Map</a>
+    <button id="open-methodology" data-i18n="nav_methodology">Methodology</button>
+    <button id="open-sources" data-i18n="nav_sources">Sources</button>
+    <a href="#" data-i18n="nav_survey">Take the survey</a>
+    <a href="#" data-i18n="nav_about">About</a>
+    <button class="lang-select" id="lang-button" aria-haspopup="true" aria-expanded="false">
+      <span id="lang-current">🌐 English</span>
+      <span aria-hidden="true">▾</span>
+    </button>
+  </nav>
+  <div class="badge" data-i18n="badge_phase">Phase 1 prototype</div>
+</header>
+
+<div class="lang-menu" id="lang-menu" role="menu">
+  <!-- populated by JS -->
+</div>
+
+<div class="error-banner" id="error-banner"></div>
+
+<section class="stats-strip" id="stats-strip"><!-- dynamic --></section>
+
+<main class="app">
+  <aside class="sidebar">
+    <div class="search-box">
+      <input id="search" type="search" autocomplete="off" data-i18n-placeholder="search_placeholder" placeholder="Search a country…">
+    </div>
+    <div class="filter-chips">
+      <button class="chip active" data-filter="all" data-i18n="chip_all">All regions</button>
+      <button class="chip" data-filter="Africa" data-i18n="chip_africa">Africa</button>
+      <button class="chip" data-filter="Americas" data-i18n="chip_americas">Americas</button>
+      <button class="chip" data-filter="Asia" data-i18n="chip_asia">Asia</button>
+      <button class="chip" data-filter="Europe" data-i18n="chip_europe">Europe</button>
+      <button class="chip" data-filter="Oceania" data-i18n="chip_oceania">Oceania</button>
+    </div>
+    <div class="country-list" id="country-list"></div>
+  </aside>
+
+  <div class="map-wrap">
+    <div class="map-hint" data-i18n="map_hint">Click any country to open its profile →</div>
+    <div id="map"></div>
+    <div class="map-legend">
+      <div class="legend-title" data-i18n="legend_title">Data status</div>
+      <div class="row"><div class="swatch" style="background:#009EDB"></div><span data-i18n="legend_profiled">Profiled (pilot)</span></div>
+      <div class="row"><div class="swatch" style="background:#D4DEE8"></div><span data-i18n="legend_not_profiled">Not yet profiled</span></div>
+    </div>
+  </div>
+</main>
+
+<aside class="detail-panel" id="detail-panel">
+  <div class="detail-header">
+    <button class="close" id="close-detail" aria-label="Close">✕</button>
+    <div class="flag-big" id="detail-flag"></div>
+    <h2 id="detail-name"></h2>
+    <div class="subline" id="detail-subline"></div>
+  </div>
+  <div class="detail-tabs">
+    <button data-tab="overview" class="active" data-i18n="tab_overview">Overview</button>
+    <button data-tab="economy" data-i18n="tab_economy">Economy</button>
+    <button data-tab="media" data-i18n="tab_media">Media</button>
+    <button data-tab="society" data-i18n="tab_society">Society</button>
+    <button data-tab="sources" data-i18n="tab_sources">Sources</button>
+  </div>
+  <div class="detail-body" id="detail-body"></div>
+</aside>
+
+<div class="modal-backdrop" id="methodology-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 data-i18n="modal_title">Methodology &amp; data standards</h2>
+      <button class="close" data-close-modal>✕</button>
+    </div>
+    <div class="modal-body">
+      <p data-i18n="modal_intro">This atlas is built to the standards of an institutional research resource. Every number displayed is tied to a primary source that is either (a) produced by an intergovernmental body or government statistical agency, or (b) published in a recognised comparative research programme.</p>
+
+      <div class="mini-stats">
+        <div class="stat">
+          <div class="label" data-i18n="modal_indicators_label">Indicators per country</div>
+          <div class="value">40+</div>
+          <div class="delta" data-i18n="modal_indicators_delta">with citations</div>
+        </div>
+        <div class="stat">
+          <div class="label" data-i18n="modal_source_tier_label">Primary source tier</div>
+          <div class="value" data-i18n="modal_source_tier_value">Institutional</div>
+          <div class="delta">UN · World Bank · ITU · RSF · Reuters Institute</div>
+        </div>
+        <div class="stat">
+          <div class="label" data-i18n="modal_data_status_label">Data status</div>
+          <div class="value" style="color: var(--warn);" data-i18n="modal_data_status_value">Preliminary</div>
+          <div class="delta" data-i18n="modal_data_status_delta">pending source verification</div>
+        </div>
+      </div>
+
+      <h3 style="font-size: 14px; color: var(--ink); margin: 8px 0 6px;" data-i18n="modal_refresh_cadence">Refresh cadence</h3>
+      <p style="color: var(--muted);" data-i18n="modal_refresh_body">Automated indicators refresh daily via public APIs (World Bank, ITU). Manual-update indicators refresh once a year when flagship reports (Reuters Institute DNR, RSF, Freedom House) publish new editions.</p>
+
+      <h3 style="font-size: 14px; color: var(--ink); margin: 18px 0 6px;" data-i18n="modal_confidence_flags">Confidence flags</h3>
+      <p style="color: var(--muted);" data-i18n="modal_confidence_body">Each cell carries a confidence flag (high / medium / low / estimated / preliminary). Any cell marked preliminary has not yet been independently verified against its primary source and must not be cited publicly.</p>
+    </div>
+  </div>
+</div>
+
+<footer class="site">
+  <div><span data-i18n="footer_copyright">© 2026 · An independent research project prepared for the United Nations · Data last checked</span> <span id="last-check"></span></div>
+  <div>
+    <a id="footer-methodology" data-i18n="footer_methodology">Methodology</a> &nbsp;·&nbsp;
+    <a href="https://github.com/shakcoder/UN-Media-Consumption-Map-" target="_blank" data-i18n="footer_github">GitHub</a> &nbsp;·&nbsp;
+    <a href="#" data-i18n="footer_report">Report an error</a>
+  </div>
+</footer>
+
+<!-- ============================================================
+     Country data — embedded directly so the site is a single self-contained file.
+     Figures marked "preliminary" must be re-verified against primary sources.
+     Keyed by ISO 3166-1 alpha-3.
+     ============================================================ -->
+<script>
+window.COUNTRY_DATA = {
+
+  "USA": {
+    name: "United States of America",
+    capital: "Washington, D.C.",
+    region: "Americas", subregion: "Northern America",
+    flag: "🇺🇸",
+    overview: "The world's largest economy and the primary exporter of global media and digital platforms. Home to the companies that define much of the world's online information environment.",
+    population: 334914895, population_year: 2023, area_km2: 9833517, gdp_per_capita_usd: 82769,
+    currency: "United States Dollar (USD)",
+    languages: ["English (de facto)", "Spanish (widely spoken)"],
+    government: "Federal presidential republic",
+    dominant_industries: ["Technology & software", "Financial services", "Healthcare", "Manufacturing", "Entertainment & media", "Aerospace & defense"],
+    focus_areas: ["AI and semiconductor policy", "Energy transition", "Re-shoring of manufacturing", "Regulation of large platforms"],
+    demographics: { age_0_14_pct: 17.8, age_15_64_pct: 64.9, age_65_plus_pct: 17.3, urban_pct: 83.3, literacy_pct: 99.0 },
+    connectivity: { internet_pct: 97, mobile_per_100: 110, smartphone_pct: 91, fixed_broadband_per_100: 38 },
+    media: {
+      top_tv: "CBS, NBC, ABC, Fox, CNN, MSNBC",
+      top_radio: "NPR, iHeartRadio network, SiriusXM",
+      top_online_news: "New York Times, CNN, Washington Post, Fox News",
+      top_social: "YouTube, Facebook, Instagram, TikTok, X",
+      press_freedom_rank: 55, press_freedom_source: "RSF 2024"
+    },
+    topics_of_interest: ["Politics", "Business", "Sports", "Entertainment", "Technology"],
+    sources: {
+      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=US",
+      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=US",
+      internet: "ITU — https://datahub.itu.int/",
+      press_freedom: "RSF — https://rsf.org/en/country/united-states"
+    },
+    confidence: "preliminary"
+  },
+
+  "GBR": {
+    name: "United Kingdom",
+    capital: "London",
+    region: "Europe", subregion: "Northern Europe",
+    flag: "🇬🇧",
+    overview: "Globally influential media market historically anchored by the BBC. Strong public-service broadcasting tradition sits alongside one of the world's most competitive commercial press markets.",
+    population: 67596281, population_year: 2023, area_km2: 243610, gdp_per_capita_usd: 50778,
+    currency: "Pound Sterling (GBP)",
+    languages: ["English", "Welsh", "Scottish Gaelic"],
+    government: "Parliamentary constitutional monarchy",
+    dominant_industries: ["Financial services", "Creative industries", "Aerospace", "Pharmaceuticals", "Professional services", "Tech"],
+    focus_areas: ["Post-Brexit trade", "Net zero by 2050", "AI safety leadership", "Public-service broadcasting reform"],
+    demographics: { age_0_14_pct: 17.4, age_15_64_pct: 63.5, age_65_plus_pct: 19.1, urban_pct: 84.4, literacy_pct: 99.0 },
+    connectivity: { internet_pct: 97, mobile_per_100: 118, smartphone_pct: 92, fixed_broadband_per_100: 42 },
+    media: {
+      top_tv: "BBC, ITV, Channel 4, Sky",
+      top_radio: "BBC Radio (1/2/4), Global Radio (Capital, Heart)",
+      top_online_news: "BBC News, The Guardian, Mail Online, Sky News",
+      top_social: "WhatsApp, Facebook, YouTube, Instagram, TikTok",
+      press_freedom_rank: 23, press_freedom_source: "RSF 2024"
+    },
+    topics_of_interest: ["Politics", "International news", "Sports", "Business", "Climate"],
+    sources: {
+      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=GB",
+      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=GB",
+      internet: "ITU — https://datahub.itu.int/",
+      press_freedom: "RSF — https://rsf.org/en/country/united-kingdom"
+    },
+    confidence: "preliminary"
+  },
+
+  "BRA": {
+    name: "Brazil",
+    capital: "Brasilia",
+    region: "Americas", subregion: "South America",
+    flag: "🇧🇷",
+    overview: "Latin America's largest media market, with television and WhatsApp both playing outsized roles in news distribution. Portuguese-language cohesion makes it one of the most unified large media markets in the world.",
+    population: 216422446, population_year: 2023, area_km2: 8515767, gdp_per_capita_usd: 10412,
+    currency: "Brazilian Real (BRL)",
+    languages: ["Portuguese"],
+    government: "Federal presidential republic",
+    dominant_industries: ["Agribusiness", "Mining", "Manufacturing", "Oil & gas", "Services", "Renewable energy"],
+    focus_areas: ["Amazon conservation", "Green hydrogen", "Disinformation regulation", "Digital inclusion"],
+    demographics: { age_0_14_pct: 20.1, age_15_64_pct: 69.7, age_65_plus_pct: 10.2, urban_pct: 87.6, literacy_pct: 94.3 },
+    connectivity: { internet_pct: 84, mobile_per_100: 99, smartphone_pct: 84, fixed_broadband_per_100: 22 },
+    media: {
+      top_tv: "Globo, SBT, Record, Band",
+      top_radio: "Jovem Pan, Bandeirantes, CBN",
+      top_online_news: "G1 (Globo), UOL, Folha de Sao Paulo, Estadao",
+      top_social: "WhatsApp, Instagram, YouTube, TikTok, Facebook",
+      press_freedom_rank: 82, press_freedom_source: "RSF 2024"
+    },
+    topics_of_interest: ["Politics", "Sports (football)", "Entertainment", "Local news", "Religion"],
+    sources: {
+      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=BR",
+      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=BR",
+      internet: "ITU — https://datahub.itu.int/",
+      press_freedom: "RSF — https://rsf.org/en/country/brazil"
+    },
+    confidence: "preliminary"
+  },
+
+  "NGA": {
+    name: "Nigeria",
+    capital: "Abuja",
+    region: "Africa", subregion: "Western Africa",
+    flag: "🇳🇬",
+    overview: "Africa's most populous country and the continent's largest media and entertainment market. Home to Nollywood, Afrobeats, and some of Africa's most influential digital journalism platforms.",
+    population: 223804632, population_year: 2023, area_km2: 923768, gdp_per_capita_usd: 2163,
+    currency: "Naira (NGN)",
+    languages: ["English (official)", "Hausa", "Yoruba", "Igbo", "500+ others"],
+    government: "Federal presidential republic",
+    dominant_industries: ["Oil & gas", "Agriculture", "Telecommunications", "Film (Nollywood)", "Financial services", "Fintech"],
+    focus_areas: ["Economic diversification away from oil", "Fintech and digital payments growth", "Security in the north", "Youth unemployment"],
+    demographics: { age_0_14_pct: 42.5, age_15_64_pct: 54.5, age_65_plus_pct: 3.0, urban_pct: 54.4, literacy_pct: 62.0 },
+    connectivity: { internet_pct: 55, mobile_per_100: 99, smartphone_pct: 52, fixed_broadband_per_100: 0.04 },
+    media: {
+      top_tv: "NTA, Channels TV, Arise News, TVC",
+      top_radio: "Wazobia FM, Cool FM, BBC Hausa",
+      top_online_news: "Premium Times, Sahara Reporters, Punch, Vanguard",
+      top_social: "WhatsApp, Facebook, Instagram, TikTok, X",
+      press_freedom_rank: 112, press_freedom_source: "RSF 2024"
+    },
+    topics_of_interest: ["Politics", "Religion", "Entertainment (Afrobeats/Nollywood)", "Sports (football)", "Business"],
+    sources: {
+      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=NG",
+      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=NG",
+      internet: "ITU — https://datahub.itu.int/",
+      press_freedom: "RSF — https://rsf.org/en/country/nigeria"
+    },
+    confidence: "preliminary"
+  },
+
+  "KEN": {
+    name: "Kenya",
+    capital: "Nairobi",
+    region: "Africa", subregion: "Eastern Africa",
+    flag: "🇰🇪",
+    overview: "East Africa's digital hub and a pioneer of mobile money (M-Pesa). A vibrant independent press coexists with government pressure that has grown in recent years.",
+    population: 55100586, population_year: 2023, area_km2: 580367, gdp_per_capita_usd: 2203,
+    currency: "Kenyan Shilling (KES)",
+    languages: ["Swahili", "English"],
+    government: "Presidential republic",
+    dominant_industries: ["Agriculture (tea, coffee, horticulture)", "Tourism", "Financial services", "Telecommunications", "Manufacturing", "Technology"],
+    focus_areas: ["Digital ID and e-government", "Affordable housing", "Climate adaptation", "Regional trade via AfCFTA"],
+    demographics: { age_0_14_pct: 37.4, age_15_64_pct: 60.0, age_65_plus_pct: 2.6, urban_pct: 29.0, literacy_pct: 82.6 },
+    connectivity: { internet_pct: 42, mobile_per_100: 130, smartphone_pct: 62, fixed_broadband_per_100: 1 },
+    media: {
+      top_tv: "Citizen TV, KTN, NTV, K24",
+      top_radio: "Radio Citizen, Radio Maisha, Classic 105",
+      top_online_news: "Nation.Africa, Standard Media, Tuko, The Star",
+      top_social: "WhatsApp, Facebook, TikTok, X, Instagram",
+      press_freedom_rank: 102, press_freedom_source: "RSF 2024"
+    },
+    topics_of_interest: ["Politics", "Sports (athletics, football)", "Religion", "Business", "Local news"],
+    sources: {
+      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=KE",
+      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=KE",
+      internet: "ITU — https://datahub.itu.int/",
+      press_freedom: "RSF — https://rsf.org/en/country/kenya"
+    },
+    confidence: "preliminary"
+  },
+
+  "IND": {
+    name: "India",
+    capital: "New Delhi",
+    region: "Asia", subregion: "Southern Asia",
+    flag: "🇮🇳",
+    overview: "The world's most populous country and its fastest-growing major media market. Extraordinary linguistic diversity drives a multi-language news ecosystem unmatched anywhere else.",
+    population: 1428627663, population_year: 2023, area_km2: 3287263, gdp_per_capita_usd: 2612,
+    currency: "Indian Rupee (INR)",
+    languages: ["Hindi", "English", "+22 scheduled languages"],
+    government: "Federal parliamentary republic",
+    dominant_industries: ["Information technology & services", "Pharmaceuticals", "Textiles & apparel", "Agriculture", "Film (Bollywood + regional)", "Automotive"],
+    focus_areas: ["Digital Public Infrastructure (Aadhaar, UPI)", "Manufacturing via Make in India", "Green energy transition", "Press freedom concerns"],
+    demographics: { age_0_14_pct: 24.9, age_15_64_pct: 67.8, age_65_plus_pct: 7.3, urban_pct: 36.4, literacy_pct: 76.3 },
+    connectivity: { internet_pct: 52, mobile_per_100: 82, smartphone_pct: 71, fixed_broadband_per_100: 2.6 },
+    media: {
+      top_tv: "Doordarshan, Star India, Zee, Sun TV, Republic, NDTV",
+      top_radio: "All India Radio, Radio Mirchi, Red FM",
+      top_online_news: "Times of India, Hindustan Times, The Hindu, NDTV.com",
+      top_social: "WhatsApp, YouTube, Instagram, Facebook, X",
+      press_freedom_rank: 159, press_freedom_source: "RSF 2024"
+    },
+    topics_of_interest: ["Politics", "Cricket", "Bollywood & regional cinema", "Religion", "Business"],
+    sources: {
+      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=IN",
+      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=IN",
+      internet: "ITU — https://datahub.itu.int/",
+      press_freedom: "RSF — https://rsf.org/en/country/india"
+    },
+    confidence: "preliminary"
+  },
+
+  "CHN": {
+    name: "China",
+    capital: "Beijing",
+    region: "Asia", subregion: "Eastern Asia",
+    flag: "🇨🇳",
+    overview: "The world's second-largest economy and a uniquely self-contained digital ecosystem. Major global platforms (Google, Facebook, Twitter) are inaccessible; domestic super-apps dominate every aspect of media consumption.",
+    population: 1410710000, population_year: 2023, area_km2: 9596961, gdp_per_capita_usd: 12720,
+    currency: "Renminbi (CNY)",
+    languages: ["Mandarin (official)", "Cantonese", "Shanghainese", "many regional"],
+    government: "One-party socialist republic",
+    dominant_industries: ["Manufacturing", "Technology & telecommunications", "Construction", "Automotive (including EV)", "E-commerce", "Clean energy"],
+    focus_areas: ["Semiconductor self-sufficiency", "Common Prosperity policy", "Domestic consumption growth", "AI and advanced manufacturing"],
+    demographics: { age_0_14_pct: 17.0, age_15_64_pct: 68.7, age_65_plus_pct: 14.3, urban_pct: 64.6, literacy_pct: 96.8 },
+    connectivity: { internet_pct: 76, mobile_per_100: 122, smartphone_pct: 68, fixed_broadband_per_100: 44 },
+    media: {
+      top_tv: "CCTV, provincial satellite channels",
+      top_radio: "China National Radio (CNR)",
+      top_online_news: "People's Daily, Xinhua, Sina, Toutiao",
+      top_social: "WeChat, Douyin, Weibo, Xiaohongshu, Kuaishou (domestic)",
+      press_freedom_rank: 172, press_freedom_source: "RSF 2024"
+    },
+    topics_of_interest: ["National news", "Economy", "Entertainment (drama, variety)", "Sports", "Technology"],
+    sources: {
+      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=CN",
+      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=CN",
+      internet: "ITU — https://datahub.itu.int/",
+      press_freedom: "RSF — https://rsf.org/en/country/china"
+    },
+    confidence: "preliminary"
+  },
+
+  "IDN": {
+    name: "Indonesia",
+    capital: "Jakarta (Nusantara being developed as successor capital)",
+    region: "Asia", subregion: "South-eastern Asia",
+    flag: "🇮🇩",
+    overview: "The world's fourth-most-populous country, spread across 17,000+ islands. One of the world's heaviest social-media-using populations, with TikTok and Instagram central to daily media diets.",
+    population: 277534122, population_year: 2023, area_km2: 1904569, gdp_per_capita_usd: 4941,
+    currency: "Rupiah (IDR)",
+    languages: ["Indonesian (Bahasa Indonesia)", "Javanese", "Sundanese"],
+    government: "Presidential republic",
+    dominant_industries: ["Palm oil & agriculture", "Mining (nickel, coal)", "Manufacturing", "Tourism", "Textiles", "Digital economy"],
+    focus_areas: ["Capital relocation to Nusantara", "EV battery supply chain (nickel)", "Digital economy growth", "Disaster resilience"],
+    demographics: { age_0_14_pct: 25.3, age_15_64_pct: 67.4, age_65_plus_pct: 7.3, urban_pct: 58.6, literacy_pct: 96.0 },
+    connectivity: { internet_pct: 69, mobile_per_100: 128, smartphone_pct: 74, fixed_broadband_per_100: 6 },
+    media: {
+      top_tv: "SCTV, Indosiar, RCTI, TransTV, MetroTV",
+      top_radio: "RRI, Prambors, Elshinta",
+      top_online_news: "Detik.com, Kompas.com, Tribunnews, CNN Indonesia",
+      top_social: "WhatsApp, Instagram, TikTok, Facebook, YouTube",
+      press_freedom_rank: 111, press_freedom_source: "RSF 2024"
+    },
+    topics_of_interest: ["Politics", "Entertainment", "Religion (Islam)", "Sports (football, badminton)", "Lifestyle"],
+    sources: {
+      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=ID",
+      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=ID",
+      internet: "ITU — https://datahub.itu.int/",
+      press_freedom: "RSF — https://rsf.org/en/country/indonesia"
+    },
+    confidence: "preliminary"
+  },
+
+  "DEU": {
+    name: "Germany",
+    capital: "Berlin",
+    region: "Europe", subregion: "Western Europe",
+    flag: "🇩🇪",
+    overview: "Europe's largest economy, with one of the world's strongest public-service broadcasters (ARD and ZDF) funded by a household media levy. High trust in traditional news relative to most peer democracies.",
+    population: 84482267, population_year: 2023, area_km2: 357022, gdp_per_capita_usd: 52746,
+    currency: "Euro (EUR)",
+    languages: ["German"],
+    government: "Federal parliamentary republic",
+    dominant_industries: ["Automotive & engineering", "Chemicals & pharmaceuticals", "Electrical equipment", "Machinery", "Finance", "IT & software"],
+    focus_areas: ["Energy transition (Energiewende)", "Industrial competitiveness", "Migration policy", "Defense modernization"],
+    demographics: { age_0_14_pct: 14.0, age_15_64_pct: 63.9, age_65_plus_pct: 22.1, urban_pct: 77.8, literacy_pct: 99.0 },
+    connectivity: { internet_pct: 93, mobile_per_100: 128, smartphone_pct: 88, fixed_broadband_per_100: 45 },
+    media: {
+      top_tv: "ARD, ZDF, RTL, ProSieben, Sat.1",
+      top_radio: "Deutschlandfunk, regional ARD stations, Antenne Bayern",
+      top_online_news: "Bild, Der Spiegel, Sueddeutsche Zeitung, Tagesschau",
+      top_social: "WhatsApp, Instagram, Facebook, YouTube, TikTok",
+      press_freedom_rank: 10, press_freedom_source: "RSF 2024"
+    },
+    topics_of_interest: ["Politics", "Business", "Sports (football)", "Climate", "International news"],
+    sources: {
+      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=DE",
+      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=DE",
+      internet: "ITU — https://datahub.itu.int/",
+      press_freedom: "RSF — https://rsf.org/en/country/germany"
+    },
+    confidence: "preliminary"
+  },
+
+  "MEX": {
+    name: "Mexico",
+    capital: "Mexico City",
+    region: "Americas", subregion: "Central America",
+    flag: "🇲🇽",
+    overview: "Latin America's second-largest economy, with a media market historically dominated by a small number of large broadcasters. One of the most dangerous countries in the world to practice journalism.",
+    population: 128455567, population_year: 2023, area_km2: 1964375, gdp_per_capita_usd: 13926,
+    currency: "Mexican Peso (MXN)",
+    languages: ["Spanish", "68 recognised indigenous languages"],
+    government: "Federal presidential republic",
+    dominant_industries: ["Manufacturing (automotive, electronics)", "Oil & gas", "Agriculture", "Tourism", "Financial services", "Remittances from abroad"],
+    focus_areas: ["Nearshoring from USMCA trade", "Energy sovereignty", "Security and cartel violence", "Journalist safety"],
+    demographics: { age_0_14_pct: 25.4, age_15_64_pct: 66.6, age_65_plus_pct: 8.0, urban_pct: 81.4, literacy_pct: 95.4 },
+    connectivity: { internet_pct: 77, mobile_per_100: 98, smartphone_pct: 79, fixed_broadband_per_100: 19 },
+    media: {
+      top_tv: "Televisa, TV Azteca, Imagen TV",
+      top_radio: "Grupo Formula, Radio Centro, MVS Radio",
+      top_online_news: "El Universal, Milenio, Reforma, Animal Politico",
+      top_social: "WhatsApp, Facebook, TikTok, Instagram, YouTube",
+      press_freedom_rank: 121, press_freedom_source: "RSF 2024"
+    },
+    topics_of_interest: ["Politics", "Sports (football)", "Entertainment (telenovelas)", "Local news", "Crime"],
+    sources: {
+      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=MX",
+      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=MX",
+      internet: "ITU — https://datahub.itu.int/",
+      press_freedom: "RSF — https://rsf.org/en/country/mexico"
+    },
+    confidence: "preliminary"
+  }
+};
+</script>
+
+<!-- ============================================================
+     Translations — 6 UN languages.
+     NB for any maintainer: UI labels only. Country overviews and proper-noun
+     lists (industries, outlets, languages) remain in English until the UN
+     language service signs off on content translations.
+     ============================================================ -->
+<script>
+window.TRANSLATIONS = {
+  en: {
+    _name: "English", _native: "English", _rtl: false,
+    brand_title: "Global Media Consumption Atlas",
+    brand_subtitle: "An open, source-cited public research resource",
+    nav_map: "Map", nav_methodology: "Methodology", nav_sources: "Sources",
+    nav_survey: "Take the survey", nav_about: "About",
+    badge_phase: "Phase 1 prototype",
+    search_placeholder: "Search a country…",
+    chip_all: "All regions", chip_africa: "Africa", chip_americas: "Americas",
+    chip_asia: "Asia", chip_europe: "Europe", chip_oceania: "Oceania",
+    map_hint: "Click any country to open its profile →",
+    legend_title: "Data status", legend_profiled: "Profiled (pilot)",
+    legend_not_profiled: "Not yet profiled",
+    stat_pilot_countries: "Pilot countries",
+    stat_across_continents: "across {n} continents",
+    stat_people_covered: "People covered",
+    stat_world_pop_pct: "{n}% of world population",
+    stat_avg_internet: "Avg. internet access",
+    stat_weighted: "weighted by country",
+    stat_leading_platform: "Leading platform",
+    stat_markets_led: "#1 in {n} of {t} pilot markets",
+    stat_top_industries: "Top dominant industries",
+    stat_across_pilot: "across pilot set",
+    stat_country: "Country", stat_population: "Population",
+    stat_ref_year: "{n} reference year", stat_gdp: "GDP per capita",
+    stat_internet_access: "Internet access", stat_smartphone: "smartphone {n}%",
+    stat_leading_social: "#1 social medium",
+    pilot_countries_count: "Pilot countries ({n})",
+    more_coming: "More countries coming",
+    more_coming_desc: "185 more countries will be profiled in Phase 2. Click any country on the map to check its status.",
+    tag_profile: "Profile",
+    sub_people: "{r} · {n}M people",
+    tab_overview: "Overview", tab_economy: "Economy", tab_media: "Media",
+    tab_society: "Society", tab_sources: "Sources",
+    section_overview: "Overview", section_languages: "Languages",
+    section_focus_areas: "Focus areas", section_at_a_glance: "At a glance",
+    section_dominant_industries: "Dominant industries",
+    section_strategic_focus: "Strategic focus areas",
+    section_connectivity: "Connectivity", section_leading_outlets: "Leading outlets",
+    section_press_freedom: "Press freedom", section_topics: "Topics of interest",
+    section_age_structure: "Age structure", section_where_live: "Where people live",
+    section_education: "Education", section_primary_sources: "Primary sources",
+    section_confidence_level: "Confidence level",
+    label_capital: "Capital", label_government: "Government",
+    label_region: "Region", label_currency: "Currency",
+    label_population: "Population", label_area: "Area",
+    label_gdp: "GDP per capita", label_ref_year: "Reference year",
+    label_internet_users: "Internet users (% of population)",
+    label_mobile_subs: "Mobile subscriptions per 100",
+    label_smartphone_adoption: "Smartphone adoption",
+    label_fixed_broadband: "Fixed broadband per 100",
+    label_tv: "Television", label_radio: "Radio",
+    label_online_news: "Online news", label_social_platforms: "Social platforms",
+    label_rsf_rank: "RSF 2024 rank (lower = freer)",
+    label_under_15: "Under 15", label_15_64: "15–64", label_65_plus: "65+",
+    label_urban_pop: "Urban population", label_literacy: "Adult literacy",
+    confidence_banner_title: "Preliminary data.",
+    confidence_banner_body: "These figures are placeholder values being verified against primary sources. Do not cite publicly until the Sources tab shows verified timestamps.",
+    no_data_title: "No profile yet",
+    no_data_body: "This country will be profiled in Phase 2, when we expand from the 10 pilot countries to all 195 UN member states. Every profile will include demographics, economic indicators, media reach data, and cited sources.",
+    no_data_subline: "Country profile not yet available",
+    sources_intro: "Every data point on this country's page ultimately links back to one of these primary sources. Full per-field citations will appear here after Phase 1 verification.",
+    sources_confidence_note: "Confidence reflects whether each value has been independently verified against its primary source within the last 12 months and whether the source is Tier 1 (institutional) or Tier 2 (peer-reviewed research).",
+    translation_notice: "Country overviews and industry descriptions remain in English while translations are being finalised.",
+    subline_capital: "Capital",
+    subline_pop: "Pop.",
+    modal_title: "Methodology & data standards",
+    modal_intro: "This atlas is built to the standards of an institutional research resource. Every number displayed is tied to a primary source that is either (a) produced by an intergovernmental body or government statistical agency, or (b) published in a recognised comparative research programme.",
+    modal_indicators_label: "Indicators per country", modal_indicators_delta: "with citations",
+    modal_source_tier_label: "Primary source tier", modal_source_tier_value: "Institutional",
+    modal_data_status_label: "Data status", modal_data_status_value: "Preliminary",
+    modal_data_status_delta: "pending source verification",
+    modal_refresh_cadence: "Refresh cadence",
+    modal_refresh_body: "Automated indicators refresh daily via public APIs (World Bank, ITU). Manual-update indicators refresh once a year when flagship reports (Reuters Institute DNR, RSF, Freedom House) publish new editions.",
+    modal_confidence_flags: "Confidence flags",
+    modal_confidence_body: "Each cell carries a confidence flag (high / medium / low / estimated / preliminary). Any cell marked preliminary has not yet been independently verified against its primary source and must not be cited publicly.",
+    footer_copyright: "© 2026 · An independent research project prepared for the United Nations · Data last checked",
+    footer_methodology: "Methodology", footer_github: "GitHub", footer_report: "Report an error"
+  },
+
+  fr: {
+    _name: "French", _native: "Français", _rtl: false,
+    brand_title: "Atlas mondial de la consommation des médias",
+    brand_subtitle: "Une ressource publique de recherche, ouverte et sourcée",
+    nav_map: "Carte", nav_methodology: "Méthodologie", nav_sources: "Sources",
+    nav_survey: "Répondre au sondage", nav_about: "À propos",
+    badge_phase: "Prototype – phase 1",
+    search_placeholder: "Rechercher un pays…",
+    chip_all: "Toutes les régions", chip_africa: "Afrique", chip_americas: "Amériques",
+    chip_asia: "Asie", chip_europe: "Europe", chip_oceania: "Océanie",
+    map_hint: "Cliquez sur un pays pour ouvrir son profil →",
+    legend_title: "Statut des données", legend_profiled: "Profilé (pilote)",
+    legend_not_profiled: "Pas encore profilé",
+    stat_pilot_countries: "Pays pilotes",
+    stat_across_continents: "sur {n} continents",
+    stat_people_covered: "Population couverte",
+    stat_world_pop_pct: "{n}% de la population mondiale",
+    stat_avg_internet: "Accès internet moyen",
+    stat_weighted: "pondéré par pays",
+    stat_leading_platform: "Plateforme dominante",
+    stat_markets_led: "N°1 dans {n} des {t} marchés pilotes",
+    stat_top_industries: "Principales industries",
+    stat_across_pilot: "dans l'ensemble pilote",
+    stat_country: "Pays", stat_population: "Population",
+    stat_ref_year: "année de référence {n}", stat_gdp: "PIB par habitant",
+    stat_internet_access: "Accès internet", stat_smartphone: "smartphone {n}%",
+    stat_leading_social: "N°1 plateforme sociale",
+    pilot_countries_count: "Pays pilotes ({n})",
+    more_coming: "Autres pays à venir",
+    more_coming_desc: "185 autres pays seront profilés en phase 2. Cliquez sur un pays de la carte pour vérifier son statut.",
+    tag_profile: "Profil",
+    sub_people: "{r} · {n}M habitants",
+    tab_overview: "Aperçu", tab_economy: "Économie", tab_media: "Médias",
+    tab_society: "Société", tab_sources: "Sources",
+    section_overview: "Aperçu", section_languages: "Langues",
+    section_focus_areas: "Domaines prioritaires", section_at_a_glance: "En bref",
+    section_dominant_industries: "Industries dominantes",
+    section_strategic_focus: "Priorités stratégiques",
+    section_connectivity: "Connectivité", section_leading_outlets: "Médias de référence",
+    section_press_freedom: "Liberté de la presse", section_topics: "Centres d'intérêt",
+    section_age_structure: "Structure par âge", section_where_live: "Lieu de résidence",
+    section_education: "Éducation", section_primary_sources: "Sources primaires",
+    section_confidence_level: "Niveau de confiance",
+    label_capital: "Capitale", label_government: "Régime",
+    label_region: "Région", label_currency: "Monnaie",
+    label_population: "Population", label_area: "Superficie",
+    label_gdp: "PIB par habitant", label_ref_year: "Année de référence",
+    label_internet_users: "Utilisateurs d'internet (% de la population)",
+    label_mobile_subs: "Abonnements mobiles pour 100 habitants",
+    label_smartphone_adoption: "Adoption du smartphone",
+    label_fixed_broadband: "Haut débit fixe pour 100 habitants",
+    label_tv: "Télévision", label_radio: "Radio",
+    label_online_news: "Presse en ligne", label_social_platforms: "Réseaux sociaux",
+    label_rsf_rank: "Classement RSF 2024 (plus bas = plus libre)",
+    label_under_15: "Moins de 15 ans", label_15_64: "15–64 ans", label_65_plus: "65 ans et plus",
+    label_urban_pop: "Population urbaine", label_literacy: "Alphabétisation des adultes",
+    confidence_banner_title: "Données préliminaires.",
+    confidence_banner_body: "Ces chiffres sont provisoires et en cours de vérification auprès des sources primaires. Ne pas citer publiquement avant que l'onglet Sources n'affiche des horodatages vérifiés.",
+    no_data_title: "Profil non disponible",
+    no_data_body: "Ce pays sera profilé en phase 2, lorsque nous étendrons la couverture des 10 pays pilotes à l'ensemble des 195 États membres de l'ONU. Chaque profil inclura des données démographiques, économiques, médiatiques et leurs sources.",
+    no_data_subline: "Profil du pays non encore disponible",
+    sources_intro: "Chaque point de données de cette page renvoie à une source primaire. Les citations détaillées par champ apparaîtront ici après la vérification de la phase 1.",
+    sources_confidence_note: "Le niveau de confiance indique si chaque valeur a été vérifiée de manière indépendante auprès de sa source primaire au cours des 12 derniers mois et si la source est de niveau 1 (institutionnel) ou niveau 2 (recherche évaluée par les pairs).",
+    translation_notice: "Les aperçus par pays et les descriptions des industries restent en anglais en attendant la finalisation des traductions.",
+    subline_capital: "Capitale", subline_pop: "Pop.",
+    modal_title: "Méthodologie et normes de données",
+    modal_intro: "Cet atlas est construit selon les standards d'une ressource de recherche institutionnelle. Chaque chiffre affiché est lié à une source primaire produite soit (a) par un organisme intergouvernemental ou une agence statistique gouvernementale, soit (b) publiée dans un programme comparatif de recherche reconnu.",
+    modal_indicators_label: "Indicateurs par pays", modal_indicators_delta: "avec citations",
+    modal_source_tier_label: "Niveau des sources primaires", modal_source_tier_value: "Institutionnel",
+    modal_data_status_label: "Statut des données", modal_data_status_value: "Préliminaire",
+    modal_data_status_delta: "en attente de vérification",
+    modal_refresh_cadence: "Fréquence de mise à jour",
+    modal_refresh_body: "Les indicateurs automatisés sont mis à jour quotidiennement via des API publiques (Banque mondiale, UIT). Les indicateurs manuels sont mis à jour une fois par an, lors de la publication des rapports phares (Reuters Institute DNR, RSF, Freedom House).",
+    modal_confidence_flags: "Indicateurs de confiance",
+    modal_confidence_body: "Chaque cellule porte un indicateur de confiance (élevé / moyen / faible / estimé / préliminaire). Toute cellule marquée préliminaire n'a pas encore été vérifiée de manière indépendante et ne doit pas être citée publiquement.",
+    footer_copyright: "© 2026 · Un projet de recherche indépendant préparé pour les Nations Unies · Données vérifiées le",
+    footer_methodology: "Méthodologie", footer_github: "GitHub", footer_report: "Signaler une erreur"
+  },
+
+  es: {
+    _name: "Spanish", _native: "Español", _rtl: false,
+    brand_title: "Atlas mundial del consumo de medios",
+    brand_subtitle: "Un recurso público de investigación, abierto y con citas",
+    nav_map: "Mapa", nav_methodology: "Metodología", nav_sources: "Fuentes",
+    nav_survey: "Responder la encuesta", nav_about: "Acerca de",
+    badge_phase: "Prototipo – fase 1",
+    search_placeholder: "Buscar un país…",
+    chip_all: "Todas las regiones", chip_africa: "África", chip_americas: "Américas",
+    chip_asia: "Asia", chip_europe: "Europa", chip_oceania: "Oceanía",
+    map_hint: "Haga clic en cualquier país para abrir su perfil →",
+    legend_title: "Estado de los datos", legend_profiled: "Perfilado (piloto)",
+    legend_not_profiled: "Aún no perfilado",
+    stat_pilot_countries: "Países piloto",
+    stat_across_continents: "en {n} continentes",
+    stat_people_covered: "Población cubierta",
+    stat_world_pop_pct: "{n}% de la población mundial",
+    stat_avg_internet: "Acceso medio a internet",
+    stat_weighted: "ponderado por país",
+    stat_leading_platform: "Plataforma dominante",
+    stat_markets_led: "N.º 1 en {n} de {t} mercados piloto",
+    stat_top_industries: "Principales industrias",
+    stat_across_pilot: "en el conjunto piloto",
+    stat_country: "País", stat_population: "Población",
+    stat_ref_year: "año de referencia {n}", stat_gdp: "PIB per cápita",
+    stat_internet_access: "Acceso a internet", stat_smartphone: "smartphone {n}%",
+    stat_leading_social: "N.º 1 plataforma social",
+    pilot_countries_count: "Países piloto ({n})",
+    more_coming: "Próximamente más países",
+    more_coming_desc: "Se perfilarán 185 países más en la fase 2. Haga clic en cualquier país del mapa para ver su estado.",
+    tag_profile: "Perfil",
+    sub_people: "{r} · {n}M habitantes",
+    tab_overview: "Resumen", tab_economy: "Economía", tab_media: "Medios",
+    tab_society: "Sociedad", tab_sources: "Fuentes",
+    section_overview: "Resumen", section_languages: "Idiomas",
+    section_focus_areas: "Áreas de enfoque", section_at_a_glance: "De un vistazo",
+    section_dominant_industries: "Industrias dominantes",
+    section_strategic_focus: "Prioridades estratégicas",
+    section_connectivity: "Conectividad", section_leading_outlets: "Medios principales",
+    section_press_freedom: "Libertad de prensa", section_topics: "Temas de interés",
+    section_age_structure: "Estructura por edad", section_where_live: "Dónde vive la gente",
+    section_education: "Educación", section_primary_sources: "Fuentes primarias",
+    section_confidence_level: "Nivel de confianza",
+    label_capital: "Capital", label_government: "Gobierno",
+    label_region: "Región", label_currency: "Moneda",
+    label_population: "Población", label_area: "Superficie",
+    label_gdp: "PIB per cápita", label_ref_year: "Año de referencia",
+    label_internet_users: "Usuarios de internet (% de la población)",
+    label_mobile_subs: "Suscripciones móviles por cada 100",
+    label_smartphone_adoption: "Adopción de smartphone",
+    label_fixed_broadband: "Banda ancha fija por cada 100",
+    label_tv: "Televisión", label_radio: "Radio",
+    label_online_news: "Noticias en línea", label_social_platforms: "Plataformas sociales",
+    label_rsf_rank: "Clasificación RSF 2024 (menor = más libre)",
+    label_under_15: "Menores de 15", label_15_64: "15–64", label_65_plus: "65 y más",
+    label_urban_pop: "Población urbana", label_literacy: "Alfabetización adulta",
+    confidence_banner_title: "Datos preliminares.",
+    confidence_banner_body: "Estas cifras son provisionales y están siendo verificadas con las fuentes primarias. No citar públicamente hasta que la pestaña Fuentes muestre fechas de verificación.",
+    no_data_title: "Aún sin perfil",
+    no_data_body: "Este país se perfilará en la fase 2, cuando ampliemos la cobertura de los 10 países piloto a los 195 Estados miembros de la ONU. Cada perfil incluirá datos demográficos, económicos, de alcance mediático y sus fuentes citadas.",
+    no_data_subline: "Perfil del país aún no disponible",
+    sources_intro: "Cada dato de esta página remite a una fuente primaria. Las citas completas por campo aparecerán aquí tras la verificación de la fase 1.",
+    sources_confidence_note: "El nivel de confianza refleja si cada valor ha sido verificado de forma independiente con su fuente primaria en los últimos 12 meses y si la fuente es de nivel 1 (institucional) o nivel 2 (investigación revisada por pares).",
+    translation_notice: "Los resúmenes de país y descripciones de industrias permanecen en inglés mientras se finalizan las traducciones.",
+    subline_capital: "Capital", subline_pop: "Pob.",
+    modal_title: "Metodología y estándares de datos",
+    modal_intro: "Este atlas se construye según los estándares de un recurso de investigación institucional. Cada número mostrado está vinculado a una fuente primaria producida (a) por un organismo intergubernamental o una agencia estadística gubernamental, o (b) publicada en un programa comparativo de investigación reconocido.",
+    modal_indicators_label: "Indicadores por país", modal_indicators_delta: "con citas",
+    modal_source_tier_label: "Nivel de fuentes primarias", modal_source_tier_value: "Institucional",
+    modal_data_status_label: "Estado de los datos", modal_data_status_value: "Preliminar",
+    modal_data_status_delta: "pendiente de verificación",
+    modal_refresh_cadence: "Frecuencia de actualización",
+    modal_refresh_body: "Los indicadores automatizados se actualizan a diario mediante API públicas (Banco Mundial, UIT). Los indicadores manuales se actualizan una vez al año, cuando se publican los informes de referencia (Reuters Institute DNR, RSF, Freedom House).",
+    modal_confidence_flags: "Indicadores de confianza",
+    modal_confidence_body: "Cada celda lleva un indicador de confianza (alto / medio / bajo / estimado / preliminar). Las celdas marcadas como preliminares aún no han sido verificadas independientemente y no deben citarse públicamente.",
+    footer_copyright: "© 2026 · Proyecto de investigación independiente preparado para las Naciones Unidas · Datos verificados el",
+    footer_methodology: "Metodología", footer_github: "GitHub", footer_report: "Informar de un error"
+  },
+
+  ar: {
+    _name: "Arabic", _native: "العربية", _rtl: true,
+    brand_title: "أطلس الاستهلاك الإعلامي العالمي",
+    brand_subtitle: "مورد بحثي عام مفتوح مع توثيق المصادر",
+    nav_map: "الخريطة", nav_methodology: "المنهجية", nav_sources: "المصادر",
+    nav_survey: "المشاركة في الاستبيان", nav_about: "حول",
+    badge_phase: "نموذج أولي – المرحلة ١",
+    search_placeholder: "ابحث عن دولة…",
+    chip_all: "جميع المناطق", chip_africa: "أفريقيا", chip_americas: "الأمريكتان",
+    chip_asia: "آسيا", chip_europe: "أوروبا", chip_oceania: "أوقيانوسيا",
+    map_hint: "← انقر على أي دولة لفتح ملفها",
+    legend_title: "حالة البيانات", legend_profiled: "تم التوصيف (تجريبي)",
+    legend_not_profiled: "لم يتم التوصيف بعد",
+    stat_pilot_countries: "الدول التجريبية",
+    stat_across_continents: "عبر {n} قارات",
+    stat_people_covered: "السكان المشمولون",
+    stat_world_pop_pct: "{n}٪ من سكان العالم",
+    stat_avg_internet: "متوسط الوصول للإنترنت",
+    stat_weighted: "مرجّح بحسب الدولة",
+    stat_leading_platform: "المنصة الرائدة",
+    stat_markets_led: "الأولى في {n} من {t} أسواق تجريبية",
+    stat_top_industries: "أبرز الصناعات",
+    stat_across_pilot: "عبر المجموعة التجريبية",
+    stat_country: "الدولة", stat_population: "السكان",
+    stat_ref_year: "سنة المرجع {n}", stat_gdp: "الناتج المحلي للفرد",
+    stat_internet_access: "الوصول للإنترنت", stat_smartphone: "هاتف ذكي {n}٪",
+    stat_leading_social: "أبرز منصة اجتماعية",
+    pilot_countries_count: "الدول التجريبية ({n})",
+    more_coming: "دول إضافية قادمة",
+    more_coming_desc: "سيتم توصيف ١٨٥ دولة إضافية في المرحلة ٢. انقر على أي دولة على الخريطة لمعرفة حالتها.",
+    tag_profile: "ملف",
+    sub_people: "{r} · {n} مليون نسمة",
+    tab_overview: "نظرة عامة", tab_economy: "الاقتصاد", tab_media: "الإعلام",
+    tab_society: "المجتمع", tab_sources: "المصادر",
+    section_overview: "نظرة عامة", section_languages: "اللغات",
+    section_focus_areas: "محاور التركيز", section_at_a_glance: "لمحة سريعة",
+    section_dominant_industries: "الصناعات المهيمنة",
+    section_strategic_focus: "الأولويات الاستراتيجية",
+    section_connectivity: "الاتصال", section_leading_outlets: "أبرز الوسائل",
+    section_press_freedom: "حرية الصحافة", section_topics: "مواضيع الاهتمام",
+    section_age_structure: "التوزيع العمري", section_where_live: "أماكن السكن",
+    section_education: "التعليم", section_primary_sources: "المصادر الأولية",
+    section_confidence_level: "مستوى الثقة",
+    label_capital: "العاصمة", label_government: "نظام الحكم",
+    label_region: "المنطقة", label_currency: "العملة",
+    label_population: "السكان", label_area: "المساحة",
+    label_gdp: "الناتج المحلي للفرد", label_ref_year: "سنة المرجع",
+    label_internet_users: "مستخدمو الإنترنت (٪ من السكان)",
+    label_mobile_subs: "اشتراكات الهاتف المحمول لكل ١٠٠",
+    label_smartphone_adoption: "انتشار الهاتف الذكي",
+    label_fixed_broadband: "النطاق العريض الثابت لكل ١٠٠",
+    label_tv: "التلفزيون", label_radio: "الإذاعة",
+    label_online_news: "الأخبار الإلكترونية", label_social_platforms: "المنصات الاجتماعية",
+    label_rsf_rank: "تصنيف منظمة مراسلون بلا حدود ٢٠٢٤ (أقل = أكثر حرية)",
+    label_under_15: "أقل من ١٥", label_15_64: "١٥–٦٤", label_65_plus: "٦٥ فأكثر",
+    label_urban_pop: "سكان الحضر", label_literacy: "محو أمية الكبار",
+    confidence_banner_title: "بيانات أولية.",
+    confidence_banner_body: "هذه الأرقام أولية قيد التحقق من المصادر الأساسية. يرجى عدم الاستشهاد بها علنًا حتى تظهر طوابع زمنية موثّقة في علامة المصادر.",
+    no_data_title: "لا يوجد ملف بعد",
+    no_data_body: "سيتم توصيف هذه الدولة في المرحلة ٢، عند توسيع التغطية من الدول التجريبية العشر إلى جميع الدول الأعضاء الـ ١٩٥ في الأمم المتحدة. سيتضمن كل ملف بيانات ديموغرافية واقتصادية وإعلامية ومصادرها.",
+    no_data_subline: "ملف الدولة غير متاح بعد",
+    sources_intro: "كل نقطة بيانات على هذه الصفحة ترتبط في النهاية بأحد هذه المصادر الأولية. ستظهر الاستشهادات التفصيلية لكل حقل هنا بعد التحقق من المرحلة ١.",
+    sources_confidence_note: "يعكس مستوى الثقة ما إذا تم التحقق من كل قيمة بشكل مستقل مع مصدرها الأولي خلال الاثني عشر شهرًا الماضية، وما إذا كان المصدر من المستوى الأول (مؤسسي) أو المستوى الثاني (بحث خاضع لمراجعة الأقران).",
+    translation_notice: "تظل نظرات الدول ووصف الصناعات بالإنجليزية ريثما تُنجز الترجمات.",
+    subline_capital: "العاصمة", subline_pop: "عدد السكان",
+    modal_title: "المنهجية ومعايير البيانات",
+    modal_intro: "بُني هذا الأطلس وفق معايير مورد بحثي مؤسسي. كل رقم معروض مرتبط بمصدر أولي يصدر إما (أ) عن هيئة حكومية دولية أو وكالة إحصاء حكومية، أو (ب) ضمن برنامج بحثي مقارن معتمد.",
+    modal_indicators_label: "عدد المؤشرات لكل دولة", modal_indicators_delta: "مع استشهادات",
+    modal_source_tier_label: "مستوى المصدر الأولي", modal_source_tier_value: "مؤسسي",
+    modal_data_status_label: "حالة البيانات", modal_data_status_value: "أولية",
+    modal_data_status_delta: "بانتظار التحقق من المصدر",
+    modal_refresh_cadence: "دورة التحديث",
+    modal_refresh_body: "تُحدَّث المؤشرات الآلية يوميًا عبر واجهات برمجية عامة (البنك الدولي، الاتحاد الدولي للاتصالات). المؤشرات اليدوية تُحدَّث مرة واحدة في السنة عند صدور التقارير الرئيسية (تقرير معهد رويترز للأخبار الرقمية، منظمة مراسلون بلا حدود، فريدم هاوس).",
+    modal_confidence_flags: "مستويات الثقة",
+    modal_confidence_body: "تحمل كل خلية مستوى ثقة (عالٍ / متوسط / منخفض / مُقدَّر / أولي). أي خلية أولية لم يتم التحقق منها بعد بشكل مستقل ولا يجوز الاستشهاد بها علنًا.",
+    footer_copyright: "© ٢٠٢٦ · مشروع بحثي مستقل أُعدّ للأمم المتحدة · آخر تحقق من البيانات",
+    footer_methodology: "المنهجية", footer_github: "GitHub", footer_report: "الإبلاغ عن خطأ"
+  },
+
+  zh: {
+    _name: "Chinese", _native: "中文", _rtl: false,
+    brand_title: "全球媒体消费地图",
+    brand_subtitle: "一个公开、附有来源引用的公共研究资源",
+    nav_map: "地图", nav_methodology: "方法论", nav_sources: "来源",
+    nav_survey: "参与调查", nav_about: "关于",
+    badge_phase: "第一阶段原型",
+    search_placeholder: "搜索国家……",
+    chip_all: "所有地区", chip_africa: "非洲", chip_americas: "美洲",
+    chip_asia: "亚洲", chip_europe: "欧洲", chip_oceania: "大洋洲",
+    map_hint: "点击任意国家以打开其资料 →",
+    legend_title: "数据状态", legend_profiled: "已收录（试点）",
+    legend_not_profiled: "尚未收录",
+    stat_pilot_countries: "试点国家",
+    stat_across_continents: "覆盖 {n} 个大洲",
+    stat_people_covered: "覆盖人口",
+    stat_world_pop_pct: "占世界人口 {n}%",
+    stat_avg_internet: "平均互联网接入率",
+    stat_weighted: "按国家加权",
+    stat_leading_platform: "主导平台",
+    stat_markets_led: "在 {t} 个试点市场中的 {n} 个居首",
+    stat_top_industries: "主要行业",
+    stat_across_pilot: "跨试点范围",
+    stat_country: "国家", stat_population: "人口",
+    stat_ref_year: "{n} 年参考", stat_gdp: "人均 GDP",
+    stat_internet_access: "互联网接入", stat_smartphone: "智能手机 {n}%",
+    stat_leading_social: "首要社交平台",
+    pilot_countries_count: "试点国家 ({n})",
+    more_coming: "更多国家即将加入",
+    more_coming_desc: "第二阶段将收录另外 185 个国家。点击地图上的任意国家以查看其状态。",
+    tag_profile: "资料",
+    sub_people: "{r} · {n} 百万人口",
+    tab_overview: "概览", tab_economy: "经济", tab_media: "媒体",
+    tab_society: "社会", tab_sources: "来源",
+    section_overview: "概览", section_languages: "语言",
+    section_focus_areas: "关注领域", section_at_a_glance: "一览",
+    section_dominant_industries: "主导行业",
+    section_strategic_focus: "战略优先事项",
+    section_connectivity: "互联互通", section_leading_outlets: "主要媒体",
+    section_press_freedom: "新闻自由", section_topics: "兴趣话题",
+    section_age_structure: "年龄结构", section_where_live: "居住地",
+    section_education: "教育", section_primary_sources: "主要来源",
+    section_confidence_level: "可信度",
+    label_capital: "首都", label_government: "政体",
+    label_region: "地区", label_currency: "货币",
+    label_population: "人口", label_area: "面积",
+    label_gdp: "人均 GDP", label_ref_year: "参考年份",
+    label_internet_users: "互联网用户（占人口百分比）",
+    label_mobile_subs: "每 100 人移动订阅数",
+    label_smartphone_adoption: "智能手机普及率",
+    label_fixed_broadband: "每 100 人固定宽带数",
+    label_tv: "电视", label_radio: "广播",
+    label_online_news: "网络新闻", label_social_platforms: "社交平台",
+    label_rsf_rank: "RSF 2024 排名（越低越自由）",
+    label_under_15: "15 岁以下", label_15_64: "15–64 岁", label_65_plus: "65 岁及以上",
+    label_urban_pop: "城市人口", label_literacy: "成人识字率",
+    confidence_banner_title: "初步数据。",
+    confidence_banner_body: "这些数值为待核实的临时数据，正在对照主要来源进行验证。在「来源」选项卡显示已验证时间戳之前，请勿公开引用。",
+    no_data_title: "尚无资料",
+    no_data_body: "此国家将在第二阶段收录，届时我们将从 10 个试点国家扩展至全部 195 个联合国会员国。每个资料将包含人口、经济、媒体触达数据及其来源。",
+    no_data_subline: "国家资料尚未提供",
+    sources_intro: "本页面上的每一项数据最终都可追溯到以下主要来源之一。第一阶段验证完成后，将在此处显示每一字段的完整引用。",
+    sources_confidence_note: "可信度反映每一数值是否在过去 12 个月内对照其主要来源独立核实，以及该来源属于第一层（机构）还是第二层（同行评议研究）。",
+    translation_notice: "各国概览与行业描述在翻译最终确定前暂保留英文。",
+    subline_capital: "首都", subline_pop: "人口",
+    modal_title: "方法论与数据标准",
+    modal_intro: "本地图集按照机构级研究资源的标准构建。所显示的每一个数字都与一个主要来源相关联：该来源要么（a）由政府间机构或政府统计机构发布，要么（b）发表于公认的比较研究项目。",
+    modal_indicators_label: "每国指标数", modal_indicators_delta: "附引用",
+    modal_source_tier_label: "主要来源层级", modal_source_tier_value: "机构级",
+    modal_data_status_label: "数据状态", modal_data_status_value: "初步",
+    modal_data_status_delta: "待来源核实",
+    modal_refresh_cadence: "更新频率",
+    modal_refresh_body: "自动化指标通过公开 API（世界银行、国际电联）每日更新。人工更新指标每年在重要报告（路透研究所 DNR、无国界记者、自由之家）发布新版时更新一次。",
+    modal_confidence_flags: "可信度标记",
+    modal_confidence_body: "每个单元格均带有可信度标记（高 / 中 / 低 / 估算 / 初步）。标记为初步的单元格尚未对照主要来源独立核实，不得公开引用。",
+    footer_copyright: "© 2026 · 为联合国准备的独立研究项目 · 数据最近核查",
+    footer_methodology: "方法论", footer_github: "GitHub", footer_report: "报告错误"
+  },
+
+  ru: {
+    _name: "Russian", _native: "Русский", _rtl: false,
+    brand_title: "Глобальный атлас медиапотребления",
+    brand_subtitle: "Открытый общественный исследовательский ресурс с указанием источников",
+    nav_map: "Карта", nav_methodology: "Методология", nav_sources: "Источники",
+    nav_survey: "Пройти опрос", nav_about: "О проекте",
+    badge_phase: "Прототип – фаза 1",
+    search_placeholder: "Поиск страны…",
+    chip_all: "Все регионы", chip_africa: "Африка", chip_americas: "Америки",
+    chip_asia: "Азия", chip_europe: "Европа", chip_oceania: "Океания",
+    map_hint: "Нажмите на любую страну, чтобы открыть её профиль →",
+    legend_title: "Статус данных", legend_profiled: "Профиль готов (пилот)",
+    legend_not_profiled: "Профиль ещё не готов",
+    stat_pilot_countries: "Пилотных стран",
+    stat_across_continents: "на {n} континентах",
+    stat_people_covered: "Охват населения",
+    stat_world_pop_pct: "{n}% населения мира",
+    stat_avg_internet: "Средний доступ к интернету",
+    stat_weighted: "взвешенно по странам",
+    stat_leading_platform: "Ведущая платформа",
+    stat_markets_led: "№1 в {n} из {t} пилотных рынков",
+    stat_top_industries: "Ведущие отрасли",
+    stat_across_pilot: "по пилотной группе",
+    stat_country: "Страна", stat_population: "Население",
+    stat_ref_year: "{n} справочный год", stat_gdp: "ВВП на душу населения",
+    stat_internet_access: "Доступ к интернету", stat_smartphone: "смартфон {n}%",
+    stat_leading_social: "№1 соцсеть",
+    pilot_countries_count: "Пилотные страны ({n})",
+    more_coming: "Скоро больше стран",
+    more_coming_desc: "В фазе 2 будут профилированы ещё 185 стран. Нажмите на любую страну на карте, чтобы узнать её статус.",
+    tag_profile: "Профиль",
+    sub_people: "{r} · {n} млн жителей",
+    tab_overview: "Обзор", tab_economy: "Экономика", tab_media: "СМИ",
+    tab_society: "Общество", tab_sources: "Источники",
+    section_overview: "Обзор", section_languages: "Языки",
+    section_focus_areas: "Приоритеты", section_at_a_glance: "Кратко",
+    section_dominant_industries: "Доминирующие отрасли",
+    section_strategic_focus: "Стратегические приоритеты",
+    section_connectivity: "Связность", section_leading_outlets: "Ведущие СМИ",
+    section_press_freedom: "Свобода прессы", section_topics: "Темы интереса",
+    section_age_structure: "Возрастная структура", section_where_live: "Где живут люди",
+    section_education: "Образование", section_primary_sources: "Первичные источники",
+    section_confidence_level: "Уровень достоверности",
+    label_capital: "Столица", label_government: "Форма правления",
+    label_region: "Регион", label_currency: "Валюта",
+    label_population: "Население", label_area: "Площадь",
+    label_gdp: "ВВП на душу населения", label_ref_year: "Справочный год",
+    label_internet_users: "Пользователи интернета (% населения)",
+    label_mobile_subs: "Мобильные подписки на 100 человек",
+    label_smartphone_adoption: "Проникновение смартфонов",
+    label_fixed_broadband: "Фиксированный ШПД на 100 человек",
+    label_tv: "Телевидение", label_radio: "Радио",
+    label_online_news: "Онлайн-новости", label_social_platforms: "Соцсети",
+    label_rsf_rank: "Рейтинг RSF 2024 (меньше = свободнее)",
+    label_under_15: "До 15", label_15_64: "15–64", label_65_plus: "65 и старше",
+    label_urban_pop: "Городское население", label_literacy: "Грамотность взрослых",
+    confidence_banner_title: "Предварительные данные.",
+    confidence_banner_body: "Эти цифры являются предварительными и проверяются по первичным источникам. Не цитировать публично, пока во вкладке «Источники» не появятся подтверждённые отметки времени.",
+    no_data_title: "Профиль ещё не готов",
+    no_data_body: "Эта страна будет профилирована в фазе 2, когда мы расширим охват с 10 пилотных стран до всех 195 государств-членов ООН. Каждый профиль будет включать демографические, экономические и медийные данные с указанием источников.",
+    no_data_subline: "Профиль страны пока недоступен",
+    sources_intro: "Каждая величина на странице этой страны в конечном счёте восходит к одному из этих первичных источников. Полные ссылки по каждому полю появятся здесь после верификации фазы 1.",
+    sources_confidence_note: "Уровень достоверности отражает, была ли каждая величина независимо проверена по первичному источнику за последние 12 месяцев, и относится ли источник к уровню 1 (институциональный) или уровню 2 (рецензируемые исследования).",
+    translation_notice: "Страновые обзоры и описания отраслей остаются на английском до завершения переводов.",
+    subline_capital: "Столица", subline_pop: "Нас.",
+    modal_title: "Методология и стандарты данных",
+    modal_intro: "Атлас построен по стандартам институционального исследовательского ресурса. Каждое отображаемое число связано с первичным источником, который либо (а) выпущен межправительственной организацией или государственным статистическим агентством, либо (б) опубликован в признанной сравнительной исследовательской программе.",
+    modal_indicators_label: "Показатели по странам", modal_indicators_delta: "с цитированием",
+    modal_source_tier_label: "Уровень первичных источников", modal_source_tier_value: "Институциональный",
+    modal_data_status_label: "Статус данных", modal_data_status_value: "Предварительные",
+    modal_data_status_delta: "ожидают верификации",
+    modal_refresh_cadence: "Частота обновления",
+    modal_refresh_body: "Автоматические показатели обновляются ежедневно через публичные API (Всемирный банк, МСЭ). Ручные показатели обновляются раз в год при выходе флагманских отчётов (Reuters Institute DNR, RSF, Freedom House).",
+    modal_confidence_flags: "Флаги достоверности",
+    modal_confidence_body: "Каждая ячейка имеет флаг достоверности (высокая / средняя / низкая / оценочная / предварительная). Ячейки с флагом «предварительная» ещё не прошли независимую верификацию по первичному источнику и не должны цитироваться публично.",
+    footer_copyright: "© 2026 · Независимый исследовательский проект, подготовленный для Организации Объединённых Наций · Данные проверены",
+    footer_methodology: "Методология", footer_github: "GitHub", footer_report: "Сообщить об ошибке"
+  }
+};
+</script>
+
+<!-- ============================================================
+     Main application script
+     ============================================================ -->
+<script>
+if (!window.COUNTRY_DATA) window.COUNTRY_DATA = {};
+
+/* ---------- i18n ---------- */
+let currentLang = localStorage.getItem("atlas_lang") || "en";
+if (!window.TRANSLATIONS[currentLang]) currentLang = "en";
+
+function t(key, vars) {
+  const dict = window.TRANSLATIONS[currentLang] || window.TRANSLATIONS.en;
+  let s = dict[key] !== undefined ? dict[key] : (window.TRANSLATIONS.en[key] || key);
+  if (vars) {
+    for (const k in vars) s = s.replace(new RegExp("\\{" + k + "\\}", "g"), vars[k]);
+  }
+  return s;
+}
+
+function setLanguage(lang) {
+  if (!window.TRANSLATIONS[lang]) lang = "en";
+  currentLang = lang;
+  localStorage.setItem("atlas_lang", lang);
+  document.documentElement.lang = lang;
+  document.documentElement.dir = window.TRANSLATIONS[lang]._rtl ? "rtl" : "ltr";
+  document.body.setAttribute("data-lang", lang);
+  document.title = t("brand_title");
+
+  // Replace all text nodes carrying data-i18n keys
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    el.textContent = t(el.getAttribute("data-i18n"));
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder")));
+  });
+
+  // Update the language button label
+  const btnLabel = document.getElementById("lang-current");
+  if (btnLabel) btnLabel.textContent = "🌐 " + window.TRANSLATIONS[lang]._native;
+
+  // Re-render dynamic content
+  if (currentActiveIso) {
+    renderCountryStats(currentActiveIso);
+    renderDetail(currentActiveIso);
+  } else {
+    renderAggregateStats();
+  }
+  renderList();
+}
+
+/* ---------- Language menu ---------- */
+(function buildLangMenu() {
+  const menu = document.getElementById("lang-menu");
+  menu.innerHTML = Object.entries(window.TRANSLATIONS).map(([code, data]) => `
+    <button data-lang="${code}" class="${code === currentLang ? "current" : ""}">
+      <span class="native">${data._native}</span>
+      <span class="latin">${data._name}</span>
+    </button>
+  `).join("");
+  menu.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      setLanguage(btn.dataset.lang);
+      menu.classList.remove("open");
+      menu.querySelectorAll("button").forEach(b => {
+        b.classList.toggle("current", b.dataset.lang === currentLang);
+      });
+    });
+  });
+})();
+document.getElementById("lang-button").addEventListener("click", (e) => {
+  e.stopPropagation();
+  document.getElementById("lang-menu").classList.toggle("open");
+});
+document.addEventListener("click", () => {
+  document.getElementById("lang-menu").classList.remove("open");
+});
+
+/* ---------- Map ---------- */
+const COUNTRY_BOUNDARIES_URL =
+  "https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson";
+const BASE_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const BASE_TILES_ATTRIB =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
+const map = L.map("map", {
+  center: [20, 10], zoom: 2, minZoom: 2, maxZoom: 6,
+  worldCopyJump: true, zoomControl: true, attributionControl: true
+});
+L.tileLayer(BASE_TILES, { attribution: BASE_TILES_ATTRIB, subdomains: "abcd", maxZoom: 19 }).addTo(map);
+
+function styleCountry(feature) {
+  const iso = feature.properties["ISO3166-1-Alpha-3"];
+  const covered = !!(window.COUNTRY_DATA && window.COUNTRY_DATA[iso]);
+  return { fillColor: covered ? "#009EDB" : "#D4DEE8", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: covered ? 0.75 : 0.55 };
+}
+function styleCountryHover(feature) {
+  const iso = feature.properties["ISO3166-1-Alpha-3"];
+  const covered = !!(window.COUNTRY_DATA && window.COUNTRY_DATA[iso]);
+  return { fillColor: covered ? "#0072BC" : "#B8C4D3", weight: 1.5, color: "#003D6B", fillOpacity: covered ? 0.9 : 0.75 };
+}
+
+let countryLayer;
+let currentActiveIso = null;
+
+fetch(COUNTRY_BOUNDARIES_URL)
+  .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+  .then(geojson => {
+    countryLayer = L.geoJSON(geojson, {
+      style: styleCountry,
+      onEachFeature: (feature, layer) => {
+        const iso = feature.properties["ISO3166-1-Alpha-3"];
+        const name = feature.properties.name;
+        layer.bindTooltip(name, { sticky: true, direction: "top" });
+        layer.on({
+          mouseover: (e) => { try { e.target.setStyle(styleCountryHover(feature)); } catch(err) {} },
+          mouseout: (e) => { if (iso !== currentActiveIso) { try { countryLayer.resetStyle(e.target); } catch(err) {} } },
+          click: () => openDetail(iso)
+        });
+      }
+    }).addTo(map);
+  })
+  .catch(err => {
+    console.error("Boundary load failed:", err);
+    const banner = document.getElementById("error-banner");
+    banner.classList.add("show");
+    banner.textContent = "⚠ Could not load the world map boundaries from the CDN. Check your connection and refresh the page.";
+  });
+
+/* ---------- Stats strip ---------- */
+const statsStrip = document.getElementById("stats-strip");
+
+function renderAggregateStats() {
+  const allEntries = Object.values(window.COUNTRY_DATA).filter(e => e && e.name);
+  const entries = activeFilter === "all"
+    ? allEntries
+    : allEntries.filter(e => e.region === activeFilter);
+  if (!entries.length) {
+    statsStrip.innerHTML = `
+      <div class="stat"><div class="label">${t("stat_pilot_countries")}</div><div class="value">—</div></div>
+      <div class="stat"><div class="label">${t("stat_people_covered")}</div><div class="value">—</div></div>
+      <div class="stat"><div class="label">${t("stat_avg_internet")}</div><div class="value">—</div></div>
+      <div class="stat"><div class="label">${t("stat_leading_platform")}</div><div class="value">—</div></div>
+      <div class="stat"><div class="label">${t("stat_top_industries")}</div><div class="value">—</div></div>`;
+    return;
+  }
+  const totalPop = entries.reduce((a, b) => a + b.population, 0);
+  const continents = new Set(entries.map(e => e.region));
+  const avgInternet = entries.reduce((a, b) => a + b.connectivity.internet_pct, 0) / entries.length;
+  const firstMentions = {};
+  entries.forEach(e => {
+    const first = (e.media.top_social || "").split(",")[0].trim();
+    if (first) firstMentions[first] = (firstMentions[first] || 0) + 1;
+  });
+  const topEntry = Object.entries(firstMentions).sort((a, b) => b[1] - a[1])[0];
+
+  statsStrip.innerHTML = `
+    <div class="stat highlight">
+      <div class="label">${t("stat_pilot_countries")}</div>
+      <div class="value">${entries.length}</div>
+      <div class="delta">${t("stat_across_continents", { n: continents.size })}</div>
+    </div>
+    <div class="stat">
+      <div class="label">${t("stat_people_covered")}</div>
+      <div class="value">${(totalPop / 1e9).toFixed(2)}B</div>
+      <div class="delta">${t("stat_world_pop_pct", { n: Math.round((totalPop / 8100000000) * 100) })}</div>
+    </div>
+    <div class="stat">
+      <div class="label">${t("stat_avg_internet")}</div>
+      <div class="value">${avgInternet.toFixed(0)}%</div>
+      <div class="delta">${t("stat_weighted")}</div>
+    </div>
+    <div class="stat">
+      <div class="label">${t("stat_leading_platform")}</div>
+      <div class="value">${topEntry ? topEntry[0] : "—"}</div>
+      <div class="delta">${topEntry ? t("stat_markets_led", { n: topEntry[1], t: entries.length }) : ""}</div>
+    </div>
+    <div class="stat">
+      <div class="label">${t("stat_top_industries")}</div>
+      <div class="value" style="font-size:13px;">${topIndustries(entries, 3).join(" · ")}</div>
+      <div class="delta">${t("stat_across_pilot")}</div>
+    </div>`;
+}
+function topIndustries(entries, n) {
+  const counts = {};
+  entries.forEach(e => e.dominant_industries.forEach(ind => {
+    const key = ind.split(/[&(,]/)[0].trim();
+    counts[key] = (counts[key] || 0) + 1;
+  }));
+  return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k]) => k);
+}
+function renderCountryStats(iso) {
+  const d = window.COUNTRY_DATA[iso];
+  if (!d) return renderAggregateStats();
+  const c = d.connectivity;
+  const topPlatform = (d.media.top_social || "").split(",")[0].trim();
+  statsStrip.innerHTML = `
+    <div class="stat highlight">
+      <div class="label">${t("stat_country")}</div>
+      <div class="value">${d.flag} ${d.name}</div>
+      <div class="delta">${d.capital} · ${d.subregion}</div>
+    </div>
+    <div class="stat">
+      <div class="label">${t("stat_population")}</div>
+      <div class="value">${(d.population / 1e6).toFixed(1)}M</div>
+      <div class="delta">${t("stat_ref_year", { n: d.population_year })}</div>
+    </div>
+    <div class="stat">
+      <div class="label">${t("stat_gdp")}</div>
+      <div class="value">$${d.gdp_per_capita_usd.toLocaleString()}</div>
+      <div class="delta">${d.currency.split("(")[0].trim()}</div>
+    </div>
+    <div class="stat">
+      <div class="label">${t("stat_internet_access")}</div>
+      <div class="value">${c.internet_pct}%</div>
+      <div class="delta">${t("stat_smartphone", { n: c.smartphone_pct })}</div>
+    </div>
+    <div class="stat">
+      <div class="label">${t("stat_leading_platform")}</div>
+      <div class="value">${topPlatform || "—"}</div>
+      <div class="delta">${t("stat_leading_social")}</div>
+    </div>`;
+}
+
+/* ---------- Sidebar ---------- */
+const listEl = document.getElementById("country-list");
+const searchEl = document.getElementById("search");
+let activeFilter = "all";
+let searchTerm = "";
+
+function renderList() {
+  const entries = Object.entries(window.COUNTRY_DATA);
+  const shown = entries
+    .filter(([iso, d]) => activeFilter === "all" || d.region === activeFilter)
+    .filter(([iso, d]) => !searchTerm || d.name.toLowerCase().includes(searchTerm));
+  shown.sort((a, b) => a[1].name.localeCompare(b[1].name));
+  let html = `<div class="section-heading">${t("pilot_countries_count", { n: shown.length })}</div>`;
+  html += shown.map(([iso, d]) => `
+    <div class="country-card" data-iso="${iso}">
+      <div class="flag">${d.flag}</div>
+      <div class="meta">
+        <div class="name">${d.name}</div>
+        <div class="sub">${d.subregion} · ${t("sub_people", { r: "", n: (d.population / 1e6).toFixed(1) }).replace("· ·", "·").replace(/^·\s*/, "")}</div>
+      </div>
+      <div class="tag">${t("tag_profile")}</div>
+    </div>`).join("");
+  html += `<div class="section-heading">${t("more_coming")}</div>
+    <div style="padding:10px 14px; font-size:12px; color:var(--muted); line-height:1.5;">${t("more_coming_desc")}</div>`;
+  listEl.innerHTML = html;
+  listEl.querySelectorAll(".country-card").forEach(card => {
+    card.addEventListener("click", () => openDetail(card.dataset.iso));
+  });
+}
+searchEl.addEventListener("input", e => { searchTerm = e.target.value.trim().toLowerCase(); renderList(); });
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    activeFilter = chip.dataset.filter;
+    renderList();
+    if (!currentActiveIso) renderAggregateStats();
+  });
+});
+
+/* ---------- Detail panel ---------- */
+const panel = document.getElementById("detail-panel");
+const panelBody = document.getElementById("detail-body");
+const panelFlag = document.getElementById("detail-flag");
+const panelName = document.getElementById("detail-name");
+const panelSubline = document.getElementById("detail-subline");
+let currentTab = "overview";
+
+document.getElementById("close-detail").addEventListener("click", closeDetail);
+document.querySelectorAll(".detail-tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    currentTab = btn.dataset.tab;
+    document.querySelectorAll(".detail-tabs button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    if (currentActiveIso) renderDetail(currentActiveIso);
+  });
+});
+
+function openDetail(iso) {
+  currentActiveIso = iso;
+  currentTab = "overview";
+  document.querySelectorAll(".detail-tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === "overview"));
+  document.querySelectorAll(".country-card").forEach(c => c.classList.toggle("active", c.dataset.iso === iso));
+  if (countryLayer) {
+    countryLayer.eachLayer(layer => {
+      const layerIso = layer.feature.properties["ISO3166-1-Alpha-3"];
+      if (layerIso === iso) {
+        try { layer.setStyle(styleCountryHover(layer.feature)); } catch(e) {}
+        map.fitBounds(layer.getBounds(), { maxZoom: 4, padding: [50, 50] });
+      } else {
+        try { countryLayer.resetStyle(layer); } catch(e) {}
+      }
+    });
+  }
+  const d = window.COUNTRY_DATA[iso];
+  if (d) {
+    panelFlag.textContent = d.flag;
+    panelName.textContent = d.name;
+    panelSubline.textContent = `${d.subregion} · ${t("subline_capital")}: ${d.capital} · ${t("subline_pop")} ${formatPop(d.population)}`;
+    renderCountryStats(iso);
+  } else {
+    panelFlag.textContent = "🌍";
+    panelName.textContent = lookupName(iso);
+    panelSubline.textContent = t("no_data_subline");
+  }
+  renderDetail(iso);
+  panel.classList.add("open");
+}
+
+function closeDetail() {
+  panel.classList.remove("open");
+  if (currentActiveIso && countryLayer) {
+    countryLayer.eachLayer(layer => {
+      if (layer.feature.properties["ISO3166-1-Alpha-3"] === currentActiveIso) {
+        try { countryLayer.resetStyle(layer); } catch(e) {}
+      }
+    });
+  }
+  currentActiveIso = null;
+  document.querySelectorAll(".country-card").forEach(c => c.classList.remove("active"));
+  renderAggregateStats();
+}
+
+function lookupName(iso) {
+  if (!countryLayer) return iso;
+  let found = iso;
+  countryLayer.eachLayer(l => { if (l.feature.properties["ISO3166-1-Alpha-3"] === iso) found = l.feature.properties.name; });
+  return found;
+}
+
+function renderDetail(iso) {
+  const d = window.COUNTRY_DATA[iso];
+  if (!d) {
+    panelBody.innerHTML = `
+      <div class="no-data">
+        <div class="icon">🗺️</div>
+        <div><strong>${t("no_data_title")}</strong></div>
+        <p style="margin-top:8px;">${t("no_data_body")}</p>
+      </div>`;
+    return;
+  }
+  if (currentTab === "overview") panelBody.innerHTML = tabOverview(d);
+  else if (currentTab === "economy") panelBody.innerHTML = tabEconomy(d);
+  else if (currentTab === "media") panelBody.innerHTML = tabMedia(d);
+  else if (currentTab === "society") panelBody.innerHTML = tabSociety(d);
+  else if (currentTab === "sources") panelBody.innerHTML = tabSources(d);
+}
+
+function confidenceBanner(d) {
+  if (d.confidence !== "preliminary") return "";
+  return `<div class="confidence-banner">
+    <span>⚠</span>
+    <span><strong>${t("confidence_banner_title")}</strong> ${t("confidence_banner_body")}</span>
+  </div>`;
+}
+
+function translationNotice() {
+  if (currentLang === "en") return "";
+  return `<div class="translation-notice">${t("translation_notice")}</div>`;
+}
+
+function tabOverview(d) {
+  return confidenceBanner(d) + translationNotice() + `
+    <h3>${t("section_overview")}</h3>
+    <p>${d.overview}</p>
+    <div class="kv-grid">
+      <div class="kv"><div class="label">${t("label_capital")}</div><div class="value">${d.capital}</div></div>
+      <div class="kv"><div class="label">${t("label_government")}</div><div class="value">${d.government}</div></div>
+      <div class="kv"><div class="label">${t("label_region")}</div><div class="value">${d.subregion}</div></div>
+      <div class="kv"><div class="label">${t("label_currency")}</div><div class="value">${d.currency}</div></div>
+    </div>
+    <h3>${t("section_languages")}</h3>
+    <div class="pills">${d.languages.map(l => `<div class="pill">${l}</div>`).join("")}</div>
+    <h3>${t("section_focus_areas")}</h3>
+    <div class="pills">${d.focus_areas.map(f => `<div class="pill neutral">${f}</div>`).join("")}</div>`;
+}
+
+function tabEconomy(d) {
+  return confidenceBanner(d) + translationNotice() + `
+    <h3>${t("section_at_a_glance")}</h3>
+    <div class="kv-grid">
+      <div class="kv"><div class="label">${t("label_population")}</div><div class="value">${formatPop(d.population)}</div></div>
+      <div class="kv"><div class="label">${t("label_area")}</div><div class="value">${d.area_km2.toLocaleString()} km²</div></div>
+      <div class="kv"><div class="label">${t("label_gdp")}</div><div class="value">$${d.gdp_per_capita_usd.toLocaleString()}</div></div>
+      <div class="kv"><div class="label">${t("label_ref_year")}</div><div class="value">${d.population_year}</div></div>
+    </div>
+    <h3>${t("section_dominant_industries")}</h3>
+    <div class="pills">${d.dominant_industries.map(i => `<div class="pill">${i}</div>`).join("")}</div>
+    <h3>${t("section_strategic_focus")}</h3>
+    <div class="pills">${d.focus_areas.map(f => `<div class="pill neutral">${f}</div>`).join("")}</div>`;
+}
+
+function tabMedia(d) {
+  const c = d.connectivity, m = d.media;
+  return confidenceBanner(d) + translationNotice() + `
+    <h3>${t("section_connectivity")}</h3>
+    <div class="data-row"><span class="label">${t("label_internet_users")}</span><span class="value">${c.internet_pct}%</span></div>
+    <div class="bar"><div class="bar-fill" style="width:${c.internet_pct}%"></div></div>
+    <div class="data-row"><span class="label">${t("label_mobile_subs")}</span><span class="value">${c.mobile_per_100}</span></div>
+    <div class="bar"><div class="bar-fill" style="width:${Math.min(c.mobile_per_100, 150) / 1.5}%"></div></div>
+    <div class="data-row"><span class="label">${t("label_smartphone_adoption")}</span><span class="value">${c.smartphone_pct}%</span></div>
+    <div class="bar"><div class="bar-fill" style="width:${c.smartphone_pct}%"></div></div>
+    <div class="data-row"><span class="label">${t("label_fixed_broadband")}</span><span class="value">${c.fixed_broadband_per_100}</span></div>
+    <h3>${t("section_leading_outlets")}</h3>
+    <div class="data-row"><span class="label">${t("label_tv")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_tv}</span></div>
+    <div class="data-row"><span class="label">${t("label_radio")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_radio}</span></div>
+    <div class="data-row"><span class="label">${t("label_online_news")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_online_news}</span></div>
+    <div class="data-row"><span class="label">${t("label_social_platforms")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_social}</span></div>
+    <h3>${t("section_press_freedom")}</h3>
+    <div class="data-row"><span class="label">${t("label_rsf_rank")}</span><span class="value">#${m.press_freedom_rank} / 180</span></div>
+    <h3>${t("section_topics")}</h3>
+    <div class="pills">${d.topics_of_interest.map(topic => `<div class="pill">${topic}</div>`).join("")}</div>`;
+}
+
+function tabSociety(d) {
+  const dg = d.demographics;
+  return confidenceBanner(d) + translationNotice() + `
+    <h3>${t("section_age_structure")}</h3>
+    <div class="data-row"><span class="label">${t("label_under_15")}</span><span class="value">${dg.age_0_14_pct}%</span></div>
+    <div class="bar"><div class="bar-fill" style="width:${dg.age_0_14_pct}%"></div></div>
+    <div class="data-row"><span class="label">${t("label_15_64")}</span><span class="value">${dg.age_15_64_pct}%</span></div>
+    <div class="bar"><div class="bar-fill" style="width:${dg.age_15_64_pct}%"></div></div>
+    <div class="data-row"><span class="label">${t("label_65_plus")}</span><span class="value">${dg.age_65_plus_pct}%</span></div>
+    <div class="bar"><div class="bar-fill" style="width:${dg.age_65_plus_pct}%"></div></div>
+    <h3>${t("section_where_live")}</h3>
+    <div class="data-row"><span class="label">${t("label_urban_pop")}</span><span class="value">${dg.urban_pct}%</span></div>
+    <div class="bar"><div class="bar-fill" style="width:${dg.urban_pct}%"></div></div>
+    <h3>${t("section_education")}</h3>
+    <div class="data-row"><span class="label">${t("label_literacy")}</span><span class="value">${dg.literacy_pct}%</span></div>
+    <div class="bar"><div class="bar-fill" style="width:${dg.literacy_pct}%"></div></div>`;
+}
+
+function tabSources(d) {
+  return `
+    <h3>${t("section_primary_sources")}</h3>
+    <p style="color: var(--muted); font-size: 13px;">${t("sources_intro")}</p>
+    <div class="sources-list">
+      ${Object.entries(d.sources).map(([field, url]) => {
+        const parts = url.split(" — ");
+        const org = parts[0];
+        const link = parts[1] || "";
+        return `<div><strong>${capitalize(field)}:</strong> ${org}<br>${link ? `<a href="${link}" target="_blank" rel="noopener">${link}</a>` : ""}</div>`;
+      }).join("")}
+    </div>
+    <h3>${t("section_confidence_level")}</h3>
+    <div class="pill" style="background: #FFF4E5; color: #B4651A;">${d.confidence}</div>
+    <p style="font-size: 12px; color: var(--muted); margin-top: 14px;">${t("sources_confidence_note")}</p>`;
+}
+
+/* ---------- Methodology modal ---------- */
+const methodModal = document.getElementById("methodology-modal");
+document.getElementById("open-methodology").addEventListener("click", () => methodModal.classList.add("open"));
+document.getElementById("open-sources").addEventListener("click", () => methodModal.classList.add("open"));
+document.getElementById("footer-methodology").addEventListener("click", (e) => { e.preventDefault(); methodModal.classList.add("open"); });
+methodModal.addEventListener("click", e => {
+  if (e.target === methodModal || e.target.hasAttribute("data-close-modal")) methodModal.classList.remove("open");
+});
+
+/* ---------- Helpers ---------- */
+function formatPop(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + "B";
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+  if (n >= 1e3) return (n / 1e3).toFixed(0) + "k";
+  return n.toString();
+}
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, " ");
+}
+
+/* ---------- Init ---------- */
+setLanguage(currentLang);
+document.getElementById("last-check").textContent = new Date().toISOString().slice(0, 10);
+
+/* ---------- Live data loader ----------
+ * Try to fetch data/countries.json (written weekly by the GitHub Actions
+ * refresh workflow). If found, it replaces the inline fallback above and
+ * the page re-renders with verified, dated numbers. If the fetch fails
+ * (file missing, offline, etc.) the inline preliminary data stays visible.
+ */
+(async function loadLiveData() {
+  try {
+    const r = await fetch("data/countries.json", { cache: "no-cache" });
+    if (!r.ok) throw new Error("no countries.json yet (HTTP " + r.status + ")");
+    const live = await r.json();
+    // strip the _meta helper key and keep only country rows
+    const meta = live._meta;
+    delete live._meta;
+    // Only replace if the live payload actually has country rows
+    if (Object.keys(live).length > 0) {
+      window.COUNTRY_DATA = live;
+      if (meta && meta.generated_at) {
+        const d = new Date(meta.generated_at);
+        document.getElementById("last-check").textContent = d.toISOString().slice(0, 10);
+      }
+      if (currentActiveIso) {
+        renderCountryStats(currentActiveIso);
+        renderDetail(currentActiveIso);
+      } else {
+        renderAggregateStats();
+      }
+      renderList();
+      // Re-style the map so newly-covered countries light up in blue
+      if (countryLayer) {
+        countryLayer.eachLayer(l => {
+          try { countryLayer.resetStyle(l); } catch(e) {}
+        });
+      }
+      console.log("[atlas] live data loaded:", meta);
+    }
+  } catch (err) {
+    console.info("[atlas] using inline fallback data:", err.message);
+  }
+})();
+</script>
+
+</body>
+</html>
