@@ -1843,42 +1843,87 @@ function tabEconomy(d) {
 
 function tabMedia(d) {
   const c = d.connectivity, m = d.media;
-  return confidenceBanner(d) + translationNotice() + `
-    <h3>${t("section_connectivity")}</h3>
-    <div class="data-row"><span class="label">${t("label_internet_users")}</span><span class="value">${c.internet_pct}%</span></div>
-    <div class="bar"><div class="bar-fill" style="width:${c.internet_pct}%"></div></div>
-    <div class="data-row"><span class="label">${t("label_mobile_subs")}</span><span class="value">${c.mobile_per_100}</span></div>
-    <div class="bar"><div class="bar-fill" style="width:${Math.min(c.mobile_per_100, 150) / 1.5}%"></div></div>
-    <div class="data-row"><span class="label">${t("label_smartphone_adoption")}</span><span class="value">${c.smartphone_pct}%</span></div>
-    <div class="bar"><div class="bar-fill" style="width:${c.smartphone_pct}%"></div></div>
-    <div class="data-row"><span class="label">${t("label_fixed_broadband")}</span><span class="value">${c.fixed_broadband_per_100}</span></div>
-    <h3>${t("section_leading_outlets")}</h3>
-    <div class="data-row"><span class="label">${t("label_tv")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_tv}</span></div>
-    <div class="data-row"><span class="label">${t("label_radio")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_radio}</span></div>
-    <div class="data-row"><span class="label">${t("label_online_news")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_online_news}</span></div>
-    <div class="data-row"><span class="label">${t("label_social_platforms")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_social}</span></div>
-    <h3>${t("section_press_freedom")}</h3>
-    <div class="data-row"><span class="label">${t("label_rsf_rank")}</span><span class="value">#${m.press_freedom_rank} / 180</span></div>
-    <h3>${t("section_topics")}</h3>
-    <div class="pills">${d.topics_of_interest.map(topic => `<div class="pill">${topic}</div>`).join("")}</div>`;
+  const nc = d.news_consumption || {};
+  const inf = d.information_freedom || {};
+  let html = confidenceBanner(d) + translationNotice();
+
+  // News consumption (Reuters Institute DNR)
+  if (nc.trust_in_news_pct != null) {
+    html += `<h3>News consumption <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Reuters Institute DNR 2024</span></h3>`;
+    html += `<div class="data-row"><span class="label">Trust in news</span><span class="value">${nc.trust_in_news_pct}%</span></div>`;
+    html += `<div class="bar"><div class="bar-fill" style="width:${nc.trust_in_news_pct}%"></div></div>`;
+    html += `<div class="data-row"><span class="label">Use TV for news</span><span class="value">${nc.tv_as_news_source_pct}%</span></div>`;
+    html += `<div class="bar"><div class="bar-fill" style="width:${nc.tv_as_news_source_pct}%"></div></div>`;
+    html += `<div class="data-row"><span class="label">Use online sources for news</span><span class="value">${nc.online_as_news_source_pct}%</span></div>`;
+    html += `<div class="bar"><div class="bar-fill" style="width:${nc.online_as_news_source_pct}%"></div></div>`;
+    html += `<div class="data-row"><span class="label">Use social media for news</span><span class="value">${nc.social_as_news_source_pct}%</span></div>`;
+    html += `<div class="bar"><div class="bar-fill" style="width:${nc.social_as_news_source_pct}%"></div></div>`;
+  }
+
+  html += `<h3>${t("section_connectivity")}</h3>`;
+  html += `<div class="data-row"><span class="label">${t("label_internet_users")}</span><span class="value">${c.internet_pct}%</span></div>`;
+  html += `<div class="bar"><div class="bar-fill" style="width:${c.internet_pct}%"></div></div>`;
+  html += `<div class="data-row"><span class="label">${t("label_mobile_subs")}</span><span class="value">${c.mobile_per_100}</span></div>`;
+  html += `<div class="bar"><div class="bar-fill" style="width:${Math.min(c.mobile_per_100, 150) / 1.5}%"></div></div>`;
+  html += `<div class="data-row"><span class="label">${t("label_smartphone_adoption")}</span><span class="value">${c.smartphone_pct}%</span></div>`;
+  html += `<div class="bar"><div class="bar-fill" style="width:${c.smartphone_pct}%"></div></div>`;
+  html += `<div class="data-row"><span class="label">${t("label_fixed_broadband")}</span><span class="value">${c.fixed_broadband_per_100}</span></div>`;
+
+  html += `<h3>${t("section_leading_outlets")}</h3>`;
+  html += `<div class="data-row"><span class="label">${t("label_tv")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_tv}</span></div>`;
+  html += `<div class="data-row"><span class="label">${t("label_radio")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_radio}</span></div>`;
+  html += `<div class="data-row"><span class="label">${t("label_online_news")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_online_news}</span></div>`;
+  html += `<div class="data-row"><span class="label">${t("label_social_platforms")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_social}</span></div>`;
+
+  // Information freedom (RSF + Freedom House)
+  html += `<h3>Information freedom</h3>`;
+  html += `<div class="data-row"><span class="label">${t("label_rsf_rank")}</span><span class="value">#${m.press_freedom_rank} / 180</span></div>`;
+  if (inf.internet_freedom_score != null) {
+    const score = inf.internet_freedom_score;
+    const status = inf.internet_freedom_status || "";
+    const color = score >= 70 ? "var(--positive)" : score >= 40 ? "var(--warn)" : "var(--danger)";
+    html += `<div class="data-row"><span class="label">Internet freedom <span style="font-size:10px;color:var(--muted-2);">Freedom House</span></span><span class="value" style="color:${color}">${score}/100 · ${status}</span></div>`;
+    html += `<div class="bar"><div class="bar-fill" style="width:${score}%; background:${color}"></div></div>`;
+  }
+
+  html += `<h3>${t("section_topics")}</h3>`;
+  html += `<div class="pills">${d.topics_of_interest.map(topic => `<div class="pill">${topic}</div>`).join("")}</div>`;
+  return html;
 }
 
 function tabSociety(d) {
   const dg = d.demographics;
-  return confidenceBanner(d) + translationNotice() + `
-    <h3>${t("section_age_structure")}</h3>
-    <div class="data-row"><span class="label">${t("label_under_15")}</span><span class="value">${dg.age_0_14_pct}%</span></div>
-    <div class="bar"><div class="bar-fill" style="width:${dg.age_0_14_pct}%"></div></div>
-    <div class="data-row"><span class="label">${t("label_15_64")}</span><span class="value">${dg.age_15_64_pct}%</span></div>
-    <div class="bar"><div class="bar-fill" style="width:${dg.age_15_64_pct}%"></div></div>
-    <div class="data-row"><span class="label">${t("label_65_plus")}</span><span class="value">${dg.age_65_plus_pct}%</span></div>
-    <div class="bar"><div class="bar-fill" style="width:${dg.age_65_plus_pct}%"></div></div>
-    <h3>${t("section_where_live")}</h3>
-    <div class="data-row"><span class="label">${t("label_urban_pop")}</span><span class="value">${dg.urban_pct}%</span></div>
-    <div class="bar"><div class="bar-fill" style="width:${dg.urban_pct}%"></div></div>
-    <h3>${t("section_education")}</h3>
-    <div class="data-row"><span class="label">${t("label_literacy")}</span><span class="value">${dg.literacy_pct}%</span></div>
-    <div class="bar"><div class="bar-fill" style="width:${dg.literacy_pct}%"></div></div>`;
+  let html = confidenceBanner(d) + translationNotice();
+
+  // Life expectancy & electricity (new World Bank indicators)
+  if (dg.life_expectancy || dg.electricity_pct != null) {
+    html += `<h3>Key indicators <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">World Bank</span></h3>`;
+    html += `<div class="kv-grid">`;
+    if (dg.life_expectancy) html += `<div class="kv"><div class="label">Life expectancy</div><div class="value">${dg.life_expectancy} years</div></div>`;
+    if (dg.electricity_pct != null) html += `<div class="kv"><div class="label">Electricity access</div><div class="value">${dg.electricity_pct}%</div></div>`;
+    if (dg.edu_spending_gdp_pct) html += `<div class="kv"><div class="label">Education spending</div><div class="value">${dg.edu_spending_gdp_pct}% of GDP</div></div>`;
+    html += `<div class="kv"><div class="label">Urban population</div><div class="value">${dg.urban_pct}%</div></div>`;
+    html += `</div>`;
+  }
+
+  html += `<h3>${t("section_age_structure")}</h3>`;
+  html += `<div class="data-row"><span class="label">${t("label_under_15")}</span><span class="value">${dg.age_0_14_pct}%</span></div>`;
+  html += `<div class="bar"><div class="bar-fill" style="width:${dg.age_0_14_pct}%"></div></div>`;
+  html += `<div class="data-row"><span class="label">${t("label_15_64")}</span><span class="value">${dg.age_15_64_pct}%</span></div>`;
+  html += `<div class="bar"><div class="bar-fill" style="width:${dg.age_15_64_pct}%"></div></div>`;
+  html += `<div class="data-row"><span class="label">${t("label_65_plus")}</span><span class="value">${dg.age_65_plus_pct}%</span></div>`;
+  html += `<div class="bar"><div class="bar-fill" style="width:${dg.age_65_plus_pct}%"></div></div>`;
+
+  if (!dg.life_expectancy && !dg.electricity_pct) {
+    html += `<h3>${t("section_where_live")}</h3>`;
+    html += `<div class="data-row"><span class="label">${t("label_urban_pop")}</span><span class="value">${dg.urban_pct}%</span></div>`;
+    html += `<div class="bar"><div class="bar-fill" style="width:${dg.urban_pct}%"></div></div>`;
+  }
+
+  html += `<h3>${t("section_education")}</h3>`;
+  html += `<div class="data-row"><span class="label">${t("label_literacy")}</span><span class="value">${dg.literacy_pct}%</span></div>`;
+  html += `<div class="bar"><div class="bar-fill" style="width:${dg.literacy_pct}%"></div></div>`;
+  return html;
 }
 
 function tabSources(d) {
