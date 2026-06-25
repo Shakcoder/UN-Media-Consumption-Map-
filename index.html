@@ -614,7 +614,7 @@
         <div class="stat">
           <div class="label" data-i18n="modal_source_tier_label">Primary source tier</div>
           <div class="value" data-i18n="modal_source_tier_value">Institutional</div>
-          <div class="delta">UN · World Bank · ITU · RSF · Reuters Institute</div>
+          <div class="delta">UN · World Bank · RSF · Freedom House · Reuters Institute · Afrobarometer · Arab Barometer</div>
         </div>
         <div class="stat">
           <div class="label" data-i18n="modal_data_status_label">Data status</div>
@@ -1847,9 +1847,10 @@ function tabMedia(d) {
   const inf = d.information_freedom || {};
   let html = confidenceBanner(d) + translationNotice();
 
-  // News consumption (Reuters Institute DNR)
+  // News consumption (multi-source: Reuters DNR, Afrobarometer, Arab Barometer, etc.)
   if (nc.trust_in_news_pct != null) {
-    html += `<h3>News consumption <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Reuters Institute DNR 2024</span></h3>`;
+    const ncSrc = nc.source || "Survey data";
+    html += `<h3>News consumption <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">${ncSrc}</span></h3>`;
     html += `<div class="data-row"><span class="label">Trust in news</span><span class="value">${nc.trust_in_news_pct}%</span></div>`;
     html += `<div class="bar"><div class="bar-fill" style="width:${nc.trust_in_news_pct}%"></div></div>`;
     html += `<div class="data-row"><span class="label">Use TV for news</span><span class="value">${nc.tv_as_news_source_pct}%</span></div>`;
@@ -1875,15 +1876,22 @@ function tabMedia(d) {
   html += `<div class="data-row"><span class="label">${t("label_online_news")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_online_news}</span></div>`;
   html += `<div class="data-row"><span class="label">${t("label_social_platforms")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_social}</span></div>`;
 
-  // Information freedom (RSF + Freedom House)
+  // Information freedom (RSF + Freedom House FOTN + Freedom House FITW)
   html += `<h3>Information freedom</h3>`;
   html += `<div class="data-row"><span class="label">${t("label_rsf_rank")}</span><span class="value">#${m.press_freedom_rank} / 180</span></div>`;
   if (inf.internet_freedom_score != null) {
     const score = inf.internet_freedom_score;
     const status = inf.internet_freedom_status || "";
     const color = score >= 70 ? "var(--positive)" : score >= 40 ? "var(--warn)" : "var(--danger)";
-    html += `<div class="data-row"><span class="label">Internet freedom <span style="font-size:10px;color:var(--muted-2);">Freedom House</span></span><span class="value" style="color:${color}">${score}/100 · ${status}</span></div>`;
+    html += `<div class="data-row"><span class="label">Internet freedom <span style="font-size:10px;color:var(--muted-2);">Freedom on the Net</span></span><span class="value" style="color:${color}">${score}/100 · ${status}</span></div>`;
     html += `<div class="bar"><div class="bar-fill" style="width:${score}%; background:${color}"></div></div>`;
+  }
+  if (inf.political_freedom_score != null) {
+    const pf = inf.political_freedom_score;
+    const pfStatus = inf.political_freedom_status || "";
+    const pfColor = pf >= 70 ? "var(--positive)" : pf >= 40 ? "var(--warn)" : "var(--danger)";
+    html += `<div class="data-row"><span class="label">Political freedom <span style="font-size:10px;color:var(--muted-2);">Freedom in the World</span></span><span class="value" style="color:${pfColor}">${pf}/100 · ${pfStatus}</span></div>`;
+    html += `<div class="bar"><div class="bar-fill" style="width:${pf}%; background:${pfColor}"></div></div>`;
   }
 
   html += `<h3>${t("section_topics")}</h3>`;
