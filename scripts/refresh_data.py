@@ -144,52 +144,66 @@ def fetch_json(url: str, max_retries: int = 3, timeout: int = 20) -> Any:
     raise RuntimeError(f"Failed after {max_retries} attempts: {url}") from last_exc
 
 
-def latest_world_bank_value(iso2: str, indicator: str) -> tuple[float | None, int | None]:
+def fetch_indicator_all_countries(wb_code: str) -> dict[str, tuple[float, int]]:
     """
-    Query the World Bank for one indicator and return (value, reference_year)
-    for the most recent year that has a non-null value.
+    Fetch ONE indicator for ALL countries in a single request, using the World
+    Bank "most recent non-empty value" parameter (mrnev=1). Returns a map of
+    ISO-3 country code -> (value, reference_year).
+
+    Why this exists: the old approach made one request per country per
+    indicator. At 50+ countries x 11 indicators that is 550+ sequential
+    requests, which exceeded the GitHub Actions 15-minute timeout and caused
+    the weekly refresh to be cancelled. This collapses it to one request per
+    indicator (11 total) — roughly a 50x speedup — so the job finishes in
+    seconds regardless of how many countries are in the atlas.
     """
     url = (
-        f"https://api.worldbank.org/v2/country/{iso2}/indicator/{indicator}"
-        "?format=json&per_page=20"
+        f"https://api.worldbank.org/v2/country/all/indicator/{wb_code}"
+        "?format=json&per_page=500&mrnev=1"
     )
+    out: dict[str, tuple[float, int]] = {}
     try:
         payload = fetch_json(url)
     except Exception as exc:  # noqa: BLE001 — intentional catch-all for resilience
-        print(f"  ! {indicator}: {exc}")
-        return None, None
+        print(f"  ! {wb_code}: bulk fetch failed, will fall back to previous values: {exc}")
+        return out
 
     if not isinstance(payload, list) or len(payload) < 2 or not payload[1]:
-        return None, None
+        return out
 
     for row in payload[1]:
+        iso3 = row.get("countryiso3code")
         value = row.get("value")
-        if value is not None:
-            try:
-                return float(value), int(row["date"])
-            except (TypeError, ValueError):
-                continue
-    return None, None
+        if not iso3 or value is None:
+            continue
+        try:
+            out[iso3] = (float(value), int(row["date"]))
+        except (TypeError, ValueError):
+            continue
+    return out
 
 
 # --------------------------------------------------------------------------
 # Build one country row
 # --------------------------------------------------------------------------
-def build_country(iso3: str, static_meta: dict[str, Any], prev: dict[str, Any] | None) -> dict[str, Any]:
-    iso2 = ISO3_TO_ISO2.get(iso3)
-    if not iso2:
-        print(f"  ! {iso3}: no ISO-2 mapping — add it to ISO3_TO_ISO2 and re-run.")
-        return {}
+def build_country(
+    iso3: str,
+    static_meta: dict[str, Any],
+    prev: dict[str, Any] | None,
+    wb_data: dict[str, dict[str, tuple[float, int]]],
+) -> dict[str, Any]:
+    iso2 = ISO3_TO_ISO2.get(iso3, iso3)
 
     print(f"→ {iso3} ({static_meta.get('name', iso3)})")
 
-    # Quantitative block
+    # Quantitative block — read from the pre-fetched bulk data, no HTTP here.
     values: dict[str, Any] = {}
     latest_year: int | None = None
     sources: dict[str, str] = {}
 
     for field, wb_code in WORLD_BANK_INDICATORS.items():
-        value, year = latest_world_bank_value(iso2, wb_code)
+        pair = wb_data.get(field, {}).get(iso3)
+        value, year = pair if pair else (None, None)
         if value is None and prev:
             # preserve whatever we had previously — never publish null
             prev_value = _lookup_previous(prev, field)
@@ -289,9 +303,17 @@ def main() -> int:
         except json.JSONDecodeError:
             previous = {}
 
+    # Fetch every indicator once, for all countries, before building rows.
+    # 11 requests total instead of (countries x 11).
+    print("Fetching World Bank indicators (one bulk request each)...")
+    wb_data: dict[str, dict[str, tuple[float, int]]] = {}
+    for field, wb_code in WORLD_BANK_INDICATORS.items():
+        wb_data[field] = fetch_indicator_all_countries(wb_code)
+        print(f"  · {field} ({wb_code}): {len(wb_data[field])} countries returned")
+
     result: dict[str, Any] = {}
     for iso3, meta in sorted(static.items()):
-        result[iso3] = build_country(iso3, meta, previous.get(iso3))
+        result[iso3] = build_country(iso3, meta, previous.get(iso3), wb_data)
 
     result["_meta"] = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
