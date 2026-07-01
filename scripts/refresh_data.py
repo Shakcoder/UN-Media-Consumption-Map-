@@ -4,9 +4,9 @@ refresh_data.py — automated data refresh for the Global Media Consumption Atla
 
 Primary sources (all free, no API key):
   - World Bank Open Data API (14 indicators, automated weekly)
-  - RSF Press Freedom Index (180 countries, manual annual)
+  - RSF Press Freedom Index (174 countries, manual annual)
   - Freedom House: Freedom on the Net (70 countries, manual annual)
-  - Freedom House: Freedom in the World (all countries, manual annual)
+  - Freedom House: Freedom in the World (195 countries, manual annual)
   - Reuters Institute Digital News Report (48 markets, manual annual)
   - Afrobarometer (39 African countries, manual per wave)
   - Arab Barometer (16+ MENA countries, manual per wave)
@@ -194,62 +194,75 @@ RSF_SCORE_2025: dict[str, float] = {
     "YEM": 31.45, "ZAF": 75.71, "ZMB": 57.33, "ZWE": 51.40,
 }
 
-# --- Freedom House: Freedom on the Net 2023 (internet-specific, 0–100) ---
-# https://freedomhouse.org/report/freedom-net
-FREEDOM_HOUSE_FOTN_2023: dict[str, int] = {
-    "USA": 76, "BRA": 64, "NGA": 49, "KEN": 51, "IND": 50,
-    "CHN": 9, "IDN": 47, "DEU": 80, "MEX": 56, "PAK": 26,
-    "BGD": 40, "RUS": 21, "ETH": 27, "JPN": 78, "PHL": 62,
-    "EGY": 25, "VNM": 22, "IRN": 14, "TUR": 32, "THA": 39,
-    "FRA": 77, "ZAF": 72, "ITA": 76, "COL": 63, "ARG": 70,
-    "SAU": 24, "UGA": 43, "MAR": 44, "AGO": 31, "GHA": 65,
-    "MMR": 17, "KOR": 66, "IRQ": 29, "MYS": 41, "UKR": 55,
-    "VEN": 28,
+# --- Freedom House: Freedom on the Net 2025 (internet-specific, 0–100) ---
+# https://freedomhouse.org/country/scores?type=fotn
+# FOTN only assesses a subset of countries (chosen for global significance
+# and internet population) — 70 of our 195 are covered. Israel was rated in
+# prior years but is not covered in the 2025 edition.
+FREEDOM_HOUSE_FOTN_2025: dict[str, int] = {
+    "AGO": 60, "ARE": 28, "ARG": 71, "ARM": 72, "AUS": 75,
+    "AZE": 34, "BGD": 45, "BHR": 30, "BLR": 20, "BRA": 65,
+    "CAN": 85, "CHL": 87, "CHN": 9, "COL": 64, "CRI": 86,
+    "CUB": 21, "DEU": 74, "ECU": 63, "EGY": 28, "EST": 91,
+    "ETH": 30, "FRA": 76, "GBR": 76, "GEO": 70, "GHA": 64,
+    "HUN": 69, "IDN": 48, "IND": 51, "IRN": 13, "IRQ": 41,
+    "ISL": 94, "ITA": 74, "JOR": 47, "JPN": 78, "KAZ": 37,
+    "KEN": 58, "KGZ": 47, "KHM": 42, "KOR": 65, "LBN": 50,
+    "LBY": 43, "LKA": 53, "MAR": 54, "MEX": 61, "MMR": 9,
+    "MWI": 61, "MYS": 60, "NGA": 59, "NIC": 38, "NLD": 84,
+    "PAK": 27, "PHL": 61, "RUS": 17, "RWA": 34, "SAU": 25,
+    "SDN": 27, "SGP": 53, "SRB": 67, "THA": 39, "TUN": 59,
+    "TUR": 31, "UGA": 52, "UKR": 62, "USA": 73, "UZB": 29,
+    "VEN": 26, "VNM": 22, "ZAF": 73, "ZMB": 62, "ZWE": 50,
 }
 
-# --- Freedom House: Freedom in the World 2024 (political freedom, 0–100) ---
+# --- Freedom House: Freedom in the World 2026 report (covers calendar year 2025; political freedom, 0–100) ---
 # Covers ALL countries. Higher = more free.
-# https://freedomhouse.org/report/freedom-world
-FREEDOM_HOUSE_FITW_2024: dict[str, int] = {
-    "AFG": 10, "AGO": 31, "ALB": 67, "AND": 94, "ARE": 17,
-    "ARG": 84, "ARM": 54, "ATG": 85, "AUS": 95, "AUT": 93,
-    "AZE": 7, "BDI": 14, "BEL": 96, "BEN": 64, "BFA": 39,
-    "BGD": 39, "BGR": 78, "BHR": 12, "BHS": 91, "BIH": 53,
-    "BLR": 8, "BLZ": 87, "BOL": 66, "BRA": 72, "BRB": 96,
-    "BRN": 28, "BTN": 61, "BWA": 72, "CAF": 9, "CAN": 98,
-    "CHE": 96, "CHL": 93, "CHN": 9, "CIV": 44, "CMR": 16,
-    "COD": 20, "COG": 18, "COL": 63, "COM": 42, "CPV": 92,
-    "CRI": 91, "CUB": 12, "CYP": 93, "CZE": 91, "DEU": 94,
-    "DJI": 24, "DMA": 91, "DNK": 97, "DOM": 67, "DZA": 32,
-    "ECU": 67, "EGY": 18, "ERI": 2, "ESP": 90, "EST": 94,
-    "ETH": 22, "FIN": 100, "FJI": 56, "FRA": 89, "FSM": 92, "GAB": 23,
-    "GBR": 93, "GEO": 58, "GHA": 80, "GIN": 28, "GMB": 44,
-    "GNB": 32, "GNQ": 5, "GRC": 87, "GRD": 89, "GTM": 51,
-    "GUY": 73, "HND": 45, "HRV": 85, "HTI": 32, "HUN": 69,
-    "IDN": 58, "IND": 66, "IRL": 97, "IRN": 14, "IRQ": 29,
-    "ISL": 95, "ISR": 74, "ITA": 90, "JAM": 80, "JOR": 33,
-    "JPN": 96, "KAZ": 23, "KEN": 48, "KGZ": 28, "KHM": 24,
-    "KIR": 93, "KNA": 89, "KOR": 83, "KWT": 36, "LAO": 12,
-    "LBN": 42, "LBR": 60, "LBY": 9, "LCA": 91, "LIE": 90,
-    "LKA": 56, "LSO": 59, "LTU": 90, "LUX": 97, "LVA": 89,
-    "MAR": 37, "MCO": 82, "MDA": 62, "MDG": 61, "MDV": 40,
-    "MEX": 60, "MHL": 93, "MKD": 67, "MLI": 30, "MLT": 90,
-    "MMR": 9, "MNE": 67, "MNG": 84, "MOZ": 43, "MRT": 31,
-    "MUS": 85, "MWI": 64, "MYS": 51, "NAM": 77, "NER": 31,
-    "NGA": 43, "NIC": 19, "NLD": 97, "NOR": 100, "NPL": 56,
-    "NRU": 77, "NZL": 99, "OMN": 23, "PAK": 37, "PAN": 83,
-    "PER": 68, "PHL": 56, "PLW": 92, "PNG": 62, "POL": 81,
-    "PRK": 3, "PRT": 96, "PRY": 65, "PSE": 25, "QAT": 25,
-    "ROU": 83, "RUS": 13, "RWA": 22, "SAU": 7, "SDN": 7,
-    "SEN": 72, "SGP": 47, "SLB": 73, "SLE": 56, "SLV": 51,
-    "SMR": 96, "SOM": 7, "SRB": 62, "SSD": 2, "STP": 84,
-    "SUR": 78, "SVK": 90, "SVN": 93, "SWE": 100, "SWZ": 17,
-    "SYC": 72, "SYR": 1, "TCD": 17, "TGO": 32, "THA": 29,
-    "TJK": 8, "TKM": 2, "TLS": 72, "TON": 81, "TTO": 82,
-    "TUN": 32, "TUR": 32, "TUV": 93, "TZA": 45, "UGA": 34,
-    "UKR": 50, "URY": 97, "USA": 83, "UZB": 12, "VAT": 35,
-    "VCT": 89, "VEN": 14, "VNM": 19, "VUT": 83, "WSM": 82,
-    "YEM": 11, "ZAF": 79, "ZMB": 52, "ZWE": 28,
+# https://freedomhouse.org/report/freedom-world — data via Our World in Data
+# (ourworldindata.org/grapher/freedom-score-fh), verified against 195 countries.
+# PSE and VAT are not individually rated by Freedom House (Gaza Strip alone is
+# rated but is not representative of Palestine as a whole; Vatican is unrated);
+# both retain the prior compiled estimate.
+FREEDOM_HOUSE_FITW_2025: dict[str, int] = {
+    "AFG": 8, "AGO": 28, "ALB": 69, "AND": 93, "ARE": 18,
+    "ARG": 85, "ARM": 54, "ATG": 83, "AUS": 94, "AUT": 94,
+    "AZE": 6, "BDI": 13, "BEL": 95, "BEN": 61, "BFA": 20,
+    "BGD": 44, "BGR": 74, "BHR": 12, "BHS": 90, "BIH": 54,
+    "BLR": 7, "BLZ": 87, "BOL": 69, "BRA": 73, "BRB": 94,
+    "BRN": 27, "BTN": 69, "BWA": 75, "CAF": 5, "CAN": 97,
+    "CHE": 96, "CHL": 95, "CHN": 9, "CIV": 46, "CMR": 15,
+    "COD": 18, "COG": 17, "COL": 69, "COM": 41, "CPV": 92,
+    "CRI": 91, "CUB": 9, "CYP": 90, "CZE": 95, "DEU": 95,
+    "DJI": 24, "DMA": 92, "DNK": 97, "DOM": 67, "DZA": 31,
+    "ECU": 64, "EGY": 18, "ERI": 3, "ESP": 91, "EST": 96,
+    "ETH": 18, "FIN": 100, "FJI": 72, "FRA": 89, "FSM": 92,
+    "GAB": 25, "GBR": 92, "GEO": 51, "GHA": 80, "GIN": 28,
+    "GMB": 51, "GNB": 33, "GNQ": 5, "GRC": 85, "GRD": 89,
+    "GTM": 48, "GUY": 74, "HND": 47, "HRV": 82, "HTI": 22,
+    "HUN": 65, "IDN": 56, "IND": 62, "IRL": 98, "IRN": 10,
+    "IRQ": 31, "ISL": 95, "ISR": 73, "ITA": 87, "JAM": 81,
+    "JOR": 34, "JPN": 96, "KAZ": 23, "KEN": 49, "KGZ": 25,
+    "KHM": 22, "KIR": 89, "KNA": 89, "KOR": 83, "KWT": 30,
+    "LAO": 13, "LBN": 41, "LBR": 65, "LBY": 10, "LCA": 91,
+    "LIE": 90, "LKA": 63, "LSO": 67, "LTU": 90, "LUX": 97,
+    "LVA": 89, "MAR": 37, "MCO": 82, "MDA": 60, "MDG": 50,
+    "MDV": 41, "MEX": 58, "MHL": 93, "MKD": 67, "MLI": 21,
+    "MLT": 88, "MMR": 4, "MNE": 68, "MNG": 84, "MOZ": 42,
+    "MRT": 38, "MUS": 87, "MWI": 68, "MYS": 53, "NAM": 73,
+    "NER": 27, "NGA": 44, "NIC": 14, "NLD": 97, "NOR": 99,
+    "NPL": 59, "NRU": 75, "NZL": 99, "OMN": 24, "PAK": 32,
+    "PAN": 82, "PER": 66, "PHL": 58, "PLW": 92, "PNG": 61,
+    "POL": 82, "PRK": 3, "PRT": 96, "PRY": 63, "PSE": 27,
+    "QAT": 25, "ROU": 83, "RUS": 12, "RWA": 21, "SAU": 9,
+    "SDN": 1, "SEN": 70, "SGP": 48, "SLB": 74, "SLE": 61,
+    "SLV": 42, "SMR": 97, "SOM": 8, "SRB": 53, "SSD": 0,
+    "STP": 84, "SUR": 81, "SVK": 88, "SVN": 97, "SWE": 99,
+    "SWZ": 17, "SYC": 81, "SYR": 10, "TCD": 15, "TGO": 37,
+    "THA": 33, "TJK": 5, "TKM": 1, "TLS": 73, "TON": 79,
+    "TTO": 83, "TUN": 42, "TUR": 32, "TUV": 93, "TZA": 28,
+    "UGA": 33, "UKR": 51, "URY": 97, "USA": 81, "UZB": 12,
+    "VAT": 35, "VCT": 90, "VEN": 13, "VNM": 20, "VUT": 82,
+    "WSM": 84, "YEM": 10, "ZAF": 81, "ZMB": 53, "ZWE": 25,
 }
 
 def _freedom_status(score: int) -> str:
@@ -418,18 +431,18 @@ def build_country(
         sources["press_freedom_rank"] = f"RSF 2025 — https://rsf.org/en/country/{iso3.lower()}"
 
     # Internet freedom (Freedom House FOTN)
-    fotn_score = FREEDOM_HOUSE_FOTN_2023.get(iso3)
+    fotn_score = FREEDOM_HOUSE_FOTN_2025.get(iso3)
     if fotn_score is not None:
         values["internet_freedom_score"] = fotn_score
         values["internet_freedom_status"] = _freedom_status(fotn_score)
-        sources["internet_freedom"] = "Freedom House: Freedom on the Net 2023 — https://freedomhouse.org/report/freedom-net"
+        sources["internet_freedom"] = "Freedom House: Freedom on the Net 2025 — https://freedomhouse.org/country/scores?type=fotn"
 
     # Political freedom (Freedom House FITW — all countries)
-    fitw_score = FREEDOM_HOUSE_FITW_2024.get(iso3)
+    fitw_score = FREEDOM_HOUSE_FITW_2025.get(iso3)
     if fitw_score is not None:
         values["political_freedom_score"] = fitw_score
         values["political_freedom_status"] = _freedom_status(fitw_score)
-        sources["political_freedom"] = "Freedom House: Freedom in the World 2024 — https://freedomhouse.org/report/freedom-world"
+        sources["political_freedom"] = "Freedom House: Freedom in the World 2026 report (2025 data) — https://freedomhouse.org/report/freedom-world"
 
     # News consumption (Reuters DNR / regional barometers / WVS)
     nc = NEWS_CONSUMPTION.get(iso3)
@@ -475,10 +488,10 @@ def build_country(
             "press_freedom_source": "RSF 2025 — https://rsf.org/en/index",
             "internet_freedom_score": values.get("internet_freedom_score"),
             "internet_freedom_status": values.get("internet_freedom_status"),
-            "internet_freedom_source": "Freedom House: Freedom on the Net 2023",
+            "internet_freedom_source": "Freedom House: Freedom on the Net 2025",
             "political_freedom_score": values.get("political_freedom_score"),
             "political_freedom_status": values.get("political_freedom_status"),
-            "political_freedom_source": "Freedom House: Freedom in the World 2024",
+            "political_freedom_source": "Freedom House: Freedom in the World 2026 report (2025 data)",
         },
         "news_consumption": {
             "trust_in_news_pct": values.get("news_trust_pct"),
@@ -539,9 +552,9 @@ def main() -> int:
         "data_sources": [
             "World Bank Open Data API (14 indicators, automated weekly)",
             "DataReportal Digital Report 2024 (smartphone penetration, 50 countries)",
-            "RSF Press Freedom Index 2024 (50 countries)",
-            "Freedom House: Freedom on the Net 2023 (36 countries)",
-            "Freedom House: Freedom in the World 2024 (50 countries)",
+            "RSF Press Freedom Index 2025 (174 countries)",
+            "Freedom House: Freedom on the Net 2025 (70 countries)",
+            "Freedom House: Freedom in the World 2026 report / 2025 data (195 countries)",
             "Reuters Institute Digital News Report 2024 (23 markets)",
             "Afrobarometer Round 9/10 (8 African countries)",
             "Arab Barometer Wave IX (7 MENA countries)",
