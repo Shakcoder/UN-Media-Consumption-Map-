@@ -8,7 +8,7 @@ Primary sources (all free, no API key):
   - Freedom House: Freedom on the Net (70 countries, manual annual)
   - Freedom House: Freedom in the World (195 countries, manual annual)
   - Reuters Institute Digital News Report (46 of 48 markets, manual annual)
-  - Afrobarometer (39 African countries, manual per wave)
+  - Afrobarometer (35 of 39 surveyed African countries, manual per wave)
   - Arab Barometer (16+ MENA countries, manual per wave)
   - Asian Barometer (13+ Asian countries, manual per wave)
   - Latinobarometro (18 Latin American countries, manual annual)
@@ -331,21 +331,51 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     "MAR": {"trust": 28, "tv": 41, "online": 83, "social": 62, "src": "Reuters Institute DNR 2026"},
     "NGA": {"trust": 68, "tv": 59, "online": 94, "social": 79, "src": "Reuters Institute DNR 2026"},
     "ZAF": {"trust": 50, "tv": 56, "online": 89, "social": 74, "src": "Reuters Institute DNR 2026"},
-    # ---- Afrobarometer Round 9/10 + DataReportal 2024 (Africa) ----
-    "ETH": {"trust": 48, "tv": 42, "online": 35, "social": 28, "src": "Afrobarometer R9 + DataReportal 2024"},
-    "COD": {"trust": 47, "tv": 38, "online": 22, "social": 18, "src": "Afrobarometer R9 + DataReportal 2024"},
-    "UGA": {"trust": 55, "tv": 35, "online": 40, "social": 32, "src": "Afrobarometer R9 + DataReportal 2024"},
-    "GHA": {"trust": 58, "tv": 52, "online": 55, "social": 42, "src": "Afrobarometer R9 + DataReportal 2024"},
-    "CMR": {"trust": 52, "tv": 40, "online": 35, "social": 30, "src": "Afrobarometer R9 + DataReportal 2024"},
-    "MOZ": {"trust": 53, "tv": 32, "online": 22, "social": 18, "src": "Afrobarometer R9 + DataReportal 2024"},
-    "AGO": {"trust": 52, "tv": 48, "online": 30, "social": 25, "src": "Afrobarometer R9 + DataReportal 2024"},
-    "MDG": {"trust": 50, "tv": 35, "online": 20, "social": 15, "src": "Afrobarometer R9 + DataReportal 2024"},
+    # ---- Afrobarometer Round 9 (2023) — 35 countries, computed from microdata ----
+    # Weighted "weekly or more" usage (Q74 values 3-4) for TV/internet/social.
+    # No comparable media-trust question in R9; trust intentionally left unset.
+    "AGO": {"trust": None, "tv": 62.3, "online": 39.2, "social": 40.8, "src": "Afrobarometer Round 9 (2023)"},
+    "BEN": {"trust": None, "tv": 33.2, "online": 27.0, "social": 34.6, "src": "Afrobarometer Round 9 (2023)"},
+    "BFA": {"trust": None, "tv": 46.3, "online": 22.4, "social": 27.2, "src": "Afrobarometer Round 9 (2023)"},
+    "BWA": {"trust": None, "tv": 41.1, "online": 37.0, "social": 47.3, "src": "Afrobarometer Round 9 (2023)"},
+    "CIV": {"trust": None, "tv": 70.7, "online": 55.3, "social": 54.5, "src": "Afrobarometer Round 9 (2023)"},
+    "CMR": {"trust": None, "tv": 73.9, "online": 63.7, "social": 67.1, "src": "Afrobarometer Round 9 (2023)"},
+    "COG": {"trust": None, "tv": 57.0, "online": 40.9, "social": 41.9, "src": "Afrobarometer Round 9 (2023)"},
+    "CPV": {"trust": None, "tv": 87.8, "online": 68.4, "social": 69.1, "src": "Afrobarometer Round 9 (2023)"},
+    "ETH": {"trust": None, "tv": 37.0, "online": 19.3, "social": 20.2, "src": "Afrobarometer Round 9 (2023)"},
+    "GAB": {"trust": None, "tv": 85.3, "online": 76.2, "social": 77.8, "src": "Afrobarometer Round 9 (2023)"},
+    "GHA": {"trust": None, "tv": 71.4, "online": 41.9, "social": 43.2, "src": "Afrobarometer Round 9 (2023)"},
+    "GIN": {"trust": None, "tv": 45.9, "online": 27.9, "social": 35.5, "src": "Afrobarometer Round 9 (2023)"},
+    "GMB": {"trust": None, "tv": 57.7, "online": 47.5, "social": 61.4, "src": "Afrobarometer Round 9 (2023)"},
+    "LBR": {"trust": None, "tv": 21.2, "online": 33.4, "social": 34.6, "src": "Afrobarometer Round 9 (2023)"},
+    "LSO": {"trust": None, "tv": 41.6, "online": 31.2, "social": 41.9, "src": "Afrobarometer Round 9 (2023)"},
+    "MDG": {"trust": None, "tv": 28.6, "online": 7.0, "social": 13.8, "src": "Afrobarometer Round 9 (2023)"},
+    "MLI": {"trust": None, "tv": 50.2, "online": 30.2, "social": 38.8, "src": "Afrobarometer Round 9 (2023)"},
+    "MOZ": {"trust": None, "tv": 45.3, "online": 25.7, "social": 26.9, "src": "Afrobarometer Round 9 (2023)"},
+    "MRT": {"trust": None, "tv": 44.5, "online": 38.8, "social": 43.9, "src": "Afrobarometer Round 9 (2023)"},
+    "MUS": {"trust": None, "tv": 96.4, "online": 82.0, "social": 80.9, "src": "Afrobarometer Round 9 (2023)"},
+    "MWI": {"trust": None, "tv": 18.7, "online": 10.6, "social": 18.6, "src": "Afrobarometer Round 9 (2023)"},
+    "NAM": {"trust": None, "tv": 50.2, "online": 49.1, "social": 49.6, "src": "Afrobarometer Round 9 (2023)"},
+    "NER": {"trust": None, "tv": 17.3, "online": 17.4, "social": 23.6, "src": "Afrobarometer Round 9 (2023)"},
+    "SDN": {"trust": None, "tv": 58.6, "online": 45.5, "social": 45.4, "src": "Afrobarometer Round 9 (2023)"},
+    "SEN": {"trust": None, "tv": 71.9, "online": 46.0, "social": 55.1, "src": "Afrobarometer Round 9 (2023)"},
+    "SLE": {"trust": None, "tv": 14.9, "online": 27.2, "social": 33.4, "src": "Afrobarometer Round 9 (2023)"},
+    "STP": {"trust": None, "tv": 75.9, "online": 57.1, "social": 55.9, "src": "Afrobarometer Round 9 (2023)"},
+    "SWZ": {"trust": None, "tv": 67.6, "online": 62.1, "social": 61.9, "src": "Afrobarometer Round 9 (2023)"},
+    "SYC": {"trust": None, "tv": 96.4, "online": 70.1, "social": 68.4, "src": "Afrobarometer Round 9 (2023)"},
+    "TGO": {"trust": None, "tv": 49.8, "online": 39.7, "social": 49.7, "src": "Afrobarometer Round 9 (2023)"},
+    "TUN": {"trust": None, "tv": 72.1, "online": 51.0, "social": 56.0, "src": "Afrobarometer Round 9 (2023)"},
+    "TZA": {"trust": None, "tv": 47.3, "online": 19.0, "social": 20.4, "src": "Afrobarometer Round 9 (2023)"},
+    "UGA": {"trust": None, "tv": 35.4, "online": 16.5, "social": 16.4, "src": "Afrobarometer Round 9 (2023)"},
+    "ZMB": {"trust": None, "tv": 45.9, "online": 32.4, "social": 36.3, "src": "Afrobarometer Round 9 (2023)"},
+    "ZWE": {"trust": None, "tv": 28.2, "online": 25.5, "social": 41.4, "src": "Afrobarometer Round 9 (2023)"},
+    # DRC not covered by Afrobarometer Round 9 (only Congo-Brazzaville was) — kept as prior estimate.
+    "COD": {"trust": 47, "tv": 38, "online": 22, "social": 18, "src": "Estimate (DataReportal 2024)"},
     # ---- Arab Barometer Wave IX + DataReportal 2024 (MENA) ----
     "EGY": {"trust": 45, "tv": 72, "online": 68, "social": 48, "src": "Arab Barometer IX + DataReportal 2024"},
     "SAU": {"trust": 55, "tv": 58, "online": 88, "social": 62, "src": "Arab Barometer IX + DataReportal 2024"},
     "IRQ": {"trust": 38, "tv": 65, "online": 62, "social": 50, "src": "Arab Barometer IX + DataReportal 2024"},
     "YEM": {"trust": 40, "tv": 55, "online": 30, "social": 28, "src": "Arab Barometer IX + DataReportal 2024"},
-    "SDN": {"trust": 44, "tv": 48, "online": 35, "social": 30, "src": "Arab Barometer IX + DataReportal 2024"},
     "DZA": {"trust": 48, "tv": 65, "online": 60, "social": 42, "src": "Arab Barometer IX + DataReportal 2024"},
     # ---- Asian Barometer Wave 6 + DataReportal 2024 (Asia) ----
     "PAK": {"trust": 42, "tv": 70, "online": 58, "social": 42, "src": "Asian Barometer W6 + DataReportal 2024"},
@@ -477,7 +507,7 @@ def build_country(
         values["news_tv_pct"] = nc["tv"]
         values["news_online_pct"] = nc["online"]
         values["news_social_pct"] = nc["social"]
-        sources["news_consumption"] = f"{nc['src']} — https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2024" if "Reuters" in nc["src"] else nc["src"]
+        sources["news_consumption"] = f"{nc['src']} — https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2026" if "Reuters" in nc["src"] else nc["src"]
 
     # Assemble the country object
     country: dict[str, Any] = {
@@ -582,7 +612,7 @@ def main() -> int:
             "Freedom House: Freedom on the Net 2025 (70 countries)",
             "Freedom House: Freedom in the World 2026 report / 2025 data (195 countries)",
             "Reuters Institute Digital News Report 2026 (46 markets)",
-            "Afrobarometer Round 9/10 (8 African countries)",
+            "Afrobarometer Round 9 (35 African countries)",
             "Arab Barometer Wave IX (6 MENA countries)",
             "Asian Barometer Wave 6 + DataReportal (4 Asian countries)",
             "Latinobarometro 2024 (1 Latin American country)",
