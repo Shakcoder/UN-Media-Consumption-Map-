@@ -7,7 +7,7 @@ Primary sources (all free, no API key):
   - RSF Press Freedom Index (174 countries, manual annual)
   - Freedom House: Freedom on the Net (70 countries, manual annual)
   - Freedom House: Freedom in the World (195 countries, manual annual)
-  - Reuters Institute Digital News Report (48 markets, manual annual)
+  - Reuters Institute Digital News Report (46 of 48 markets, manual annual)
   - Afrobarometer (39 African countries, manual per wave)
   - Arab Barometer (16+ MENA countries, manual per wave)
   - Asian Barometer (13+ Asian countries, manual per wave)
@@ -273,36 +273,64 @@ def _freedom_status(score: int) -> str:
     return "Not Free"
 
 # --- News consumption: ALL 50 countries ---
-# Reuters Institute Digital News Report 2024 for markets they cover (23).
+# Reuters Institute Digital News Report 2026 for markets they cover (46 of the
+# 48 surveyed — Hong Kong and Taiwan excluded as non-UN-member entities).
 # Afrobarometer R9/R10, Arab Barometer Wave IX, Asian Barometer Wave 6,
 # Latinobarometro 2024, Eurobarometer, World Values Survey Wave 7, and
-# DataReportal 2024 for the remaining 27.
+# DataReportal 2024 for the remaining markets DNR does not survey.
 # Each entry: trust_pct, tv_pct, online_pct, social_pct, source label.
 NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
-    # ---- Reuters Institute Digital News Report 2024 (23 markets) ----
-    "USA": {"trust": 32, "tv": 47, "online": 76, "social": 39, "src": "Reuters Institute DNR 2024"},
-    "GBR": {"trust": 36, "tv": 47, "online": 73, "social": 34, "src": "Reuters Institute DNR 2024"},
-    "BRA": {"trust": 43, "tv": 62, "online": 87, "social": 56, "src": "Reuters Institute DNR 2024"},
-    "IND": {"trust": 38, "tv": 57, "online": 78, "social": 52, "src": "Reuters Institute DNR 2024"},
-    "IDN": {"trust": 56, "tv": 66, "online": 86, "social": 61, "src": "Reuters Institute DNR 2024"},
-    "DEU": {"trust": 43, "tv": 60, "online": 72, "social": 30, "src": "Reuters Institute DNR 2024"},
-    "MEX": {"trust": 40, "tv": 54, "online": 83, "social": 56, "src": "Reuters Institute DNR 2024"},
-    "JPN": {"trust": 42, "tv": 52, "online": 72, "social": 24, "src": "Reuters Institute DNR 2024"},
-    "FRA": {"trust": 30, "tv": 48, "online": 73, "social": 34, "src": "Reuters Institute DNR 2024"},
-    "ZAF": {"trust": 51, "tv": 56, "online": 82, "social": 47, "src": "Reuters Institute DNR 2024"},
-    "ITA": {"trust": 35, "tv": 52, "online": 75, "social": 39, "src": "Reuters Institute DNR 2024"},
-    "COL": {"trust": 34, "tv": 48, "online": 81, "social": 52, "src": "Reuters Institute DNR 2024"},
-    "ARG": {"trust": 30, "tv": 59, "online": 81, "social": 47, "src": "Reuters Institute DNR 2024"},
-    "AUS": {"trust": 41, "tv": 42, "online": 77, "social": 36, "src": "Reuters Institute DNR 2024"},
-    "CAN": {"trust": 40, "tv": 43, "online": 76, "social": 36, "src": "Reuters Institute DNR 2024"},
-    "KOR": {"trust": 30, "tv": 48, "online": 82, "social": 36, "src": "Reuters Institute DNR 2024"},
-    "TUR": {"trust": 33, "tv": 68, "online": 85, "social": 61, "src": "Reuters Institute DNR 2024"},
-    "POL": {"trust": 36, "tv": 57, "online": 79, "social": 42, "src": "Reuters Institute DNR 2024"},
-    "THA": {"trust": 52, "tv": 66, "online": 88, "social": 67, "src": "Reuters Institute DNR 2024"},
-    "KEN": {"trust": 61, "tv": 59, "online": 83, "social": 52, "src": "Reuters Institute DNR 2024"},
-    "NGA": {"trust": 59, "tv": 56, "online": 84, "social": 53, "src": "Reuters Institute DNR 2024"},
-    "PHL": {"trust": 30, "tv": 55, "online": 86, "social": 61, "src": "Reuters Institute DNR 2024"},
-    "PER": {"trust": 29, "tv": 53, "online": 79, "social": 49, "src": "Reuters Institute DNR 2024"},
+    # ---- Reuters Institute Digital News Report 2026 (46 markets) ----
+    # Europe
+    "GBR": {"trust": 30, "tv": 47, "online": 75, "social": 40, "src": "Reuters Institute DNR 2026"},
+    "AUT": {"trust": 39, "tv": 57, "online": 71, "social": 40, "src": "Reuters Institute DNR 2026"},
+    "BEL": {"trust": 39, "tv": 41, "online": 75, "social": 49, "src": "Reuters Institute DNR 2026"},
+    "BGR": {"trust": 21, "tv": 58, "online": 75, "social": 58, "src": "Reuters Institute DNR 2026"},
+    "HRV": {"trust": 29, "tv": 61, "online": 78, "social": 46, "src": "Reuters Institute DNR 2026"},
+    "CZE": {"trust": 31, "tv": 60, "online": 81, "social": 44, "src": "Reuters Institute DNR 2026"},
+    "DNK": {"trust": 55, "tv": 61, "online": 83, "social": 47, "src": "Reuters Institute DNR 2026"},
+    "FIN": {"trust": 63, "tv": 61, "online": 87, "social": 45, "src": "Reuters Institute DNR 2026"},
+    "FRA": {"trust": 29, "tv": 58, "online": 64, "social": 39, "src": "Reuters Institute DNR 2026"},
+    "DEU": {"trust": 46, "tv": 59, "online": 67, "social": 36, "src": "Reuters Institute DNR 2026"},
+    "GRC": {"trust": 18, "tv": 46, "online": 85, "social": 64, "src": "Reuters Institute DNR 2026"},
+    "HUN": {"trust": 17, "tv": 40, "online": 83, "social": 62, "src": "Reuters Institute DNR 2026"},
+    "IRL": {"trust": 42, "tv": 56, "online": 80, "social": 47, "src": "Reuters Institute DNR 2026"},
+    "ITA": {"trust": 32, "tv": 62, "online": 69, "social": 45, "src": "Reuters Institute DNR 2026"},
+    "NLD": {"trust": 49, "tv": 57, "online": 77, "social": 37, "src": "Reuters Institute DNR 2026"},
+    "NOR": {"trust": 53, "tv": 53, "online": 87, "social": 43, "src": "Reuters Institute DNR 2026"},
+    "POL": {"trust": 39, "tv": 56, "online": 77, "social": 52, "src": "Reuters Institute DNR 2026"},
+    "PRT": {"trust": 51, "tv": 71, "online": 71, "social": 48, "src": "Reuters Institute DNR 2026"},
+    "ROU": {"trust": 23, "tv": 58, "online": 72, "social": 48, "src": "Reuters Institute DNR 2026"},
+    "SRB": {"trust": 22, "tv": 51, "online": 85, "social": 64, "src": "Reuters Institute DNR 2026"},
+    "SVK": {"trust": 19, "tv": 52, "online": 71, "social": 50, "src": "Reuters Institute DNR 2026"},
+    "ESP": {"trust": 33, "tv": 56, "online": 71, "social": 47, "src": "Reuters Institute DNR 2026"},
+    "SWE": {"trust": 52, "tv": 61, "online": 87, "social": 47, "src": "Reuters Institute DNR 2026"},
+    "CHE": {"trust": 42, "tv": 49, "online": 80, "social": 42, "src": "Reuters Institute DNR 2026"},
+    "TUR": {"trust": 28, "tv": 53, "online": 71, "social": 49, "src": "Reuters Institute DNR 2026"},
+    # Americas
+    "USA": {"trust": 25, "tv": 56, "online": 77, "social": 45, "src": "Reuters Institute DNR 2026"},
+    "ARG": {"trust": 26, "tv": 54, "online": 77, "social": 61, "src": "Reuters Institute DNR 2026"},
+    "BRA": {"trust": 36, "tv": 44, "online": 76, "social": 53, "src": "Reuters Institute DNR 2026"},
+    "CAN": {"trust": 37, "tv": 49, "online": 76, "social": 53, "src": "Reuters Institute DNR 2026"},
+    "CHL": {"trust": 34, "tv": 54, "online": 76, "social": 59, "src": "Reuters Institute DNR 2026"},
+    "COL": {"trust": 25, "tv": 38, "online": 78, "social": 60, "src": "Reuters Institute DNR 2026"},
+    "MEX": {"trust": 31, "tv": 34, "online": 82, "social": 66, "src": "Reuters Institute DNR 2026"},
+    "PER": {"trust": 32, "tv": 49, "online": 85, "social": 69, "src": "Reuters Institute DNR 2026"},
+    # Asia-Pacific
+    "AUS": {"trust": 43, "tv": 57, "online": 79, "social": 56, "src": "Reuters Institute DNR 2026"},
+    "IND": {"trust": 39, "tv": 44, "online": 80, "social": 54, "src": "Reuters Institute DNR 2026"},
+    "IDN": {"trust": 32, "tv": 42, "online": 83, "social": 64, "src": "Reuters Institute DNR 2026"},
+    "JPN": {"trust": 41, "tv": 51, "online": 62, "social": 25, "src": "Reuters Institute DNR 2026"},
+    "MYS": {"trust": 30, "tv": 36, "online": 84, "social": 69, "src": "Reuters Institute DNR 2026"},
+    "PHL": {"trust": 28, "tv": 42, "online": 85, "social": 70, "src": "Reuters Institute DNR 2026"},
+    "SGP": {"trust": 46, "tv": 40, "online": 87, "social": 59, "src": "Reuters Institute DNR 2026"},
+    "KOR": {"trust": 30, "tv": 58, "online": 82, "social": 47, "src": "Reuters Institute DNR 2026"},
+    "THA": {"trust": 47, "tv": 42, "online": 89, "social": 78, "src": "Reuters Institute DNR 2026"},
+    # Africa
+    "KEN": {"trust": 68, "tv": 66, "online": 91, "social": 74, "src": "Reuters Institute DNR 2026"},
+    "MAR": {"trust": 28, "tv": 41, "online": 83, "social": 62, "src": "Reuters Institute DNR 2026"},
+    "NGA": {"trust": 68, "tv": 59, "online": 94, "social": 79, "src": "Reuters Institute DNR 2026"},
+    "ZAF": {"trust": 50, "tv": 56, "online": 89, "social": 74, "src": "Reuters Institute DNR 2026"},
     # ---- Afrobarometer Round 9/10 + DataReportal 2024 (Africa) ----
     "ETH": {"trust": 48, "tv": 42, "online": 35, "social": 28, "src": "Afrobarometer R9 + DataReportal 2024"},
     "COD": {"trust": 47, "tv": 38, "online": 22, "social": 18, "src": "Afrobarometer R9 + DataReportal 2024"},
@@ -319,12 +347,10 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     "YEM": {"trust": 40, "tv": 55, "online": 30, "social": 28, "src": "Arab Barometer IX + DataReportal 2024"},
     "SDN": {"trust": 44, "tv": 48, "online": 35, "social": 30, "src": "Arab Barometer IX + DataReportal 2024"},
     "DZA": {"trust": 48, "tv": 65, "online": 60, "social": 42, "src": "Arab Barometer IX + DataReportal 2024"},
-    "MAR": {"trust": 50, "tv": 62, "online": 68, "social": 48, "src": "Arab Barometer IX + DataReportal 2024"},
     # ---- Asian Barometer Wave 6 + DataReportal 2024 (Asia) ----
     "PAK": {"trust": 42, "tv": 70, "online": 58, "social": 42, "src": "Asian Barometer W6 + DataReportal 2024"},
     "BGD": {"trust": 50, "tv": 65, "online": 55, "social": 40, "src": "Asian Barometer W6 + DataReportal 2024"},
     "MMR": {"trust": 35, "tv": 45, "online": 55, "social": 48, "src": "DataReportal 2024"},
-    "MYS": {"trust": 45, "tv": 50, "online": 82, "social": 62, "src": "Asian Barometer W6 + DataReportal 2024"},
     "NPL": {"trust": 48, "tv": 52, "online": 48, "social": 38, "src": "Asian Barometer W6 + DataReportal 2024"},
     # ---- Latinobarometro 2024 + DataReportal (Latin America) ----
     "VEN": {"trust": 30, "tv": 48, "online": 65, "social": 50, "src": "Latinobarometro 2024 + DataReportal"},
@@ -555,10 +581,10 @@ def main() -> int:
             "RSF Press Freedom Index 2025 (174 countries)",
             "Freedom House: Freedom on the Net 2025 (70 countries)",
             "Freedom House: Freedom in the World 2026 report / 2025 data (195 countries)",
-            "Reuters Institute Digital News Report 2024 (23 markets)",
+            "Reuters Institute Digital News Report 2026 (46 markets)",
             "Afrobarometer Round 9/10 (8 African countries)",
-            "Arab Barometer Wave IX (7 MENA countries)",
-            "Asian Barometer Wave 6 + DataReportal (5 Asian countries)",
+            "Arab Barometer Wave IX (6 MENA countries)",
+            "Asian Barometer Wave 6 + DataReportal (4 Asian countries)",
             "Latinobarometro 2024 (1 Latin American country)",
             "World Values Survey Wave 7 (4 countries)",
             "Other: Asia Foundation, Internews/EBU, DataReportal (2 countries)",
