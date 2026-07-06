@@ -1,0 +1,66 @@
+name: Trend engine (daily)
+
+# The daily heartbeat of the Content Intelligence Platform.
+# 1. Fetches Wikipedia pageviews for ~167 UN topics x 22 languages (demand)
+# 2. Fetches GDELT global news coverage for the same topics (supply)
+# 3. Computes per-topic and per-country intelligence (velocity, trending)
+# 4. Commits the results — GitHub Pages republishes automatically.
+#
+# Runs at 05:30 UTC daily (after Wikimedia finalizes yesterday's pageviews).
+# GDELT is rate-limited to ~1 request/5s, so this job takes ~40 minutes.
+
+on:
+  schedule:
+    - cron: "30 5 * * *"
+  workflow_dispatch:        # manual "Run workflow" button
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+concurrency:
+  group: trend-engine
+  cancel-in-progress: false
+
+jobs:
+  trends:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch Wikipedia pageviews (demand signal)
+        run: python scripts/fetch_trends_wikipedia.py
+
+      - name: Fetch GDELT news coverage (supply signal)
+        run: python scripts/fetch_trends_gdelt.py
+
+      - name: Compute topic intelligence
+        run: python scripts/compute_topic_intelligence.py
+
+      - name: Commit updated trend data (if changed)
+        run: |
+          set -e
+          git config user.name "atlas-bot"
+          git config user.email "actions@github.com"
+          git pull --rebase origin main || true
+          git add data/trends/
+          if git diff --cached --quiet; then
+            echo "No changes — trend data already up to date."
+          else
+            git commit -m "chore(trends): daily update $(date -u +%Y-%m-%d)"
+            git push
+            echo "Pushed."
+          fi
