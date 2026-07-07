@@ -181,7 +181,16 @@ def main() -> None:
             encoding="utf-8",
         )
 
-    series_out: dict[str, dict[str, dict]] = {t["qid"]: {} for t in topics}
+    # IMPORTANT: seed series_out from `existing`, not empty dicts. If this run
+    # gets killed by the workflow timeout partway through (observed in
+    # practice — shared CI IPs get rate-limited harder than a home
+    # connection), any topic not yet reached this run still keeps its
+    # last-known-good data instead of vanishing. Every checkpoint and the
+    # final output are therefore monotonically >= the prior state, never a
+    # regression, however early the process is interrupted.
+    series_out: dict[str, dict[str, dict]] = {
+        t["qid"]: dict(existing.get(t["qid"], {})) for t in topics
+    }
     n_fetched = n_backfilled = n_done = 0
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
         futures = [pool.submit(run_job, j) for j in jobs]
@@ -208,9 +217,8 @@ def main() -> None:
             if n_done % 100 == 0:
                 print(f"  …{n_done}/{total} series", flush=True)
             if n_done % 250 == 0:
-                # checkpoint: completed series survive an interrupted run;
-                # a rerun fetches the rest incrementally
-                write_output({q: l for q, l in series_out.items() if l})
+                # checkpoint: safe at any interruption point (see note above)
+                write_output(series_out)
 
     # carry dormant series forward unchanged, re-aligned to the new window
     for qid, lang in carried:

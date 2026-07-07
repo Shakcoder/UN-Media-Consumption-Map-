@@ -15,11 +15,21 @@ compute_topic_intelligence.py keeps the two signals separate.
 
 RATE LIMIT: GDELT allows ~1 request per 5 seconds per IP and returns a
 plain-text notice (not JSON) when throttled. This script paces at
-SLEEP seconds/call and backs off on throttle notices. A full run of
-~167 topics × 2 calls ≈ 35 minutes — run it on a schedule, not in a hurry.
+SLEEP seconds/call. Shared CI runner IPs (GitHub Actions) have been
+observed hitting GDELT's limit immediately — evidently other tenants'
+traffic on the same IP pool already consumes the budget — so retries are
+kept short (fail fast, move to the next topic) rather than backing off
+for minutes on a call that may never succeed this run.
 
-Output: data/trends/gdelt_coverage.json (rolling snapshot, overwritten
-daily; the volume timeline covers the trailing TIMESPAN).
+RESILIENCE: writes a checkpoint every CHECKPOINT_EVERY topics, always
+merged with the previous snapshot, so a mid-run kill (timeout) leaves a
+file that is monotonically at least as complete as before — it can only
+gain topics/freshness, never lose them. If GDELT is unreachable, this
+signal simply stays "stale" or absent; the daily "Trending now" feature
+depends only on Wikipedia data and is unaffected.
+
+Output: data/trends/gdelt_coverage.json (rolling snapshot; the volume
+timeline covers the trailing TIMESPAN).
 """
 
 from __future__ import annotations
@@ -41,7 +51,9 @@ USER_AGENT = "UN-Media-Atlas/1.0 (Global Content Intelligence Platform; research
 TIMESPAN = "90d"          # volume timeline window
 COUNTRY_TIMESPAN = "14d"  # source-country breakdown window
 SLEEP = 6.5               # seconds between calls (GDELT limit: 1 per 5s)
-MAX_BACKOFF_RETRIES = 4
+MAX_BACKOFF_RETRIES = 2   # fail fast: better to cover more topics partially
+BACKOFF_BASE = 12         # seconds; attempt N waits BACKOFF_BASE*(N+1)
+CHECKPOINT_EVERY = 20     # topics between merged, safe-to-interrupt saves
 
 
 def _ssl_context() -> ssl.SSLContext:
@@ -66,19 +78,18 @@ def gdelt_call(params: dict[str, str]) -> dict | None:
             try:
                 return json.loads(raw)
             except json.JSONDecodeError:
-                # Throttle notice or transient HTML — back off hard and retry.
-                wait = 30 * (attempt + 1)
-                print(f"    throttled/non-JSON, waiting {wait}s…", flush=True)
-                time.sleep(wait)
+                # Throttle notice or transient HTML — short retry, then give up
+                # on this call (a later topic gets its turn instead of one
+                # call monopolizing the whole time budget).
+                if attempt < MAX_BACKOFF_RETRIES - 1:
+                    time.sleep(BACKOFF_BASE * (attempt + 1))
         except urllib.error.HTTPError as e:
-            if e.code == 429:
-                wait = 30 * (attempt + 1)
-                print(f"    HTTP 429, waiting {wait}s…", flush=True)
-                time.sleep(wait)
-            else:
-                time.sleep(10)
+            if e.code == 429 and attempt < MAX_BACKOFF_RETRIES - 1:
+                time.sleep(BACKOFF_BASE * (attempt + 1))
+            elif e.code != 429:
+                time.sleep(3)
         except Exception:
-            time.sleep(10)
+            time.sleep(3)
     return None
 
 
@@ -109,17 +120,36 @@ def parse_source_countries(data: dict) -> dict[str, float]:
     return out
 
 
+def write_output(results: dict) -> None:
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT_PATH.write_text(
+        json.dumps({
+            "source": "GDELT 2.0 DOC API (news coverage, 100+ languages via machine translation)",
+            "license": "open (attribution appreciated)",
+            "signal_type": "supply (what media publish)",
+            "updated": date.today().isoformat(),
+            "volume_timespan": TIMESPAN,
+            "country_timespan": COUNTRY_TIMESPAN,
+            "topics": results,
+        }, separators=(",", ":"), ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
 def main() -> None:
     registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
     topics = registry["topics"]
 
     # Previous snapshot — used as per-topic fallback when today's fetch fails,
-    # so a rate-limited run can never erase good data.
+    # so a rate-limited run (or a mid-run kill) can never erase good data.
     previous: dict[str, dict] = {}
     if OUTPUT_PATH.exists():
         previous = json.loads(OUTPUT_PATH.read_text(encoding="utf-8")).get("topics", {})
 
-    results: dict[str, dict] = {}
+    # Seed results from `previous` (not empty) so every checkpoint — and a
+    # timeout kill at any point — leaves a file at least as complete as
+    # what existed before this run started.
+    results: dict[str, dict] = {qid: dict(entry) for qid, entry in previous.items()}
     for i, t in enumerate(topics, 1):
         qid, label = t["qid"], t["label_en"]
         query = f'"{label}"' if " " in label else label
@@ -155,36 +185,18 @@ def main() -> None:
 
         if i % 10 == 0:
             print(f"  …{i}/{len(topics)} topics", flush=True)
+        if i % CHECKPOINT_EVERY == 0:
+            write_output(results)   # safe: monotonically >= previous state
 
+    write_output(results)
     ok_vol = sum(1 for e in results.values()
                  if e.get("volume_daily") and not e.get("volume_stale"))
     ok_cty = sum(1 for e in results.values()
                  if e.get("source_countries") and not e.get("countries_stale"))
-
-    # Global guard: if almost everything failed AND we have a previous good
-    # snapshot, keep it untouched instead of committing a degraded file.
-    if previous and ok_vol < max(3, len(topics) // 5):
-        print(f"Only {ok_vol}/{len(topics)} topics fetched fresh — keeping the "
-              f"previous snapshot untouched (likely rate-limited today).")
-        return
-
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT_PATH.write_text(
-        json.dumps({
-            "source": "GDELT 2.0 DOC API (news coverage, 100+ languages via machine translation)",
-            "license": "open (attribution appreciated)",
-            "signal_type": "supply (what media publish)",
-            "updated": date.today().isoformat(),
-            "volume_timespan": TIMESPAN,
-            "country_timespan": COUNTRY_TIMESPAN,
-            "topics": results,
-        }, separators=(",", ":"), ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
     size_mb = OUTPUT_PATH.stat().st_size / 1e6
     print(f"Wrote {OUTPUT_PATH} ({size_mb:.1f} MB) — "
-          f"volume OK for {ok_vol}/{len(topics)}, "
-          f"source-country OK for {ok_cty}/{len(topics)}.")
+          f"volume fresh for {ok_vol}/{len(topics)}, "
+          f"source-country fresh for {ok_cty}/{len(topics)}.")
 
 
 if __name__ == "__main__":
