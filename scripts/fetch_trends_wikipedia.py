@@ -38,6 +38,41 @@ MERGE_DAYS = 10       # incremental fetch depth on daily runs
 WORKERS = 4           # parallel fetchers (modest: ~5-10 req/s aggregate)
 REQ_TIMEOUT = (5, 15) # (connect, read) seconds
 
+# Wikimedia throttles anonymous clients (especially cloud/CI IPs) to roughly
+# hundreds of requests per hour. Two defenses:
+# 1. DORMANT PRUNING — series averaging < DORMANT_MEAN views/day (65% of all
+#    series, mostly small language editions) are refreshed only on Sundays;
+#    they cannot affect results (compute's include floor is higher anyway).
+# 2. ADAPTIVE THROTTLE — a shared delay grows on any 429 and decays on
+#    success, so throughput self-tunes to whatever budget the IP has.
+DORMANT_MEAN = 8.0
+FULL_REFRESH = date.today().weekday() == 6   # Sunday: refresh everything
+
+_throttle_lock = __import__("threading").Lock()
+_throttle_delay = 0.0
+
+
+def _throttle_wait() -> None:
+    with _throttle_lock:
+        d = _throttle_delay
+    if d > 0:
+        time.sleep(d)
+
+
+def _throttle_hit(retry_after: float | None) -> None:
+    global _throttle_delay
+    with _throttle_lock:
+        _throttle_delay = min(max(_throttle_delay * 2, 1.0), 20.0)
+        if retry_after:
+            _throttle_delay = max(_throttle_delay, min(retry_after, 60.0))
+
+
+def _throttle_ok() -> None:
+    global _throttle_delay
+    with _throttle_lock:
+        _throttle_delay = max(_throttle_delay * 0.9 - 0.01, 0.0)
+
+
 _session_store: dict[int, requests.Session] = {}
 
 
@@ -61,15 +96,20 @@ def fetch_series(lang: str, title: str, start: date, end: date) -> dict[str, int
         f"{start.strftime('%Y%m%d')}00/{end.strftime('%Y%m%d')}00"
     )
     for attempt in range(3):
+        _throttle_wait()
         try:
             resp = _session().get(url, timeout=REQ_TIMEOUT)
             if resp.status_code == 404:    # no pageview data for this article
+                _throttle_ok()
                 return {}
-            if resp.status_code == 429:    # throttled — back off and retry
-                time.sleep(5 * (attempt + 1))
+            if resp.status_code == 429:    # throttled — adapt globally, retry
+                ra = resp.headers.get("Retry-After")
+                _throttle_hit(float(ra) if ra and ra.isdigit() else None)
+                time.sleep(2 * (attempt + 1))
                 continue
             resp.raise_for_status()
             data = resp.json()
+            _throttle_ok()
             return {
                 f"{it['timestamp'][:4]}-{it['timestamp'][4:6]}-{it['timestamp'][6:8]}":
                     it["views"]
@@ -97,14 +137,30 @@ def main() -> None:
     all_dates = [(full_start + timedelta(days=i)).isoformat()
                  for i in range(WINDOW_DAYS)]
 
-    # Build the full work list, then fetch in parallel. A stalled socket
-    # only blocks one worker for REQ_TIMEOUT seconds instead of the run.
+    def stored_mean(qid: str, lang: str) -> float | None:
+        prev = existing.get(qid, {}).get(lang)
+        if not prev:
+            return None
+        vals = [v for v in prev["values"] if v is not None]
+        return (sum(vals) / len(vals)) if vals else 0.0
+
+    # Build the work list, then fetch in parallel. Dormant series (see note
+    # at top) are skipped on weekdays: their stored history is carried
+    # forward untouched and they refresh on the Sunday full pass.
     jobs: list[tuple[str, str, str, bool]] = []   # (qid, lang, title, incremental)
+    carried: list[tuple[str, str]] = []
     for t in topics:
         for lang, title in t["titles"].items():
-            incremental = bool(existing.get(t["qid"], {}).get(lang))
+            m = stored_mean(t["qid"], lang)
+            incremental = m is not None
+            if incremental and not FULL_REFRESH and m < DORMANT_MEAN:
+                carried.append((t["qid"], lang))
+                continue
             jobs.append((t["qid"], lang, title, incremental))
     total = len(jobs)
+    print(f"Fetching {total} series "
+          f"({'full Sunday refresh' if FULL_REFRESH else f'{len(carried)} dormant series carried forward'})",
+          flush=True)
 
     def run_job(job: tuple[str, str, str, bool]) -> tuple[str, str, dict[str, int], bool]:
         qid, lang, title, incremental = job
@@ -151,10 +207,24 @@ def main() -> None:
             n_done += 1
             if n_done % 100 == 0:
                 print(f"  …{n_done}/{total} series", flush=True)
-            if n_done % 500 == 0:
+            if n_done % 250 == 0:
                 # checkpoint: completed series survive an interrupted run;
                 # a rerun fetches the rest incrementally
                 write_output({q: l for q, l in series_out.items() if l})
+
+    # carry dormant series forward unchanged, re-aligned to the new window
+    for qid, lang in carried:
+        prev = existing[qid][lang]
+        pstart = datetime.strptime(prev["start"], "%Y-%m-%d").date()
+        prev_map = {
+            (pstart + timedelta(days=i)).isoformat(): v
+            for i, v in enumerate(prev["values"])
+            if v is not None
+        }
+        series_out[qid][lang] = {
+            "start": all_dates[0],
+            "values": [prev_map.get(dd) for dd in all_dates],
+        }
 
     write_output(series_out)
     size_mb = OUTPUT_PATH.stat().st_size / 1e6

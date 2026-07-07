@@ -1009,6 +1009,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Strategic focus areas",
     section_connectivity: "Connectivity", section_leading_outlets: "Leading outlets",
     section_press_freedom: "Press freedom", section_topics: "Topics of interest",
+    section_trending: "Trending this week (live)", section_distinctive: "Distinctive interests", trending_unavailable: "Live trend data is not yet available for this country — the survey-based topics below still apply.",
     section_age_structure: "Age structure", section_where_live: "Where people live",
     section_education: "Education", section_primary_sources: "Primary sources",
     section_confidence_level: "Confidence level",
@@ -1089,6 +1090,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Priorités stratégiques",
     section_connectivity: "Connectivité", section_leading_outlets: "Médias de référence",
     section_press_freedom: "Liberté de la presse", section_topics: "Centres d'intérêt",
+    section_trending: "Tendances de la semaine (en direct)", section_distinctive: "Intérêts distinctifs", trending_unavailable: "Les tendances en direct ne sont pas encore disponibles pour ce pays — les thèmes issus d'enquêtes restent valables.",
     section_age_structure: "Structure par âge", section_where_live: "Lieu de résidence",
     section_education: "Éducation", section_primary_sources: "Sources primaires",
     section_confidence_level: "Niveau de confiance",
@@ -1168,6 +1170,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Prioridades estratégicas",
     section_connectivity: "Conectividad", section_leading_outlets: "Medios principales",
     section_press_freedom: "Libertad de prensa", section_topics: "Temas de interés",
+    section_trending: "Tendencias de la semana (en vivo)", section_distinctive: "Intereses distintivos", trending_unavailable: "Los datos de tendencias en vivo aún no están disponibles para este país — los temas basados en encuestas siguen siendo válidos.",
     section_age_structure: "Estructura por edad", section_where_live: "Dónde vive la gente",
     section_education: "Educación", section_primary_sources: "Fuentes primarias",
     section_confidence_level: "Nivel de confianza",
@@ -1247,6 +1250,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "الأولويات الاستراتيجية",
     section_connectivity: "الاتصال", section_leading_outlets: "أبرز الوسائل",
     section_press_freedom: "حرية الصحافة", section_topics: "مواضيع الاهتمام",
+    section_trending: "الرائج هذا الأسبوع (مباشر)", section_distinctive: "اهتمامات مميزة", trending_unavailable: "بيانات الاتجاهات المباشرة غير متاحة بعد لهذا البلد — المواضيع المستندة إلى الاستطلاعات لا تزال سارية.",
     section_age_structure: "التوزيع العمري", section_where_live: "أماكن السكن",
     section_education: "التعليم", section_primary_sources: "المصادر الأولية",
     section_confidence_level: "مستوى الثقة",
@@ -1326,6 +1330,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "战略优先事项",
     section_connectivity: "互联互通", section_leading_outlets: "主要媒体",
     section_press_freedom: "新闻自由", section_topics: "兴趣话题",
+    section_trending: "本周热门（实时）", section_distinctive: "特色关注话题", trending_unavailable: "该国的实时趋势数据暂不可用——下方基于调查的话题仍然有效。",
     section_age_structure: "年龄结构", section_where_live: "居住地",
     section_education: "教育", section_primary_sources: "主要来源",
     section_confidence_level: "可信度",
@@ -1405,6 +1410,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Стратегические приоритеты",
     section_connectivity: "Связность", section_leading_outlets: "Ведущие СМИ",
     section_press_freedom: "Свобода прессы", section_topics: "Темы интереса",
+    section_trending: "В тренде на этой неделе (онлайн)", section_distinctive: "Отличительные интересы", trending_unavailable: "Данные о трендах пока недоступны для этой страны — темы на основе опросов остаются актуальными.",
     section_age_structure: "Возрастная структура", section_where_live: "Где живут люди",
     section_education: "Образование", section_primary_sources: "Первичные источники",
     section_confidence_level: "Уровень достоверности",
@@ -1897,6 +1903,35 @@ function tabMedia(d) {
     html += `<div class="bar"><div class="bar-fill" style="width:${pf}%; background:${pfColor}"></div></div>`;
   }
 
+  // ---- Live trending topics (daily trend engine: Wikipedia demand signal) ----
+  html += `<h3>${t("section_trending")}</h3>`;
+  const tr = (window.TRENDS_DATA && window.TRENDS_DATA.countries)
+    ? window.TRENDS_DATA.countries[currentActiveIso] : null;
+  if (tr) {
+    const rising = (tr.rising_topics || []).slice(0, 5);
+    if (rising.length) {
+      rising.forEach(r => {
+        const pct = Math.round(r.velocity * 100);
+        html += `<div class="data-row"><span class="label">${r.label_en}</span>` +
+                `<span class="value" style="color:var(--positive)">▲ +${pct}% <span style="font-size:10px;color:var(--muted-2);">this week</span></span></div>`;
+      });
+    } else {
+      html += `<div class="data-row"><span class="label" style="color:var(--muted-2);">No topics rising sharply this week</span></div>`;
+    }
+    const dis = (tr.distinctive_topics || []).slice(0, 5);
+    if (dis.length) {
+      html += `<h3>${t("section_distinctive")}</h3>`;
+      dis.forEach(x => {
+        html += `<div class="data-row"><span class="label">${x.label_en}</span>` +
+                `<span class="value">${x.vs_global_avg}× <span style="font-size:10px;color:var(--muted-2);">global avg</span></span></div>`;
+      });
+    }
+    const gen = window.TRENDS_DATA.generated || "";
+    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:6px;">Source: Wikipedia reading patterns (Wikimedia Pageviews API), updated ${gen}. Country attribution via language-population weights — an approximation, not a measurement.</div>`;
+  } else {
+    html += `<div style="font-size:11px;color:var(--muted-2);">${t("trending_unavailable")}</div>`;
+  }
+
   html += `<h3>${t("section_topics")}</h3>`;
   html += `<div class="pills">${d.topics_of_interest.map(topic => `<div class="pill">${topic}</div>`).join("")}</div>`;
   return html;
@@ -2016,6 +2051,25 @@ document.getElementById("last-check").textContent = new Date().toISOString().sli
     }
   } catch (err) {
     console.info("[atlas] using inline fallback data:", err.message);
+  }
+})();
+
+/* ---------- Trend intelligence loader ----------
+ * Fetches data/trends/topic_intelligence.json (written daily by the
+ * trend-engine workflow). Powers the "Trending this week" and
+ * "Distinctive interests" sections of the country panel. Optional:
+ * if the file is missing the panel shows a graceful notice instead.
+ */
+(async function loadTrends() {
+  try {
+    const r = await fetch("data/trends/topic_intelligence.json", { cache: "no-cache" });
+    if (!r.ok) throw new Error("no trend data yet (HTTP " + r.status + ")");
+    window.TRENDS_DATA = await r.json();
+    if (currentActiveIso) renderDetail(currentActiveIso);
+    console.log("[atlas] trend intelligence loaded:",
+                Object.keys(window.TRENDS_DATA.countries || {}).length, "countries");
+  } catch (err) {
+    console.info("[atlas] trend data unavailable:", err.message);
   }
 })();
 </script>

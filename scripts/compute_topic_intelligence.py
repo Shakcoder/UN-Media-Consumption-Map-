@@ -180,6 +180,15 @@ def main() -> None:
              if GDELT_NAME_TO_ISO3.get(k)),
             key=lambda kv: -kv[1])[:10]
 
+        # compact global daily series (sum across tracked languages) so the
+        # Topic Explorer can draw trend lines without the full raw dataset
+        n_days = max(len(s["values"]) for s in langs.values())
+        global_series = [0] * n_days
+        for s in langs.values():
+            for i, v in enumerate(s["values"]):
+                if v is not None:
+                    global_series[i] += v
+
         topic_out[qid] = {
             "label_en": meta["label_en"],
             "category": meta["category"],
@@ -194,6 +203,8 @@ def main() -> None:
             "news_articles_7d": news_7d,
             "top_covering_media_countries": [
                 {"iso3": c, "coverage_share_pct": v} for c, v in top_media],
+            "series_start": next(iter(langs.values()))["start"],
+            "global_series": global_series,
         }
 
         # country attribution (documented heuristic)
@@ -209,11 +220,29 @@ def main() -> None:
                         "weight": w,
                     })
 
-    # per-country: top interest topics + rising list
-    country_out: dict[str, dict] = {}
+    # Global baseline share per topic (average of its share across countries).
+    # Used for "distinctive interests": share ÷ global share, TF-IDF-style —
+    # a perennially popular topic (share high EVERYWHERE) scores ~1 and drops
+    # out, while a topic a country cares about unusually much scores >>1.
+    share_by_country: dict[str, dict[str, float]] = {}
     for iso3, scores in country_scores.items():
         total = sum(scores.values()) or 1.0
+        share_by_country[iso3] = {q: s / total for q, s in scores.items()}
+    tmp: dict[str, list[float]] = {}
+    for shares in share_by_country.values():
+        for q, sh in shares.items():
+            tmp.setdefault(q, []).append(sh)
+    global_share = {q: sum(v) / len(share_by_country) for q, v in tmp.items()}
+
+    # per-country: top interest topics + distinctive interests + rising list
+    country_out: dict[str, dict] = {}
+    for iso3, scores in country_scores.items():
+        shares = share_by_country[iso3]
         top = sorted(scores.items(), key=lambda kv: -kv[1])[:15]
+        distinctive = sorted(
+            ((q, sh, sh / global_share[q]) for q, sh in shares.items()
+             if sh >= 0.01 and global_share.get(q, 0) > 0),
+            key=lambda x: -x[2])[:10]
         rising = sorted(
             country_rising.get(iso3, []),
             key=lambda r: -(r["velocity"] * r["weight"]))[:10]
@@ -226,8 +255,13 @@ def main() -> None:
         country_out[iso3] = {
             "top_topics": [
                 {"qid": q, "label_en": topics[q]["label_en"],
-                 "attention_share_pct": round(100 * s / total, 1)}
+                 "attention_share_pct": round(100 * shares[q], 1)}
                 for q, s in top],
+            "distinctive_topics": [
+                {"qid": q, "label_en": topics[q]["label_en"],
+                 "attention_share_pct": round(100 * sh, 1),
+                 "vs_global_avg": round(ratio, 1)}
+                for q, sh, ratio in distinctive if ratio >= 1.5],
             "rising_topics": rising_dedup,
         }
 
