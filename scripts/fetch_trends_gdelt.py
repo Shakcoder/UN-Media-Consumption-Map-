@@ -35,6 +35,7 @@ timeline covers the trailing TIMESPAN).
 from __future__ import annotations
 
 import json
+import random
 import ssl
 import sys
 import time
@@ -139,6 +140,14 @@ def write_output(results: dict) -> None:
 def main() -> None:
     registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
     topics = registry["topics"]
+
+    # Rotate processing order daily. The per-run budget only covers ~40
+    # topics before rate limits bite; a fixed order would keep the same
+    # topics fresh forever and starve the rest. Deterministic per-day
+    # shuffle -> every topic gets fresh data within a few days.
+    rng = random.Random(date.today().toordinal())
+    topics = list(topics)
+    rng.shuffle(topics)
 
     # Previous snapshot — used as per-topic fallback when today's fetch fails,
     # so a rate-limited run (or a mid-run kill) can never erase good data.
