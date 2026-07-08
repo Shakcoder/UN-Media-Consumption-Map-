@@ -265,7 +265,85 @@ FREEDOM_HOUSE_FITW_2025: dict[str, int] = {
     "WSM": 84, "YEM": 10, "ZAF": 81, "ZMB": 53, "ZWE": 25,
 }
 
+# Official Freedom House FIW 2026 detail: status (F/PF/NF), political-rights
+# score (0-40), civil-liberties score (0-60), electoral-democracy designation.
+# Source: official FH data files provided directly by Freedom House (July 2026).
+# Kosovo/Taiwan excluded (non-UN); PSE/VAT not individually rated by FH.
+FREEDOM_HOUSE_DETAIL_2026: dict[str, tuple[str, int, int, bool]] = {
+    "AFG": ("NF", 1, 7, False), "AGO": ("NF", 10, 18, False), "ALB": ("PF", 28, 41, True),
+    "AND": ("F", 38, 55, True), "ARE": ("NF", 5, 13, False), "ARG": ("F", 35, 50, True),
+    "ARM": ("PF", 23, 31, True), "ATG": ("F", 32, 51, True), "AUS": ("F", 39, 55, True),
+    "AUT": ("F", 38, 56, True), "AZE": ("NF", 0, 6, False), "BDI": ("NF", 2, 11, False),
+    "BEL": ("F", 38, 57, True), "BEN": ("PF", 19, 42, False), "BFA": ("NF", 2, 18, False),
+    "BGD": ("PF", 15, 29, False), "BGR": ("F", 30, 44, True), "BHR": ("NF", 2, 10, False),
+    "BHS": ("F", 38, 52, True), "BIH": ("PF", 17, 37, False), "BLR": ("NF", 1, 6, False),
+    "BLZ": ("F", 34, 53, True), "BOL": ("F", 30, 39, True), "BRA": ("F", 30, 43, True),
+    "BRB": ("F", 37, 57, True), "BRN": ("NF", 7, 20, False), "BTN": ("F", 33, 36, True),
+    "BWA": ("F", 31, 44, True), "CAF": ("NF", 1, 4, False), "CAN": ("F", 39, 58, True),
+    "CHE": ("F", 39, 57, True), "CHL": ("F", 38, 57, True), "CHN": ("NF", -2, 11, False),
+    "CIV": ("PF", 17, 29, False), "CMR": ("NF", 6, 9, False), "COD": ("NF", 4, 14, False),
+    "COG": ("NF", 2, 15, False), "COL": ("F", 31, 38, True), "COM": ("PF", 16, 25, False),
+    "CPV": ("F", 38, 54, True), "CRI": ("F", 38, 53, True), "CUB": ("NF", 0, 9, False),
+    "CYP": ("F", 38, 52, True), "CZE": ("F", 37, 58, True), "DEU": ("F", 40, 55, True),
+    "DJI": ("NF", 5, 19, False), "DMA": ("F", 37, 55, True), "DNK": ("F", 40, 57, True),
+    "DOM": ("PF", 27, 40, True), "DZA": ("NF", 10, 21, False), "ECU": ("PF", 27, 37, True),
+    "EGY": ("NF", 6, 12, False), "ERI": ("NF", 1, 2, False), "ESP": ("F", 37, 54, True),
+    "EST": ("F", 39, 57, True), "ETH": ("NF", 8, 10, False), "FIN": ("F", 40, 60, True),
+    "FJI": ("F", 28, 44, True), "FRA": ("F", 38, 51, True), "FSM": ("F", 37, 55, True),
+    "GAB": ("NF", 5, 20, False), "GBR": ("F", 39, 53, True), "GEO": ("PF", 19, 32, False),
+    "GHA": ("F", 35, 45, True), "GIN": ("NF", 6, 22, False), "GMB": ("PF", 22, 29, False),
+    "GNB": ("PF", 7, 26, False), "GNQ": ("NF", 0, 5, False), "GRC": ("F", 35, 50, True),
+    "GRD": ("F", 37, 52, True), "GTM": ("PF", 19, 29, False), "GUY": ("F", 29, 45, True),
+    "HND": ("PF", 21, 26, False), "HRV": ("F", 34, 48, True), "HTI": ("NF", 5, 17, False),
+    "HUN": ("PF", 24, 41, True), "IDN": ("PF", 28, 28, False), "IND": ("PF", 31, 31, True),
+    "IRL": ("F", 40, 58, True), "IRN": ("NF", 4, 6, False), "IRQ": ("NF", 16, 15, False),
+    "ISL": ("F", 38, 57, True), "ISR": ("F", 34, 39, True), "ITA": ("F", 35, 52, True),
+    "JAM": ("F", 34, 47, True), "JOR": ("PF", 12, 22, False), "JPN": ("F", 40, 56, True),
+    "KAZ": ("NF", 5, 18, False), "KEN": ("PF", 21, 28, False), "KGZ": ("NF", 4, 21, False),
+    "KHM": ("NF", 4, 18, False), "KIR": ("F", 36, 53, True), "KNA": ("F", 35, 54, True),
+    "KOR": ("F", 33, 50, True), "KWT": ("NF", 7, 23, False), "LAO": ("NF", 2, 11, False),
+    "LBN": ("PF", 15, 26, False), "LBR": ("PF", 31, 34, True), "LBY": ("NF", 2, 8, False),
+    "LCA": ("F", 38, 53, True), "LIE": ("F", 33, 57, True), "LKA": ("PF", 29, 34, True),
+    "LSO": ("F", 31, 36, True), "LTU": ("F", 38, 52, True), "LUX": ("F", 38, 59, True),
+    "LVA": ("F", 37, 52, True), "MAR": ("PF", 13, 24, False), "MCO": ("F", 25, 57, True),
+    "MDA": ("PF", 25, 35, True), "MDG": ("PF", 16, 34, False), "MDV": ("PF", 19, 22, False),
+    "MEX": ("PF", 26, 32, True), "MHL": ("F", 38, 55, True), "MKD": ("PF", 28, 39, True),
+    "MLI": ("NF", 3, 18, False), "MLT": ("F", 35, 53, True), "MMR": ("NF", -2, 6, False),
+    "MNE": ("PF", 26, 42, True), "MNG": ("F", 36, 48, True), "MOZ": ("PF", 13, 29, False),
+    "MRT": ("PF", 15, 23, False), "MUS": ("F", 36, 51, True), "MWI": ("F", 30, 38, True),
+    "MYS": ("PF", 22, 31, False), "NAM": ("F", 28, 45, True), "NER": ("NF", 3, 24, False),
+    "NGA": ("PF", 20, 24, False), "NIC": ("NF", 2, 12, False), "NLD": ("F", 39, 58, True),
+    "NOR": ("F", 39, 60, True), "NPL": ("PF", 27, 32, True), "NRU": ("F", 32, 43, True),
+    "NZL": ("F", 40, 59, True), "OMN": ("NF", 6, 18, False), "PAK": ("PF", 12, 20, False),
+    "PAN": ("F", 35, 47, True), "PER": ("PF", 27, 39, True), "PHL": ("PF", 25, 33, True),
+    "PLW": ("F", 37, 55, True), "PNG": ("PF", 22, 39, False), "POL": ("F", 34, 48, True),
+    "PRK": ("NF", 0, 3, False), "PRT": ("F", 39, 57, True), "PRY": ("PF", 26, 37, True),
+    "QAT": ("NF", 7, 18, False), "ROU": ("F", 35, 48, True), "RUS": ("NF", 4, 8, False),
+    "RWA": ("NF", 7, 14, False), "SAU": ("NF", 1, 8, False), "SDN": ("NF", -4, 5, False),
+    "SEN": ("F", 30, 40, True), "SGP": ("PF", 19, 29, False), "SLB": ("F", 27, 47, True),
+    "SLE": ("PF", 23, 38, True), "SLV": ("PF", 15, 27, False), "SMR": ("F", 39, 58, True),
+    "SOM": ("NF", 2, 6, False), "SRB": ("PF", 18, 35, False), "SSD": ("NF", -4, 4, False),
+    "STP": ("F", 35, 49, True), "SUR": ("F", 35, 46, True), "SVK": ("F", 35, 53, True),
+    "SVN": ("F", 39, 58, True), "SWE": ("F", 40, 59, True), "SWZ": ("NF", 1, 16, False),
+    "SYC": ("F", 35, 46, True), "SYR": ("NF", -2, 12, False), "TCD": ("NF", 1, 14, False),
+    "TGO": ("PF", 11, 26, False), "THA": ("NF", 11, 22, False), "TJK": ("NF", 0, 5, False),
+    "TKM": ("NF", 0, 1, False), "TLS": ("F", 33, 40, True), "TON": ("F", 29, 50, True),
+    "TTO": ("F", 34, 49, True), "TUN": ("PF", 11, 31, False), "TUR": ("NF", 16, 16, False),
+    "TUV": ("F", 37, 56, True), "TZA": ("NF", 6, 22, False), "UGA": ("NF", 10, 23, False),
+    "UKR": ("PF", 22, 29, False), "URY": ("F", 40, 57, True), "USA": ("F", 32, 49, True),
+    "UZB": ("NF", 2, 10, False), "VCT": ("F", 36, 54, True), "VEN": ("NF", 0, 13, False),
+    "VNM": ("NF", 4, 16, False), "VUT": ("F", 32, 50, True), "WSM": ("F", 32, 52, True),
+    "YEM": ("NF", 1, 9, False), "ZAF": ("F", 34, 47, True), "ZMB": ("PF", 22, 31, False),
+    "ZWE": ("NF", 8, 17, False),
+}
+
+_FH_STATUS_WORDS = {"F": "Free", "PF": "Partly Free", "NF": "Not Free"}
+
 def _freedom_status(score: int) -> str:
+    """Fallback only, for the few countries without an official FH status
+    (PSE, VAT). Everywhere else the official designation is used — FH derives
+    status from PR/CL ratings, not the 0-100 total, so thresholds on the
+    total mislabel countries near the boundaries."""
     if score >= 70:
         return "Free"
     if score >= 40:
@@ -497,8 +575,17 @@ def build_country(
     fitw_score = FREEDOM_HOUSE_FITW_2025.get(iso3)
     if fitw_score is not None:
         values["political_freedom_score"] = fitw_score
-        values["political_freedom_status"] = _freedom_status(fitw_score)
-        sources["political_freedom"] = "Freedom House: Freedom in the World 2026 report (2025 data) — https://freedomhouse.org/report/freedom-world"
+        detail = FREEDOM_HOUSE_DETAIL_2026.get(iso3)
+        if detail:
+            status_letter, pr, cl, electoral = detail
+            values["political_freedom_status"] = _FH_STATUS_WORDS[status_letter]
+            values["political_rights_score"] = pr        # 0-40
+            values["civil_liberties_score"] = cl         # 0-60
+            values["electoral_democracy"] = electoral
+            sources["political_freedom"] = "Freedom House: Freedom in the World 2026 — official data files provided by Freedom House (July 2026) — https://freedomhouse.org/report/freedom-world"
+        else:
+            values["political_freedom_status"] = _freedom_status(fitw_score)
+            sources["political_freedom"] = "Freedom House: Freedom in the World 2026 report (2025 data) — https://freedomhouse.org/report/freedom-world"
 
     # News consumption (Reuters DNR / regional barometers / WVS)
     nc = NEWS_CONSUMPTION.get(iso3)
@@ -547,7 +634,10 @@ def build_country(
             "internet_freedom_source": "Freedom House: Freedom on the Net 2025",
             "political_freedom_score": values.get("political_freedom_score"),
             "political_freedom_status": values.get("political_freedom_status"),
-            "political_freedom_source": "Freedom House: Freedom in the World 2026 report (2025 data)",
+            "political_rights_score": values.get("political_rights_score"),
+            "civil_liberties_score": values.get("civil_liberties_score"),
+            "electoral_democracy": values.get("electoral_democracy"),
+            "political_freedom_source": "Freedom House: Freedom in the World 2026 — official FH data files (July 2026)",
         },
         "news_consumption": {
             "trust_in_news_pct": values.get("news_trust_pct"),
