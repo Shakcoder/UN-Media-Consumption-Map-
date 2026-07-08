@@ -93,6 +93,18 @@
     transition: all 0.15s;
   }
   .lang-select:hover { background: #fff; border-color: var(--un-blue); }
+  .country-label {
+    pointer-events: none;
+    font: 600 11px/1.1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #33445C;
+    text-shadow: 0 1px 2px rgba(255,255,255,.95), 0 -1px 2px rgba(255,255,255,.95),
+                 1px 0 2px rgba(255,255,255,.95), -1px 0 2px rgba(255,255,255,.95);
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+    display: inline-block;
+  }
+  .country-label.minor { font-weight: 500; font-size: 10px; color: #5C6B7E; }
+
   .lang-menu {
     position: absolute;
     top: 54px; right: 22px;
@@ -278,9 +290,16 @@
     display: flex; flex-direction: column;
     border-inline-start: 1px solid var(--border);
   }
-  [dir="rtl"] .detail-panel {
-    transform: translateX(-100%);
-    box-shadow: 12px 0 40px rgba(15,26,43,0.14);
+  /* RTL languages: text content flows right-to-left inside its containers,
+     while the page layout (header, panel position, map controls) stays put. */
+  body.rtl-text #detail-body,
+  body.rtl-text #country-list,
+  body.rtl-text .modal-body,
+  body.rtl-text #stats-strip .stat,
+  body.rtl-text #detail-name,
+  body.rtl-text #detail-subline {
+    direction: rtl;
+    text-align: right;
   }
   .detail-panel.open { transform: translateX(0); }
 
@@ -486,7 +505,6 @@
   .leaflet-container { font-family: inherit; background: #DFE8F0; }
   .leaflet-interactive:focus { outline: none; }
   /* Ensure Leaflet zoom controls stay LTR even in RTL mode */
-  [dir="rtl"] .leaflet-control-zoom { direction: ltr; }
 
   @media (max-width: 780px) {
     main.app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
@@ -535,8 +553,9 @@
     <a href="topics.html" data-i18n="nav_topics">Topic Explorer</a>
     <button id="open-methodology" data-i18n="nav_methodology">Methodology</button>
     <button id="open-sources" data-i18n="nav_sources">Sources</button>
-    <a href="#" data-i18n="nav_survey">Take the survey</a>
-    <a href="#" data-i18n="nav_about">About</a>
+    <!-- Survey link hidden until the survey is live:
+    <a href="#" data-i18n="nav_survey">Take the survey</a> -->
+    <a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-#readme" target="_blank" rel="noopener" data-i18n="nav_about">About</a>
     <button class="lang-select" id="lang-button" aria-haspopup="true" aria-expanded="false">
       <span id="lang-current">🌐 English</span>
       <span aria-hidden="true">▾</span>
@@ -574,8 +593,9 @@
     <div id="map"></div>
     <div class="map-legend">
       <div class="legend-title" data-i18n="legend_title">Data status</div>
-      <div class="row"><div class="swatch" style="background:#009EDB"></div><span data-i18n="legend_profiled">Profiled (pilot)</span></div>
-      <div class="row"><div class="swatch" style="background:#D4DEE8"></div><span data-i18n="legend_not_profiled">Not yet profiled</span></div>
+      <div class="row"><div class="swatch" style="background:#009EDB"></div><span data-i18n="legend_profiled">Covered (data available)</span></div>
+      <div class="row"><div class="swatch" style="background:#8FCBEA"></div><span data-i18n="legend_territory">Territory (see sovereign state)</span></div>
+      <div class="row"><div class="swatch" style="background:#D4DEE8"></div><span data-i18n="legend_not_profiled">Non-sovereign area (no data)</span></div>
     </div>
   </div>
 </main>
@@ -638,7 +658,7 @@
   <div>
     <a id="footer-methodology" data-i18n="footer_methodology">Methodology</a> &nbsp;·&nbsp;
     <a href="https://github.com/shakcoder/UN-Media-Consumption-Map-" target="_blank" data-i18n="footer_github">GitHub</a> &nbsp;·&nbsp;
-    <a href="#" data-i18n="footer_report">Report an error</a>
+    <a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-/issues/new" target="_blank" rel="noopener" data-i18n="footer_report">Report an error</a>
   </div>
 </footer>
 
@@ -981,23 +1001,23 @@ window.TRANSLATIONS = {
     chip_all: "All regions", chip_africa: "Africa", chip_americas: "Americas",
     chip_asia: "Asia", chip_europe: "Europe", chip_oceania: "Oceania",
     map_hint: "Click any country to open its profile →",
-    legend_title: "Data status", legend_profiled: "Profiled (pilot)",
-    legend_not_profiled: "Not yet profiled",
-    stat_pilot_countries: "Pilot countries",
+    legend_title: "Data status", legend_profiled: "Covered (data available)", legend_territory: "Territory (see sovereign state)",
+    legend_not_profiled: "Non-sovereign area (no data)",
+    stat_pilot_countries: "Countries covered",
     stat_across_continents: "across {n} continents",
     stat_people_covered: "People covered",
     stat_world_pop_pct: "{n}% of world population",
     stat_avg_internet: "Avg. internet access",
     stat_weighted: "weighted by country",
     stat_leading_platform: "Leading platform",
-    stat_markets_led: "#1 in {n} of {t} pilot markets",
+    stat_markets_led: "#1 in {n} of {t} markets",
     stat_top_industries: "Top dominant industries",
-    stat_across_pilot: "across pilot set",
+    stat_across_pilot: "across covered countries",
     stat_country: "Country", stat_population: "Population",
     stat_ref_year: "{n} reference year", stat_gdp: "GDP per capita",
     stat_internet_access: "Internet access", stat_smartphone: "smartphone {n}%",
     stat_leading_social: "#1 social medium",
-    pilot_countries_count: "Pilot countries ({n})",
+    pilot_countries_count: "Countries ({n})",
     more_coming: "More countries coming",
     more_coming_desc: "More countries will be profiled as we expand toward full coverage of all 195 UN member states. Click any country on the map to check its status.",
     tag_profile: "Profile",
@@ -1010,7 +1030,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Strategic focus areas",
     section_connectivity: "Connectivity", section_leading_outlets: "Leading outlets",
     section_press_freedom: "Press freedom", section_topics: "Topics of interest",
-    section_trending: "Trending this week (live)", section_distinctive: "Distinctive interests", label_pr_cl: "Political rights · Civil liberties", label_electoral: "Electoral democracy", trending_unavailable: "Live trend data is not yet available for this country — the survey-based topics below still apply.",
+    section_trending: "Trending this week (live)", section_distinctive: "Distinctive interests", label_pr_cl: "Political rights · Civil liberties", label_electoral: "Electoral democracy", map_territory_note: "territory · data shown under {c}", map_not_covered: "not covered (non-member territory)", trending_unavailable: "Live trend data is not yet available for this country — the survey-based topics below still apply.",
     section_age_structure: "Age structure", section_where_live: "Where people live",
     section_education: "Education", section_primary_sources: "Primary sources",
     section_confidence_level: "Confidence level",
@@ -1062,23 +1082,23 @@ window.TRANSLATIONS = {
     chip_all: "Toutes les régions", chip_africa: "Afrique", chip_americas: "Amériques",
     chip_asia: "Asie", chip_europe: "Europe", chip_oceania: "Océanie",
     map_hint: "Cliquez sur un pays pour ouvrir son profil →",
-    legend_title: "Statut des données", legend_profiled: "Profilé (pilote)",
-    legend_not_profiled: "Pas encore profilé",
-    stat_pilot_countries: "Pays pilotes",
+    legend_title: "Statut des données", legend_profiled: "Couvert (données disponibles)", legend_territory: "Territoire (voir l'État souverain)",
+    legend_not_profiled: "Zone non souveraine (pas de données)",
+    stat_pilot_countries: "Pays couverts",
     stat_across_continents: "sur {n} continents",
     stat_people_covered: "Population couverte",
     stat_world_pop_pct: "{n}% de la population mondiale",
     stat_avg_internet: "Accès internet moyen",
     stat_weighted: "pondéré par pays",
     stat_leading_platform: "Plateforme dominante",
-    stat_markets_led: "N°1 dans {n} des {t} marchés pilotes",
+    stat_markets_led: "N°1 dans {n} des {t} marchés",
     stat_top_industries: "Principales industries",
-    stat_across_pilot: "dans l'ensemble pilote",
+    stat_across_pilot: "dans l'ensemble des pays couverts",
     stat_country: "Pays", stat_population: "Population",
     stat_ref_year: "année de référence {n}", stat_gdp: "PIB par habitant",
     stat_internet_access: "Accès internet", stat_smartphone: "smartphone {n}%",
     stat_leading_social: "N°1 plateforme sociale",
-    pilot_countries_count: "Pays pilotes ({n})",
+    pilot_countries_count: "Pays ({n})",
     more_coming: "Autres pays à venir",
     more_coming_desc: "D'autres pays seront profilés à mesure que nous étendons la couverture à l'ensemble des 195 États membres de l'ONU. Cliquez sur un pays de la carte pour vérifier son statut.",
     tag_profile: "Profil",
@@ -1091,7 +1111,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Priorités stratégiques",
     section_connectivity: "Connectivité", section_leading_outlets: "Médias de référence",
     section_press_freedom: "Liberté de la presse", section_topics: "Centres d'intérêt",
-    section_trending: "Tendances de la semaine (en direct)", section_distinctive: "Intérêts distinctifs", label_pr_cl: "Droits politiques · Libertés civiles", label_electoral: "Démocratie électorale", trending_unavailable: "Les tendances en direct ne sont pas encore disponibles pour ce pays — les thèmes issus d'enquêtes restent valables.",
+    section_trending: "Tendances de la semaine (en direct)", section_distinctive: "Intérêts distinctifs", label_pr_cl: "Droits politiques · Libertés civiles", label_electoral: "Démocratie électorale", map_territory_note: "territoire · données affichées sous {c}", map_not_covered: "non couvert (territoire non membre)", trending_unavailable: "Les tendances en direct ne sont pas encore disponibles pour ce pays — les thèmes issus d'enquêtes restent valables.",
     section_age_structure: "Structure par âge", section_where_live: "Lieu de résidence",
     section_education: "Éducation", section_primary_sources: "Sources primaires",
     section_confidence_level: "Niveau de confiance",
@@ -1142,23 +1162,23 @@ window.TRANSLATIONS = {
     chip_all: "Todas las regiones", chip_africa: "África", chip_americas: "Américas",
     chip_asia: "Asia", chip_europe: "Europa", chip_oceania: "Oceanía",
     map_hint: "Haga clic en cualquier país para abrir su perfil →",
-    legend_title: "Estado de los datos", legend_profiled: "Perfilado (piloto)",
-    legend_not_profiled: "Aún no perfilado",
-    stat_pilot_countries: "Países piloto",
+    legend_title: "Estado de los datos", legend_profiled: "Cubierto (datos disponibles)", legend_territory: "Territorio (ver Estado soberano)",
+    legend_not_profiled: "Zona no soberana (sin datos)",
+    stat_pilot_countries: "Países cubiertos",
     stat_across_continents: "en {n} continentes",
     stat_people_covered: "Población cubierta",
     stat_world_pop_pct: "{n}% de la población mundial",
     stat_avg_internet: "Acceso medio a internet",
     stat_weighted: "ponderado por país",
     stat_leading_platform: "Plataforma dominante",
-    stat_markets_led: "N.º 1 en {n} de {t} mercados piloto",
+    stat_markets_led: "N.º 1 en {n} de {t} mercados",
     stat_top_industries: "Principales industrias",
-    stat_across_pilot: "en el conjunto piloto",
+    stat_across_pilot: "en todos los países cubiertos",
     stat_country: "País", stat_population: "Población",
     stat_ref_year: "año de referencia {n}", stat_gdp: "PIB per cápita",
     stat_internet_access: "Acceso a internet", stat_smartphone: "smartphone {n}%",
     stat_leading_social: "N.º 1 plataforma social",
-    pilot_countries_count: "Países piloto ({n})",
+    pilot_countries_count: "Países ({n})",
     more_coming: "Próximamente más países",
     more_coming_desc: "Se perfilarán más países a medida que ampliemos la cobertura hacia los 195 Estados miembros de la ONU. Haga clic en cualquier país del mapa para ver su estado.",
     tag_profile: "Perfil",
@@ -1171,7 +1191,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Prioridades estratégicas",
     section_connectivity: "Conectividad", section_leading_outlets: "Medios principales",
     section_press_freedom: "Libertad de prensa", section_topics: "Temas de interés",
-    section_trending: "Tendencias de la semana (en vivo)", section_distinctive: "Intereses distintivos", label_pr_cl: "Derechos políticos · Libertades civiles", label_electoral: "Democracia electoral", trending_unavailable: "Los datos de tendencias en vivo aún no están disponibles para este país — los temas basados en encuestas siguen siendo válidos.",
+    section_trending: "Tendencias de la semana (en vivo)", section_distinctive: "Intereses distintivos", label_pr_cl: "Derechos políticos · Libertades civiles", label_electoral: "Democracia electoral", map_territory_note: "territorio · datos mostrados bajo {c}", map_not_covered: "no cubierto (territorio no miembro)", trending_unavailable: "Los datos de tendencias en vivo aún no están disponibles para este país — los temas basados en encuestas siguen siendo válidos.",
     section_age_structure: "Estructura por edad", section_where_live: "Dónde vive la gente",
     section_education: "Educación", section_primary_sources: "Fuentes primarias",
     section_confidence_level: "Nivel de confianza",
@@ -1222,23 +1242,23 @@ window.TRANSLATIONS = {
     chip_all: "جميع المناطق", chip_africa: "أفريقيا", chip_americas: "الأمريكتان",
     chip_asia: "آسيا", chip_europe: "أوروبا", chip_oceania: "أوقيانوسيا",
     map_hint: "← انقر على أي دولة لفتح ملفها",
-    legend_title: "حالة البيانات", legend_profiled: "تم التوصيف (تجريبي)",
-    legend_not_profiled: "لم يتم التوصيف بعد",
-    stat_pilot_countries: "الدول التجريبية",
+    legend_title: "حالة البيانات", legend_profiled: "مشمول (البيانات متاحة)", legend_territory: "إقليم (انظر الدولة ذات السيادة)",
+    legend_not_profiled: "منطقة غير ذات سيادة (لا بيانات)",
+    stat_pilot_countries: "الدول المشمولة",
     stat_across_continents: "عبر {n} قارات",
     stat_people_covered: "السكان المشمولون",
     stat_world_pop_pct: "{n}٪ من سكان العالم",
     stat_avg_internet: "متوسط الوصول للإنترنت",
     stat_weighted: "مرجّح بحسب الدولة",
     stat_leading_platform: "المنصة الرائدة",
-    stat_markets_led: "الأولى في {n} من {t} أسواق تجريبية",
+    stat_markets_led: "الأولى في {n} من {t} سوقًا",
     stat_top_industries: "أبرز الصناعات",
-    stat_across_pilot: "عبر المجموعة التجريبية",
+    stat_across_pilot: "عبر الدول المشمولة",
     stat_country: "الدولة", stat_population: "السكان",
     stat_ref_year: "سنة المرجع {n}", stat_gdp: "الناتج المحلي للفرد",
     stat_internet_access: "الوصول للإنترنت", stat_smartphone: "هاتف ذكي {n}٪",
     stat_leading_social: "أبرز منصة اجتماعية",
-    pilot_countries_count: "الدول التجريبية ({n})",
+    pilot_countries_count: "الدول ({n})",
     more_coming: "دول إضافية قادمة",
     more_coming_desc: "سيتم توصيف المزيد من الدول مع توسيعنا التغطية نحو جميع الدول الـ 195 الأعضاء في الأمم المتحدة. انقر على أي دولة على الخريطة لمعرفة حالتها.",
     tag_profile: "ملف",
@@ -1251,7 +1271,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "الأولويات الاستراتيجية",
     section_connectivity: "الاتصال", section_leading_outlets: "أبرز الوسائل",
     section_press_freedom: "حرية الصحافة", section_topics: "مواضيع الاهتمام",
-    section_trending: "الرائج هذا الأسبوع (مباشر)", section_distinctive: "اهتمامات مميزة", label_pr_cl: "الحقوق السياسية · الحريات المدنية", label_electoral: "ديمقراطية انتخابية", trending_unavailable: "بيانات الاتجاهات المباشرة غير متاحة بعد لهذا البلد — المواضيع المستندة إلى الاستطلاعات لا تزال سارية.",
+    section_trending: "الرائج هذا الأسبوع (مباشر)", section_distinctive: "اهتمامات مميزة", label_pr_cl: "الحقوق السياسية · الحريات المدنية", label_electoral: "ديمقراطية انتخابية", map_territory_note: "إقليم · البيانات معروضة ضمن {c}", map_not_covered: "غير مشمول (إقليم غير عضو)", trending_unavailable: "بيانات الاتجاهات المباشرة غير متاحة بعد لهذا البلد — المواضيع المستندة إلى الاستطلاعات لا تزال سارية.",
     section_age_structure: "التوزيع العمري", section_where_live: "أماكن السكن",
     section_education: "التعليم", section_primary_sources: "المصادر الأولية",
     section_confidence_level: "مستوى الثقة",
@@ -1302,23 +1322,23 @@ window.TRANSLATIONS = {
     chip_all: "所有地区", chip_africa: "非洲", chip_americas: "美洲",
     chip_asia: "亚洲", chip_europe: "欧洲", chip_oceania: "大洋洲",
     map_hint: "点击任意国家以打开其资料 →",
-    legend_title: "数据状态", legend_profiled: "已收录（试点）",
-    legend_not_profiled: "尚未收录",
-    stat_pilot_countries: "试点国家",
+    legend_title: "数据状态", legend_profiled: "已覆盖（有数据）", legend_territory: "属地（见主权国家）",
+    legend_not_profiled: "非主权地区（无数据）",
+    stat_pilot_countries: "覆盖国家",
     stat_across_continents: "覆盖 {n} 个大洲",
     stat_people_covered: "覆盖人口",
     stat_world_pop_pct: "占世界人口 {n}%",
     stat_avg_internet: "平均互联网接入率",
     stat_weighted: "按国家加权",
     stat_leading_platform: "主导平台",
-    stat_markets_led: "在 {t} 个试点市场中的 {n} 个居首",
+    stat_markets_led: "在 {t} 个市场中的 {n} 个居首",
     stat_top_industries: "主要行业",
-    stat_across_pilot: "跨试点范围",
+    stat_across_pilot: "覆盖所有国家",
     stat_country: "国家", stat_population: "人口",
     stat_ref_year: "{n} 年参考", stat_gdp: "人均 GDP",
     stat_internet_access: "互联网接入", stat_smartphone: "智能手机 {n}%",
     stat_leading_social: "首要社交平台",
-    pilot_countries_count: "试点国家 ({n})",
+    pilot_countries_count: "国家 ({n})",
     more_coming: "更多国家即将加入",
     more_coming_desc: "随着我们将覆盖范围扩大至所有 195 个联合国成员国，更多国家将被收录。点击地图上的任意国家以查看其状态。",
     tag_profile: "资料",
@@ -1331,7 +1351,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "战略优先事项",
     section_connectivity: "互联互通", section_leading_outlets: "主要媒体",
     section_press_freedom: "新闻自由", section_topics: "兴趣话题",
-    section_trending: "本周热门（实时）", section_distinctive: "特色关注话题", label_pr_cl: "政治权利 · 公民自由", label_electoral: "选举民主", trending_unavailable: "该国的实时趋势数据暂不可用——下方基于调查的话题仍然有效。",
+    section_trending: "本周热门（实时）", section_distinctive: "特色关注话题", label_pr_cl: "政治权利 · 公民自由", label_electoral: "选举民主", map_territory_note: "属地 · 数据归入 {c}", map_not_covered: "未覆盖（非会员属地）", trending_unavailable: "该国的实时趋势数据暂不可用——下方基于调查的话题仍然有效。",
     section_age_structure: "年龄结构", section_where_live: "居住地",
     section_education: "教育", section_primary_sources: "主要来源",
     section_confidence_level: "可信度",
@@ -1382,23 +1402,23 @@ window.TRANSLATIONS = {
     chip_all: "Все регионы", chip_africa: "Африка", chip_americas: "Америки",
     chip_asia: "Азия", chip_europe: "Европа", chip_oceania: "Океания",
     map_hint: "Нажмите на любую страну, чтобы открыть её профиль →",
-    legend_title: "Статус данных", legend_profiled: "Профиль готов (пилот)",
-    legend_not_profiled: "Профиль ещё не готов",
-    stat_pilot_countries: "Пилотных стран",
+    legend_title: "Статус данных", legend_profiled: "Охвачено (данные доступны)", legend_territory: "Территория (см. суверенное государство)",
+    legend_not_profiled: "Несуверенная зона (нет данных)",
+    stat_pilot_countries: "Охвачено стран",
     stat_across_continents: "на {n} континентах",
     stat_people_covered: "Охват населения",
     stat_world_pop_pct: "{n}% населения мира",
     stat_avg_internet: "Средний доступ к интернету",
     stat_weighted: "взвешенно по странам",
     stat_leading_platform: "Ведущая платформа",
-    stat_markets_led: "№1 в {n} из {t} пилотных рынков",
+    stat_markets_led: "№1 в {n} из {t} рынков",
     stat_top_industries: "Ведущие отрасли",
-    stat_across_pilot: "по пилотной группе",
+    stat_across_pilot: "по всем охваченным странам",
     stat_country: "Страна", stat_population: "Население",
     stat_ref_year: "{n} справочный год", stat_gdp: "ВВП на душу населения",
     stat_internet_access: "Доступ к интернету", stat_smartphone: "смартфон {n}%",
     stat_leading_social: "№1 соцсеть",
-    pilot_countries_count: "Пилотные страны ({n})",
+    pilot_countries_count: "Страны ({n})",
     more_coming: "Скоро больше стран",
     more_coming_desc: "По мере расширения охвата до всех 195 государств — членов ООН будут профилированы дополнительные страны. Нажмите на любую страну на карте, чтобы узнать её статус.",
     tag_profile: "Профиль",
@@ -1411,7 +1431,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Стратегические приоритеты",
     section_connectivity: "Связность", section_leading_outlets: "Ведущие СМИ",
     section_press_freedom: "Свобода прессы", section_topics: "Темы интереса",
-    section_trending: "В тренде на этой неделе (онлайн)", section_distinctive: "Отличительные интересы", label_pr_cl: "Политические права · Гражданские свободы", label_electoral: "Электоральная демократия", trending_unavailable: "Данные о трендах пока недоступны для этой страны — темы на основе опросов остаются актуальными.",
+    section_trending: "В тренде на этой неделе (онлайн)", section_distinctive: "Отличительные интересы", label_pr_cl: "Политические права · Гражданские свободы", label_electoral: "Электоральная демократия", map_territory_note: "территория · данные показаны в {c}", map_not_covered: "не охвачено (территория, не член ООН)", trending_unavailable: "Данные о трендах пока недоступны для этой страны — темы на основе опросов остаются актуальными.",
     section_age_structure: "Возрастная структура", section_where_live: "Где живут люди",
     section_education: "Образование", section_primary_sources: "Первичные источники",
     section_confidence_level: "Уровень достоверности",
@@ -1477,7 +1497,10 @@ function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem("atlas_lang", lang);
   document.documentElement.lang = lang;
-  document.documentElement.dir = window.TRANSLATIONS[lang]._rtl ? "rtl" : "ltr";
+  // Keep the page frame (header, nav, map, panel position) stable in every
+  // language; only the *text content* flows right-to-left for Arabic.
+  document.documentElement.dir = "ltr";
+  document.body.classList.toggle("rtl-text", !!window.TRANSLATIONS[lang]._rtl);
   document.body.setAttribute("data-lang", lang);
   document.title = t("brand_title");
 
@@ -1494,6 +1517,7 @@ function setLanguage(lang) {
   if (btnLabel) btnLabel.textContent = "🌐 " + window.TRANSLATIONS[lang]._native;
 
   // Re-render dynamic content
+  refreshMapAnnotations();
   if (currentActiveIso) {
     renderCountryStats(currentActiveIso);
     renderDetail(currentActiveIso);
@@ -1533,7 +1557,10 @@ document.addEventListener("click", () => {
 /* ---------- Map ---------- */
 const COUNTRY_BOUNDARIES_URL =
   "https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson";
-const BASE_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+/* light_nolabels: same clean CARTO cartography but WITHOUT baked-in place
+   labels (which appear in each country's local script — e.g. China in
+   Chinese). We render our own English country labels instead. */
+const BASE_TILES = "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png";
 const BASE_TILES_ATTRIB =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
@@ -1543,19 +1570,87 @@ const map = L.map("map", {
 });
 L.tileLayer(BASE_TILES, { attribution: BASE_TILES_ATTRIB, subdomains: "abcd", maxZoom: 19 }).addTo(map);
 
+/* The public boundaries file marks a few countries with ISO "-99"
+   (a known Natural Earth quirk affecting France, Norway, Kosovo). */
+const GEO_NAME_TO_ISO = { "France": "FRA", "Norway": "NOR" };
+
+/* Non-member territories shown under their sovereign state's data.
+   Clicking one opens the sovereign's profile; the tooltip says so. */
+const TERRITORY_OF = {
+  GRL: "DNK", FRO: "DNK", ALA: "FIN",
+  ASM: "USA", GUM: "USA", MNP: "USA", PRI: "USA", VIR: "USA", UMI: "USA",
+  AIA: "GBR", BMU: "GBR", IOT: "GBR", VGB: "GBR", CYM: "GBR", FLK: "GBR",
+  GIB: "GBR", MSR: "GBR", PCN: "GBR", SHN: "GBR", TCA: "GBR", SGS: "GBR",
+  GGY: "GBR", JEY: "GBR", IMN: "GBR",
+  CUW: "NLD", ABW: "NLD", SXM: "NLD",
+  PYF: "FRA", ATF: "FRA", NCL: "FRA", BLM: "FRA", MAF: "FRA", SPM: "FRA", WLF: "FRA",
+  COK: "NZL", NIU: "NZL", NFK: "AUS", HMD: "AUS",
+  HKG: "CHN", MAC: "CHN", TWN: "CHN",
+};
+
+function resolveIso(feature) {
+  const p = feature.properties;
+  let iso = p["ISO3166-1-Alpha-3"];
+  if (!iso || iso === "-99") iso = GEO_NAME_TO_ISO[p.name] || null;
+  return iso;
+}
+function featureKind(feature) {
+  const iso = resolveIso(feature);
+  if (iso && window.COUNTRY_DATA && window.COUNTRY_DATA[iso]) return "covered";
+  if (iso && TERRITORY_OF[iso] && window.COUNTRY_DATA && window.COUNTRY_DATA[TERRITORY_OF[iso]]) return "territory";
+  return "none";
+}
+
 function styleCountry(feature) {
-  const iso = feature.properties["ISO3166-1-Alpha-3"];
-  const covered = !!(window.COUNTRY_DATA && window.COUNTRY_DATA[iso]);
-  return { fillColor: covered ? "#009EDB" : "#D4DEE8", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: covered ? 0.75 : 0.55 };
+  const kind = featureKind(feature);
+  if (kind === "covered")
+    return { fillColor: "#009EDB", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.75 };
+  if (kind === "territory")
+    return { fillColor: "#8FCBEA", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.55 };
+  return { fillColor: "#D4DEE8", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.55 };
 }
 function styleCountryHover(feature) {
-  const iso = feature.properties["ISO3166-1-Alpha-3"];
-  const covered = !!(window.COUNTRY_DATA && window.COUNTRY_DATA[iso]);
-  return { fillColor: covered ? "#0072BC" : "#B8C4D3", weight: 1.5, color: "#003D6B", fillOpacity: covered ? 0.9 : 0.75 };
+  const kind = featureKind(feature);
+  if (kind === "covered")
+    return { fillColor: "#0072BC", weight: 1.5, color: "#003D6B", fillOpacity: 0.9 };
+  if (kind === "territory")
+    return { fillColor: "#5FB3DF", weight: 1.5, color: "#003D6B", fillOpacity: 0.75 };
+  return { fillColor: "#B8C4D3", weight: 1.5, color: "#003D6B", fillOpacity: 0.75 };
 }
 
 let countryLayer;
 let currentActiveIso = null;
+let boundariesGeojson = null;
+
+function featureTooltip(feature) {
+  const name = feature.properties.name;
+  const iso = resolveIso(feature);
+  const kind = featureKind(feature);
+  if (kind === "territory") {
+    const sov = TERRITORY_OF[iso];
+    const sovName = ((window.COUNTRY_DATA || {})[sov] || {}).name || sov;
+    return `${name} — ${t("map_territory_note", { c: sovName })}`;
+  }
+  if (kind === "none") return `${name} — ${t("map_not_covered")}`;
+  return name;
+}
+
+/* Re-derive tooltips, colors, and labels. Needed (a) after the live
+   countries.json arrives — the map may have loaded first with only the
+   inline fallback — and (b) after a language switch, to re-translate
+   territory tooltips. */
+function refreshMapAnnotations() {
+  if (countryLayer) {
+    countryLayer.eachLayer(l => {
+      try {
+        l.setTooltipContent ? l.setTooltipContent(featureTooltip(l.feature))
+                            : l.bindTooltip(featureTooltip(l.feature), { sticky: true, direction: "top" });
+        if (resolveIso(l.feature) !== currentActiveIso) countryLayer.resetStyle(l);
+      } catch (e) {}
+    });
+  }
+  if (boundariesGeojson) buildCountryLabels(boundariesGeojson);
+}
 
 fetch(COUNTRY_BOUNDARIES_URL)
   .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
@@ -1563,16 +1658,23 @@ fetch(COUNTRY_BOUNDARIES_URL)
     countryLayer = L.geoJSON(geojson, {
       style: styleCountry,
       onEachFeature: (feature, layer) => {
-        const iso = feature.properties["ISO3166-1-Alpha-3"];
+        const iso = resolveIso(feature);
         const name = feature.properties.name;
-        layer.bindTooltip(name, { sticky: true, direction: "top" });
+        layer.bindTooltip(featureTooltip(feature), { sticky: true, direction: "top" });
         layer.on({
           mouseover: (e) => { try { e.target.setStyle(styleCountryHover(feature)); } catch(err) {} },
-          mouseout: (e) => { if (iso !== currentActiveIso) { try { countryLayer.resetStyle(e.target); } catch(err) {} } },
-          click: () => openDetail(iso)
+          mouseout: (e) => { if (resolveIso(feature) !== currentActiveIso) { try { countryLayer.resetStyle(e.target); } catch(err) {} } },
+          click: () => {
+            // evaluated at click time: live data may arrive after the map loads
+            const k = featureKind(feature);
+            if (k === "covered") openDetail(iso);
+            else if (k === "territory") openDetail(TERRITORY_OF[iso]);
+          }
         });
       }
     }).addTo(map);
+    boundariesGeojson = geojson;
+    buildCountryLabels(geojson);
   })
   .catch(err => {
     console.error("Boundary load failed:", err);
@@ -1580,6 +1682,71 @@ fetch(COUNTRY_BOUNDARIES_URL)
     banner.classList.add("show");
     banner.textContent = "⚠ Could not load the world map boundaries from the CDN. Check your connection and refresh the page.";
   });
+
+/* ---------- English country labels ----------
+ * The base tiles carry no labels; we label countries ourselves in English
+ * at the centroid of each country's LARGEST polygon (so France's label sits
+ * in metropolitan France, the USA's in the mainland, not mid-ocean).
+ * Two tiers keep the map readable: major countries appear from zoom 2.6,
+ * the rest from zoom 4.
+ */
+let labelLayerGiant = null, labelLayerMajor = null, labelLayerMinor = null;
+
+function largestRingArea(coords) {
+  // shoelace on the outer ring; abs value, lat/lng treated as planar (fine for sizing)
+  let a = 0;
+  const ring = coords[0];
+  for (let i = 0; i < ring.length - 1; i++)
+    a += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
+  return Math.abs(a / 2);
+}
+function labelPoint(geom) {
+  let best = null, bestArea = -1;
+  const polys = geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates;
+  for (const p of polys) {
+    const a = largestRingArea(p);
+    if (a > bestArea) { bestArea = a; best = p[0]; }
+  }
+  let lng = 0, lat = 0;
+  for (const pt of best) { lng += pt[0]; lat += pt[1]; }
+  return { lat: lat / best.length, lng: lng / best.length, area: bestArea };
+}
+
+function buildCountryLabels(geojson) {
+  for (const lg of [labelLayerGiant, labelLayerMajor, labelLayerMinor])
+    if (lg) map.removeLayer(lg);
+  const giant = [], major = [], minor = [];
+  for (const f of geojson.features) {
+    const kind = featureKind(f);
+    if (kind === "none") continue;               // no labels on non-covered slivers
+    const name = f.properties.name;              // dataset names are English
+    const pt = labelPoint(f.geometry);
+    // size tiers (deg² of the largest polygon): giants label at world view,
+    // mid-size from zoom 3, everything from zoom 4
+    const tier = pt.area >= 150 ? "giant" : pt.area >= 25 ? "major" : "minor";
+    const icon = L.divIcon({
+      className: "",
+      html: `<span class="country-label ${tier === "minor" ? "minor" : ""}">${name}</span>`,
+      iconSize: [0, 0],
+    });
+    const m = L.marker([pt.lat, pt.lng], { icon, interactive: false, keyboard: false });
+    ({ giant, major, minor })[tier].push(m);
+  }
+  labelLayerGiant = L.layerGroup(giant);
+  labelLayerMajor = L.layerGroup(major);
+  labelLayerMinor = L.layerGroup(minor);
+  updateLabelVisibility();
+}
+function updateLabelVisibility() {
+  if (!labelLayerGiant) return;
+  const z = map.getZoom();
+  const want = [[labelLayerGiant, 2], [labelLayerMajor, 3], [labelLayerMinor, 4]];
+  for (const [lg, minZ] of want) {
+    if (z >= minZ) { if (!map.hasLayer(lg)) lg.addTo(map); }
+    else map.removeLayer(lg);
+  }
+}
+map.on("zoomend", updateLabelVisibility);
 
 /* ---------- Stats strip ---------- */
 const statsStrip = document.getElementById("stats-strip");
@@ -1617,7 +1784,7 @@ function renderAggregateStats() {
     <div class="stat">
       <div class="label">${t("stat_people_covered")}</div>
       <div class="value">${(totalPop / 1e9).toFixed(2)}B</div>
-      <div class="delta">${t("stat_world_pop_pct", { n: Math.round((totalPop / 8100000000) * 100) })}</div>
+      <div class="delta">${t("stat_world_pop_pct", { n: Math.min(100, Math.round((totalPop / ((window.COUNTRY_META && window.COUNTRY_META.world_population) || 8230000000)) * 100)) })}</div>
     </div>
     <div class="stat">
       <div class="label">${t("stat_avg_internet")}</div>
@@ -1741,7 +1908,7 @@ function openDetail(iso) {
   document.querySelectorAll(".country-card").forEach(c => c.classList.toggle("active", c.dataset.iso === iso));
   if (countryLayer) {
     countryLayer.eachLayer(layer => {
-      const layerIso = layer.feature.properties["ISO3166-1-Alpha-3"];
+      const layerIso = resolveIso(layer.feature);
       if (layerIso === iso) {
         try { layer.setStyle(styleCountryHover(layer.feature)); } catch(e) {}
         map.fitBounds(layer.getBounds(), { maxZoom: 4, padding: [50, 50] });
@@ -1769,7 +1936,7 @@ function closeDetail() {
   panel.classList.remove("open");
   if (currentActiveIso && countryLayer) {
     countryLayer.eachLayer(layer => {
-      if (layer.feature.properties["ISO3166-1-Alpha-3"] === currentActiveIso) {
+      if (resolveIso(layer.feature) === currentActiveIso) {
         try { countryLayer.resetStyle(layer); } catch(e) {}
       }
     });
@@ -1782,7 +1949,7 @@ function closeDetail() {
 function lookupName(iso) {
   if (!countryLayer) return iso;
   let found = iso;
-  countryLayer.eachLayer(l => { if (l.feature.properties["ISO3166-1-Alpha-3"] === iso) found = l.feature.properties.name; });
+  countryLayer.eachLayer(l => { if (resolveIso(l.feature) === iso) found = l.feature.properties.name; });
   return found;
 }
 
@@ -2035,6 +2202,7 @@ document.getElementById("last-check").textContent = new Date().toISOString().sli
     // strip the _meta helper key and keep only country rows
     const meta = live._meta;
     delete live._meta;
+    window.COUNTRY_META = meta || null;
     // Only replace if the live payload actually has country rows
     if (Object.keys(live).length > 0) {
       window.COUNTRY_DATA = live;
@@ -2049,12 +2217,8 @@ document.getElementById("last-check").textContent = new Date().toISOString().sli
         renderAggregateStats();
       }
       renderList();
-      // Re-style the map so newly-covered countries light up in blue
-      if (countryLayer) {
-        countryLayer.eachLayer(l => {
-          try { countryLayer.resetStyle(l); } catch(e) {}
-        });
-      }
+      // Re-style, re-tooltip, and re-label the map with the full dataset
+      refreshMapAnnotations();
       console.log("[atlas] live data loaded:", meta);
     }
   } catch (err) {

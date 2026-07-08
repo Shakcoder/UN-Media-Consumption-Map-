@@ -691,9 +691,14 @@ def main() -> int:
     for iso3, meta in sorted(static.items()):
         result[iso3] = build_country(iso3, meta, previous.get(iso3), wb_data)
 
+    world_pop_row = wb_data.get("population", {}).get("WLD")
     result["_meta"] = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "country_count": len([k for k in result if not k.startswith("_")]),
+        # World Bank world total — the denominator for the "% of world
+        # population" stat (summing 195 countries slightly exceeds older
+        # hardcoded totals, which produced a "101%" display bug).
+        "world_population": world_pop_row[0] if world_pop_row else None,
         "schema_version": 2,
         "data_sources": [
             "World Bank Open Data API (14 indicators, automated weekly)",
