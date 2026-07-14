@@ -640,13 +640,30 @@
         </div>
         <div class="stat">
           <div class="label" data-i18n="modal_data_status_label">Data status</div>
-          <div class="value" style="color: var(--warn);" data-i18n="modal_data_status_value">Preliminary</div>
-          <div class="delta" data-i18n="modal_data_status_delta">pending source verification</div>
+          <div class="value" style="color: var(--positive);" data-i18n="modal_data_status_value">Verified</div>
+          <div class="delta" data-i18n="modal_data_status_delta">primary sources, cited per field</div>
         </div>
       </div>
 
       <h3 style="font-size: 14px; color: var(--ink); margin: 8px 0 6px;" data-i18n="modal_refresh_cadence">Refresh cadence</h3>
       <p style="color: var(--muted);" data-i18n="modal_refresh_body">Automated indicators refresh daily via public APIs (World Bank, ITU). Manual-update indicators refresh once a year when flagship reports (Reuters Institute DNR, RSF, Freedom House) publish new editions.</p>
+
+      <h3 style="font-size: 14px; color: var(--ink); margin: 18px 0 6px;" data-i18n="modal_sources_heading">Integrated data sources</h3>
+      <p style="color: var(--muted); font-size: 13px; line-height: 1.7;">
+        <a href="https://data.worldbank.org" target="_blank" rel="noopener">World Bank Open Data</a> (ICT indicators originally compiled by <a href="https://datahub.itu.int" target="_blank" rel="noopener">ITU</a>; education by <a href="https://uis.unesco.org" target="_blank" rel="noopener">UNESCO UIS</a>) ·
+        <a href="https://population.un.org/wpp/" target="_blank" rel="noopener">UN DESA World Population Prospects 2024</a> ·
+        <a href="https://www.mobileconnectivityindex.com" target="_blank" rel="noopener">GSMA Mobile Connectivity Index 2024</a> ·
+        <a href="https://rsf.org/en/index" target="_blank" rel="noopener">RSF World Press Freedom Index 2025</a> ·
+        <a href="https://freedomhouse.org/report/freedom-world" target="_blank" rel="noopener">Freedom House: Freedom in the World 2026</a> (official data files) ·
+        <a href="https://freedomhouse.org/report/freedom-net" target="_blank" rel="noopener">Freedom on the Net 2025</a> ·
+        <a href="https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2026" target="_blank" rel="noopener">Reuters Institute Digital News Report 2026</a> ·
+        <a href="https://www.afrobarometer.org/data/" target="_blank" rel="noopener">Afrobarometer Round 9</a> (weighted microdata incl. radio) ·
+        <a href="https://datareportal.com" target="_blank" rel="noopener">DataReportal 2024</a> ·
+        <a href="https://www.cia.gov/the-world-factbook/" target="_blank" rel="noopener">CIA World Factbook</a> (profile cross-reference) ·
+        <a href="https://wikimedia.org/api/rest_v1/" target="_blank" rel="noopener">Wikimedia Pageviews</a> + <a href="https://www.gdeltproject.org" target="_blank" rel="noopener">GDELT 2.0</a> (daily trend engine).
+        <br><span data-i18n="modal_sources_note">Reference tools (linked, not ingested): UNESCO World Trends, Pew Research, Edison Research, OECD, Meta Ad Library, Google Ads Transparency. Full registry &amp; conflict-resolution rules:</span>
+        <a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-/blob/main/docs/DATA_SOURCES.md" target="_blank" rel="noopener">docs/DATA_SOURCES.md</a>
+      </p>
 
       <h3 style="font-size: 14px; color: var(--ink); margin: 18px 0 6px;" data-i18n="modal_confidence_flags">Confidence flags</h3>
       <p style="color: var(--muted);" data-i18n="modal_confidence_body">Each cell carries a confidence flag (high / medium / low / estimated / preliminary). Any cell marked preliminary has not yet been independently verified against its primary source and must not be cited publicly.</p>
@@ -1031,7 +1048,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Strategic focus areas",
     section_connectivity: "Connectivity", section_leading_outlets: "Leading outlets",
     section_press_freedom: "Press freedom", section_topics: "Topics of interest",
-    section_trending: "Trending this week (live)", section_distinctive: "Distinctive interests", label_pr_cl: "Political rights · Civil liberties", label_electoral: "Electoral democracy", map_territory_note: "territory · data shown under {c}", map_not_covered: "not covered (non-member territory)", trending_unavailable: "Live trend data is not yet available for this country — the survey-based topics below still apply.",
+    section_trending: "Trending this week (live)", section_distinctive: "Distinctive interests", label_pr_cl: "Political rights · Civil liberties", label_electoral: "Electoral democracy", map_territory_note: "territory · data shown under {c}", map_not_covered: "not covered (non-member territory)", label_trust_news: "Trust in news", label_use_tv: "Use TV for news", label_use_radio: "Use radio for news", label_use_online: "Use online sources for news", label_use_social: "Use social media for news", label_median_age: "Median age", label_mci: "Mobile connectivity index (GSMA)", trending_unavailable: "Live trend data is not yet available for this country — the survey-based topics below still apply.",
     section_age_structure: "Age structure", section_where_live: "Where people live",
     section_education: "Education", section_primary_sources: "Primary sources",
     section_confidence_level: "Confidence level",
@@ -1062,8 +1079,8 @@ window.TRANSLATIONS = {
     modal_intro: "This atlas is built to the standards of an institutional research resource. Every number displayed is tied to a primary source that is either (a) produced by an intergovernmental body or government statistical agency, or (b) published in a recognised comparative research programme.",
     modal_indicators_label: "Indicators per country", modal_indicators_delta: "with citations",
     modal_source_tier_label: "Primary source tier", modal_source_tier_value: "Institutional",
-    modal_data_status_label: "Data status", modal_data_status_value: "Preliminary",
-    modal_data_status_delta: "pending source verification",
+    modal_data_status_label: "Data status", modal_data_status_value: "Verified",
+    modal_data_status_delta: "primary sources, cited per field", modal_sources_heading: "Integrated data sources", modal_sources_note: "Reference tools (linked, not ingested): UNESCO World Trends, Pew Research, Edison Research, OECD, Meta Ad Library, Google Ads Transparency. Full registry & conflict-resolution rules:",
     modal_refresh_cadence: "Refresh cadence",
     modal_refresh_body: "Automated indicators refresh daily via public APIs (World Bank, ITU). Manual-update indicators refresh once a year when flagship reports (Reuters Institute DNR, RSF, Freedom House) publish new editions.",
     modal_confidence_flags: "Confidence flags",
@@ -1112,7 +1129,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Priorités stratégiques",
     section_connectivity: "Connectivité", section_leading_outlets: "Médias de référence",
     section_press_freedom: "Liberté de la presse", section_topics: "Centres d'intérêt",
-    section_trending: "Tendances de la semaine (en direct)", section_distinctive: "Intérêts distinctifs", label_pr_cl: "Droits politiques · Libertés civiles", label_electoral: "Démocratie électorale", map_territory_note: "territoire · données affichées sous {c}", map_not_covered: "non couvert (territoire non membre)", trending_unavailable: "Les tendances en direct ne sont pas encore disponibles pour ce pays — les thèmes issus d'enquêtes restent valables.",
+    section_trending: "Tendances de la semaine (en direct)", section_distinctive: "Intérêts distinctifs", label_pr_cl: "Droits politiques · Libertés civiles", label_electoral: "Démocratie électorale", map_territory_note: "territoire · données affichées sous {c}", map_not_covered: "non couvert (territoire non membre)", label_trust_news: "Confiance dans l'information", label_use_tv: "S'informent par la télévision", label_use_radio: "S'informent par la radio", label_use_online: "S'informent en ligne", label_use_social: "S'informent via les réseaux sociaux", label_median_age: "Âge médian", label_mci: "Indice de connectivité mobile (GSMA)", trending_unavailable: "Les tendances en direct ne sont pas encore disponibles pour ce pays — les thèmes issus d'enquêtes restent valables.",
     section_age_structure: "Structure par âge", section_where_live: "Lieu de résidence",
     section_education: "Éducation", section_primary_sources: "Sources primaires",
     section_confidence_level: "Niveau de confiance",
@@ -1142,8 +1159,8 @@ window.TRANSLATIONS = {
     modal_intro: "Cet atlas est construit selon les standards d'une ressource de recherche institutionnelle. Chaque chiffre affiché est lié à une source primaire produite soit (a) par un organisme intergouvernemental ou une agence statistique gouvernementale, soit (b) publiée dans un programme comparatif de recherche reconnu.",
     modal_indicators_label: "Indicateurs par pays", modal_indicators_delta: "avec citations",
     modal_source_tier_label: "Niveau des sources primaires", modal_source_tier_value: "Institutionnel",
-    modal_data_status_label: "Statut des données", modal_data_status_value: "Préliminaire",
-    modal_data_status_delta: "en attente de vérification",
+    modal_data_status_label: "Statut des données", modal_data_status_value: "Vérifié",
+    modal_data_status_delta: "sources primaires, citées par champ", modal_sources_heading: "Sources de données intégrées", modal_sources_note: "Outils de référence (liés, non ingérés) : UNESCO World Trends, Pew Research, Edison Research, OCDE, Meta Ad Library, Google Ads Transparency. Registre complet :",
     modal_refresh_cadence: "Fréquence de mise à jour",
     modal_refresh_body: "Les indicateurs automatisés sont mis à jour quotidiennement via des API publiques (Banque mondiale, UIT). Les indicateurs manuels sont mis à jour une fois par an, lors de la publication des rapports phares (Reuters Institute DNR, RSF, Freedom House).",
     modal_confidence_flags: "Indicateurs de confiance",
@@ -1192,7 +1209,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Prioridades estratégicas",
     section_connectivity: "Conectividad", section_leading_outlets: "Medios principales",
     section_press_freedom: "Libertad de prensa", section_topics: "Temas de interés",
-    section_trending: "Tendencias de la semana (en vivo)", section_distinctive: "Intereses distintivos", label_pr_cl: "Derechos políticos · Libertades civiles", label_electoral: "Democracia electoral", map_territory_note: "territorio · datos mostrados bajo {c}", map_not_covered: "no cubierto (territorio no miembro)", trending_unavailable: "Los datos de tendencias en vivo aún no están disponibles para este país — los temas basados en encuestas siguen siendo válidos.",
+    section_trending: "Tendencias de la semana (en vivo)", section_distinctive: "Intereses distintivos", label_pr_cl: "Derechos políticos · Libertades civiles", label_electoral: "Democracia electoral", map_territory_note: "territorio · datos mostrados bajo {c}", map_not_covered: "no cubierto (territorio no miembro)", label_trust_news: "Confianza en las noticias", label_use_tv: "Usan TV para noticias", label_use_radio: "Usan radio para noticias", label_use_online: "Usan fuentes en línea", label_use_social: "Usan redes sociales para noticias", label_median_age: "Edad mediana", label_mci: "Índice de conectividad móvil (GSMA)", trending_unavailable: "Los datos de tendencias en vivo aún no están disponibles para este país — los temas basados en encuestas siguen siendo válidos.",
     section_age_structure: "Estructura por edad", section_where_live: "Dónde vive la gente",
     section_education: "Educación", section_primary_sources: "Fuentes primarias",
     section_confidence_level: "Nivel de confianza",
@@ -1222,8 +1239,8 @@ window.TRANSLATIONS = {
     modal_intro: "Este atlas se construye según los estándares de un recurso de investigación institucional. Cada número mostrado está vinculado a una fuente primaria producida (a) por un organismo intergubernamental o una agencia estadística gubernamental, o (b) publicada en un programa comparativo de investigación reconocido.",
     modal_indicators_label: "Indicadores por país", modal_indicators_delta: "con citas",
     modal_source_tier_label: "Nivel de fuentes primarias", modal_source_tier_value: "Institucional",
-    modal_data_status_label: "Estado de los datos", modal_data_status_value: "Preliminar",
-    modal_data_status_delta: "pendiente de verificación",
+    modal_data_status_label: "Estado de los datos", modal_data_status_value: "Verificado",
+    modal_data_status_delta: "fuentes primarias, citadas por campo", modal_sources_heading: "Fuentes de datos integradas", modal_sources_note: "Herramientas de referencia (enlazadas, no ingeridas): UNESCO World Trends, Pew Research, Edison Research, OCDE, Meta Ad Library, Google Ads Transparency. Registro completo:",
     modal_refresh_cadence: "Frecuencia de actualización",
     modal_refresh_body: "Los indicadores automatizados se actualizan a diario mediante API públicas (Banco Mundial, UIT). Los indicadores manuales se actualizan una vez al año, cuando se publican los informes de referencia (Reuters Institute DNR, RSF, Freedom House).",
     modal_confidence_flags: "Indicadores de confianza",
@@ -1272,7 +1289,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "الأولويات الاستراتيجية",
     section_connectivity: "الاتصال", section_leading_outlets: "أبرز الوسائل",
     section_press_freedom: "حرية الصحافة", section_topics: "مواضيع الاهتمام",
-    section_trending: "الرائج هذا الأسبوع (مباشر)", section_distinctive: "اهتمامات مميزة", label_pr_cl: "الحقوق السياسية · الحريات المدنية", label_electoral: "ديمقراطية انتخابية", map_territory_note: "إقليم · البيانات معروضة ضمن {c}", map_not_covered: "غير مشمول (إقليم غير عضو)", trending_unavailable: "بيانات الاتجاهات المباشرة غير متاحة بعد لهذا البلد — المواضيع المستندة إلى الاستطلاعات لا تزال سارية.",
+    section_trending: "الرائج هذا الأسبوع (مباشر)", section_distinctive: "اهتمامات مميزة", label_pr_cl: "الحقوق السياسية · الحريات المدنية", label_electoral: "ديمقراطية انتخابية", map_territory_note: "إقليم · البيانات معروضة ضمن {c}", map_not_covered: "غير مشمول (إقليم غير عضو)", label_trust_news: "الثقة في الأخبار", label_use_tv: "يستخدمون التلفزيون للأخبار", label_use_radio: "يستخدمون الإذاعة للأخبار", label_use_online: "يستخدمون الإنترنت للأخبار", label_use_social: "يستخدمون وسائل التواصل للأخبار", label_median_age: "العمر الوسيط", label_mci: "مؤشر الاتصال المحمول (GSMA)", trending_unavailable: "بيانات الاتجاهات المباشرة غير متاحة بعد لهذا البلد — المواضيع المستندة إلى الاستطلاعات لا تزال سارية.",
     section_age_structure: "التوزيع العمري", section_where_live: "أماكن السكن",
     section_education: "التعليم", section_primary_sources: "المصادر الأولية",
     section_confidence_level: "مستوى الثقة",
@@ -1302,8 +1319,8 @@ window.TRANSLATIONS = {
     modal_intro: "بُني هذا الأطلس وفق معايير مورد بحثي مؤسسي. كل رقم معروض مرتبط بمصدر أولي يصدر إما (أ) عن هيئة حكومية دولية أو وكالة إحصاء حكومية، أو (ب) ضمن برنامج بحثي مقارن معتمد.",
     modal_indicators_label: "عدد المؤشرات لكل دولة", modal_indicators_delta: "مع استشهادات",
     modal_source_tier_label: "مستوى المصدر الأولي", modal_source_tier_value: "مؤسسي",
-    modal_data_status_label: "حالة البيانات", modal_data_status_value: "أولية",
-    modal_data_status_delta: "بانتظار التحقق من المصدر",
+    modal_data_status_label: "حالة البيانات", modal_data_status_value: "موثّقة",
+    modal_data_status_delta: "مصادر أولية، مذكورة لكل حقل", modal_sources_heading: "مصادر البيانات المدمجة", modal_sources_note: "أدوات مرجعية (مرتبطة، غير مدمجة): يونسكو، بيو، إديسون، OECD، مكتبة إعلانات ميتا، شفافية إعلانات جوجل. السجل الكامل:",
     modal_refresh_cadence: "دورة التحديث",
     modal_refresh_body: "تُحدَّث المؤشرات الآلية يوميًا عبر واجهات برمجية عامة (البنك الدولي، الاتحاد الدولي للاتصالات). المؤشرات اليدوية تُحدَّث مرة واحدة في السنة عند صدور التقارير الرئيسية (تقرير معهد رويترز للأخبار الرقمية، منظمة مراسلون بلا حدود، فريدم هاوس).",
     modal_confidence_flags: "مستويات الثقة",
@@ -1352,7 +1369,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "战略优先事项",
     section_connectivity: "互联互通", section_leading_outlets: "主要媒体",
     section_press_freedom: "新闻自由", section_topics: "兴趣话题",
-    section_trending: "本周热门（实时）", section_distinctive: "特色关注话题", label_pr_cl: "政治权利 · 公民自由", label_electoral: "选举民主", map_territory_note: "属地 · 数据归入 {c}", map_not_covered: "未覆盖（非会员属地）", trending_unavailable: "该国的实时趋势数据暂不可用——下方基于调查的话题仍然有效。",
+    section_trending: "本周热门（实时）", section_distinctive: "特色关注话题", label_pr_cl: "政治权利 · 公民自由", label_electoral: "选举民主", map_territory_note: "属地 · 数据归入 {c}", map_not_covered: "未覆盖（非会员属地）", label_trust_news: "对新闻的信任", label_use_tv: "通过电视获取新闻", label_use_radio: "通过广播获取新闻", label_use_online: "通过网络获取新闻", label_use_social: "通过社交媒体获取新闻", label_median_age: "年龄中位数", label_mci: "移动连接指数 (GSMA)", trending_unavailable: "该国的实时趋势数据暂不可用——下方基于调查的话题仍然有效。",
     section_age_structure: "年龄结构", section_where_live: "居住地",
     section_education: "教育", section_primary_sources: "主要来源",
     section_confidence_level: "可信度",
@@ -1382,8 +1399,8 @@ window.TRANSLATIONS = {
     modal_intro: "本地图集按照机构级研究资源的标准构建。所显示的每一个数字都与一个主要来源相关联：该来源要么（a）由政府间机构或政府统计机构发布，要么（b）发表于公认的比较研究项目。",
     modal_indicators_label: "每国指标数", modal_indicators_delta: "附引用",
     modal_source_tier_label: "主要来源层级", modal_source_tier_value: "机构级",
-    modal_data_status_label: "数据状态", modal_data_status_value: "初步",
-    modal_data_status_delta: "待来源核实",
+    modal_data_status_label: "数据状态", modal_data_status_value: "已核实",
+    modal_data_status_delta: "主要来源，逐项标注", modal_sources_heading: "已整合的数据来源", modal_sources_note: "参考工具（链接，未纳入）：UNESCO World Trends、Pew Research、Edison Research、OECD、Meta 广告库、Google 广告透明中心。完整登记：",
     modal_refresh_cadence: "更新频率",
     modal_refresh_body: "自动化指标通过公开 API（世界银行、国际电联）每日更新。人工更新指标每年在重要报告（路透研究所 DNR、无国界记者、自由之家）发布新版时更新一次。",
     modal_confidence_flags: "可信度标记",
@@ -1432,7 +1449,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Стратегические приоритеты",
     section_connectivity: "Связность", section_leading_outlets: "Ведущие СМИ",
     section_press_freedom: "Свобода прессы", section_topics: "Темы интереса",
-    section_trending: "В тренде на этой неделе (онлайн)", section_distinctive: "Отличительные интересы", label_pr_cl: "Политические права · Гражданские свободы", label_electoral: "Электоральная демократия", map_territory_note: "территория · данные показаны в {c}", map_not_covered: "не охвачено (территория, не член ООН)", trending_unavailable: "Данные о трендах пока недоступны для этой страны — темы на основе опросов остаются актуальными.",
+    section_trending: "В тренде на этой неделе (онлайн)", section_distinctive: "Отличительные интересы", label_pr_cl: "Политические права · Гражданские свободы", label_electoral: "Электоральная демократия", map_territory_note: "территория · данные показаны в {c}", map_not_covered: "не охвачено (территория, не член ООН)", label_trust_news: "Доверие к новостям", label_use_tv: "Смотрят новости по ТВ", label_use_radio: "Слушают новости по радио", label_use_online: "Читают новости онлайн", label_use_social: "Новости из соцсетей", label_median_age: "Медианный возраст", label_mci: "Индекс мобильной связи (GSMA)", trending_unavailable: "Данные о трендах пока недоступны для этой страны — темы на основе опросов остаются актуальными.",
     section_age_structure: "Возрастная структура", section_where_live: "Где живут люди",
     section_education: "Образование", section_primary_sources: "Первичные источники",
     section_confidence_level: "Уровень достоверности",
@@ -1462,8 +1479,8 @@ window.TRANSLATIONS = {
     modal_intro: "Атлас построен по стандартам институционального исследовательского ресурса. Каждое отображаемое число связано с первичным источником, который либо (а) выпущен межправительственной организацией или государственным статистическим агентством, либо (б) опубликован в признанной сравнительной исследовательской программе.",
     modal_indicators_label: "Показатели по странам", modal_indicators_delta: "с цитированием",
     modal_source_tier_label: "Уровень первичных источников", modal_source_tier_value: "Институциональный",
-    modal_data_status_label: "Статус данных", modal_data_status_value: "Предварительные",
-    modal_data_status_delta: "ожидают верификации",
+    modal_data_status_label: "Статус данных", modal_data_status_value: "Проверено",
+    modal_data_status_delta: "первичные источники, цитируются по полям", modal_sources_heading: "Интегрированные источники данных", modal_sources_note: "Справочные инструменты (по ссылкам, не загружаются): UNESCO World Trends, Pew Research, Edison Research, ОЭСР, Meta Ad Library, Google Ads Transparency. Полный реестр:",
     modal_refresh_cadence: "Частота обновления",
     modal_refresh_body: "Автоматические показатели обновляются ежедневно через публичные API (Всемирный банк, МСЭ). Ручные показатели обновляются раз в год при выходе флагманских отчётов (Reuters Institute DNR, RSF, Freedom House).",
     modal_confidence_flags: "Флаги достоверности",
@@ -2023,17 +2040,26 @@ function tabMedia(d) {
   let html = confidenceBanner(d) + translationNotice();
 
   // News consumption (multi-source: Reuters DNR, Afrobarometer, Arab Barometer, etc.)
-  if (nc.trust_in_news_pct != null) {
+  // Each row renders only when its value exists — countries covered by
+  // Afrobarometer have channel data but (honestly) no trust figure.
+  const ncRow = (label, v) => v == null ? "" :
+    `<div class="data-row"><span class="label">${label}</span><span class="value">${v}%</span></div>` +
+    `<div class="bar"><div class="bar-fill" style="width:${Math.min(v, 100)}%"></div></div>`;
+  const ncAny = [nc.trust_in_news_pct, nc.tv_as_news_source_pct, nc.online_as_news_source_pct,
+                 nc.social_as_news_source_pct, nc.radio_as_news_source_pct].some(v => v != null);
+  if (ncAny) {
     const ncSrc = nc.source || "Survey data";
     html += `<h3>News consumption <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">${ncSrc}</span></h3>`;
-    html += `<div class="data-row"><span class="label">Trust in news</span><span class="value">${nc.trust_in_news_pct}%</span></div>`;
-    html += `<div class="bar"><div class="bar-fill" style="width:${nc.trust_in_news_pct}%"></div></div>`;
-    html += `<div class="data-row"><span class="label">Use TV for news</span><span class="value">${nc.tv_as_news_source_pct}%</span></div>`;
-    html += `<div class="bar"><div class="bar-fill" style="width:${nc.tv_as_news_source_pct}%"></div></div>`;
-    html += `<div class="data-row"><span class="label">Use online sources for news</span><span class="value">${nc.online_as_news_source_pct}%</span></div>`;
-    html += `<div class="bar"><div class="bar-fill" style="width:${nc.online_as_news_source_pct}%"></div></div>`;
-    html += `<div class="data-row"><span class="label">Use social media for news</span><span class="value">${nc.social_as_news_source_pct}%</span></div>`;
-    html += `<div class="bar"><div class="bar-fill" style="width:${nc.social_as_news_source_pct}%"></div></div>`;
+    html += ncRow(t("label_trust_news"), nc.trust_in_news_pct);
+    html += ncRow(t("label_use_tv"), nc.tv_as_news_source_pct);
+    if (nc.radio_as_news_source_pct != null) {
+      html += ncRow(t("label_use_radio") + ` <span style="font-size:10px;color:var(--muted-2);">${nc.radio_source || ""}</span>`, nc.radio_as_news_source_pct);
+    }
+    html += ncRow(t("label_use_online"), nc.online_as_news_source_pct);
+    html += ncRow(t("label_use_social"), nc.social_as_news_source_pct);
+    if (nc.survey_note) {
+      html += `<div style="font-size:10px;color:var(--warn);margin-top:4px;">⚠ ${nc.survey_note}</div>`;
+    }
   }
 
   html += `<h3>${t("section_connectivity")}</h3>`;
@@ -2044,6 +2070,10 @@ function tabMedia(d) {
   html += `<div class="data-row"><span class="label">${t("label_smartphone_adoption")}</span><span class="value">${c.smartphone_pct}%</span></div>`;
   html += `<div class="bar"><div class="bar-fill" style="width:${c.smartphone_pct}%"></div></div>`;
   html += `<div class="data-row"><span class="label">${t("label_fixed_broadband")}</span><span class="value">${c.fixed_broadband_per_100}</span></div>`;
+  if (c.mobile_connectivity_index != null) {
+    html += `<div class="data-row"><span class="label">${t("label_mci")}</span><span class="value">${c.mobile_connectivity_index}/100</span></div>`;
+    html += `<div class="bar"><div class="bar-fill" style="width:${c.mobile_connectivity_index}%"></div></div>`;
+  }
 
   html += `<h3>${t("section_leading_outlets")}</h3>`;
   html += `<div class="data-row"><span class="label">${t("label_tv")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_tv}</span></div>`;
@@ -2129,6 +2159,9 @@ function tabSociety(d) {
   }
 
   html += `<h3>${t("section_age_structure")}</h3>`;
+  if (dg.median_age != null) {
+    html += `<div class="data-row"><span class="label">${t("label_median_age")} <span style="font-size:10px;color:var(--muted-2);">UN WPP 2024</span></span><span class="value">${dg.median_age}</span></div>`;
+  }
   html += `<div class="data-row"><span class="label">${t("label_under_15")}</span><span class="value">${dg.age_0_14_pct}%</span></div>`;
   html += `<div class="bar"><div class="bar-fill" style="width:${dg.age_0_14_pct}%"></div></div>`;
   html += `<div class="data-row"><span class="label">${t("label_15_64")}</span><span class="value">${dg.age_15_64_pct}%</span></div>`;

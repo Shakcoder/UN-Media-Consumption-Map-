@@ -181,9 +181,11 @@ function facts(iso) {
     iso, name: c.name, pop: c.population, subregion: c.subregion,
     trust: nc.trust_in_news_pct, tv: nc.tv_as_news_source_pct,
     online: nc.online_as_news_source_pct, social: nc.social_as_news_source_pct,
+    radio: nc.radio_as_news_source_pct, surveyNote: nc.survey_note || null,
     survey: nc.source,
     internet: conn.internet_pct == null ? null : Math.round(conn.internet_pct),
-    smartphone: conn.smartphone_pct,
+    smartphone: conn.smartphone_pct, mci: conn.mobile_connectivity_index,
+    medianAge: dem.median_age,
     rsf: inf.press_freedom_score, fh: inf.political_freedom_status,
     fotn: inf.internet_freedom_score, electoral: inf.electoral_democracy,
     under15: dem.age_0_14_pct, urban: dem.urban_pct, literacy: dem.literacy_pct,
@@ -194,15 +196,25 @@ function facts(iso) {
 }
 
 function addCountryEvidence(f, ev) {
-  return ev.add(`${f.name} — country profile`,
-    `Atlas record. News use & trust: ${f.survey || "n/a"}. Freedom: RSF 2025 + Freedom House 2026 official files. Connectivity & demographics: World Bank.` +
-    (TRENDS ? ` Trends: daily engine as of ${TRENDS.generated} (Wikipedia reading patterns; language-weight attribution — approximation).` : ""));
+  const bits = [
+    `News use & trust: ${f.survey || "no survey integrated yet"}`,
+  ];
+  if (f.radio != null) bits.push("radio reach: Afrobarometer Round 9 microdata (2023, weighted)");
+  bits.push("press freedom: RSF World Press Freedom Index 2025");
+  bits.push("political & internet freedom: Freedom House 2026 official data files (incl. electoral-democracy designation)");
+  bits.push("connectivity & demographics: World Bank CC BY 4.0 (ICT indicators originally compiled by ITU; literacy by UNESCO Institute for Statistics)");
+  if (f.medianAge != null) bits.push("median age: UN DESA World Population Prospects 2024");
+  if (f.mci != null) bits.push("mobile connectivity: GSMA Mobile Connectivity Index 2024");
+  if (TRENDS) bits.push(`live trends: Wikimedia Pageviews + GDELT, daily engine as of ${TRENDS.generated} (language-weight country attribution — approximation)`);
+  return ev.add(`${f.name} — country profile`, "Atlas record. " + bits.join("; ") + ".");
 }
 
 const fmt = (v, suffix = "%") => v == null ? "no data" : `${Math.round(v * 10) / 10}${suffix}`;
 
 function riskLines(f, tag) {
   const risks = [];
+  if (f.surveyNote)
+    risks.push(`Survey caveat for ${f.name}: ${f.surveyNote} ${tag}`);
   if (f.internet != null && f.internet < 40)
     risks.push(`Internet penetration is only ${f.internet}% ${tag} — digital-only campaigns will miss most of the population.`);
   if (f.rsf != null && f.rsf < 40)
@@ -215,7 +227,7 @@ function riskLines(f, tag) {
 }
 
 function bestChannel(f) {
-  const ch = [["TV", f.tv], ["online sources", f.online], ["social media", f.social]]
+  const ch = [["TV", f.tv], ["radio", f.radio], ["online sources", f.online], ["social media", f.social]]
     .filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
   return ch.length ? ch[0] : null;
 }
@@ -241,15 +253,18 @@ function composeCountryBrief(f, ev, wantsTrends) {
   if (top && top[1] != null) lines.push(`**${f.name}: ${top[0]} leads for news reach — ${fmt(top[1])} weekly** ${tag}`);
   else lines.push(`**${f.name} — media profile** ${tag}`);
   lines.push("");
-  if (f.tv == null && f.online == null && f.social == null) {
+  if (f.radio != null) {
+    lines.push(`- Radio as a weekly news source: ${fmt(f.radio)} ${tag} *(Afrobarometer Round 9 microdata — the leading channel in much of Africa)*`);
+  }
+  if (f.tv == null && f.online == null && f.social == null && f.radio == null) {
     lines.push(`- The Atlas has no news-source survey for ${f.name} (not yet covered by the Reuters Institute DNR or the regional barometers integrated so far) ${tag} — the figures below are connectivity, freedom, and demographics.`);
   } else {
     lines.push(`- News sources (weekly reach): TV ${fmt(f.tv)}, online ${fmt(f.online)}, social media ${fmt(f.social)} ${tag} *(survey: ${f.survey || "n/a"})*`);
   }
   if (f.trust != null) lines.push(`- Trust in news: ${f.trust}% ${tag}`);
-  lines.push(`- Connectivity: ${fmt(f.internet)} internet penetration${f.smartphone != null ? `, ${fmt(f.smartphone)} smartphone adoption` : ""} ${tag}`);
+  lines.push(`- Connectivity: ${fmt(f.internet)} internet penetration${f.smartphone != null ? `, ${fmt(f.smartphone)} smartphone adoption` : ""}${f.mci != null ? `, GSMA mobile connectivity index ${f.mci}/100` : ""} ${tag}`);
   if (f.rsf != null) lines.push(`- Press freedom: ${Math.round(f.rsf)}/100 (RSF 2025); political status: ${f.fh || "n/a"}${f.electoral != null ? `; electoral democracy: ${f.electoral ? "yes" : "no"}` : ""} ${tag}`);
-  if (f.under15 != null || f.urban != null) lines.push(`- Audience structure: ${f.under15 != null ? `${fmt(f.under15)} under 15, ` : ""}${f.urban != null ? `${fmt(f.urban)} urban, ` : ""}${f.literacy != null ? `${fmt(f.literacy)} literacy` : ""} ${tag}`);
+  if (f.under15 != null || f.urban != null || f.medianAge != null) lines.push(`- Audience structure: ${f.medianAge != null ? `median age ${f.medianAge}, ` : ""}${f.under15 != null ? `${fmt(f.under15)} under 15, ` : ""}${f.urban != null ? `${fmt(f.urban)} urban, ` : ""}${f.literacy != null ? `${fmt(f.literacy)} literacy` : ""} ${tag}`);
   const o = f.outlets;
   if (o.top_tv || o.top_radio) lines.push(`- Leading outlets — TV: ${o.top_tv || "n/a"}; radio: ${o.top_radio || "n/a"}; online: ${o.top_online_news || "n/a"} ${tag}`);
 
@@ -285,6 +300,7 @@ function composeComparison(fs, ev) {
     `| ${label} | ${fs.map(f => f[key] == null ? "no data" : Math.round(f[key] * 10) / 10 + suffix).join(" | ")} |`;
   lines.push(row("Trust in news", "trust"));
   lines.push(row("TV for news (weekly)", "tv"));
+  if (fs.some(f => f.radio != null)) lines.push(row("Radio for news (weekly)", "radio"));
   lines.push(row("Online sources", "online"));
   lines.push(row("Social media", "social"));
   lines.push(row("Internet penetration", "internet"));

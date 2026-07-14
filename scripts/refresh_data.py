@@ -350,7 +350,125 @@ def _freedom_status(score: int) -> str:
         return "Partly Free"
     return "Not Free"
 
+# Radio as a weekly news source (%), computed from Afrobarometer Round 9
+# microdata (Q74A, weighted, values 3-4 = weekly or more). Radio is the
+# leading news channel in much of Africa — a channel the digital-first
+# sources miss entirely. 39 surveyed countries.
+AFRO_RADIO_2023: dict[str, float] = {
+    "AGO": 60.1, "BEN": 72.2, "BFA": 70.8, "BWA": 67.7, "CIV": 56.8,
+    "CMR": 53.7, "COG": 59.0, "CPV": 48.8, "ETH": 44.9, "GAB": 51.0,
+    "GHA": 79.6, "GIN": 72.0, "GMB": 67.7, "KEN": 85.1, "LBR": 78.9,
+    "LSO": 72.0, "MAR": 44.9, "MDG": 65.0, "MLI": 72.8, "MOZ": 54.3,
+    "MRT": 36.9, "MUS": 96.2, "MWI": 57.6, "NAM": 78.1, "NER": 52.9,
+    "NGA": 65.0, "SDN": 45.1, "SEN": 68.8, "SLE": 67.3, "STP": 72.1,
+    "SWZ": 67.0, "SYC": 81.2, "TGO": 75.4, "TUN": 39.1, "TZA": 74.4,
+    "UGA": 78.8, "ZAF": 74.8, "ZMB": 66.2, "ZWE": 64.8,
+}
+
+# Median age of population, 2025 estimates. Source: UN DESA, World
+# Population Prospects 2024 revision (CC BY 3.0 IGO) — the UN's own
+# demographic standard. All 195 countries.
+WPP_MEDIAN_AGE_2025: dict[str, float] = {
+    "AFG": 17.3, "AGO": 16.6, "ALB": 37.3, "AND": 43.9, "ARE": 31.6,
+    "ARG": 32.9, "ARM": 36.6, "ATG": 36.3, "AUS": 38.3, "AUT": 43.6,
+    "AZE": 33.6, "BDI": 16.4, "BEL": 41.9, "BEN": 18.0, "BFA": 17.7,
+    "BGD": 26.0, "BGR": 44.8, "BHR": 33.3, "BHS": 35.3, "BIH": 45.7,
+    "BLR": 41.3, "BLZ": 26.9, "BOL": 25.2, "BRA": 34.8, "BRB": 39.4,
+    "BRN": 32.7, "BTN": 30.5, "BWA": 23.4, "CAF": 14.5, "CAN": 40.6,
+    "CHE": 42.9, "CHL": 36.9, "CHN": 40.1, "CIV": 18.3, "CMR": 18.0,
+    "COD": 15.8, "COG": 18.6, "COL": 32.5, "COM": 20.6, "CPV": 29.0,
+    "CRI": 35.2, "CUB": 42.2, "CYP": 38.6, "CZE": 43.8, "DEU": 45.5,
+    "DJI": 24.9, "DMA": 36.3, "DNK": 41.3, "DOM": 28.3, "DZA": 28.6,
+    "ECU": 29.3, "EGY": 24.5, "ERI": 19.2, "ESP": 45.9, "EST": 42.8,
+    "ETH": 19.1, "FIN": 43.2, "FJI": 28.1, "FRA": 42.3, "FSM": 23.3,
+    "GAB": 21.5, "GBR": 40.1, "GEO": 37.3, "GHA": 21.3, "GIN": 18.3,
+    "GMB": 18.6, "GNB": 19.4, "GNQ": 20.9, "GRC": 46.8, "GRD": 34.4,
+    "GTM": 23.4, "GUY": 26.2, "HND": 24.2, "HRV": 45.3, "HTI": 24.1,
+    "HUN": 43.9, "IDN": 30.4, "IND": 28.8, "IRL": 39.0, "IRN": 34.0,
+    "IRQ": 20.8, "ISL": 36.2, "ISR": 29.2, "ITA": 48.2, "JAM": 32.8,
+    "JOR": 24.7, "JPN": 49.8, "KAZ": 29.7, "KEN": 20.0, "KGZ": 25.4,
+    "KHM": 26.2, "KIR": 22.9, "KNA": 36.2, "KOR": 45.6, "KWT": 34.8,
+    "LAO": 24.9, "LBN": 28.8, "LBR": 18.8, "LBY": 27.7, "LCA": 34.6,
+    "LIE": 44.5, "LKA": 33.3, "LSO": 21.8, "LTU": 42.3, "LUX": 39.5,
+    "LVA": 43.6, "MAR": 29.8, "MCO": 53.6, "MDA": 38.6, "MDG": 19.2,
+    "MDV": 32.7, "MEX": 29.6, "MHL": 20.4, "MKD": 41.0, "MLI": 15.7,
+    "MLT": 41.1, "MMR": 30.1, "MNE": 40.0, "MNG": 26.9, "MOZ": 16.5,
+    "MRT": 17.4, "MUS": 37.8, "MWI": 18.1, "MYS": 31.0, "NAM": 21.3,
+    "NER": 15.6, "NGA": 18.1, "NIC": 26.0, "NLD": 41.5, "NOR": 39.8,
+    "NPL": 25.3, "NRU": 20.2, "NZL": 37.7, "OMN": 29.7, "PAK": 20.6,
+    "PAN": 30.3, "PER": 30.2, "PHL": 26.1, "PLW": 38.5, "PNG": 22.8,
+    "POL": 42.5, "PRK": 36.5, "PRT": 46.9, "PRY": 27.0, "PSE": 20.1,
+    "QAT": 33.5, "ROU": 43.2, "RUS": 40.3, "RWA": 19.9, "SAU": 29.6,
+    "SDN": 18.5, "SEN": 19.6, "SGP": 36.2, "SLB": 20.7, "SLE": 19.7,
+    "SLV": 27.9, "SMR": 48.6, "SOM": 15.6, "SRB": 44.4, "SSD": 18.7,
+    "STP": 19.5, "SUR": 28.6, "SVK": 42.3, "SVN": 44.7, "SWE": 40.3,
+    "SWZ": 22.5, "SYC": 34.3, "SYR": 23.3, "TCD": 15.8, "TGO": 19.1,
+    "THA": 40.6, "TJK": 22.2, "TKM": 26.9, "TLS": 21.7, "TON": 20.8,
+    "TTO": 37.7, "TUN": 32.9, "TUR": 33.5, "TUV": 24.2, "TZA": 17.5,
+    "UGA": 16.9, "UKR": 41.8, "URY": 36.4, "USA": 38.5, "UZB": 27.0,
+    "VAT": 57.4, "VCT": 34.4, "VEN": 29.4, "VNM": 33.4, "VUT": 20.3,
+    "WSM": 19.8, "YEM": 18.4, "ZAF": 28.7, "ZMB": 17.9, "ZWE": 18.1,
+}
+
+# GSMA Mobile Connectivity Index 2024 (0-100; higher = more enabling
+# environment for mobile internet). Free dataset from
+# mobileconnectivityindex.com (GSMA Intelligence). 172 countries.
+GSMA_MCI_2024: dict[str, float] = {
+    "AFG": 26.8, "AGO": 48.0, "ALB": 72.2, "ARE": 90.7, "ARG": 72.2,
+    "ARM": 72.3, "AUS": 91.6, "AUT": 88.4, "AZE": 73.8, "BDI": 25.1,
+    "BEL": 90.0, "BEN": 42.4, "BFA": 35.3, "BGD": 56.7, "BGR": 81.4,
+    "BHR": 81.8, "BHS": 70.2, "BIH": 67.7, "BLR": 70.5, "BLZ": 64.2,
+    "BOL": 62.2, "BRA": 77.1, "BRB": 65.5, "BRN": 74.6, "BTN": 64.4,
+    "BWA": 64.4, "CAF": 22.3, "CAN": 88.2, "CHE": 91.2, "CHL": 79.7,
+    "CHN": 83.5, "CIV": 50.6, "CMR": 49.0, "COD": 28.2, "COG": 40.8,
+    "COL": 72.2, "COM": 34.1, "CPV": 60.0, "CRI": 73.0, "CYP": 86.7,
+    "CZE": 87.4, "DEU": 92.0, "DNK": 93.4, "DOM": 70.3, "DZA": 57.9,
+    "ECU": 68.8, "EGY": 65.9, "ESP": 90.9, "EST": 90.1, "ETH": 41.6,
+    "FIN": 91.5, "FJI": 61.7, "FRA": 89.6, "GAB": 55.2, "GBR": 91.4,
+    "GEO": 74.9, "GHA": 57.6, "GIN": 38.5, "GMB": 44.6, "GNB": 33.0,
+    "GNQ": 43.5, "GRC": 84.1, "GTM": 64.8, "GUY": 63.9, "HND": 54.7,
+    "HRV": 87.3, "HTI": 47.0, "HUN": 86.6, "IDN": 76.3, "IND": 69.2,
+    "IRL": 91.1, "IRN": 65.4, "IRQ": 56.0, "ISL": 91.5, "ISR": 84.0,
+    "ITA": 85.2, "JAM": 55.5, "JOR": 66.2, "JPN": 87.7, "KAZ": 76.9,
+    "KEN": 56.8, "KGZ": 62.8, "KHM": 61.7, "KOR": 85.2, "KWT": 81.7,
+    "LAO": 57.7, "LBN": 66.7, "LBR": 38.5, "LBY": 67.1, "LCA": 60.8,
+    "LKA": 64.0, "LSO": 47.8, "LTU": 88.2, "LUX": 89.3, "LVA": 86.6,
+    "MAR": 65.3, "MDA": 73.0, "MDG": 38.3, "MDV": 64.2, "MEX": 76.3,
+    "MKD": 76.0, "MLI": 37.2, "MLT": 85.8, "MMR": 52.7, "MNE": 75.6,
+    "MNG": 68.2, "MOZ": 40.6, "MRT": 42.8, "MUS": 73.0, "MWI": 39.8,
+    "MYS": 80.3, "NAM": 56.3, "NER": 27.5, "NGA": 53.4, "NIC": 55.8,
+    "NLD": 91.5, "NOR": 92.1, "NPL": 53.1, "NZL": 89.5, "OMN": 74.1,
+    "PAK": 49.1, "PAN": 73.5, "PER": 72.3, "PHL": 71.5, "PNG": 47.6,
+    "POL": 83.8, "PRT": 84.2, "PRY": 73.1, "QAT": 86.3, "ROU": 82.8,
+    "RUS": 80.2, "RWA": 52.5, "SAU": 84.8, "SDN": 29.2, "SEN": 51.4,
+    "SGP": 93.4, "SLB": 45.6, "SLE": 44.4, "SLV": 66.3, "SOM": 40.7,
+    "SRB": 77.4, "SSD": 12.7, "SUR": 60.1, "SVK": 85.3, "SVN": 89.5,
+    "SWE": 90.4, "SWZ": 57.1, "SYC": 74.0, "TCD": 26.9, "TGO": 47.9,
+    "THA": 78.6, "TJK": 44.3, "TLS": 47.9, "TON": 64.2, "TTO": 69.3,
+    "TUN": 66.6, "TUR": 77.9, "TZA": 46.8, "UGA": 45.5, "UKR": 71.3,
+    "URY": 84.0, "USA": 91.3, "UZB": 67.8, "VCT": 62.0, "VEN": 59.8,
+    "VNM": 79.5, "VUT": 59.0, "WSM": 64.3, "YEM": 28.4, "ZAF": 71.7,
+    "ZMB": 44.2, "ZWE": 38.3,
+}
+
+# Primary compilers behind World Bank-republished indicators. The World Bank
+# redistributes these under CC BY 4.0, which suits a public site better than
+# ITU's own CC BY-NC-SA terms — same numbers, clean license. Credit both.
+WB_DATA_ORIGINS = {
+    "internet_pct": " (data originally compiled by ITU)",
+    "mobile_per_100": " (data originally compiled by ITU)",
+    "fixed_broadband_per_100": " (data originally compiled by ITU)",
+    "literacy_pct": " (data originally compiled by UNESCO Institute for Statistics)",
+    "edu_spending_gdp_pct": " (data originally compiled by UNESCO Institute for Statistics)",
+}
+
 # --- News consumption: ALL 50 countries ---
+# Markets where the DNR 2026 sample is NOT nationally representative
+# (online survey of mainly English-speaking / more urban, educated users —
+# per the report's own methodology notes). Figures for these countries skew
+# younger, urban, and connected; they are flagged in the output.
+DNR_NON_REPRESENTATIVE = {"IND", "KEN", "NGA", "ZAF", "MAR"}
+
 # Reuters Institute Digital News Report 2026 for markets they cover (46 of the
 # 48 surveyed — Hong Kong and Taiwan excluded as non-UN-member entities).
 # Afrobarometer R9/R10, Arab Barometer Wave IX, Asian Barometer Wave 6,
@@ -475,6 +593,20 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
 # --------------------------------------------------------------------------
 # HTTP helpers
 # --------------------------------------------------------------------------
+def _ssl_context():
+    """Certifi-based context when available (fixes local macOS cert issues);
+    the system default elsewhere (GitHub Actions runners are fine as-is)."""
+    import ssl
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        return ssl.create_default_context()
+
+
+_CTX = _ssl_context()
+
+
 def fetch_json(url: str, max_retries: int = 3, timeout: int = 20) -> Any:
     last_exc: Exception | None = None
     for attempt in range(max_retries):
@@ -483,7 +615,7 @@ def fetch_json(url: str, max_retries: int = 3, timeout: int = 20) -> Any:
                 "User-Agent": "UN-Media-Consumption-Atlas/1.0 (+github actions)",
                 "Accept": "application/json",
             })
-            with urlopen(req, timeout=timeout) as resp:
+            with urlopen(req, timeout=timeout, context=_CTX) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except (HTTPError, URLError, TimeoutError) as e:
             last_exc = e
@@ -492,28 +624,48 @@ def fetch_json(url: str, max_retries: int = 3, timeout: int = 20) -> Any:
     raise RuntimeError(f"Failed after {max_retries} attempts: {url}") from last_exc
 
 
+# Sparse indicators (censuses/surveys, not annual series) need a wider
+# most-recent-value window to catch each country's latest real observation.
+SPARSE_WINDOWS = {"SE.ADT.LITR.ZS": 30, "SE.XPD.TOTL.GD.ZS": 30}
+
+
 def fetch_indicator_all_countries(wb_code: str) -> dict[str, tuple[float, int]]:
-    url = (
-        f"https://api.worldbank.org/v2/country/all/indicator/{wb_code}"
-        "?format=json&per_page=500&mrnev=1"
-    )
+    """Latest available value per country for one indicator.
+
+    NOTE (2026-07-14): the API's mrnev (most-recent-non-empty) mode started
+    returning HTTP 400 / timeouts for many indicators, so we fetch a recent
+    window with plain mrv (which is stable), paginate, and pick each
+    country's newest non-null value ourselves — this also preserves the TRUE
+    year of each data point for citations, which gapfill would mask.
+    """
     out: dict[str, tuple[float, int]] = {}
-    try:
-        payload = fetch_json(url)
-    except Exception as exc:
-        print(f"  ! {wb_code}: bulk fetch failed: {exc}")
-        return out
-    if not isinstance(payload, list) or len(payload) < 2 or not payload[1]:
-        return out
-    for row in payload[1]:
-        iso3 = row.get("countryiso3code")
-        value = row.get("value")
-        if not iso3 or value is None:
-            continue
+    page, pages = 1, 1
+    while page <= pages:
+        url = (
+            f"https://api.worldbank.org/v2/country/all/indicator/{wb_code}"
+            f"?format=json&per_page=300&mrv={SPARSE_WINDOWS.get(wb_code, 12)}&page={page}"
+        )
         try:
-            out[iso3] = (float(value), int(row["date"]))
-        except (TypeError, ValueError):
-            continue
+            payload = fetch_json(url)
+        except Exception as exc:
+            print(f"  ! {wb_code}: bulk fetch failed on page {page}: {exc}")
+            return out
+        if not isinstance(payload, list) or len(payload) < 2 or not payload[1]:
+            break
+        pages = int(payload[0].get("pages", 1))
+        for row in payload[1]:
+            iso3 = row.get("countryiso3code")
+            value = row.get("value")
+            if not iso3 or value is None:
+                continue
+            try:
+                year = int(row["date"])
+                if iso3 not in out or year > out[iso3][1]:
+                    out[iso3] = (float(value), year)
+            except (TypeError, ValueError):
+                continue
+        page += 1
+        time.sleep(0.4)   # polite pacing between pages
     return out
 
 
@@ -541,6 +693,9 @@ def build_country(
             prev_value = _lookup_previous(prev, field)
             if prev_value is not None:
                 values[field] = prev_value
+                prev_src = (prev.get("sources") or {}).get(field)
+                if prev_src:
+                    sources[field] = prev_src
                 continue
         if value is not None:
             if field in {"population", "area_km2", "gdp_per_capita_usd"}:
@@ -549,8 +704,9 @@ def build_country(
                 values[field] = round(value, 1)
             if year and (latest_year is None or year > latest_year):
                 latest_year = year
+            origin = WB_DATA_ORIGINS.get(field, "")
             sources[field] = (
-                f"World Bank — https://data.worldbank.org/indicator/{wb_code}?locations={iso2}"
+                f"World Bank{origin} — https://data.worldbank.org/indicator/{wb_code}?locations={iso2}"
             )
 
     # Smartphone % (DataReportal)
@@ -595,6 +751,29 @@ def build_country(
         values["news_online_pct"] = nc["online"]
         values["news_social_pct"] = nc["social"]
         sources["news_consumption"] = f"{nc['src']} — https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2026" if "Reuters" in nc["src"] else nc["src"]
+        if iso3 in DNR_NON_REPRESENTATIVE and "Reuters" in nc["src"]:
+            values["news_survey_note"] = ("Survey sample is online and mainly English-speaking/urban — "
+                                          "not nationally representative; figures skew younger and more connected "
+                                          "(per DNR 2026 methodology).")
+
+    # Radio (Afrobarometer R9 microdata — independent of the dicts above,
+    # because DNR reports radio only per-brand, not as a single reach figure)
+    radio = AFRO_RADIO_2023.get(iso3)
+    if radio is not None:
+        values["news_radio_pct"] = radio
+        sources["news_radio"] = "Afrobarometer Round 9 (2023), computed from weighted microdata — https://www.afrobarometer.org/data/"
+
+    # Median age (UN DESA WPP 2024)
+    ma = WPP_MEDIAN_AGE_2025.get(iso3)
+    if ma is not None:
+        values["median_age"] = ma
+        sources["median_age"] = "UN DESA, World Population Prospects 2024 (2025 estimate) — https://population.un.org/wpp/"
+
+    # Mobile Connectivity Index (GSMA)
+    mci = GSMA_MCI_2024.get(iso3)
+    if mci is not None:
+        values["mobile_connectivity_index"] = mci
+        sources["mobile_connectivity_index"] = "GSMA Mobile Connectivity Index 2024 — https://www.mobileconnectivityindex.com/"
 
     # Assemble the country object
     country: dict[str, Any] = {
@@ -604,6 +783,8 @@ def build_country(
         "area_km2": values.get("area_km2"),
         "gdp_per_capita_usd": values.get("gdp_per_capita_usd"),
         "demographics": {
+            "median_age": values.get("median_age"),
+            "median_age_source": "UN DESA WPP 2024 (2025 estimate)" if values.get("median_age") is not None else None,
             "age_0_14_pct": values.get("age_0_14_pct"),
             "age_15_64_pct": values.get("age_15_64_pct"),
             "age_65_plus_pct": values.get("age_65_plus_pct"),
@@ -618,6 +799,8 @@ def build_country(
             "mobile_per_100": values.get("mobile_per_100"),
             "smartphone_pct": values.get("smartphone_pct"),
             "fixed_broadband_per_100": values.get("fixed_broadband_per_100"),
+            "mobile_connectivity_index": values.get("mobile_connectivity_index"),
+            "mobile_connectivity_index_source": "GSMA Mobile Connectivity Index 2024" if values.get("mobile_connectivity_index") is not None else None,
         },
         "media": {
             **static_meta.get("media", {}),
@@ -644,6 +827,9 @@ def build_country(
             "tv_as_news_source_pct": values.get("news_tv_pct"),
             "online_as_news_source_pct": values.get("news_online_pct"),
             "social_as_news_source_pct": values.get("news_social_pct"),
+            "radio_as_news_source_pct": values.get("news_radio_pct"),
+            "radio_source": "Afrobarometer Round 9 (2023)" if values.get("news_radio_pct") is not None else None,
+            "survey_note": values.get("news_survey_note"),
             "source": nc["src"] if nc else None,
         },
         "sources": sources,
@@ -701,18 +887,23 @@ def main() -> int:
         "world_population": world_pop_row[0] if world_pop_row else None,
         "schema_version": 2,
         "data_sources": [
-            "World Bank Open Data API (14 indicators, automated weekly)",
-            "DataReportal Digital Report 2024 (smartphone penetration, 50 countries)",
+            "World Bank Open Data API (14 indicators, automated weekly; ICT indicators originally compiled by ITU, education/literacy by UNESCO Institute for Statistics — CC BY 4.0)",
+            "UN DESA World Population Prospects 2024 (median age, 195 countries)",
+            "GSMA Mobile Connectivity Index 2024 (172 countries)",
             "RSF Press Freedom Index 2025 (174 countries)",
             "Freedom House: Freedom on the Net 2025 (70 countries)",
-            "Freedom House: Freedom in the World 2026 report / 2025 data (195 countries)",
-            "Reuters Institute Digital News Report 2026 (46 markets)",
-            "Afrobarometer Round 9 (35 African countries)",
-            "Arab Barometer Wave IX (6 MENA countries)",
-            "Asian Barometer Wave 6 + DataReportal (4 Asian countries)",
-            "Latinobarometro 2024 (1 Latin American country)",
-            "World Values Survey Wave 7 (4 countries)",
-            "Other: Asia Foundation, Internews/EBU, DataReportal (2 countries)",
+            "Freedom House: Freedom in the World 2026 — official FH data files incl. PR/CL scores & electoral democracy (193 countries)",
+            "Reuters Institute Digital News Report 2026 (46 markets; non-representative samples flagged for IND/KEN/NGA/ZAF/MAR)",
+            "Afrobarometer Round 9 microdata (news sources incl. radio, 35-39 African countries, weighted)",
+            "DataReportal 2024 (smartphone penetration estimates, 50 countries)",
+            "Arab Barometer Wave IX (6 MENA countries — compiled estimates pending microdata registration)",
+            "Asian Barometer Wave 6 (4 Asian countries — compiled estimates pending microdata registration)",
+            "Latinobarometro 2024 (1 country — compiled estimate pending microdata registration)",
+            "World Values Survey Wave 7 (4 countries — compiled estimates pending microdata registration)",
+            "Other: Asia Foundation, Internews/EBU (2 countries)",
+            "Trend engine: Wikimedia Pageviews API (CC0) + GDELT 2.0 (daily, 167 topics, 22 languages)",
+            "Curated country profiles cross-referenced with the CIA World Factbook and national sources",
+            "Reference tools (linked, not ingested): UNESCO World Trends in Freedom of Expression, Pew Research Center, Edison Research, OECD Data, Meta Ad Library, Google Ads Transparency Center",
         ],
     }
 
