@@ -96,7 +96,7 @@ const COUNTRY_ALIASES = {
   "drc": "COD", "dr congo": "COD", "democratic republic of the congo": "COD",
   "congo-kinshasa": "COD", "congo brazzaville": "COG", "republic of the congo": "COG",
   "ivory coast": "CIV", "cote d'ivoire": "CIV", "côte d'ivoire": "CIV",
-  "south korea": "KOR", "north korea": "PRK", "russia": "RUS", "syria": "SYR",
+  "south korea": "KOR", "north korea": "PRK", "korea": "KOR", "russia": "RUS", "syria": "SYR",
   "iran": "IRN", "vietnam": "VNM", "laos": "LAO", "bolivia": "BOL",
   "venezuela": "VEN", "tanzania": "TZA", "moldova": "MDA", "brunei": "BRN",
   "turkey": "TUR", "türkiye": "TUR", "czechia": "CZE", "czech republic": "CZE",
@@ -150,7 +150,7 @@ const TOPIC_SYNONYMS = {
   "fake news": "Fake news", "gender": "Gender equality",
   "women's rights": "Women's rights", "press freedom": "Freedom of the press",
   "food": "Food security", "hunger": "Hunger", "famine": "Famine",
-  "war": "War", "health": "Mental health",
+  "war": "War", "mental health": "Mental health",
 };
 
 function detectEntities(question, countries, trends) {
@@ -187,7 +187,7 @@ function detectEntities(question, countries, trends) {
   }
 
   // topics: synonyms first, then the tracked topic labels
-  const topicLabels = trends ? Object.entries(trends.topics).map(([qid, t]) => [t.label_en, qid]) : [];
+  const topicLabels = (trends && trends.topics) ? Object.entries(trends.topics).map(([qid, t]) => [t.label_en, qid]) : [];
   for (const [syn, label] of Object.entries(TOPIC_SYNONYMS)) {
     if (q.includes(" " + syn + " ")) {
       const hit = topicLabels.find(([l]) => l === label);
@@ -306,7 +306,7 @@ async function askAnalystFree(question, env) {
   // Nothing recognized: refuse deterministically (costs no AI quota).
   if (pack.length === 0) {
     return {
-      answer: "I couldn't match your question to the Atlas's data. I can answer questions about **specific countries or regions** (all 195 UN member states) and **167 tracked topics** (climate, health, refugees, AI, misinformation, gender equality…). Try naming a country, a region like *East Africa*, or a topic — for example: *\"Compare news trust in France and Germany\"* or *\"What is trending in Nigeria?\"*",
+      answer: "I couldn't match your question to the Atlas's data. I can answer questions about **specific countries or regions** (195 countries — the 193 UN member states plus the two observer states) and **167 tracked topics** (climate, health, refugees, AI, misinformation, gender equality…). Try naming a country, a region like *East Africa*, or a topic — for example: *\"Compare news trust in France and Germany\"* or *\"What is trending in Nigeria?\"*",
       evidence: [],
       engine: "retrieval-only",
     };
@@ -504,7 +504,8 @@ export default {
     try { body = await request.json(); } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON body." }), { status: 400, headers });
     }
-    const question = String(body.question || "").trim().slice(0, MAX_QUESTION_CHARS);
+    // a literal `null` body parses successfully — guard before property access
+    const question = String((body && body.question) || "").trim().slice(0, MAX_QUESTION_CHARS);
     if (!question)
       return new Response(JSON.stringify({ error: "Empty question." }), { status: 400, headers });
 

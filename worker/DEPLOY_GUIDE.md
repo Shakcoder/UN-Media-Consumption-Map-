@@ -1,10 +1,12 @@
-# Turning on the "Ask the Analyst" AI — click-by-click, **zero cost**
+# OPTIONAL upgrade: AI-written prose for "Ask the Analyst" — click-by-click, **zero cost**
 
 *One-time setup, ~15 minutes, no coding, no credit card, no subscription.*
 
-The chat page (`ask.html`) is already on the website in Demo Mode. This guide switches on real free-text answers using **Cloudflare's free AI allowance** — open AI models that run on Cloudflare's servers at no charge. There is nothing to pay and no payment method is ever requested.
+**You do not need this guide for the analyst to work.** Since July 2026 the Ask page (`ask.html`) answers ANY free-text question entirely in the visitor's browser — typos, comparisons, rankings, follow-ups, clarifying questions — using the Atlas's own published data. It needs no account, no server, and cannot break after handover.
 
-How it stays reliable: the Worker code finds the countries/topics in each question and pulls the exact records from the Atlas's own published data **before** any AI is involved; the AI's only job is to write those records up with citation tags. It cannot browse the web and is instructed to refuse rather than guess.
+This guide adds an optional layer on top: smoother AI-written prose via **Cloudflare's free AI allowance** (open AI models on Cloudflare's servers at no charge). If the Worker is ever down, the page automatically falls back to the built-in browser engine — visitors never see an error.
+
+How it stays reliable: the Worker code finds the countries/topics in each question and pulls the exact records from the Atlas's own published data **before** any AI is involved; the AI's only job is to write those records up. It cannot browse the web and is instructed to refuse rather than guess.
 
 ---
 
@@ -39,7 +41,7 @@ That's the entire "AI setup" — no account keys, no billing page, nothing to to
    ```js
    const WORKER_URL = "https://atlas-analyst.YOURNAME.workers.dev";
    ```
-3. Commit and push (GitHub Desktop). Two minutes later the Ask page switches from the yellow "Demo mode" banner to the green "Live" banner.
+3. Upload the changed `ask.html` via GitHub → **Add file → Upload files**. Two minutes later the Ask page's banner notes that AI-written prose is enabled. (Answers now try the Worker first and fall back to the browser engine automatically if it's unreachable.)
 
 ## Part D — Test
 
@@ -52,7 +54,8 @@ Answers arrive in ~5–20 seconds with numbered evidence beneath them.
 
 | Symptom | Cause & fix |
 |---|---|
-| Yellow demo banner still showing | `WORKER_URL` still empty in ask.html, or the push hasn't deployed (wait 2 min, hard-refresh Cmd+Shift+R). |
+| Banner doesn't mention AI prose | `WORKER_URL` still empty in ask.html, or the upload hasn't deployed (wait 2 min, hard-refresh Cmd+Shift+R). |
+| Answers look identical to before | That's expected when the Worker is unreachable — the page silently falls back to the built-in browser engine so visitors never see an outage. Check the Worker URL in a browser. |
 | "the free AI binding is missing" | Part B — the binding's variable name must be exactly `AI`. |
 | Answers stop late in the day | The daily free allowance ran out; it resets at midnight UTC. (If this happens often, that's a *good* problem — usage justifies a budget conversation.) |
 | "I couldn't reach the analyst backend" | Check the Worker URL — opening it in a browser should show a small JSON usage message. |
