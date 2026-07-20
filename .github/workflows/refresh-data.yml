@@ -19,9 +19,16 @@ on:
       - "scripts/refresh_data.py"
       - ".github/workflows/refresh-data.yml"
 
-# This workflow writes back to the repo, so it needs contents:write.
+# This workflow writes back to the repo, so it needs contents:write
+# (and issues:write for the failure-alert step).
 permissions:
   contents: write
+  issues: write
+
+# Never let two refreshes race each other.
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
 
 # Future-proof against GitHub's Node 20 → Node 24 migration (required by June 2026).
 env:
@@ -65,6 +72,9 @@ jobs:
           set -e
           git config user.name "atlas-bot"
           git config user.email "actions@github.com"
+          # ORDER MATTERS: commit first (rebase refuses a dirty tree), THEN
+          # pull --rebase to replay on top of any concurrent trend-engine
+          # commit, then push.
           git add data/countries.json
           echo "=== git status ==="
           git status
@@ -74,6 +84,22 @@ jobs:
             echo "No changes — data is already up to date."
           else
             git commit -m "chore(data): refresh $(date -u +%Y-%m-%d)"
+            git pull --rebase origin main
             git push
             echo "=== Pushed. ==="
+          fi
+
+      - name: Open an issue if this run failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Weekly data refresh failed on $(date -u +%Y-%m-%d)"
+          existing=$(gh issue list --state open --search "in:title \"Weekly data refresh failed\"" --json number --jq 'length')
+          if [ "$existing" = "0" ]; then
+            gh issue create --title "$title" \
+              --body "The weekly refresh-data workflow failed. Open the Actions tab, click the failed run, and check which step went red. The site keeps serving the last good data meanwhile. Close this once a later run succeeds." \
+              --label "automation"
+          else
+            echo "An open failure issue already exists — not duplicating."
           fi

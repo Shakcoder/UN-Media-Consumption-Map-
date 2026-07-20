@@ -1,0 +1,63 @@
+name: Source watchdog (monthly)
+
+# The Atlas's annual flagship sources (RSF, Freedom House, Reuters DNR,
+# GSMA, Afrobarometer, UN WPP) can't refresh themselves — a human integrates
+# each new edition once a year. This workflow makes sure that moment is
+# never missed: once a month it probes each source's site, and when a NEWER
+# edition than the one integrated is detected it opens a GitHub Issue with
+# step-by-step refresh instructions (written for non-coders).
+#
+# It never modifies data. It only watches and opens issues.
+# De-duplication: one issue per source edition — if an open OR closed issue
+# with the same title exists, nothing new is opened (closing an issue
+# permanently silences that edition).
+
+on:
+  schedule:
+    - cron: "0 6 3 * *"    # 3rd of every month, 06:00 UTC
+  workflow_dispatch:        # manual "Run workflow" button
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Probe sources for new editions
+        run: python scripts/check_source_editions.py
+
+      - name: Open issues for new editions (skip duplicates)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          count=$(python3 -c "import json;print(len(json.load(open('watchdog_findings.json'))))")
+          echo "Findings: $count"
+          [ "$count" = "0" ] && exit 0
+          for i in $(seq 0 $((count - 1))); do
+            title=$(python3 -c "import json;print(json.load(open('watchdog_findings.json'))[$i]['title'])")
+            # search open AND closed issues so a dismissed edition stays dismissed
+            existing=$(gh issue list --state all --search "in:title \"$title\"" --json number --jq 'length')
+            if [ "$existing" != "0" ]; then
+              echo "Issue already exists for: $title"
+              continue
+            fi
+            python3 -c "import json;print(json.load(open('watchdog_findings.json'))[$i]['body'])" > /tmp/issue_body.md
+            gh issue create --title "$title" --body-file /tmp/issue_body.md --label "data-refresh"
+            echo "Opened: $title"
+          done

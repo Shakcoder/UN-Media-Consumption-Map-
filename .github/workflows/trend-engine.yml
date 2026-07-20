@@ -25,6 +25,7 @@ on:
 
 permissions:
   contents: write
+  issues: write      # failure-alert step opens an issue
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -70,12 +71,31 @@ jobs:
           set -e
           git config user.name "atlas-bot"
           git config user.email "actions@github.com"
-          git pull --rebase origin main || true
-          git add data/trends/
+          # ORDER MATTERS: commit first (rebase refuses to run on a dirty tree),
+          # THEN pull --rebase to replay our commit on top of any concurrent
+          # commit (e.g. the weekly refresh), then push.
+          # explicit paths: never publish stray files that land in data/trends/
+          git add data/trends/wiki_pageviews.json data/trends/gdelt_coverage.json data/trends/topic_intelligence.json
           if git diff --cached --quiet; then
             echo "No changes — trend data already up to date."
           else
             git commit -m "chore(trends): daily update $(date -u +%Y-%m-%d)"
+            git pull --rebase origin main
             git push
             echo "Pushed."
+          fi
+
+      - name: Open an issue if this run failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Trend engine failed on $(date -u +%Y-%m-%d)"
+          existing=$(gh issue list --state open --search "in:title \"Trend engine failed\"" --json number --jq 'length')
+          if [ "$existing" = "0" ]; then
+            gh issue create --title "$title" \
+              --body "The daily trend-engine workflow failed. Open the Actions tab, click the failed run, and check which step went red. A single bad day is usually harmless (the next run catches up) — this issue exists so repeated failures never go unnoticed. Close it once a later run succeeds." \
+              --label "automation"
+          else
+            echo "An open failure issue already exists — not duplicating."
           fi
