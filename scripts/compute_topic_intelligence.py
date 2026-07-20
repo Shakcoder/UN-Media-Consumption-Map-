@@ -26,6 +26,8 @@ METHOD NOTES (also embedded in the output for the AI analyst to cite):
 from __future__ import annotations
 
 import json
+import re
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -137,10 +139,32 @@ def series_stats(values: list) -> dict | None:
 def main() -> None:
     registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
     topics = {t["qid"]: t for t in registry["topics"]}
+    if not WIKI_PATH.exists():
+        # first-ever run, or the fetch step failed before producing anything:
+        # exit cleanly so the workflow's commit step doesn't fail the night
+        print(f"NOTE: {WIKI_PATH.name} not found — nothing to compute yet. "
+              "The next successful pageview fetch will populate it.")
+        sys.exit(0)
     wiki = json.loads(WIKI_PATH.read_text(encoding="utf-8"))
     gdelt = {}
     if GDELT_PATH.exists():
-        gdelt = json.loads(GDELT_PATH.read_text(encoding="utf-8")).get("topics", {})
+        try:
+            gdelt_doc = json.loads(GDELT_PATH.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            gdelt_doc = {}
+        # STALENESS GUARD: if the GDELT fetch has been failing for a week,
+        # presenting its last snapshot as "news articles in the last 7 days"
+        # would be silently wrong. Drop the supply signal instead.
+        from datetime import date as _date, timedelta as _td
+        upd = str(gdelt_doc.get("updated", ""))
+        try:
+            fresh = (_date.today() - _date.fromisoformat(upd)) <= _td(days=7)
+        except ValueError:
+            fresh = False
+        if fresh:
+            gdelt = gdelt_doc.get("topics", {})
+        else:
+            print(f"WARNING: gdelt_coverage.json is stale (updated={upd or 'unknown'}) — omitting news-coverage figures this run")
 
     topic_out: dict[str, dict] = {}
     country_scores: dict[str, dict[str, float]] = {}   # iso3 -> {qid: score}
@@ -175,6 +199,9 @@ def main() -> None:
         vol = g.get("volume_daily", [])
         news_7d = sum(p["articles"] for p in vol[-7:]) if vol else None
         src = g.get("source_countries", {})
+        # tolerate both clean names and legacy "<Country> Volume Intensity"
+        # series names from GDELT snapshots fetched before the suffix fix
+        src = {re.sub(r"\s+Volume Intensity$", "", k).strip(): v for k, v in src.items()}
         top_media = sorted(
             ((GDELT_NAME_TO_ISO3.get(k), v) for k, v in src.items()
              if GDELT_NAME_TO_ISO3.get(k)),

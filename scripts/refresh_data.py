@@ -50,6 +50,9 @@ WORLD_BANK_INDICATORS: dict[str, str] = {
     "electricity_pct": "EG.ELC.ACCS.ZS",
     "life_expectancy": "SP.DYN.LE00.IN",
     "edu_spending_gdp_pct": "SE.XPD.TOTL.GD.ZS",
+    # Global Findex (World Bank): % of adults (15+) with a financial account —
+    # incl. mobile money. A strong proxy for transactional digital adoption.
+    "financial_account_pct": "FX.OWN.TOTL.ZS",
 }
 
 ISO3_TO_ISO2: dict[str, str] = {
@@ -460,6 +463,7 @@ WB_DATA_ORIGINS = {
     "fixed_broadband_per_100": " (data originally compiled by ITU)",
     "literacy_pct": " (data originally compiled by UNESCO Institute for Statistics)",
     "edu_spending_gdp_pct": " (data originally compiled by UNESCO Institute for Statistics)",
+    "financial_account_pct": " (Global Findex Database)",
 }
 
 # --- News consumption: ALL 50 countries ---
@@ -672,11 +676,65 @@ def fetch_indicator_all_countries(wb_code: str) -> dict[str, tuple[float, int]]:
 # --------------------------------------------------------------------------
 # Build one country row
 # --------------------------------------------------------------------------
+CLDR_TERRITORY_URL = ("https://raw.githubusercontent.com/unicode-org/cldr-json/main/"
+                      "cldr-json/cldr-core/supplemental/territoryInfo.json")
+CLDR_LANG_NAMES_URL = ("https://raw.githubusercontent.com/unicode-org/cldr-json/main/"
+                       "cldr-json/cldr-localenames-full/main/en/languages.json")
+
+
+def fetch_cldr_languages() -> dict[str, list[dict[str, Any]]]:
+    """Per-country language shares from Unicode CLDR (free, Unicode License V3).
+
+    Returns {ISO2: [{"language": "Swahili", "code": "sw", "pct": 80.0,
+                     "official": True}, ...]} — top languages by share of the
+    population that speaks them (CLDR territory-language data). Empty dict on
+    any failure so the weekly refresh never breaks because of this extra.
+    """
+    try:
+        info = fetch_json(CLDR_TERRITORY_URL)
+        names = fetch_json(CLDR_LANG_NAMES_URL)
+    except Exception as exc:  # network hiccup → skip quietly, keep previous data
+        print(f"  ! CLDR language fetch failed ({exc}) — keeping previous language data")
+        return {}
+    try:
+        name_map = names["main"]["en"]["localeDisplayNames"]["languages"]
+        territories = info["supplemental"]["territoryInfo"]
+    except (KeyError, TypeError) as exc:
+        print(f"  ! CLDR payload shape changed ({exc}) — keeping previous language data")
+        return {}
+
+    out: dict[str, list[dict[str, Any]]] = {}
+    for iso2, tdata in territories.items():
+        pops = tdata.get("languagePopulation")
+        if not isinstance(pops, dict):
+            continue
+        rows = []
+        for code, ldata in pops.items():
+            try:
+                pct = float(ldata.get("_populationPercent", 0))
+            except (TypeError, ValueError):
+                continue
+            if pct < 1:                      # ignore sub-1% slivers
+                continue
+            status = ldata.get("_officialStatus", "")
+            rows.append({
+                "language": name_map.get(code, code),
+                "code": code,
+                "pct": round(pct, 1),
+                "official": status.startswith("official"),
+            })
+        rows.sort(key=lambda r: (-r["official"], -r["pct"]))
+        if rows:
+            out[iso2] = rows[:6]
+    return out
+
+
 def build_country(
     iso3: str,
     static_meta: dict[str, Any],
     prev: dict[str, Any] | None,
     wb_data: dict[str, dict[str, tuple[float, int]]],
+    cldr_langs: dict[str, list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     iso2 = ISO3_TO_ISO2.get(iso3, iso3)
     print(f"→ {iso3} ({static_meta.get('name', iso3)})")
@@ -775,6 +833,18 @@ def build_country(
         values["mobile_connectivity_index"] = mci
         sources["mobile_connectivity_index"] = "GSMA Mobile Connectivity Index 2024 — https://www.mobileconnectivityindex.com/"
 
+    # Language shares (Unicode CLDR territory-language data) — which languages
+    # actually reach this country's population, with official status.
+    languages_detail = (cldr_langs or {}).get(iso2)
+    if languages_detail:
+        sources["languages_detail"] = ("Unicode CLDR territory-language data (Unicode License V3) — "
+                                       "https://github.com/unicode-org/cldr-json")
+    elif prev and prev.get("languages_detail"):
+        languages_detail = prev["languages_detail"]          # keep last good copy
+        prev_src = (prev.get("sources") or {}).get("languages_detail")
+        if prev_src:
+            sources["languages_detail"] = prev_src
+
     # Assemble the country object
     country: dict[str, Any] = {
         **static_meta,
@@ -801,7 +871,9 @@ def build_country(
             "fixed_broadband_per_100": values.get("fixed_broadband_per_100"),
             "mobile_connectivity_index": values.get("mobile_connectivity_index"),
             "mobile_connectivity_index_source": "GSMA Mobile Connectivity Index 2024" if values.get("mobile_connectivity_index") is not None else None,
+            "financial_account_pct": values.get("financial_account_pct"),
         },
+        "languages_detail": languages_detail or None,
         "media": {
             **static_meta.get("media", {}),
             "press_freedom_rank": values.get("press_freedom_rank"),
@@ -873,9 +945,13 @@ def main() -> int:
         wb_data[field] = fetch_indicator_all_countries(wb_code)
         print(f"  · {field} ({wb_code}): {len(wb_data[field])} countries returned")
 
+    print("Fetching Unicode CLDR language data (two requests)...")
+    cldr_langs = fetch_cldr_languages()
+    print(f"  · language shares for {len(cldr_langs)} territories")
+
     result: dict[str, Any] = {}
     for iso3, meta in sorted(static.items()):
-        result[iso3] = build_country(iso3, meta, previous.get(iso3), wb_data)
+        result[iso3] = build_country(iso3, meta, previous.get(iso3), wb_data, cldr_langs)
 
     world_pop_row = wb_data.get("population", {}).get("WLD")
     result["_meta"] = {
@@ -887,7 +963,8 @@ def main() -> int:
         "world_population": world_pop_row[0] if world_pop_row else None,
         "schema_version": 2,
         "data_sources": [
-            "World Bank Open Data API (14 indicators, automated weekly; ICT indicators originally compiled by ITU, education/literacy by UNESCO Institute for Statistics — CC BY 4.0)",
+            "World Bank Open Data API (15 indicators incl. Global Findex financial-account ownership, automated weekly; ICT indicators originally compiled by ITU, education/literacy by UNESCO Institute for Statistics — CC BY 4.0)",
+            "Unicode CLDR territory-language data (per-country language shares & official status, automated weekly — Unicode License V3)",
             "UN DESA World Population Prospects 2024 (median age, 195 countries)",
             "GSMA Mobile Connectivity Index 2024 (172 countries)",
             "RSF Press Freedom Index 2025 (174 countries)",

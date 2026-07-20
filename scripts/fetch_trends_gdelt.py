@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import json
 import random
+import re
 import ssl
 import sys
 import time
@@ -111,10 +112,17 @@ def parse_volume(data: dict) -> list[dict]:
 
 
 def parse_source_countries(data: dict) -> dict[str, float]:
-    """timelinesourcecountry -> {country_name: mean share of coverage}."""
+    """timelinesourcecountry -> {country_name: mean share of coverage}.
+
+    GDELT names its series "<Country> Volume Intensity" — strip the suffix so
+    downstream ISO3 mapping (compute_topic_intelligence.GDELT_NAME_TO_ISO3)
+    receives plain country names. Without this every lookup fails silently
+    and top_covering_media_countries comes out empty.
+    """
     out: dict[str, float] = {}
     for series in data.get("timeline", []):
         name = series.get("series", "").strip()
+        name = re.sub(r"\s+Volume Intensity$", "", name).strip()
         pts = [pt.get("value", 0) for pt in series.get("data", [])]
         if name and pts:
             out[name] = round(sum(pts) / len(pts), 4)

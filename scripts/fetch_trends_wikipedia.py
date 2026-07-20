@@ -19,6 +19,7 @@ compute_topic_intelligence.py via documented language→country weights.
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 import urllib.parse
@@ -128,7 +129,14 @@ def main() -> None:
 
     existing: dict = {}
     if OUTPUT_PATH.exists():
-        existing = json.loads(OUTPUT_PATH.read_text(encoding="utf-8")).get("series", {})
+        # Guard against a corrupt file (e.g. the process was SIGKILLed mid-write
+        # before writes became atomic): start fresh rather than wedging the
+        # pipeline permanently on a JSONDecodeError every day.
+        try:
+            existing = json.loads(OUTPUT_PATH.read_text(encoding="utf-8")).get("series", {})
+        except (json.JSONDecodeError, OSError) as exc:
+            print(f"WARNING: existing {OUTPUT_PATH.name} unreadable ({exc}) — rebuilding from scratch", flush=True)
+            existing = {}
 
     # Pageview data lags ~1 day; end at yesterday.
     end = date.today() - timedelta(days=1)
@@ -168,8 +176,11 @@ def main() -> None:
         return qid, lang, fetch_series(lang, title, start, end), incremental
 
     def write_output(series: dict) -> None:
+        # ATOMIC write: dump to a temp file, then os.replace() — so a timeout
+        # kill mid-write can never leave a half-written (corrupt) JSON behind.
         OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-        OUTPUT_PATH.write_text(
+        tmp = OUTPUT_PATH.with_suffix(".json.tmp")
+        tmp.write_text(
             json.dumps({
                 "source": "Wikimedia Pageviews API (user traffic, all access methods)",
                 "license": "CC0 / public API",
@@ -180,6 +191,7 @@ def main() -> None:
             }, separators=(",", ":"), ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
+        os.replace(tmp, OUTPUT_PATH)
 
     # IMPORTANT: seed series_out from `existing`, not empty dicts. If this run
     # gets killed by the workflow timeout partway through (observed in

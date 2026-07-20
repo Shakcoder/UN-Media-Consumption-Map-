@@ -802,11 +802,18 @@ def build():
         subregion, currency, languages, government, industries = vals[0], vals[1], vals[2], vals[3], vals[4]
         overview, tv, radio, online, social = vals[5], vals[6], vals[7], vals[8], vals[9]
 
-        # Get name and capital from World Bank, fall back to defaults
+        # Get name and capital from World Bank, fall back to defaults.
+        # A few UN-recognised states are absent from the World Bank API —
+        # without this map their ISO code would leak through as their name.
+        WB_MISSING = {
+            "VAT": ("Holy See", "Vatican City", "VA"),
+            "PRK": ("Korea, Dem. People's Rep.", "Pyongyang", "KP"),
+        }
         wb = wb_lookup.get(iso3, {})
-        name = wb.get("name", iso3)
-        capital = wb.get("capitalCity", "")
-        iso2 = wb.get("iso2Code", iso3[:2])
+        fallback_name, fallback_capital, fallback_iso2 = WB_MISSING.get(iso3, (iso3, "", iso3[:2]))
+        name = wb.get("name") or fallback_name
+        capital = wb.get("capitalCity") or fallback_capital
+        iso2 = wb.get("iso2Code") or fallback_iso2
 
         # Map subregion → region (subregion is always correct, WB region is too broad)
         if subregion in ("Western Africa", "Eastern Africa", "Middle Africa", "Southern Africa", "Northern Africa"):
