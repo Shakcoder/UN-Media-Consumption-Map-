@@ -1,29 +1,45 @@
-# Global Media Consumption Map
+# Global Media Consumption Atlas
+### An AI-assisted Content Intelligence Platform for UN communications
 
-An interactive, source-cited public website showing how the world consumes media — demographics, preferred mediums, content preferences, topic interests, trust levels — country by country and continent by continent.
+An interactive, source-cited public resource showing **where and how the world gets its information** — and **what each country is paying attention to right now** — across all 195 UN-recognised countries.
 
-Built for handover to the United Nations. Grounded in data from ITU, UNESCO, the World Bank, the Reuters Institute, Pew Research, and other vetted institutions.
+**Live site:** the Atlas (interactive map) · Topic Explorer (live trends, 167 UN-relevant topics) · Ask the Analyst (free-text questions, evidence-backed answers — runs entirely in your browser)
 
-## Status
-**Phase 0 — Foundations.** Live "coming soon" page; data schema and source list drafted; survey ethics language prepared.
+## What it does
+
+| Page | What it answers |
+|---|---|
+| **Map** (`index.html`) | "What does Country X's media landscape look like?" — platforms, trust, connectivity, press freedom, demographics, with a citation on every number |
+| **Topic Explorer** (`topics.html`) | "What is the world paying attention to this week?" — daily attention trends for 167 topics across 22 languages |
+| **Ask the Analyst** (`ask.html`) | Any question in plain English — comparisons, rankings, campaign guidance, live trends. Understands typos and follow-ups, asks clarifying questions, cites all sources per answer |
+
+## How it stays current, at $0
+
+- **Daily** — the trend engine (GitHub Actions) refreshes Wikipedia-attention and GDELT news-coverage signals.
+- **Weekly** — the data refresh pulls 15 World Bank indicators and Unicode CLDR language data for every country.
+- **Monthly** — a source watchdog probes the annual flagship sources (RSF, Freedom House, Reuters DNR, GSMA, Afrobarometer, UN WPP) and **opens a GitHub Issue with step-by-step instructions** whenever a new edition is published.
+- **Hosting** — GitHub Pages. **Automation** — GitHub Actions. **AI analyst** — in-browser, no server. Total running cost: **$0**.
 
 ## Documents
-- [`PLAN.md`](PLAN.md) — full phased build plan
-- [`docs/GITHUB_SETUP.md`](docs/GITHUB_SETUP.md) — step-by-step guide to putting the site online
-- [`docs/DATA_SCHEMA.md`](docs/DATA_SCHEMA.md) — what data we track per country and from where
-- [`docs/SURVEY_ETHICS.md`](docs/SURVEY_ETHICS.md) — consent and data-handling language for the survey
+- [`docs/PLATFORM_DESIGN.md`](docs/PLATFORM_DESIGN.md) — full platform design (the pivot plan)
+- [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) — every source: license, cadence, conflict-resolution rules
+- [`docs/AUTOMATION.md`](docs/AUTOMATION.md) — how the automated pipelines work, for non-coders
+- [`docs/SUPERVISOR_SUMMARY.md`](docs/SUPERVISOR_SUMMARY.md) — one-page summary for supervisors
+- [`worker/DEPLOY_GUIDE.md`](worker/DEPLOY_GUIDE.md) — optional free AI-prose upgrade (Cloudflare)
 
 ## Repository layout
 ```
-/              index.html — the public website
-/assets/       images, icons
-/data/         CSV/JSON datasets, one per indicator group
-/scripts/      automated data-refresh scripts (GitHub Actions)
-/docs/         human-readable documentation
+/                index.html, topics.html, ask.html, ask-engine.js — the site
+/data/           countries.json (generated weekly), topics.json, trends/ (generated daily)
+/data/sources/   original files from annual sources (Freedom House, …)
+/scripts/        data pipeline (Python, run by GitHub Actions)
+/.github/        the three automated workflows
+/docs/           human-readable documentation
+/worker/         optional Cloudflare Worker (free AI-written prose)
 ```
 
 ## Principles
-1. **Every number has a citation.** No exceptions.
-2. **Gaps are shown honestly.** "No reliable data" beats a bad estimate.
-3. **Boring tech.** Plain HTML/CSS/JS so anyone using GitHub Copilot can maintain it.
-4. **Open and free.** No paid services, no closed formats.
+1. **Every number has a citation.** No exceptions — answers ship with a "View sources" list.
+2. **Gaps are shown honestly.** "No data" beats a bad estimate; the analyst refuses rather than guesses.
+3. **Radio and TV are first-class.** In much of the world they out-reach digital — recommendations respect that.
+4. **Boring tech, zero cost.** Plain HTML/CSS/JS + GitHub's free tier, maintainable after handover by non-coders.

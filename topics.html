@@ -12,13 +12,13 @@
     --accent-soft: #E6F4FB;
     --ink: #0F1A2B;
     --muted: #5C6B7E;
-    --muted-2: #94A3B8;
+    --muted-2: #64748B;
     --bg: #F7FAFC;
     --surface: #FFFFFF;
     --border: #E3EBF1;
     --border-soft: #EEF3F7;
-    --positive: #16A34A;
-    --warn: #F59E0B;
+    --positive: #15803D;
+    --warn: #B45309;
     --danger: #DC2626;
     --shadow: 0 1px 2px rgba(15,26,43,0.04), 0 4px 14px rgba(15,26,43,0.06);
     --radius: 10px;
@@ -26,13 +26,21 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
          background: var(--bg); color: var(--ink); }
-  header.site { display: flex; align-items: center; justify-content: space-between;
+  :focus-visible { outline: 2px solid var(--un-blue); outline-offset: 2px; }
+  .skip-link { position: absolute; left: -9999px; top: 0; background: var(--un-blue-ink); color: #fff;
+    padding: 8px 14px; z-index: 3000; border-radius: 0 0 8px 0; font-size: 13px; }
+  .skip-link:focus { left: 0; }
+  header.site { display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
   header.site .brand { display: flex; align-items: center; gap: 12px; }
+  header.site .logo { width: 34px; height: 34px; flex-shrink: 0; }
   header.site .title { font-weight: 600; font-size: 15px; }
   header.site .subtitle { font-size: 12px; color: var(--muted); }
-  header.site a.back { color: var(--un-blue-dark); text-decoration: none; font-size: 13px; }
-  header.site a.back:hover { text-decoration: underline; }
+  header.site nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+  header.site nav a { padding: 6px 12px; font-size: 13px; color: var(--muted);
+    text-decoration: none; border-radius: 6px; white-space: nowrap; }
+  header.site nav a:hover, header.site nav a:focus-visible { background: var(--border-soft); color: var(--ink); }
+  header.site nav a[aria-current="page"] { color: var(--un-blue-dark); font-weight: 600; background: var(--accent-soft); }
 
   .layout { display: grid; grid-template-columns: 320px 1fr; gap: 16px;
             max-width: 1200px; margin: 16px auto; padding: 0 16px; }
@@ -44,7 +52,7 @@
   /* left: topic list */
   .list { padding: 10px; max-height: calc(100vh - 130px); overflow-y: auto; }
   .list input { width: 100%; padding: 8px 10px; border: 1px solid var(--border);
-    border-radius: 8px; font-size: 13px; margin-bottom: 8px; }
+    border-radius: 8px; font-size: 16px; margin-bottom: 8px; font-family: inherit; }
   .cat { font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; color: var(--muted-2);
          text-transform: uppercase; margin: 12px 6px 4px; }
   .topic-row { display: flex; justify-content: space-between; align-items: center;
@@ -75,25 +83,44 @@
   .up { color: var(--positive); } .down { color: var(--danger); }
   .note { font-size: 11px; color: var(--muted-2); margin-top: 14px; line-height: 1.5; }
   .movers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 600px) { .movers { grid-template-columns: 1fr; } }
   .movers .topic-row { border: 1px solid var(--border-soft); }
   .empty { color: var(--muted-2); font-size: 13px; padding: 8px; }
 </style>
 </head>
 <body>
 
+<a class="skip-link" href="#detail">Skip to topic detail</a>
 <header class="site">
   <div class="brand">
+    <svg class="logo" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Atlas emblem">
+      <defs><clipPath id="globeClip"><circle cx="20" cy="18" r="12"/></clipPath></defs>
+      <circle cx="20" cy="18" r="13" fill="#009EDB"/>
+      <g clip-path="url(#globeClip)" stroke="#FFFFFF" stroke-width="0.5" fill="none" opacity="0.85">
+        <circle cx="20" cy="18" r="3.5"/><circle cx="20" cy="18" r="7"/><circle cx="20" cy="18" r="10.5"/>
+        <line x1="8" y1="18" x2="32" y2="18"/><line x1="20" y1="6" x2="20" y2="30"/>
+        <line x1="11" y1="9" x2="29" y2="27"/><line x1="11" y1="27" x2="29" y2="9"/>
+      </g>
+      <path d="M9,33 Q20,38 31,33" fill="none" stroke="#009EDB" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="12" cy="33" r="0.8" fill="#009EDB"/><circle cx="15.5" cy="35" r="0.8" fill="#009EDB"/>
+      <circle cx="20" cy="36" r="0.8" fill="#009EDB"/><circle cx="24.5" cy="35" r="0.8" fill="#009EDB"/>
+      <circle cx="28" cy="33" r="0.8" fill="#009EDB"/>
+    </svg>
     <div>
       <div class="title">Topic Explorer</div>
-      <div class="subtitle">Live topic intelligence · 167 UN-relevant topics · 22 languages</div>
+      <div class="subtitle">Live topic intelligence · UN-relevant topics tracked daily · 22 languages</div>
     </div>
   </div>
-  <div style="display:flex;gap:16px;"><a class="back" href="ask.html">Ask the Analyst</a><a class="back" href="index.html">← Back to the Atlas</a></div>
+  <nav aria-label="Atlas pages">
+    <a href="index.html">Map</a>
+    <a href="topics.html" aria-current="page">Topic Explorer</a>
+    <a href="ask.html">Ask the Analyst</a>
+  </nav>
 </header>
 
-<div class="layout">
+<div class="layout" role="main">
   <div class="card list" id="topic-list">
-    <input id="search" type="search" placeholder="Search topics…">
+    <input id="search" type="search" placeholder="Search topics…" aria-label="Search topics">
     <div id="list-body"><div class="empty">Loading topics…</div></div>
   </div>
 
@@ -118,7 +145,7 @@ let DATA = null, activeQid = null;
 function sparkline(series) {
   const w = 600, h = 130, pad = 4;
   const vals = series.filter(v => v != null);
-  if (!vals.length) return "";
+  if (vals.length < 2 || series.length < 2) return "";
   const mx = Math.max(...vals), mn = Math.min(...vals);
   const range = (mx - mn) || 1;
   const pts = series.map((v, i) => {
@@ -126,7 +153,8 @@ function sparkline(series) {
     const y = v == null ? null : h - pad - ((v - mn) / range) * (h - 2 * pad);
     return y == null ? null : `${x.toFixed(1)},${y.toFixed(1)}`;
   }).filter(Boolean);
-  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img"
+    aria-label="Line chart: global attention over the last 120 days, from ${Math.round(mn).toLocaleString()} to ${Math.round(mx).toLocaleString()} Wikipedia views per day">
     <polyline points="${pts.join(" ")}" fill="none" stroke="var(--un-blue)" stroke-width="2"/>
   </svg>`;
 }
@@ -137,6 +165,7 @@ function momentumBadge(m) {
 }
 
 function renderList(filter) {
+  if (!DATA) return;                    // typing before the data arrives
   const body = document.getElementById("list-body");
   const q = (filter || "").toLowerCase();
   const byCat = {};
@@ -150,29 +179,41 @@ function renderList(filter) {
     if (!rows.length) continue;
     html += `<div class="cat">${CAT_LABELS[cat]}</div>`;
     for (const [qid, t] of rows) {
-      html += `<div class="topic-row ${qid === activeQid ? "active" : ""}" data-qid="${qid}">
+      html += `<div class="topic-row ${qid === activeQid ? "active" : ""}" data-qid="${qid}"
+        role="button" tabindex="0" aria-label="${t.label_en} — ${t.momentum}">
         <span>${t.label_en}</span>${momentumBadge(t.momentum)}</div>`;
     }
   }
   body.innerHTML = html || `<div class="empty">No topics match.</div>`;
-  body.querySelectorAll(".topic-row").forEach(r =>
-    r.addEventListener("click", () => { activeQid = r.dataset.qid; renderDetail(); renderList(document.getElementById("search").value); }));
+  const activate = (r) => {
+    activeQid = r.dataset.qid; renderDetail(); renderList(document.getElementById("search").value);
+    // on phones the detail pane sits below the list — bring it into view
+    if (window.innerWidth <= 820) document.getElementById("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  body.querySelectorAll(".topic-row").forEach(r => {
+    r.addEventListener("click", () => activate(r));
+    r.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(r); } });
+  });
 }
 
 function renderGlobalMovers() {
   const sorted = Object.entries(DATA.topics).sort((a, b) => b[1].global_velocity - a[1].global_velocity);
-  const risers = sorted.slice(0, 5), fallers = sorted.slice(-5).reverse();
+  // only genuinely rising/falling topics qualify — in a quiet week the
+  // bottom five might still be positive (and vice versa)
+  const risers = sorted.filter(([, t]) => t.global_velocity > 0).slice(0, 5);
+  const fallers = sorted.filter(([, t]) => t.global_velocity < 0).slice(-5).reverse();
   const row = ([qid, t]) => {
     const pct = Math.round(t.global_velocity * 100);
     const cls = pct >= 0 ? "up" : "down";
     const sym = pct >= 0 ? "+" : "";
-    return `<div class="topic-row" data-qid="${qid}"><span>${t.label_en}</span>
+    return `<div class="topic-row" data-qid="${qid}" role="button" tabindex="0"
+      aria-label="${t.label_en}, ${sym}${pct}%"><span>${t.label_en}</span>
       <span class="${cls}">${sym}${pct}%</span></div>`;
   };
   return `<h1>Global topic movers</h1>
-    <div class="sub">Across 167 UN-relevant topics in 22 languages · updated ${DATA.generated}</div>
-    <h3 class="sect">Rising this week</h3><div class="movers">${risers.map(row).join("")}</div>
-    <h3 class="sect">Falling this week</h3><div class="movers">${fallers.map(row).join("")}</div>
+    <div class="sub">Across ${Object.keys(DATA.topics).length} tracked topics in 22 languages · updated ${DATA.generated}</div>
+    <h3 class="sect">Rising this week</h3><div class="movers">${risers.map(row).join("") || '<div class="empty">No topics rising sharply this week.</div>'}</div>
+    <h3 class="sect">Falling this week</h3><div class="movers">${fallers.map(row).join("") || '<div class="empty">No topics falling sharply this week.</div>'}</div>
     <div class="note">Velocity = attention in the last 7 days vs. the prior 30 days, measured from
     Wikipedia reading patterns (Wikimedia Pageviews API — a measure of what people <em>look up</em>,
     not what media publish). Select any topic on the left for detail.</div>`;
@@ -217,8 +258,11 @@ function renderDetail() {
 }
 
 function bindMoverClicks(scope) {
-  scope.querySelectorAll(".topic-row[data-qid]").forEach(r =>
-    r.addEventListener("click", () => { activeQid = r.dataset.qid; renderDetail(); renderList(document.getElementById("search").value); }));
+  const activate = (r) => { activeQid = r.dataset.qid; renderDetail(); renderList(document.getElementById("search").value); };
+  scope.querySelectorAll(".topic-row[data-qid]").forEach(r => {
+    r.addEventListener("click", () => activate(r));
+    r.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(r); } });
+  });
 }
 
 document.getElementById("search").addEventListener("input", e => renderList(e.target.value));
@@ -233,6 +277,8 @@ document.getElementById("search").addEventListener("input", e => renderList(e.ta
     document.getElementById("detail").innerHTML =
       `<div class="empty">Trend data is not available yet — it is generated by the daily
        trend-engine workflow. (${err.message})</div>`;
+    document.getElementById("list-body").innerHTML =
+      `<div class="empty">Topics will appear once the daily trend engine has run.</div>`;
   }
 })();
 </script>

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="An interactive, source-cited global map of media consumption patterns. A public research resource prepared for the United Nations.">
 <title>Global Media Consumption Atlas</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='42' fill='%23009EDB'/><circle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='5'/><path d='M20 50h60M50 20c12 10 12 50 0 60M50 20c-12 10-12 50 0 60' stroke='white' stroke-width='5' fill='none'/></svg>">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -17,13 +18,15 @@
     --accent-soft: #E6F4FB;
     --ink: #0F1A2B;
     --muted: #5C6B7E;
-    --muted-2: #94A3B8;
+    /* AA-compliant secondary text (≥4.5:1 on white) — was #94A3B8 (2.56:1) */
+    --muted-2: #64748B;
     --bg: #F7FAFC;
     --surface: #FFFFFF;
     --border: #E3EBF1;
     --border-soft: #EEF3F7;
-    --positive: #16A34A;
-    --warn: #F59E0B;
+    /* AA-compliant status colors for text — were #16A34A (3.3:1) / #F59E0B (2.15:1) */
+    --positive: #15803D;
+    --warn: #B45309;
     --danger: #DC2626;
     --shadow: 0 1px 2px rgba(15,26,43,0.04), 0 4px 14px rgba(15,26,43,0.06);
     --shadow-lg: 0 8px 32px rgba(15,26,43,0.12);
@@ -32,6 +35,10 @@
 
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; }
+  :focus-visible { outline: 2px solid var(--un-blue); outline-offset: 2px; }
+  .skip-link { position: absolute; left: -9999px; top: 0; background: var(--un-blue-ink); color: #fff;
+    padding: 8px 14px; z-index: 3000; border-radius: 0 0 8px 0; font-size: 13px; text-decoration: none; }
+  .skip-link:focus { left: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Noto Sans Arabic", "Noto Sans SC", sans-serif;
     background: var(--bg);
@@ -73,8 +80,11 @@
     padding: 6px 12px; font-size: 13px; color: var(--muted);
     text-decoration: none; border-radius: 6px;
     background: none; border: none; cursor: pointer; font-family: inherit;
+    white-space: nowrap;
   }
+  header.site nav { flex-wrap: wrap; }
   header.site nav a:hover, header.site nav button:hover { background: var(--border-soft); color: var(--ink); }
+  header.site nav a[aria-current="page"] { color: var(--un-blue-dark); font-weight: 600; background: var(--accent-soft); }
 
   /* Language selector */
   .lang-select {
@@ -209,7 +219,7 @@
     font-family: inherit;
   }
   .chip:hover { border-color: var(--un-blue); color: var(--un-blue-dark); }
-  .chip.active { background: var(--un-blue); color: #fff; border-color: var(--un-blue); }
+  .chip.active { background: var(--un-blue-dark); color: #fff; border-color: var(--un-blue-dark); }
 
   .country-list { flex: 1; overflow-y: auto; padding: 6px 8px 20px; }
   .country-list .section-heading {
@@ -285,11 +295,14 @@
     background: var(--surface);
     box-shadow: -12px 0 40px rgba(15,26,43,0.14);
     transform: translateX(100%);
-    transition: transform 0.28s cubic-bezier(.2,.7,.2,1);
+    /* visibility keeps the closed panel's buttons out of the tab order */
+    visibility: hidden;
+    transition: transform 0.28s cubic-bezier(.2,.7,.2,1), visibility 0s linear 0.28s;
     z-index: 1000;
     display: flex; flex-direction: column;
     border-inline-start: 1px solid var(--border);
   }
+  .detail-panel.open { visibility: visible; transition-delay: 0s; }
   /* RTL languages: text content flows right-to-left inside its containers,
      while the page layout (header, panel position, map controls) stays put. */
   body.rtl-text #detail-body,
@@ -507,17 +520,31 @@
   /* Ensure Leaflet zoom controls stay LTR even in RTL mode */
 
   @media (max-width: 780px) {
-    main.app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    html, body { overflow: auto; }
+    main.app { grid-template-columns: 1fr; grid-template-rows: auto auto; height: auto; }
+    .map-wrap { height: 58vh; }
     aside.sidebar { max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border); }
+    footer.site { position: static; height: auto; flex-wrap: wrap; gap: 4px; }
+    .detail-panel { top: 0; bottom: 0; }
+    .sidebar .search-box input { font-size: 16px; } /* prevents iOS focus-zoom */
     .stats-strip { grid-template-columns: repeat(2, 1fr); }
+    .stats-strip .stat:last-child { grid-column: 1 / -1; }
     .detail-panel { width: 100vw; }
+    header.site { flex-wrap: wrap; height: auto; padding: 10px 14px; gap: 8px; }
     header.site .subtitle { display: none; }
+    header.site .badge { display: none; }
+    header.site .title { font-size: 14px; }
+    header.site nav { gap: 2px; }
     header.site nav a, header.site nav button { padding: 6px 8px; font-size: 12px; }
+    /* comfortable touch targets on phones */
+    .chip { padding: 9px 14px; font-size: 12px; }
+    .detail-header .close, .modal .close { width: 40px; height: 40px; }
   }
 </style>
 </head>
 <body data-lang="en">
 
+<a class="skip-link" href="#country-list">Skip to country list</a>
 <header class="site">
   <div class="brand">
     <!-- UN-styled placeholder logo (blue circle with polar-projection-style gridlines + olive branch underline).
@@ -543,13 +570,13 @@
       <circle cx="28" cy="33" r="0.8" fill="#009EDB"/>
     </svg>
     <div>
-      <div class="title" data-i18n="brand_title">Global Media Consumption Atlas</div>
+      <h1 class="title" style="margin:0; font-size:15px;" data-i18n="brand_title">Global Media Consumption Atlas</h1>
       <div class="subtitle" data-i18n="brand_subtitle">An open, source-cited public research resource</div>
     </div>
   </div>
   <div class="spacer"></div>
-  <nav>
-    <a href="#" data-i18n="nav_map">Map</a>
+  <nav aria-label="Atlas pages">
+    <a href="index.html" aria-current="page" data-i18n="nav_map">Map</a>
     <a href="topics.html" data-i18n="nav_topics">Topic Explorer</a>
     <a href="ask.html" data-i18n="nav_ask">Ask the Analyst</a>
     <button id="open-methodology" data-i18n="nav_methodology">Methodology</button>
@@ -562,21 +589,21 @@
       <span aria-hidden="true">▾</span>
     </button>
   </nav>
-  <div class="badge" data-i18n="badge_phase">Phase 1 prototype</div>
+  <div class="badge" data-i18n="badge_phase">Phase 2 · Expansion</div>
 </header>
 
 <div class="lang-menu" id="lang-menu" role="menu">
   <!-- populated by JS -->
 </div>
 
-<div class="error-banner" id="error-banner"></div>
+<div class="error-banner" id="error-banner" role="alert"></div>
 
 <section class="stats-strip" id="stats-strip"><!-- dynamic --></section>
 
 <main class="app">
   <aside class="sidebar">
     <div class="search-box">
-      <input id="search" type="search" autocomplete="off" data-i18n-placeholder="search_placeholder" placeholder="Search a country…">
+      <input id="search" type="search" autocomplete="off" aria-label="Search a country" data-i18n-placeholder="search_placeholder" placeholder="Search a country…">
     </div>
     <div class="filter-chips">
       <button class="chip active" data-filter="all" data-i18n="chip_all">All regions</button>
@@ -601,28 +628,28 @@
   </div>
 </main>
 
-<aside class="detail-panel" id="detail-panel">
+<aside class="detail-panel" id="detail-panel" role="dialog" aria-labelledby="detail-name" aria-hidden="true">
   <div class="detail-header">
-    <button class="close" id="close-detail" aria-label="Close">✕</button>
-    <div class="flag-big" id="detail-flag"></div>
+    <button class="close" id="close-detail" aria-label="Close country profile">✕</button>
+    <div class="flag-big" id="detail-flag" aria-hidden="true"></div>
     <h2 id="detail-name"></h2>
     <div class="subline" id="detail-subline"></div>
   </div>
-  <div class="detail-tabs">
-    <button data-tab="overview" class="active" data-i18n="tab_overview">Overview</button>
-    <button data-tab="economy" data-i18n="tab_economy">Economy</button>
-    <button data-tab="media" data-i18n="tab_media">Media</button>
-    <button data-tab="society" data-i18n="tab_society">Society</button>
-    <button data-tab="sources" data-i18n="tab_sources">Sources</button>
+  <div class="detail-tabs" role="tablist" aria-label="Country profile sections">
+    <button data-tab="overview" class="active" role="tab" aria-selected="true" data-i18n="tab_overview">Overview</button>
+    <button data-tab="economy" role="tab" aria-selected="false" data-i18n="tab_economy">Economy</button>
+    <button data-tab="media" role="tab" aria-selected="false" data-i18n="tab_media">Media</button>
+    <button data-tab="society" role="tab" aria-selected="false" data-i18n="tab_society">Society</button>
+    <button data-tab="sources" role="tab" aria-selected="false" data-i18n="tab_sources">Sources</button>
   </div>
   <div class="detail-body" id="detail-body"></div>
 </aside>
 
 <div class="modal-backdrop" id="methodology-modal">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="methodology-title">
     <div class="modal-header">
-      <h2 data-i18n="modal_title">Methodology &amp; data standards</h2>
-      <button class="close" data-close-modal>✕</button>
+      <h2 id="methodology-title" data-i18n="modal_title">Methodology &amp; data standards</h2>
+      <button class="close" data-close-modal aria-label="Close methodology">✕</button>
     </div>
     <div class="modal-body">
       <p data-i18n="modal_intro">This atlas is built to the standards of an institutional research resource. Every number displayed is tied to a primary source that is either (a) produced by an intergovernmental body or government statistical agency, or (b) published in a recognised comparative research programme.</p>
@@ -646,7 +673,7 @@
       </div>
 
       <h3 style="font-size: 14px; color: var(--ink); margin: 8px 0 6px;" data-i18n="modal_refresh_cadence">Refresh cadence</h3>
-      <p style="color: var(--muted);" data-i18n="modal_refresh_body">Automated indicators refresh daily via public APIs (World Bank, ITU). Manual-update indicators refresh once a year when flagship reports (Reuters Institute DNR, RSF, Freedom House) publish new editions.</p>
+      <p style="color: var(--muted);" data-i18n="modal_refresh_body">Topic trends refresh daily (Wikimedia + GDELT). Country indicators refresh weekly via the World Bank API. Annual flagship reports (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobarometer) are integrated once a year — a monthly watchdog opens a reminder automatically when a new edition is published.</p>
 
       <h3 style="font-size: 14px; color: var(--ink); margin: 18px 0 6px;" data-i18n="modal_sources_heading">Integrated data sources</h3>
       <p style="color: var(--muted); font-size: 13px; line-height: 1.7;">
@@ -666,7 +693,7 @@
       </p>
 
       <h3 style="font-size: 14px; color: var(--ink); margin: 18px 0 6px;" data-i18n="modal_confidence_flags">Confidence flags</h3>
-      <p style="color: var(--muted);" data-i18n="modal_confidence_body">Each cell carries a confidence flag (high / medium / low / estimated / preliminary). Any cell marked preliminary has not yet been independently verified against its primary source and must not be cited publicly.</p>
+      <p style="color: var(--muted);" data-i18n="modal_confidence_body">Each country record carries a confidence flag: verified (checked against its primary sources) or preliminary (not yet verified — must not be cited publicly). Individual figures always name their source in the Sources tab.</p>
     </div>
   </div>
 </div>
@@ -1037,7 +1064,7 @@ window.TRANSLATIONS = {
     stat_leading_social: "#1 social medium",
     pilot_countries_count: "Countries ({n})",
     more_coming: "More countries coming",
-    more_coming_desc: "More countries will be profiled as we expand toward full coverage of all 195 UN member states. Click any country on the map to check its status.",
+    more_coming_desc: "All 195 countries (the 193 UN member states plus the two observer states) are profiled. Click any country on the map to open its profile.",
     tag_profile: "Profile",
     sub_people: "{r} · {n}M people",
     tab_overview: "Overview", tab_economy: "Economy", tab_media: "Media",
@@ -1068,7 +1095,7 @@ window.TRANSLATIONS = {
     confidence_banner_title: "Preliminary data.",
     confidence_banner_body: "These figures are placeholder values being verified against primary sources. Do not cite publicly until the Sources tab shows verified timestamps.",
     no_data_title: "No profile yet",
-    no_data_body: "This country has not yet been profiled. We're expanding coverage toward all 195 UN member states. Every profile includes demographics, economic indicators, media reach data, and cited sources.",
+    no_data_body: "This area has no separate profile (it is shown under its sovereign state, or is a non-sovereign territory). All 195 countries — the 193 UN member states plus the two observer states — are covered.",
     no_data_subline: "Country profile not yet available",
     sources_intro: "Every data point on this country's page ultimately links back to one of these primary sources.",
     sources_confidence_note: "Confidence reflects whether each value has been independently verified against its primary source within the last 12 months and whether the source is Tier 1 (institutional) or Tier 2 (peer-reviewed research).",
@@ -1082,9 +1109,9 @@ window.TRANSLATIONS = {
     modal_data_status_label: "Data status", modal_data_status_value: "Verified",
     modal_data_status_delta: "primary sources, cited per field", modal_sources_heading: "Integrated data sources", modal_sources_note: "Reference tools (linked, not ingested): UNESCO World Trends, Pew Research, Edison Research, OECD, Meta Ad Library, Google Ads Transparency. Full registry & conflict-resolution rules:",
     modal_refresh_cadence: "Refresh cadence",
-    modal_refresh_body: "Automated indicators refresh daily via public APIs (World Bank, ITU). Manual-update indicators refresh once a year when flagship reports (Reuters Institute DNR, RSF, Freedom House) publish new editions.",
+    modal_refresh_body: "Topic trends refresh daily (Wikimedia + GDELT). Country indicators refresh weekly via the World Bank API. Annual flagship reports (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobarometer) are integrated once a year — a monthly watchdog opens a reminder automatically when a new edition appears.",
     modal_confidence_flags: "Confidence flags",
-    modal_confidence_body: "Each cell carries a confidence flag (high / medium / low / estimated / preliminary). Any cell marked preliminary has not yet been independently verified against its primary source and must not be cited publicly.",
+    modal_confidence_body: "Each country record carries a confidence flag: verified (checked against its primary sources) or preliminary (not yet verified — must not be cited publicly). Individual figures always name their source in the Sources tab.",
     footer_copyright: "© 2026 · An independent research project prepared for the United Nations · Data last checked",
     footer_methodology: "Methodology", footer_github: "GitHub", footer_report: "Report an error"
   },
@@ -1162,9 +1189,9 @@ window.TRANSLATIONS = {
     modal_data_status_label: "Statut des données", modal_data_status_value: "Vérifié",
     modal_data_status_delta: "sources primaires, citées par champ", modal_sources_heading: "Sources de données intégrées", modal_sources_note: "Outils de référence (liés, non ingérés) : UNESCO World Trends, Pew Research, Edison Research, OCDE, Meta Ad Library, Google Ads Transparency. Registre complet :",
     modal_refresh_cadence: "Fréquence de mise à jour",
-    modal_refresh_body: "Les indicateurs automatisés sont mis à jour quotidiennement via des API publiques (Banque mondiale, UIT). Les indicateurs manuels sont mis à jour une fois par an, lors de la publication des rapports phares (Reuters Institute DNR, RSF, Freedom House).",
+    modal_refresh_body: "Les tendances thématiques sont mises à jour quotidiennement (Wikimedia + GDELT). Les indicateurs pays sont actualisés chaque semaine via l'API de la Banque mondiale. Les rapports annuels de référence (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobaromètre) sont intégrés une fois par an — un dispositif de veille mensuel ouvre automatiquement un rappel dès la parution d'une nouvelle édition.",
     modal_confidence_flags: "Indicateurs de confiance",
-    modal_confidence_body: "Chaque cellule porte un indicateur de confiance (élevé / moyen / faible / estimé / préliminaire). Toute cellule marquée préliminaire n'a pas encore été vérifiée de manière indépendante et ne doit pas être citée publiquement.",
+    modal_confidence_body: "Chaque fiche pays porte un indicateur de confiance : vérifié (contrôlé auprès de ses sources primaires) ou préliminaire (non encore vérifié — à ne pas citer publiquement). Chaque chiffre nomme sa source dans l'onglet Sources.",
     footer_copyright: "© 2026 · Un projet de recherche indépendant préparé pour les Nations Unies · Données vérifiées le",
     footer_methodology: "Méthodologie", footer_github: "GitHub", footer_report: "Signaler une erreur"
   },
@@ -1242,9 +1269,9 @@ window.TRANSLATIONS = {
     modal_data_status_label: "Estado de los datos", modal_data_status_value: "Verificado",
     modal_data_status_delta: "fuentes primarias, citadas por campo", modal_sources_heading: "Fuentes de datos integradas", modal_sources_note: "Herramientas de referencia (enlazadas, no ingeridas): UNESCO World Trends, Pew Research, Edison Research, OCDE, Meta Ad Library, Google Ads Transparency. Registro completo:",
     modal_refresh_cadence: "Frecuencia de actualización",
-    modal_refresh_body: "Los indicadores automatizados se actualizan a diario mediante API públicas (Banco Mundial, UIT). Los indicadores manuales se actualizan una vez al año, cuando se publican los informes de referencia (Reuters Institute DNR, RSF, Freedom House).",
+    modal_refresh_body: "Las tendencias temáticas se actualizan a diario (Wikimedia + GDELT). Los indicadores por país se actualizan semanalmente mediante la API del Banco Mundial. Los informes anuales de referencia (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobarómetro) se integran una vez al año — un mecanismo de vigilancia mensual abre automáticamente un recordatorio cuando aparece una nueva edición.",
     modal_confidence_flags: "Indicadores de confianza",
-    modal_confidence_body: "Cada celda lleva un indicador de confianza (alto / medio / bajo / estimado / preliminar). Las celdas marcadas como preliminares aún no han sido verificadas independientemente y no deben citarse públicamente.",
+    modal_confidence_body: "Cada ficha de país lleva un indicador de confianza: verificado (contrastado con sus fuentes primarias) o preliminar (aún sin verificar — no debe citarse públicamente). Cada cifra nombra su fuente en la pestaña Fuentes.",
     footer_copyright: "© 2026 · Proyecto de investigación independiente preparado para las Naciones Unidas · Datos verificados el",
     footer_methodology: "Metodología", footer_github: "GitHub", footer_report: "Informar de un error"
   },
@@ -1303,7 +1330,7 @@ window.TRANSLATIONS = {
     label_fixed_broadband: "النطاق العريض الثابت لكل ١٠٠",
     label_tv: "التلفزيون", label_radio: "الإذاعة",
     label_online_news: "الأخبار الإلكترونية", label_social_platforms: "المنصات الاجتماعية",
-    label_rsf_rank: "تصنيف منظمة مراسلون بلا حدود ٢٠٢٤ (أقل = أكثر حرية)",
+    label_rsf_rank: "تصنيف منظمة مراسلون بلا حدود ٢٠٢٥ (أقل = أكثر حرية)",
     label_under_15: "أقل من ١٥", label_15_64: "١٥–٦٤", label_65_plus: "٦٥ فأكثر",
     label_urban_pop: "سكان الحضر", label_literacy: "محو أمية الكبار",
     confidence_banner_title: "بيانات أولية.",
@@ -1322,9 +1349,9 @@ window.TRANSLATIONS = {
     modal_data_status_label: "حالة البيانات", modal_data_status_value: "موثّقة",
     modal_data_status_delta: "مصادر أولية، مذكورة لكل حقل", modal_sources_heading: "مصادر البيانات المدمجة", modal_sources_note: "أدوات مرجعية (مرتبطة، غير مدمجة): يونسكو، بيو، إديسون، OECD، مكتبة إعلانات ميتا، شفافية إعلانات جوجل. السجل الكامل:",
     modal_refresh_cadence: "دورة التحديث",
-    modal_refresh_body: "تُحدَّث المؤشرات الآلية يوميًا عبر واجهات برمجية عامة (البنك الدولي، الاتحاد الدولي للاتصالات). المؤشرات اليدوية تُحدَّث مرة واحدة في السنة عند صدور التقارير الرئيسية (تقرير معهد رويترز للأخبار الرقمية، منظمة مراسلون بلا حدود، فريدم هاوس).",
+    modal_refresh_body: "تُحدَّث اتجاهات الموضوعات يوميًا (ويكيميديا + GDELT)، وتُحدَّث مؤشرات الدول أسبوعيًا عبر واجهة البنك الدولي. أما التقارير السنوية الرئيسية (رويترز، مراسلون بلا حدود، فريدم هاوس، GSMA، أفروباروميتر) فتُدمَج مرة في السنة — وتفتح آلية مراقبة شهرية تذكيرًا تلقائيًا عند صدور إصدار جديد.",
     modal_confidence_flags: "مستويات الثقة",
-    modal_confidence_body: "تحمل كل خلية مستوى ثقة (عالٍ / متوسط / منخفض / مُقدَّر / أولي). أي خلية أولية لم يتم التحقق منها بعد بشكل مستقل ولا يجوز الاستشهاد بها علنًا.",
+    modal_confidence_body: "يحمل سجل كل دولة مؤشر ثقة: مُتحقَّق منه (رُوجع مقابل مصادره الأولية) أو أولي (لم يُتحقق منه بعد — لا يجوز الاستشهاد به علنًا). ويُسمّي كل رقم مصدره في تبويب المصادر.",
     footer_copyright: "© ٢٠٢٦ · مشروع بحثي مستقل أُعدّ للأمم المتحدة · آخر تحقق من البيانات",
     footer_methodology: "المنهجية", footer_github: "GitHub", footer_report: "الإبلاغ عن خطأ"
   },
@@ -1498,7 +1525,11 @@ window.TRANSLATIONS = {
 if (!window.COUNTRY_DATA) window.COUNTRY_DATA = {};
 
 /* ---------- i18n ---------- */
-let currentLang = localStorage.getItem("atlas_lang") || "en";
+/* localStorage can THROW (private browsing, blocked storage) — never let a
+   storage failure take down the whole app. */
+function storageGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+function storageSet(k, v) { try { window.localStorage.setItem(k, v); } catch (e) {} }
+let currentLang = storageGet("atlas_lang") || "en";
 if (!window.TRANSLATIONS[currentLang]) currentLang = "en";
 
 function t(key, vars) {
@@ -1513,7 +1544,7 @@ function t(key, vars) {
 function setLanguage(lang) {
   if (!window.TRANSLATIONS[lang]) lang = "en";
   currentLang = lang;
-  localStorage.setItem("atlas_lang", lang);
+  storageSet("atlas_lang", lang);
   document.documentElement.lang = lang;
   // Keep the page frame (header, nav, map, panel position) stable in every
   // language; only the *text content* flows right-to-left for Arabic.
@@ -1566,10 +1597,13 @@ function setLanguage(lang) {
 })();
 document.getElementById("lang-button").addEventListener("click", (e) => {
   e.stopPropagation();
-  document.getElementById("lang-menu").classList.toggle("open");
+  const menu = document.getElementById("lang-menu");
+  menu.classList.toggle("open");
+  document.getElementById("lang-button").setAttribute("aria-expanded", menu.classList.contains("open") ? "true" : "false");
 });
 document.addEventListener("click", () => {
   document.getElementById("lang-menu").classList.remove("open");
+  document.getElementById("lang-button").setAttribute("aria-expanded", "false");
 });
 
 /* ---------- Map ---------- */
@@ -1582,11 +1616,20 @@ const BASE_TILES = "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}
 const BASE_TILES_ATTRIB =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-const map = L.map("map", {
-  center: [20, 10], zoom: 2, minZoom: 2, maxZoom: 6,
-  worldCopyJump: true, zoomControl: true, attributionControl: true
-});
-L.tileLayer(BASE_TILES, { attribution: BASE_TILES_ATTRIB, subdomains: "abcd", maxZoom: 19 }).addTo(map);
+/* If the Leaflet CDN is unreachable (offline, blocked network), the map is
+   lost but the sidebar, stats, panel, and search must keep working. */
+let map = null;
+if (window.L) {
+  map = L.map("map", {
+    center: [20, 10], zoom: 2, minZoom: 2, maxZoom: 6,
+    worldCopyJump: true, zoomControl: true, attributionControl: true
+  });
+  L.tileLayer(BASE_TILES, { attribution: BASE_TILES_ATTRIB, subdomains: "abcd", maxZoom: 19 }).addTo(map);
+} else {
+  const banner = document.getElementById("error-banner");
+  banner.classList.add("show");
+  banner.textContent = "⚠ The map library could not be loaded (network issue). Country search, list, and profiles still work below.";
+}
 
 /* The public boundaries file marks a few countries with ISO "-99"
    (a known Natural Earth quirk affecting France, Norway, Kosovo). */
@@ -1670,7 +1713,7 @@ function refreshMapAnnotations() {
   if (boundariesGeojson) buildCountryLabels(boundariesGeojson);
 }
 
-fetch(COUNTRY_BOUNDARIES_URL)
+if (map) fetch(COUNTRY_BOUNDARIES_URL)
   .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
   .then(geojson => {
     countryLayer = L.geoJSON(geojson, {
@@ -1731,6 +1774,7 @@ function labelPoint(geom) {
 }
 
 function buildCountryLabels(geojson) {
+  if (!map) return;
   for (const lg of [labelLayerGiant, labelLayerMajor, labelLayerMinor])
     if (lg) map.removeLayer(lg);
   const giant = [], major = [], minor = [];
@@ -1756,7 +1800,7 @@ function buildCountryLabels(geojson) {
   updateLabelVisibility();
 }
 function updateLabelVisibility() {
-  if (!labelLayerGiant) return;
+  if (!map || !labelLayerGiant) return;
   const z = map.getZoom();
   const want = [[labelLayerGiant, 2], [labelLayerMajor, 3], [labelLayerMinor, 4]];
   for (const [lg, minZ] of want) {
@@ -1764,7 +1808,7 @@ function updateLabelVisibility() {
     else map.removeLayer(lg);
   }
 }
-map.on("zoomend", updateLabelVisibility);
+if (map) map.on("zoomend", updateLabelVisibility);
 
 /* ---------- Stats strip ---------- */
 const statsStrip = document.getElementById("stats-strip");
@@ -1783,12 +1827,16 @@ function renderAggregateStats() {
       <div class="stat"><div class="label">${t("stat_top_industries")}</div><div class="value">—</div></div>`;
     return;
   }
-  const totalPop = entries.reduce((a, b) => a + b.population, 0);
+  const totalPop = entries.reduce((a, b) => a + (b.population || 0), 0);
   const continents = new Set(entries.map(e => e.region));
-  const avgInternet = entries.reduce((a, b) => a + b.connectivity.internet_pct, 0) / entries.length;
+  // average internet only over countries that HAVE the indicator —
+  // counting no-data countries as 0% would bias the figure downward
+  const withNet = entries.filter(e => e.connectivity && e.connectivity.internet_pct != null);
+  const avgInternet = withNet.length
+    ? withNet.reduce((a, b) => a + b.connectivity.internet_pct, 0) / withNet.length : null;
   const firstMentions = {};
   entries.forEach(e => {
-    const first = (e.media.top_social || "").split(",")[0].trim();
+    const first = ((e.media || {}).top_social || "").split(",")[0].trim();
     if (first) firstMentions[first] = (firstMentions[first] || 0) + 1;
   });
   const topEntry = Object.entries(firstMentions).sort((a, b) => b[1] - a[1])[0];
@@ -1806,7 +1854,7 @@ function renderAggregateStats() {
     </div>
     <div class="stat">
       <div class="label">${t("stat_avg_internet")}</div>
-      <div class="value">${avgInternet.toFixed(0)}%</div>
+      <div class="value">${avgInternet == null ? "—" : avgInternet.toFixed(0) + "%"}</div>
       <div class="delta">${t("stat_weighted")}</div>
     </div>
     <div class="stat">
@@ -1822,7 +1870,7 @@ function renderAggregateStats() {
 }
 function topIndustries(entries, n) {
   const counts = {};
-  entries.forEach(e => e.dominant_industries.forEach(ind => {
+  entries.forEach(e => (e.dominant_industries || []).forEach(ind => {
     const key = ind.split(/[&(,]/)[0].trim();
     counts[key] = (counts[key] || 0) + 1;
   }));
@@ -1831,28 +1879,28 @@ function topIndustries(entries, n) {
 function renderCountryStats(iso) {
   const d = window.COUNTRY_DATA[iso];
   if (!d) return renderAggregateStats();
-  const c = d.connectivity;
-  const topPlatform = (d.media.top_social || "").split(",")[0].trim();
+  const c = d.connectivity || {};
+  const topPlatform = ((d.media || {}).top_social || "").split(",")[0].trim();
   statsStrip.innerHTML = `
     <div class="stat highlight">
       <div class="label">${t("stat_country")}</div>
-      <div class="value">${d.flag} ${d.name}</div>
-      <div class="delta">${d.capital} · ${d.subregion}</div>
+      <div class="value">${d.flag || ""} ${d.name}</div>
+      <div class="delta">${[d.capital, d.subregion].filter(Boolean).join(" · ")}</div>
     </div>
     <div class="stat">
       <div class="label">${t("stat_population")}</div>
-      <div class="value">${(d.population / 1e6).toFixed(1)}M</div>
-      <div class="delta">${t("stat_ref_year", { n: d.population_year })}</div>
+      <div class="value">${formatPop(d.population)}</div>
+      <div class="delta">${d.population_year ? t("stat_ref_year", { n: d.population_year }) : ""}</div>
     </div>
     <div class="stat">
       <div class="label">${t("stat_gdp")}</div>
-      <div class="value">$${d.gdp_per_capita_usd.toLocaleString()}</div>
-      <div class="delta">${d.currency.split("(")[0].trim()}</div>
+      <div class="value">${d.gdp_per_capita_usd == null ? "—" : "$" + fmtNum(d.gdp_per_capita_usd)}</div>
+      <div class="delta">${d.currency ? d.currency.split("(")[0].trim() : ""}</div>
     </div>
     <div class="stat">
       <div class="label">${t("stat_internet_access")}</div>
-      <div class="value">${c.internet_pct}%</div>
-      <div class="delta">${t("stat_smartphone", { n: c.smartphone_pct })}</div>
+      <div class="value">${fmtPct(c.internet_pct == null ? null : Math.round(c.internet_pct))}</div>
+      <div class="delta">${c.smartphone_pct != null ? t("stat_smartphone", { n: c.smartphone_pct }) : ""}</div>
     </div>
     <div class="stat">
       <div class="label">${t("stat_leading_platform")}</div>
@@ -1873,21 +1921,30 @@ function renderList() {
     .filter(([iso, d]) => activeFilter === "all" || d.region === activeFilter)
     .filter(([iso, d]) => !searchTerm || d.name.toLowerCase().includes(searchTerm));
   shown.sort((a, b) => a[1].name.localeCompare(b[1].name));
-  let html = `<div class="section-heading">${t("pilot_countries_count", { n: shown.length })}</div>`;
-  html += shown.map(([iso, d]) => `
-    <div class="country-card" data-iso="${iso}">
-      <div class="flag">${d.flag}</div>
+  let html = `<div class="section-heading" id="country-list-heading">${t("pilot_countries_count", { n: shown.length })}</div>`;
+  html += shown.map(([iso, d]) => {
+    const popTxt = d.population != null
+      ? t("sub_people", { r: "", n: (d.population / 1e6).toFixed(1) }).replace(/·\s*·/g, "·").trim().replace(/^·\s*/, "")
+      : "";
+    return `
+    <div class="country-card" data-iso="${iso}" role="button" tabindex="0"
+         aria-label="${d.name} — ${t("tag_profile")}">
+      <div class="flag" aria-hidden="true">${d.flag || "🌐"}</div>
       <div class="meta">
         <div class="name">${d.name}</div>
-        <div class="sub">${d.subregion} · ${t("sub_people", { r: "", n: (d.population / 1e6).toFixed(1) }).replace("· ·", "·").replace(/^·\s*/, "")}</div>
+        <div class="sub">${[d.subregion, popTxt].filter(Boolean).join(" · ")}</div>
       </div>
-      <div class="tag">${t("tag_profile")}</div>
-    </div>`).join("");
+      <div class="tag" aria-hidden="true">${t("tag_profile")}</div>
+    </div>`;
+  }).join("");
   html += `<div class="section-heading">${t("more_coming")}</div>
     <div style="padding:10px 14px; font-size:12px; color:var(--muted); line-height:1.5;">${t("more_coming_desc")}</div>`;
   listEl.innerHTML = html;
   listEl.querySelectorAll(".country-card").forEach(card => {
     card.addEventListener("click", () => openDetail(card.dataset.iso));
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(card.dataset.iso); }
+    });
   });
 }
 searchEl.addEventListener("input", e => { searchTerm = e.target.value.trim().toLowerCase(); renderList(); });
@@ -1913,10 +1970,24 @@ document.getElementById("close-detail").addEventListener("click", closeDetail);
 document.querySelectorAll(".detail-tabs button").forEach(btn => {
   btn.addEventListener("click", () => {
     currentTab = btn.dataset.tab;
-    document.querySelectorAll(".detail-tabs button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".detail-tabs button").forEach(b => {
+      b.classList.remove("active");
+      b.setAttribute("aria-selected", "false");
+    });
     btn.classList.add("active");
+    btn.setAttribute("aria-selected", "true");
     if (currentActiveIso) renderDetail(currentActiveIso);
   });
+});
+
+/* ESC closes (in priority order): language menu, methodology modal, country panel */
+let lastFocusBeforePanel = null;
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  const langMenu = document.getElementById("lang-menu");
+  if (langMenu.classList.contains("open")) { langMenu.classList.remove("open"); return; }
+  if (methodModal.classList.contains("open")) { closeMethodology(); return; }
+  if (panel.classList.contains("open")) closeDetail();
 });
 
 function openDetail(iso) {
@@ -1937,9 +2008,12 @@ function openDetail(iso) {
   }
   const d = window.COUNTRY_DATA[iso];
   if (d) {
-    panelFlag.textContent = d.flag;
+    panelFlag.textContent = d.flag || "🌐";
     panelName.textContent = d.name;
-    panelSubline.textContent = `${d.subregion} · ${t("subline_capital")}: ${d.capital} · ${t("subline_pop")} ${formatPop(d.population)}`;
+    panelSubline.textContent = [d.subregion,
+      d.capital ? `${t("subline_capital")}: ${d.capital}` : null,
+      d.population != null ? `${t("subline_pop")} ${formatPop(d.population)}` : null,
+    ].filter(Boolean).join(" · ");
     renderCountryStats(iso);
   } else {
     panelFlag.textContent = "🌍";
@@ -1947,11 +2021,18 @@ function openDetail(iso) {
     panelSubline.textContent = t("no_data_subline");
   }
   renderDetail(iso);
+  const wasOpen = panel.classList.contains("open");
   panel.classList.add("open");
+  panel.setAttribute("aria-hidden", "false");
+  if (!wasOpen) {
+    lastFocusBeforePanel = document.activeElement;
+    document.getElementById("close-detail").focus({ preventScroll: true });
+  }
 }
 
 function closeDetail() {
   panel.classList.remove("open");
+  panel.setAttribute("aria-hidden", "true");
   if (currentActiveIso && countryLayer) {
     countryLayer.eachLayer(layer => {
       if (resolveIso(layer.feature) === currentActiveIso) {
@@ -1962,6 +2043,10 @@ function closeDetail() {
   currentActiveIso = null;
   document.querySelectorAll(".country-card").forEach(c => c.classList.remove("active"));
   renderAggregateStats();
+  if (lastFocusBeforePanel && document.contains(lastFocusBeforePanel)) {
+    lastFocusBeforePanel.focus({ preventScroll: true });
+    lastFocusBeforePanel = null;
+  }
 }
 
 function lookupName(iso) {
@@ -2005,17 +2090,19 @@ function translationNotice() {
 function tabOverview(d) {
   return confidenceBanner(d) + translationNotice() + `
     <h3>${t("section_overview")}</h3>
-    <p>${d.overview}</p>
+    <p>${d.overview || ""}</p>
     <div class="kv-grid">
-      <div class="kv"><div class="label">${t("label_capital")}</div><div class="value">${d.capital}</div></div>
-      <div class="kv"><div class="label">${t("label_government")}</div><div class="value">${d.government}</div></div>
-      <div class="kv"><div class="label">${t("label_region")}</div><div class="value">${d.subregion}</div></div>
-      <div class="kv"><div class="label">${t("label_currency")}</div><div class="value">${d.currency}</div></div>
+      <div class="kv"><div class="label">${t("label_capital")}</div><div class="value">${d.capital || "—"}</div></div>
+      <div class="kv"><div class="label">${t("label_government")}</div><div class="value">${d.government || "—"}</div></div>
+      <div class="kv"><div class="label">${t("label_region")}</div><div class="value">${d.subregion || "—"}</div></div>
+      <div class="kv"><div class="label">${t("label_currency")}</div><div class="value">${d.currency || "—"}</div></div>
     </div>
-    <h3>${t("section_languages")}</h3>
-    <div class="pills">${d.languages.map(l => `<div class="pill">${l}</div>`).join("")}</div>
-    <h3>${t("section_focus_areas")}</h3>
-    <div class="pills">${d.focus_areas.map(f => `<div class="pill neutral">${f}</div>`).join("")}</div>`;
+    ${(d.languages_detail || []).length ? `<h3>${t("section_languages")} <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Unicode CLDR — share of population</span></h3>
+    <div class="pills">${d.languages_detail.map(l => `<div class="pill">${l.language} · ${l.pct}%${l.official ? " · official" : ""}</div>`).join("")}</div>`
+    : (d.languages || []).length ? `<h3>${t("section_languages")}</h3>
+    <div class="pills">${d.languages.map(l => `<div class="pill">${l}</div>`).join("")}</div>` : ""}
+    ${(d.focus_areas || []).length ? `<h3>${t("section_focus_areas")}</h3>
+    <div class="pills">${d.focus_areas.map(f => `<div class="pill neutral">${f}</div>`).join("")}</div>` : ""}`;
 }
 
 function tabEconomy(d) {
@@ -2023,18 +2110,18 @@ function tabEconomy(d) {
     <h3>${t("section_at_a_glance")}</h3>
     <div class="kv-grid">
       <div class="kv"><div class="label">${t("label_population")}</div><div class="value">${formatPop(d.population)}</div></div>
-      <div class="kv"><div class="label">${t("label_area")}</div><div class="value">${d.area_km2.toLocaleString()} km²</div></div>
-      <div class="kv"><div class="label">${t("label_gdp")}</div><div class="value">$${d.gdp_per_capita_usd.toLocaleString()}</div></div>
-      <div class="kv"><div class="label">${t("label_ref_year")}</div><div class="value">${d.population_year}</div></div>
+      <div class="kv"><div class="label">${t("label_area")}</div><div class="value">${d.area_km2 == null ? "—" : fmtNum(d.area_km2) + " km²"}</div></div>
+      <div class="kv"><div class="label">${t("label_gdp")}</div><div class="value">${d.gdp_per_capita_usd == null ? "—" : "$" + fmtNum(d.gdp_per_capita_usd)}</div></div>
+      <div class="kv"><div class="label">${t("label_ref_year")}</div><div class="value">${d.population_year || "—"}</div></div>
     </div>
-    <h3>${t("section_dominant_industries")}</h3>
-    <div class="pills">${d.dominant_industries.map(i => `<div class="pill">${i}</div>`).join("")}</div>
-    <h3>${t("section_strategic_focus")}</h3>
-    <div class="pills">${d.focus_areas.map(f => `<div class="pill neutral">${f}</div>`).join("")}</div>`;
+    ${(d.dominant_industries || []).length ? `<h3>${t("section_dominant_industries")}</h3>
+    <div class="pills">${d.dominant_industries.map(i => `<div class="pill">${i}</div>`).join("")}</div>` : ""}
+    ${(d.focus_areas || []).length ? `<h3>${t("section_strategic_focus")}</h3>
+    <div class="pills">${d.focus_areas.map(f => `<div class="pill neutral">${f}</div>`).join("")}</div>` : ""}`;
 }
 
 function tabMedia(d) {
-  const c = d.connectivity, m = d.media;
+  const c = d.connectivity || {}, m = d.media || {};
   const nc = d.news_consumption || {};
   const inf = d.information_freedom || {};
   let html = confidenceBanner(d) + translationNotice();
@@ -2062,31 +2149,39 @@ function tabMedia(d) {
     }
   }
 
+  // connectivity rows render only when the indicator exists — "null%" is
+  // worse than an honest omission
+  const connRow = (label, v, barPct) => v == null ? "" :
+    `<div class="data-row"><span class="label">${label}</span><span class="value">${v}</span></div>` +
+    (barPct == null ? "" : `<div class="bar"><div class="bar-fill" style="width:${Math.max(0, Math.min(barPct, 100))}%"></div></div>`);
   html += `<h3>${t("section_connectivity")}</h3>`;
-  html += `<div class="data-row"><span class="label">${t("label_internet_users")}</span><span class="value">${c.internet_pct}%</span></div>`;
-  html += `<div class="bar"><div class="bar-fill" style="width:${c.internet_pct}%"></div></div>`;
-  html += `<div class="data-row"><span class="label">${t("label_mobile_subs")}</span><span class="value">${c.mobile_per_100}</span></div>`;
-  html += `<div class="bar"><div class="bar-fill" style="width:${Math.min(c.mobile_per_100, 150) / 1.5}%"></div></div>`;
-  html += `<div class="data-row"><span class="label">${t("label_smartphone_adoption")}</span><span class="value">${c.smartphone_pct}%</span></div>`;
-  html += `<div class="bar"><div class="bar-fill" style="width:${c.smartphone_pct}%"></div></div>`;
-  html += `<div class="data-row"><span class="label">${t("label_fixed_broadband")}</span><span class="value">${c.fixed_broadband_per_100}</span></div>`;
+  html += connRow(t("label_internet_users"), c.internet_pct == null ? null : Math.round(c.internet_pct) + "%", c.internet_pct);
+  html += connRow(t("label_mobile_subs"), c.mobile_per_100, c.mobile_per_100 == null ? null : Math.min(c.mobile_per_100, 150) / 1.5);
+  html += connRow(t("label_smartphone_adoption"), c.smartphone_pct == null ? null : c.smartphone_pct + "%", c.smartphone_pct);
+  html += connRow(t("label_fixed_broadband"), c.fixed_broadband_per_100, null);
+  html += connRow(`Financial account ownership <span style="font-size:10px;color:var(--muted-2);">World Bank Findex, adults 15+</span>`,
+                  c.financial_account_pct == null ? null : Math.round(c.financial_account_pct) + "%", c.financial_account_pct);
   if (c.mobile_connectivity_index != null) {
     html += `<div class="data-row"><span class="label">${t("label_mci")}</span><span class="value">${c.mobile_connectivity_index}/100</span></div>`;
     html += `<div class="bar"><div class="bar-fill" style="width:${c.mobile_connectivity_index}%"></div></div>`;
   }
 
-  html += `<h3>${t("section_leading_outlets")}</h3>`;
-  html += `<div class="data-row"><span class="label">${t("label_tv")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_tv}</span></div>`;
-  html += `<div class="data-row"><span class="label">${t("label_radio")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_radio}</span></div>`;
-  html += `<div class="data-row"><span class="label">${t("label_online_news")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_online_news}</span></div>`;
-  html += `<div class="data-row"><span class="label">${t("label_social_platforms")}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${m.top_social}</span></div>`;
+  const outletRow = (label, v) => !v ? "" :
+    `<div class="data-row"><span class="label">${label}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${v}</span></div>`;
+  const outletsHtml = outletRow(t("label_tv"), m.top_tv) + outletRow(t("label_radio"), m.top_radio) +
+    outletRow(t("label_online_news"), m.top_online_news) + outletRow(t("label_social_platforms"), m.top_social);
+  if (outletsHtml) html += `<h3>${t("section_leading_outlets")}</h3>` + outletsHtml;
 
   // Information freedom (RSF + Freedom House FOTN + Freedom House FITW)
   html += `<h3>Information freedom</h3>`;
   const rsfScore = m.press_freedom_score;
-  const rsfColor = rsfScore >= 70 ? "var(--positive)" : rsfScore >= 40 ? "var(--warn)" : "var(--danger)";
-  html += `<div class="data-row"><span class="label">${t("label_rsf_rank")} <span style="font-size:10px;color:var(--muted-2);">RSF 2025</span></span><span class="value" style="color:${rsfColor}">#${m.press_freedom_rank} / 180 · ${rsfScore != null ? rsfScore.toFixed(1) : "—"}</span></div>`;
-  if (rsfScore != null) { html += `<div class="bar"><div class="bar-fill" style="width:${rsfScore}%; background:${rsfColor}"></div></div>`; }
+  if (m.press_freedom_rank != null || rsfScore != null) {
+    const rsfColor = rsfScore == null ? "var(--muted)" : rsfScore >= 70 ? "var(--positive)" : rsfScore >= 40 ? "var(--warn)" : "var(--danger)";
+    html += `<div class="data-row"><span class="label">${t("label_rsf_rank")} <span style="font-size:10px;color:var(--muted-2);">RSF 2025</span></span><span class="value" style="color:${rsfColor}">${m.press_freedom_rank != null ? "#" + m.press_freedom_rank + " / 180 · " : ""}${rsfScore != null ? rsfScore.toFixed(1) : "—"}</span></div>`;
+    if (rsfScore != null) { html += `<div class="bar"><div class="bar-fill" style="width:${rsfScore}%; background:${rsfColor}"></div></div>`; }
+  } else {
+    html += `<div class="data-row"><span class="label" style="color:var(--muted-2);">Not assessed by RSF (2025 index covers 180 countries)</span></div>`;
+  }
   if (inf.internet_freedom_score != null) {
     const score = inf.internet_freedom_score;
     const status = inf.internet_freedom_status || "";
@@ -2133,19 +2228,31 @@ function tabMedia(d) {
       });
     }
     const gen = window.TRENDS_DATA.generated || "";
-    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:6px;">Source: Wikipedia reading patterns (Wikimedia Pageviews API), updated ${gen}. Country attribution via language-population weights — an approximation, not a measurement.</div>`;
+    // staleness honesty: the trend engine runs daily — if the data is older
+    // than 3 days, say so instead of implying "this week"
+    let staleNote = "";
+    if (gen) {
+      const ageDays = Math.floor((Date.now() - new Date(gen + "T00:00:00Z").getTime()) / 86400000);
+      if (ageDays > 3) staleNote = `<span style="color:var(--warn);"> ⚠ Last updated ${ageDays} days ago — the daily engine may need attention.</span>`;
+    }
+    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:6px;">Source: Wikipedia reading patterns (Wikimedia Pageviews API), updated ${gen}.${staleNote} Country attribution via language-population weights — an approximation, not a measurement.</div>`;
   } else {
     html += `<div style="font-size:11px;color:var(--muted-2);">${t("trending_unavailable")}</div>`;
   }
 
-  html += `<h3>${t("section_topics")}</h3>`;
-  html += `<div class="pills">${d.topics_of_interest.map(topic => `<div class="pill">${topic}</div>`).join("")}</div>`;
+  if ((d.topics_of_interest || []).length) {
+    html += `<h3>${t("section_topics")}</h3>`;
+    html += `<div class="pills">${d.topics_of_interest.map(topic => `<div class="pill">${topic}</div>`).join("")}</div>`;
+  }
   return html;
 }
 
 function tabSociety(d) {
-  const dg = d.demographics;
+  const dg = d.demographics || {};
   let html = confidenceBanner(d) + translationNotice();
+  const socRow = (label, v, suffix, barPct) => v == null ? "" :
+    `<div class="data-row"><span class="label">${label}</span><span class="value">${v}${suffix || ""}</span></div>` +
+    (barPct == null ? "" : `<div class="bar"><div class="bar-fill" style="width:${Math.max(0, Math.min(barPct, 100))}%"></div></div>`);
 
   // Life expectancy & electricity (new World Bank indicators)
   if (dg.life_expectancy || dg.electricity_pct != null) {
@@ -2158,26 +2265,20 @@ function tabSociety(d) {
     html += `</div>`;
   }
 
-  html += `<h3>${t("section_age_structure")}</h3>`;
-  if (dg.median_age != null) {
-    html += `<div class="data-row"><span class="label">${t("label_median_age")} <span style="font-size:10px;color:var(--muted-2);">UN WPP 2024</span></span><span class="value">${dg.median_age}</span></div>`;
-  }
-  html += `<div class="data-row"><span class="label">${t("label_under_15")}</span><span class="value">${dg.age_0_14_pct}%</span></div>`;
-  html += `<div class="bar"><div class="bar-fill" style="width:${dg.age_0_14_pct}%"></div></div>`;
-  html += `<div class="data-row"><span class="label">${t("label_15_64")}</span><span class="value">${dg.age_15_64_pct}%</span></div>`;
-  html += `<div class="bar"><div class="bar-fill" style="width:${dg.age_15_64_pct}%"></div></div>`;
-  html += `<div class="data-row"><span class="label">${t("label_65_plus")}</span><span class="value">${dg.age_65_plus_pct}%</span></div>`;
-  html += `<div class="bar"><div class="bar-fill" style="width:${dg.age_65_plus_pct}%"></div></div>`;
+  const ageHtml = socRow(t("label_median_age") + ` <span style="font-size:10px;color:var(--muted-2);">UN WPP 2024</span>`, dg.median_age, "", null) +
+    socRow(t("label_under_15"), dg.age_0_14_pct, "%", dg.age_0_14_pct) +
+    socRow(t("label_15_64"), dg.age_15_64_pct, "%", dg.age_15_64_pct) +
+    socRow(t("label_65_plus"), dg.age_65_plus_pct, "%", dg.age_65_plus_pct);
+  if (ageHtml) html += `<h3>${t("section_age_structure")}</h3>` + ageHtml;
 
-  if (!dg.life_expectancy && !dg.electricity_pct) {
+  if (!dg.life_expectancy && dg.electricity_pct == null && dg.urban_pct != null) {
     html += `<h3>${t("section_where_live")}</h3>`;
-    html += `<div class="data-row"><span class="label">${t("label_urban_pop")}</span><span class="value">${dg.urban_pct}%</span></div>`;
-    html += `<div class="bar"><div class="bar-fill" style="width:${dg.urban_pct}%"></div></div>`;
+    html += socRow(t("label_urban_pop"), dg.urban_pct, "%", dg.urban_pct);
   }
 
-  html += `<h3>${t("section_education")}</h3>`;
-  html += `<div class="data-row"><span class="label">${t("label_literacy")}</span><span class="value">${dg.literacy_pct}%</span></div>`;
-  html += `<div class="bar"><div class="bar-fill" style="width:${dg.literacy_pct}%"></div></div>`;
+  const eduHtml = socRow(t("label_literacy"), dg.literacy_pct, "%", dg.literacy_pct);
+  if (eduHtml) html += `<h3>${t("section_education")}</h3>` + eduHtml;
+  if (!html.trim()) html = `<div class="no-data"><div class="icon">📊</div><div>${t("no_data_title")}</div></div>`;
   return html;
 }
 
@@ -2186,7 +2287,7 @@ function tabSources(d) {
     <h3>${t("section_primary_sources")}</h3>
     <p style="color: var(--muted); font-size: 13px;">${t("sources_intro")}</p>
     <div class="sources-list">
-      ${Object.entries(d.sources).map(([field, url]) => {
+      ${Object.entries(d.sources || {}).map(([field, url]) => {
         const parts = url.split(" — ");
         const org = parts[0];
         const link = parts[1] || "";
@@ -2200,27 +2301,47 @@ function tabSources(d) {
 
 /* ---------- Methodology modal ---------- */
 const methodModal = document.getElementById("methodology-modal");
-document.getElementById("open-methodology").addEventListener("click", () => methodModal.classList.add("open"));
-document.getElementById("open-sources").addEventListener("click", () => methodModal.classList.add("open"));
-document.getElementById("footer-methodology").addEventListener("click", (e) => { e.preventDefault(); methodModal.classList.add("open"); });
+let lastFocusBeforeModal = null;
+function openMethodology() {
+  lastFocusBeforeModal = document.activeElement;
+  methodModal.classList.add("open");
+  const closeBtn = methodModal.querySelector("[data-close-modal]");
+  if (closeBtn) closeBtn.focus({ preventScroll: true });
+}
+function closeMethodology() {
+  methodModal.classList.remove("open");
+  if (lastFocusBeforeModal && document.contains(lastFocusBeforeModal)) {
+    lastFocusBeforeModal.focus({ preventScroll: true });
+    lastFocusBeforeModal = null;
+  }
+}
+document.getElementById("open-methodology").addEventListener("click", openMethodology);
+document.getElementById("open-sources").addEventListener("click", openMethodology);
+document.getElementById("footer-methodology").addEventListener("click", (e) => { e.preventDefault(); openMethodology(); });
 methodModal.addEventListener("click", e => {
-  if (e.target === methodModal || e.target.hasAttribute("data-close-modal")) methodModal.classList.remove("open");
+  if (e.target === methodModal || e.target.hasAttribute("data-close-modal")) closeMethodology();
 });
 
-/* ---------- Helpers ---------- */
+/* ---------- Helpers (all null-safe: countries like the Holy See have no
+   population/GDP figures — every formatter must render "—", never crash) ---------- */
 function formatPop(n) {
+  if (n == null || isNaN(n)) return "—";
   if (n >= 1e9) return (n / 1e9).toFixed(2) + "B";
   if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
   if (n >= 1e3) return (n / 1e3).toFixed(0) + "k";
   return n.toString();
 }
+function fmtNum(n) { return n == null || isNaN(n) ? "—" : Number(n).toLocaleString(); }
+function fmtPct(n) { return n == null || isNaN(n) ? "—" : n + "%"; }
 function capitalize(s) {
   return s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, " ");
 }
 
 /* ---------- Init ---------- */
 setLanguage(currentLang);
-document.getElementById("last-check").textContent = new Date().toISOString().slice(0, 10);
+/* Show a real "data last checked" date only once countries.json confirms one —
+   printing today's date before the data loads would overstate freshness. */
+document.getElementById("last-check").textContent = "…";
 
 /* ---------- Live data loader ----------
  * Try to fetch data/countries.json (written weekly by the GitHub Actions

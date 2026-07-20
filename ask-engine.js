@@ -1,16 +1,29 @@
 /**
  * ask-engine.js — the Atlas analyst, running entirely in the browser.
+ * ====================================================================
  *
- * No servers, no accounts, no cost. Two stages:
- *   1. UNDERSTAND + RETRIEVE (deterministic): find the countries, regions,
- *      and topics named in the question; pull the matching records from the
- *      Atlas's own published data files; wrap each as numbered evidence.
- *   2. COMPOSE: build a structured, cited answer with real recommendation
- *      logic (channel mix, risk flags, comparisons, trends).
+ * No servers, no accounts, no cost, nothing to maintain. The engine:
  *
- * ask.html can optionally hand the composed evidence to a small AI model
- * running locally in the visitor's browser (WebLLM) for smoother prose —
- * but the engine below is the source of truth for every number.
+ *   1. UNDERSTANDS the question — tolerant of typos ("Nigerai"), aliases
+ *      ("DRC", "Ivory Coast"), demonyms ("Kenyan audiences"), synonyms
+ *      ("press freedom" = "media freedom"), rankings ("top 5 by radio"),
+ *      comparisons, vague asks (it asks a clarifying question back), and
+ *      follow-ups ("what about radio there?").
+ *   2. RETRIEVES the matching records from the Atlas's published data files.
+ *      Retrieval is deterministic — every number in an answer is real.
+ *   3. COMPOSES a structured answer with recommendation logic, risk flags,
+ *      and a per-answer source list (rendered by ask.html as "View sources").
+ *
+ * The public contract (used by ask.html):
+ *   await initEngine()
+ *   const r = answerQuestion("...")
+ *   // r = { answer, evidence:[{id,title,detail,links:[{label,url}]}],
+ *   //       followups:[..], clarify:{question,options:[..]}|null, entities }
+ *   resetConversation()   // clears follow-up memory (new session)
+ *
+ * MAINTENANCE (for non-coders): the lookup tables below (COUNTRY_ALIASES,
+ * DEMONYMS, TOPIC_SYNONYMS, ATTRIBUTES) are plain lists — adding a line is
+ * safe and is all that's usually needed to teach the analyst a new word.
  */
 
 const DATA_BASE = "data";
@@ -18,7 +31,9 @@ const DATA_BASE = "data";
 // ---------------------------------------------------------------------------
 // Data loading
 // ---------------------------------------------------------------------------
-let COUNTRIES = null, TRENDS = null, REGISTRY = [];
+let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null;
+let NAME_TO_ISO = {};   // every recognizable name/alias/demonym -> ISO3
+let GENERATED = new Set();  // machine-generated demonyms: exact-match only, never fuzzy targets
 
 export async function initEngine() {
   if (COUNTRIES) return true;
@@ -27,125 +42,471 @@ export async function initEngine() {
     fetch(`${DATA_BASE}/trends/topic_intelligence.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/topics.json`, { cache: "no-cache" }),
   ]);
+  if (!cRes.ok) throw new Error("countries.json failed to load (" + cRes.status + ")");
   COUNTRIES = await cRes.json();
+  META = COUNTRIES._meta || null;
   delete COUNTRIES._meta;
   TRENDS = tRes.ok ? await tRes.json() : null;
-  // full registry: all 167 tracked topics, including ones currently below
-  // the trend-measurement floor (they match questions but report honestly)
+  // full registry: all tracked topics, including ones currently below the
+  // trend-measurement floor (they match questions and report honestly)
   if (gRes.ok) {
     const reg = await gRes.json();
     REGISTRY = (reg.topics || []).map(t => [t.label_en, t.qid]);
   } else if (TRENDS) {
     REGISTRY = Object.entries(TRENDS.topics).map(([qid, t]) => [t.label_en, qid]);
   }
+  buildNameIndex();
   return true;
 }
 
 // ---------------------------------------------------------------------------
-// Entity detection (same logic validated in the Worker tests)
+// Name index: official names + aliases + generated & irregular demonyms
 // ---------------------------------------------------------------------------
 const COUNTRY_ALIASES = {
   "usa": "USA", "united states": "USA", "america": "USA", "us": "USA",
   "uk": "GBR", "britain": "GBR", "united kingdom": "GBR", "england": "GBR",
   "drc": "COD", "dr congo": "COD", "democratic republic of the congo": "COD",
   "congo-kinshasa": "COD", "congo brazzaville": "COG", "republic of the congo": "COG",
-  "ivory coast": "CIV", "cote d'ivoire": "CIV", "côte d'ivoire": "CIV",
-  "south korea": "KOR", "north korea": "PRK", "russia": "RUS", "syria": "SYR",
-  "iran": "IRN", "vietnam": "VNM", "laos": "LAO", "bolivia": "BOL",
-  "venezuela": "VEN", "tanzania": "TZA", "moldova": "MDA", "brunei": "BRN",
-  "turkey": "TUR", "türkiye": "TUR", "czechia": "CZE", "czech republic": "CZE",
-  "uae": "ARE", "emirates": "ARE", "saudi": "SAU", "saudi arabia": "SAU",
-  "burma": "MMR", "myanmar": "MMR", "cape verde": "CPV", "east timor": "TLS",
-  "gambia": "GMB", "bahamas": "BHS", "kyrgyzstan": "KGZ", "slovakia": "SVK",
-  "somalia": "SOM", "micronesia": "FSM", "eswatini": "SWZ", "swaziland": "SWZ",
-  "palestine": "PSE", "vatican": "VAT", "holy see": "VAT",
+  "ivory coast": "CIV", "cote d'ivoire": "CIV", "côte d'ivoire": "CIV", "cote divoire": "CIV",
+  "south korea": "KOR", "north korea": "PRK", "korea": "KOR",
+  "russia": "RUS", "syria": "SYR", "iran": "IRN", "vietnam": "VNM", "viet nam": "VNM",
+  "laos": "LAO", "bolivia": "BOL", "venezuela": "VEN", "tanzania": "TZA",
+  "moldova": "MDA", "brunei": "BRN", "turkey": "TUR", "türkiye": "TUR", "turkiye": "TUR",
+  "czechia": "CZE", "czech republic": "CZE", "uae": "ARE", "emirates": "ARE",
+  "united arab emirates": "ARE", "saudi": "SAU", "saudi arabia": "SAU",
+  "burma": "MMR", "myanmar": "MMR", "cape verde": "CPV", "cabo verde": "CPV",
+  "east timor": "TLS", "timor leste": "TLS", "timor-leste": "TLS",
+  "gambia": "GMB", "the gambia": "GMB", "bahamas": "BHS", "kyrgyzstan": "KGZ",
+  "slovakia": "SVK", "somalia": "SOM", "micronesia": "FSM",
+  "eswatini": "SWZ", "swaziland": "SWZ", "palestine": "PSE", "vatican": "VAT",
+  "holy see": "VAT", "netherlands": "NLD", "holland": "NLD", "macedonia": "MKD",
+  "north macedonia": "MKD", "bosnia": "BIH", "bosnia and herzegovina": "BIH",
+  "sri lanka": "LKA", "new zealand": "NZL", "png": "PNG", "papua new guinea": "PNG",
+  "central african republic": "CAF", "car": "CAF", "south sudan": "SSD",
+  "south africa": "ZAF", "burkina": "BFA", "burkina faso": "BFA",
+  "philippines": "PHL", "the philippines": "PHL", "china": "CHN", "prc": "CHN",
+  "hong kong": "CHN", "taiwan": "CHN",
 };
 
+// Irregular demonyms the suffix generator below can't derive.
+const DEMONYMS = {
+  "french": "FRA", "dutch": "NLD", "swiss": "CHE", "greek": "GRC", "danish": "DNK",
+  "swedish": "SWE", "finnish": "FIN", "polish": "POL", "spanish": "ESP",
+  "portuguese": "PRT", "german": "DEU", "turkish": "TUR", "chinese": "CHN",
+  "japanese": "JPN", "korean": "KOR", "thai": "THA", "vietnamese": "VNM",
+  "filipino": "PHL", "british": "GBR", "english": "GBR", "irish": "IRL",
+  "welsh": "GBR", "scottish": "GBR", "icelandic": "ISL", "norwegian": "NOR",
+  "american": "USA", "argentine": "ARG", "argentinian": "ARG", "brazilian": "BRA",
+  "mexican": "MEX", "peruvian": "PER", "chilean": "CHL", "cuban": "CUB",
+  "haitian": "HTI", "canadian": "CAN", "emirati": "ARE", "saudi arabian": "SAU",
+  "israeli": "ISR", "iranian": "IRN", "iraqi": "IRQ", "syrian": "SYR",
+  "lebanese": "LBN", "jordanian": "JOR", "yemeni": "YEM", "omani": "OMN",
+  "qatari": "QAT", "kuwaiti": "KWT", "bahraini": "BHR", "egyptian": "EGY",
+  "moroccan": "MAR", "algerian": "DZA", "tunisian": "TUN", "libyan": "LBY",
+  "sudanese": "SDN", "ethiopian": "ETH", "somali": "SOM", "kenyan": "KEN",
+  "ugandan": "UGA", "tanzanian": "TZA", "rwandan": "RWA", "burundian": "BDI",
+  "congolese": "COD", "nigerian": "NGA", "ghanaian": "GHA", "ivorian": "CIV",
+  "senegalese": "SEN", "malian": "MLI", "beninese": "BEN", "togolese": "TGO",
+  "cameroonian": "CMR", "gabonese": "GAB", "chadian": "TCD", "nigerien": "NER",
+  "burkinabe": "BFA", "guinean": "GIN", "liberian": "LBR", "sierra leonean": "SLE",
+  "gambian": "GMB", "mauritanian": "MRT", "malagasy": "MDG", "mozambican": "MOZ",
+  "zambian": "ZMB", "zimbabwean": "ZWE", "malawian": "MWI", "botswanan": "BWA",
+  "namibian": "NAM", "south african": "ZAF", "angolan": "AGO", "basotho": "LSO",
+  "indian": "IND", "pakistani": "PAK", "bangladeshi": "BGD", "nepali": "NPL",
+  "nepalese": "NPL", "bhutanese": "BTN", "afghan": "AFG", "uzbek": "UZB",
+  "kazakh": "KAZ", "kyrgyz": "KGZ", "tajik": "TJK", "turkmen": "TKM",
+  "mongolian": "MNG", "indonesian": "IDN", "malaysian": "MYS", "singaporean": "SGP",
+  "cambodian": "KHM", "laotian": "LAO", "burmese": "MMR", "australian": "AUS",
+  "fijian": "FJI", "russian": "RUS", "ukrainian": "UKR", "belarusian": "BLR",
+  "georgian": "GEO", "armenian": "ARM", "azerbaijani": "AZE", "italian": "ITA",
+  "romanian": "ROU", "bulgarian": "BGR", "hungarian": "HUN", "austrian": "AUT",
+  "belgian": "BEL", "czech": "CZE", "slovak": "SVK", "slovenian": "SVN",
+  "croatian": "HRV", "serbian": "SRB", "albanian": "ALB", "bosnian": "BIH",
+  "maltese": "MLT", "cypriot": "CYP", "estonian": "EST", "latvian": "LVA",
+  "lithuanian": "LTU", "colombian": "COL", "venezuelan": "VEN", "ecuadorian": "ECU",
+  "bolivian": "BOL", "paraguayan": "PRY", "uruguayan": "URY", "guatemalan": "GTM",
+  "honduran": "HND", "salvadoran": "SLV", "nicaraguan": "NIC", "costa rican": "CRI",
+  "panamanian": "PAN", "dominican": "DOM", "jamaican": "JAM",
+};
+
+// Words that must never fuzzy-match to a country/topic (too common).
+const FUZZY_STOPWORDS = new Set(("about media radio trust trends trend where which what should could would there their world " +
+  "global country countries region regions people online social news best most least top how when who why whom " +
+  "compare versus against between audience audiences platform platforms content campaign campaigns publish reach " +
+  "target young youth women rural urban digital internet mobile phone television broadcast press freedom score " +
+  "data source sources right now week today please thanks hello focus strategy channel channels format formats " +
+  "highest lowest largest smallest better worse worst rising falling popular attention interest interested local " +
+  "national levels level rates rate percent percentage share tell show give list find help plan advice info " +
+  "trending comparing ranking targeting reaching publishing measuring growing changing " +
+  "child children woman women man men adult adults human humans person little large small major minor").split(/\s+/));
+
+function buildNameIndex() {
+  NAME_TO_ISO = {};
+  for (const [iso, c] of Object.entries(COUNTRIES)) {
+    if (!c || !c.name) continue;
+    const full = c.name.toLowerCase().trim();
+    NAME_TO_ISO[full] = iso;
+    // normalize() turns hyphens into spaces, so hyphenated names need a
+    // space-separated variant too ("guinea-bissau" → "guinea bissau")
+    if (full.includes("-")) NAME_TO_ISO[full.replace(/-/g, " ")] = iso;
+    const short = full.replace(/,.*$/, "").trim();     // "Tanzania, United Rep." -> "tanzania"
+    if (short.length >= 3) NAME_TO_ISO[short] = iso;
+    if (short.includes("-")) NAME_TO_ISO[short.replace(/-/g, " ")] = iso;
+    // generated demonyms for single-word names: kenya->kenyan, chad->chadian…
+    if (!short.includes(" ") && short.length >= 4) {
+      const gens = [short + "n", short + "an", short + "ian",
+                    short.replace(/y$/, "ian"), short.replace(/a$/, "an"),
+                    short.replace(/e$/, "ian"), short + "ese", short + "i"];
+      for (const g of gens) {
+        if (g !== short && g.length >= 5 && !(g in NAME_TO_ISO) && !FUZZY_STOPWORDS.has(g)) {
+          NAME_TO_ISO[g] = iso;
+          GENERATED.add(g);   // catch "kenyan" typed exactly, but never fuzzy-match to it
+        }
+      }
+    }
+  }
+  Object.assign(NAME_TO_ISO, COUNTRY_ALIASES);
+  Object.assign(NAME_TO_ISO, DEMONYMS);      // explicit demonyms win over generated
+}
+
+// ---------------------------------------------------------------------------
+// Fuzzy matching (typo tolerance)
+// ---------------------------------------------------------------------------
+function levenshtein(a, b, cap) {
+  // Damerau-Levenshtein (optimal string alignment): counts a swap of two
+  // adjacent letters ("nigerai" → "nigeria") as ONE edit — the most common typo.
+  if (Math.abs(a.length - b.length) > cap) return cap + 1;
+  let prev2 = null, prev = new Array(b.length + 1), cur = new Array(b.length + 1);
+  for (let j = 0; j <= b.length; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    cur[0] = i;
+    let rowMin = i;
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (prev2 && i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1])
+        cur[j] = Math.min(cur[j], prev2[j - 2] + 1);
+      if (cur[j] < rowMin) rowMin = cur[j];
+    }
+    if (rowMin > cap) return cap + 1;
+    prev2 = prev.slice();
+    [prev, cur] = [cur, prev];
+  }
+  return prev[b.length];
+}
+
+const fuzzyCap = (len) => len >= 9 ? 2 : len >= 5 ? 1 : 0;
+
+/**
+ * Find the single best fuzzy match for `phrase` among `keys`.
+ * `canon` maps a key to its canonical id (e.g. "nigeria"→NGA, "nigerian"→NGA);
+ * ties are only fatal when the tied keys point to DIFFERENT canonical ids.
+ */
+function bestFuzzy(phrase, keys, canon) {
+  const cap = fuzzyCap(phrase.length);
+  if (cap === 0) return null;
+  const c = canon || ((k) => k);
+  let best = null, bestD = cap + 1, conflict = false;
+  for (const k of keys) {
+    const d = levenshtein(phrase, k, cap);
+    if (d < bestD) { bestD = d; best = k; conflict = false; }
+    else if (d === bestD && best && c(k) !== c(best)) conflict = true;
+  }
+  return (best && bestD <= cap && !conflict) ? best : null;
+}
+
+// ---------------------------------------------------------------------------
+// Vocabulary: regions, topics, attributes, platforms, audiences
+// ---------------------------------------------------------------------------
 const REGION_MAP = {
   "east africa": { subregion: "Eastern Africa" }, "eastern africa": { subregion: "Eastern Africa" },
   "west africa": { subregion: "Western Africa" }, "western africa": { subregion: "Western Africa" },
-  "north africa": { subregion: "Northern Africa" }, "southern africa": { subregion: "Southern Africa" },
-  "central africa": { subregion: "Middle Africa" }, "africa": { region: "Africa" },
+  "north africa": { subregion: "Northern Africa" }, "northern africa": { subregion: "Northern Africa" },
+  "southern africa": { subregion: "Southern Africa" },
+  "central africa": { subregion: "Middle Africa" }, "middle africa": { subregion: "Middle Africa" },
+  "sub-saharan africa": { subregions: ["Eastern Africa", "Western Africa", "Southern Africa", "Middle Africa"] },
+  "africa": { region: "Africa" },
   "western europe": { subregion: "Western Europe" }, "eastern europe": { subregion: "Eastern Europe" },
   "northern europe": { subregion: "Northern Europe" }, "southern europe": { subregion: "Southern Europe" },
-  "europe": { region: "Europe" },
+  "scandinavia": { subregion: "Northern Europe" }, "the balkans": { subregion: "Southern Europe" },
+  "balkans": { subregion: "Southern Europe" }, "europe": { region: "Europe" },
   "south asia": { subregion: "Southern Asia" }, "southern asia": { subregion: "Southern Asia" },
   "southeast asia": { subregion: "South-Eastern Asia" }, "south-east asia": { subregion: "South-Eastern Asia" },
-  "east asia": { subregion: "Eastern Asia" }, "central asia": { subregion: "Central Asia" },
+  "south east asia": { subregion: "South-Eastern Asia" },
+  "east asia": { subregion: "Eastern Asia" }, "eastern asia": { subregion: "Eastern Asia" },
+  "central asia": { subregion: "Central Asia" },
   "middle east": { subregion: "Western Asia" }, "western asia": { subregion: "Western Asia" },
+  "gulf": { subregion: "Western Asia" }, "mena": { subregions: ["Western Asia", "Northern Africa"] },
   "asia": { region: "Asia" },
   "latin america": { subregions: ["South America", "Central America", "Caribbean"] },
   "south america": { subregion: "South America" }, "central america": { subregion: "Central America" },
   "caribbean": { subregion: "Caribbean" }, "north america": { subregion: "Northern America" },
   "oceania": { region: "Oceania" }, "pacific": { region: "Oceania" },
+  "the americas": { region: "Americas" }, "americas": { region: "Americas" },
+  // adjective forms ("African countries", "European audiences")
+  "african": { region: "Africa" }, "european": { region: "Europe" },
+  "asian": { region: "Asia" }, "east african": { subregion: "Eastern Africa" },
+  "west african": { subregion: "Western Africa" }, "north african": { subregion: "Northern Africa" },
+  "southern african": { subregion: "Southern Africa" }, "central african": { subregion: "Middle Africa" },
+  "middle eastern": { subregion: "Western Asia" }, "south asian": { subregion: "Southern Asia" },
+  "southeast asian": { subregion: "South-Eastern Asia" }, "east asian": { subregion: "Eastern Asia" },
+  "central asian": { subregion: "Central Asia" }, "latin american": { subregions: ["South America", "Central America", "Caribbean"] },
+  "caribbean island": { subregion: "Caribbean" }, "south american": { subregion: "South America" },
+  "oceanian": { region: "Oceania" }, "pacific island": { region: "Oceania" },
+  // named zones that cut across UN subregions — explicit country lists
+  "sahel": { isos: ["MRT", "SEN", "MLI", "BFA", "NER", "NGA", "TCD", "SDN", "ERI"] },
+  "the sahel": { isos: ["MRT", "SEN", "MLI", "BFA", "NER", "NGA", "TCD", "SDN", "ERI"] },
+  "horn of africa": { isos: ["ETH", "ERI", "DJI", "SOM"] },
+  "the horn of africa": { isos: ["ETH", "ERI", "DJI", "SOM"] },
+  "maghreb": { isos: ["MAR", "DZA", "TUN", "LBY", "MRT"] },
+  "the gulf states": { isos: ["SAU", "ARE", "QAT", "KWT", "BHR", "OMN"] },
+  "nordics": { isos: ["DNK", "NOR", "SWE", "FIN", "ISL"] },
+  "the nordics": { isos: ["DNK", "NOR", "SWE", "FIN", "ISL"] },
 };
+
+// Pretty display names for region keys whose key text is an adjective or
+// lowercase phrase ("african" must never render as a region heading).
+const REGION_DISPLAY = {
+  "african": "Africa", "european": "Europe", "asian": "Asia", "oceanian": "Oceania",
+  "east african": "Eastern Africa", "west african": "Western Africa",
+  "north african": "Northern Africa", "southern african": "Southern Africa",
+  "central african": "Middle Africa", "middle eastern": "the Middle East",
+  "south asian": "Southern Asia", "southeast asian": "South-Eastern Asia",
+  "east asian": "Eastern Asia", "central asian": "Central Asia",
+  "latin american": "Latin America", "south american": "South America",
+  "caribbean island": "the Caribbean", "pacific island": "the Pacific",
+  "mena": "the Middle East & North Africa", "sahel": "the Sahel", "the sahel": "the Sahel",
+  "horn of africa": "the Horn of Africa", "the horn of africa": "the Horn of Africa",
+  "maghreb": "the Maghreb", "the gulf states": "the Gulf states",
+  "nordics": "the Nordic countries", "the nordics": "the Nordic countries",
+};
+const regionDisplay = (rk) => REGION_DISPLAY[rk] || titleCase(rk);
 
 const TOPIC_SYNONYMS = {
   "ai": "Artificial intelligence", "artificial intelligence": "Artificial intelligence",
-  "climate": "Climate change", "global warming": "Climate change",
-  "covid": "COVID-19", "coronavirus": "COVID-19",
-  "refugees": "Refugee", "migration": "Human migration", "migrants": "Human migration",
-  "vaccines": "Vaccine", "vaccination": "Vaccination",
+  "machine learning": "Artificial intelligence", "chatbots": "ChatGPT",
+  "climate": "Climate change", "global warming": "Climate change", "climate crisis": "Climate change",
+  "covid": "COVID-19", "coronavirus": "COVID-19", "pandemic": "COVID-19",
+  "refugees": "Refugee", "refugee crisis": "Refugee",
+  "migration": "Human migration", "migrants": "Human migration", "immigration": "Human migration",
+  "vaccines": "Vaccine", "vaccination": "Vaccination", "vaccinations": "Vaccination",
   "misinformation": "Misinformation", "disinformation": "Disinformation",
-  "fake news": "Fake news", "gender": "Gender equality",
-  "women's rights": "Women's rights", "press freedom": "Freedom of the press",
-  "food": "Food security", "hunger": "Hunger", "famine": "Famine",
+  "fake news": "Fake news", "gender": "Gender equality", "gender equality": "Gender equality",
+  "women's rights": "Women's rights", "womens rights": "Women's rights",
+  "women rights": "Women's rights",
+  "press freedom": "Freedom of the press", "media freedom": "Freedom of the press",
+  "food": "Food security", "food security": "Food security", "hunger": "Hunger", "famine": "Famine",
+  "sea level": "Sea level rise", "sea levels": "Sea level rise",
+  "renewables": "Renewable energy", "renewable energy": "Renewable energy",
+  "solar": "Solar energy", "nuclear": "Nuclear power",
+  "crypto": "Cryptocurrency", "bitcoin": "Cryptocurrency",
+  "mental health": "Mental health", "malaria": "Malaria", "hiv": "HIV/AIDS", "aids": "HIV/AIDS",
+  "polio": "Polio", "cholera": "Cholera", "ebola": "Ebola",
+  "drought": "Drought", "flooding": "Flood", "floods": "Flood",
+  "deforestation": "Deforestation", "biodiversity": "Biodiversity",
+  "plastic": "Plastic pollution", "plastic pollution": "Plastic pollution",
+  "child labour": "Child labour", "child labor": "Child labour",
+  "human trafficking": "Human trafficking", "corruption": "Corruption",
+  "peacekeeping": "Peacekeeping", "terrorism": "Terrorism",
+  "poverty": "Poverty", "inequality": "Economic inequality",
+  "education": "Education", "literacy": "Literacy",
+  "clean water": "Drinking water", "sanitation": "Sanitation", "water": "Drinking water",
+  // labels too short for the ≥4-char label matcher — reachable via synonyms only
+  "war": "War", "armed conflict": "War", "conflict": "War", "5g": "5G",
 };
 
+// Attributes the analyst can rank, look up, and compare on.
+const ATTRIBUTES = {
+  internet:   { label: "Internet penetration", unit: "%", get: f => f.internet,
+                words: ["internet", "internet penetration", "internet access", "connectivity", "connected", "online access"],
+                source: "World Bank (ITU data)" },
+  smartphone: { label: "Smartphone adoption", unit: "%", get: f => f.smartphone,
+                words: ["smartphone", "smartphones", "phone ownership"], source: "GSMA / World Bank" },
+  radio:      { label: "Radio as weekly news source", unit: "%", get: f => f.radio,
+                words: ["radio"], source: "Afrobarometer R9 / national surveys", surveyMix: true },
+  tv:         { label: "TV as weekly news source", unit: "%", get: f => f.tv,
+                words: ["tv", "television", "broadcast tv"], source: "Reuters DNR 2026 / barometers", surveyMix: true },
+  online:     { label: "Online news use (weekly)", unit: "%", get: f => f.online,
+                words: ["online news", "digital news", "news websites"], source: "Reuters DNR 2026 / barometers", surveyMix: true },
+  social:     { label: "Social media as news source", unit: "%", get: f => f.social,
+                words: ["social media", "social networks", "social platforms"], source: "Reuters DNR 2026 / barometers", surveyMix: true },
+  trust:      { label: "Trust in news", unit: "%", get: f => f.trust,
+                words: ["trust", "trusts", "trusted", "trust in news", "news trust", "credibility", "believe the news"], source: "Reuters DNR 2026 / barometers", surveyMix: true },
+  press:      { label: "Press freedom (RSF, 0–100)", unit: "/100", get: f => f.rsf,
+                words: ["press freedom", "media freedom", "rsf", "journalist safety", "press freedom score"],
+                source: "RSF World Press Freedom Index 2025" },
+  netfreedom: { label: "Internet freedom (FOTN, 0–100)", unit: "/100", get: f => f.fotn,
+                words: ["internet freedom", "online freedom", "censorship", "internet censorship"],
+                source: "Freedom House FOTN 2025 (70 countries)" },
+  medianage:  { label: "Median age", unit: " years", get: f => f.medianAge,
+                words: ["median age", "average age", "age"], source: "UN DESA WPP 2024" },
+  under15:    { label: "Population under 15", unit: "%", get: f => f.under15,
+                words: ["under 15", "children", "under-15"], source: "World Bank" },
+  urban:      { label: "Urban population", unit: "%", get: f => f.urban,
+                words: ["urban", "urbanisation", "urbanization", "cities"], source: "World Bank" },
+  literacy:   { label: "Adult literacy", unit: "%", get: f => f.literacy,
+                words: ["literacy", "literate", "literacy rate"], source: "World Bank (UNESCO UIS data)" },
+  population: { label: "Population", unit: "", get: f => f.pop, fmt: v => fmtPop(v),
+                words: ["population", "biggest country", "largest country", "most populous"], source: "World Bank" },
+  mci:        { label: "Mobile connectivity index", unit: "/100", get: f => f.mci,
+                words: ["mobile connectivity", "mobile internet", "mci"], source: "GSMA MCI 2024" },
+  finaccount: { label: "Financial account ownership", unit: "%", get: f => f.finAccount,
+                words: ["financial account", "bank account", "mobile money", "financial inclusion", "digital payments"],
+                source: "World Bank Global Findex" },
+};
+
+const PLATFORMS = ["whatsapp", "facebook", "tiktok", "instagram", "youtube", "telegram", "x", "twitter", "wechat", "snapchat", "viber", "line"];
+const PLATFORM_NAMES = { whatsapp: "WhatsApp", facebook: "Facebook", tiktok: "TikTok", instagram: "Instagram",
+  youtube: "YouTube", telegram: "Telegram", x: "X (Twitter)", wechat: "WeChat", snapchat: "Snapchat", viber: "Viber", line: "LINE" };
+
+const AUDIENCES = {
+  youth: ["youth", "young", "young people", "under 25", "under-25", "gen z", "students", "teenagers", "teens"],
+  women: ["women", "female", "girls", "mothers"],
+  rural: ["rural", "villages", "countryside", "farmers"],
+  older: ["older", "elderly", "seniors", "over 60", "older adults"],
+};
+
+// ---------------------------------------------------------------------------
+// Entity + intent detection
+// ---------------------------------------------------------------------------
+function normalize(question) {
+  return " " + question.toLowerCase()
+    .replace(/[’‘]/g, "'").replace(/[“”]/g, '"')
+    .replace(/'s\b/g, "")                       // "france's media" → "france media"
+    .replace(/\bu\.s\.a?\.?/g, " usa ")         // U.S. / U.S.A.
+    .replace(/\bu\.k\.?/g, " united kingdom ")
+    .replace(/\bthe us\b/g, " the usa ")        // 2-letter aliases are ambiguous with
+    .replace(/\bthe uk\b/g, " the united kingdom ")  // the pronoun "us" — resolve safe forms only
+    .replace(/\bindian ocean\b/g, " the ocean ")     // geography ≠ the country India
+    .replace(/\bniger delta\b/g, " the delta ")
+    .replace(/-/g, " ")                         // "radio-dependent" → "radio dependent"
+    .replace(/[?!.,;:()"]/g, " ").replace(/\s+/g, " ").trim() + " ";
+}
+
 export function detectEntities(question) {
-  const q = " " + question.toLowerCase().replace(/[?!.,;:()"]/g, " ").replace(/\s+/g, " ") + " ";
-  const found = { countries: [], regions: [], topics: [], wantsTrends: false, wantsCompare: false };
+  const q = normalize(question);
+  const found = { countries: [], regions: [], topics: [], attributes: [], platforms: [],
+                  audiences: [], wantsTrends: false, wantsCompare: false, rankDir: null,
+                  rankN: 5, intents: [] };
 
-  const nameToIso = {};
-  for (const [iso, c] of Object.entries(COUNTRIES)) {
-    if (c && c.name) nameToIso[c.name.toLowerCase().replace(/,.*$/, "").trim()] = iso;
-  }
-  Object.assign(nameToIso, COUNTRY_ALIASES);
-  const names = Object.keys(nameToIso).sort((a, b) => b.length - a.length);
+  // --- countries AND regions in ONE longest-phrase-first pass ---
+  // Longer phrases claim their words first, which resolves both directions
+  // of ambiguity: "latin america" (region) wins over "america"→USA, while
+  // "south africa" (country) wins over "africa" (region).
+  const names = Object.keys(NAME_TO_ISO);
+  const regionKeys = Object.keys(REGION_MAP);
+  const phrases = [
+    ...names.filter(n => n.length >= 3).map(n => [n, "country"]),
+    ...regionKeys.map(r => [r, "region"]),
+  ].sort((a, b) => b[0].length - a[0].length);
   let scrub = q;
-  for (const nm of names) {
-    if (nm.length < 3) continue;
-    const idx = scrub.indexOf(" " + nm + " ") >= 0 ? scrub.indexOf(" " + nm + " ")
-      : (scrub.includes(" " + nm) && nm.length > 4 ? scrub.indexOf(" " + nm) : -1);
-    if (idx >= 0) {
-      const iso = nameToIso[nm];
-      if (!found.countries.includes(iso)) found.countries.push(iso);
-      scrub = scrub.replace(new RegExp(" " + nm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), " ");
+  for (const [phrase, kind] of phrases) {
+    if (!scrub.includes(" " + phrase + " ")) continue;
+    if (kind === "country") {
+      const iso = NAME_TO_ISO[phrase];
+      if (COUNTRIES[iso] && !found.countries.includes(iso)) found.countries.push(iso);
+    } else if (!found.regions.includes(phrase)) {
+      found.regions.push(phrase);
+    }
+    scrub = scrub.split(" " + phrase + " ").join(" ");
+  }
+
+  // --- fuzzy country pass for remaining words (typos: "Nigerai") ---
+  const scrubTokens = scrub.trim().split(" ").filter(t => t.length >= 5 && !FUZZY_STOPWORDS.has(t) && !t.includes("'"));
+  const nameKeys = names.filter(n => n.length >= 4 && !GENERATED.has(n));
+  for (const tok of scrubTokens) {
+    const hit = bestFuzzy(tok, nameKeys, (k) => NAME_TO_ISO[k]);
+    if (hit) {
+      const iso = NAME_TO_ISO[hit];
+      if (COUNTRIES[iso] && !found.countries.includes(iso)) {
+        found.countries.push(iso);
+        scrub = scrub.split(" " + tok + " ").join(" ");
+      }
     }
   }
 
-  const regionKeys = Object.keys(REGION_MAP).sort((a, b) => b.length - a.length);
-  for (const rk of regionKeys) {
-    if (scrub.includes(" " + rk + " ")) {
-      found.regions.push(rk);
-      scrub = scrub.split(" " + rk + " ").join(" ");
-    }
-  }
-
-  const topicLabels = REGISTRY;
+  // --- topics: synonyms, exact labels, then fuzzy ---
   for (const [syn, label] of Object.entries(TOPIC_SYNONYMS)) {
     if (q.includes(" " + syn + " ")) {
-      const hit = topicLabels.find(([l]) => l === label);
+      const hit = REGISTRY.find(([l]) => l === label);
       if (hit && !found.topics.some(t => t.qid === hit[1])) found.topics.push({ label: hit[0], qid: hit[1] });
     }
   }
-  for (const [label, qid] of topicLabels) {
+  for (const [label, qid] of REGISTRY) {
     const l = label.toLowerCase();
     if (l.length >= 4 && q.includes(l) && !found.topics.some(t => t.qid === qid)) {
       found.topics.push({ label, qid });
     }
   }
+  if (!found.topics.length) {
+    const labelKeys = REGISTRY.map(([l]) => l.toLowerCase()).filter(l => l.length >= 6);
+    for (const tok of scrub.trim().split(" ").filter(t => t.length >= 6 && !FUZZY_STOPWORDS.has(t))) {
+      const hit = bestFuzzy(tok, labelKeys);
+      if (hit) {
+        const entry = REGISTRY.find(([l]) => l.toLowerCase() === hit);
+        if (entry && !found.topics.some(t => t.qid === entry[1])) found.topics.push({ label: entry[0], qid: entry[1] });
+      }
+    }
+  }
   found.topics = found.topics.slice(0, 3);
 
-  found.wantsTrends = /trend|trending|rising|right now|this week|currently|interested in|care about|popular topic/.test(q);
-  found.wantsCompare = /compare|versus| vs |difference between|better than/.test(q) || found.countries.length >= 2;
+  // --- attributes ---
+  for (const [key, attr] of Object.entries(ATTRIBUTES)) {
+    if (attr.words.some(w => q.includes(" " + w + " "))) found.attributes.push(key);
+  }
+  // "age" alone is too weak — require a stronger cue
+  if (found.attributes.includes("medianage") && !/median age|average age|how old/.test(q)) {
+    found.attributes = found.attributes.filter(a => a !== "medianage");
+  }
 
+  // --- platforms ---
+  for (const p of PLATFORMS) {
+    if (q.includes(" " + p + " ")) {
+      const canon = p === "twitter" ? "x" : p;
+      if (!found.platforms.includes(canon)) found.platforms.push(canon);
+    }
+  }
+
+  // --- audiences ---
+  for (const [aud, words] of Object.entries(AUDIENCES)) {
+    if (words.some(w => q.includes(" " + w + " "))) found.audiences.push(aud);
+  }
+
+  // --- intents ---
+  found.wantsTrends = /\b(trend|trending|rising|right now|this week|currently|interested in|care about|popular topic|talking about|paying attention|hot topic|buzz)\b/.test(q);
+  found.wantsCompare = /\b(compare|versus|vs|difference between|better than|or)\b/.test(q) && found.countries.length >= 2
+    || /\b(compare|versus|vs|difference between)\b/.test(q) || found.countries.length >= 2;
+
+  const rankMatch = q.match(/\b(top|highest|most|best|largest|greatest|leading|lowest|least|worst|smallest|bottom)\b/);
+  if (rankMatch && (found.attributes.length || /\b(top|bottom) \d+\b/.test(q))) {
+    found.rankDir = /\b(lowest|least|worst|smallest|bottom)\b/.test(q) ? "asc" : "desc";
+    const n = q.match(/\b(?:top|bottom|first)\s+(\d{1,2})\b/);
+    found.rankN = n ? Math.min(15, Math.max(1, parseInt(n[1], 10))) : 5;
+    found.intents.push("rank");
+  }
+
+  if (/\b(recommend|should we|should i|how (do|can|should) we|best (way|channel|platform|format)|where (do|can|should)|how to reach|reach|engage|publish|promote|communicat\w*|campaign|advis\w*|strateg\w*)\b/.test(q)
+      && (found.countries.length || found.regions.length)) found.intents.push("recommend");
+
+  // meta only for questions genuinely ABOUT the analyst/data — "help me reach
+  // farmers in India" or "how often do Kenyans..." must not be hijacked
+  if (/\b(what (data|sources)|which sources|where (does|do) (the|this|your) data|how (fresh|current|recent) is|how often (is|are) (the|this|your) data|last updated|up to date|what can (you|i) ask|who are you|how do you work|methodology)\b/.test(q)
+      || /^\s*help\s*$/.test(q))
+    found.intents.push("meta");
+
+  if (/^\s*(hi|hello|hey|good (morning|afternoon|evening)|thanks|thank you|thank you so much|ok|okay|great|cool|perfect|awesome)\s*[!.?…]*\s*$/i.test(question.trim()))
+    found.intents.push("greeting");
+
+  if (found.attributes.length && found.countries.length === 1 && !found.intents.includes("rank"))
+    found.intents.push("lookup");
+
+  // --- expand regions to concrete countries (largest populations first) ---
   const regionCountries = [];
   for (const rk of found.regions) {
     const spec = REGION_MAP[rk];
     for (const [iso, c] of Object.entries(COUNTRIES)) {
       if (!c || !c.subregion) continue;
-      const match = spec.region ? c.region === spec.region
+      const match = spec.isos ? spec.isos.includes(iso)
+        : spec.region ? c.region === spec.region
         : spec.subregion ? c.subregion === spec.subregion
         : spec.subregions.includes(c.subregion);
       if (match) regionCountries.push([iso, c.population || 0]);
@@ -157,20 +518,77 @@ export function detectEntities(question) {
 }
 
 // ---------------------------------------------------------------------------
-// Evidence + fact helpers
+// Conversation memory (for follow-ups: "what about radio there?")
+// ---------------------------------------------------------------------------
+let LAST = { isos: [], regions: [], topics: [], attributes: [], rankDir: null };
+
+export function resetConversation() { LAST = { isos: [], regions: [], topics: [], attributes: [], rankDir: null }; }
+
+function isFollowUp(question, ents) {
+  const q = normalize(question);
+  const hasPlace = ents.countries.length || ents.regions.length;
+  if (hasPlace) return false;
+  if (!LAST.isos.length && !LAST.regions.length) return false;
+  if (/\b(there|they|them|that country|those countries|its|it s)\b/.test(q)) return true;
+  if (/^\s*(what about|how about|and|also|why|what of)\b/.test(q.trim())) return true;
+  // a bare attribute or trend question with no location → inherit the last one;
+  // but a TOPIC question ("what's happening with sea level rise?") stands alone
+  if (ents.topics.length) return false;
+  if (ents.attributes.length && !ents.intents.includes("rank")) return true;
+  if (ents.wantsTrends) return true;
+  return false;
+}
+
+// ---------------------------------------------------------------------------
+// Evidence store — now with clickable links (rendered as "View sources")
 // ---------------------------------------------------------------------------
 function evidenceStore() {
   const items = [];
+  const seen = new Map();
   return {
-    add(title, detail) {
+    add(title, detail, links) {
+      const key = title + "|" + detail;
+      if (seen.has(key)) return seen.get(key);
       const id = "E" + (items.length + 1);
-      items.push({ id, title, detail });
+      items.push({ id, title, detail, links: links || [] });
+      seen.set(key, id);
       return id;
     },
     list: () => items,
   };
 }
 
+/** Parse "World Bank — https://…" source strings into {label, url}. */
+function parseSource(s) {
+  if (!s) return null;
+  const m = String(s).match(/(https?:\/\/\S+)/);
+  const url = m ? m[1].replace(/[).,]+$/, "") : null;
+  const label = String(s).replace(/\s*[—–-]?\s*https?:\/\/\S+/, "").trim();
+  return { label: label || url || String(s), url };
+}
+
+function countryLinks(iso) {
+  const c = COUNTRIES[iso];
+  if (!c || !c.sources) return [];
+  const pick = ["news_consumption", "news_radio", "press_freedom_rank", "political_freedom", "internet_freedom", "internet_pct", "median_age"];
+  const links = [];
+  const seen = new Set();
+  for (const k of pick) {
+    const p = parseSource(c.sources[k]);
+    if (p && p.url && !seen.has(p.url)) { links.push({ label: p.label, url: p.url }); seen.add(p.url); }
+  }
+  return links.slice(0, 6);
+}
+
+const TREND_LINKS = [
+  { label: "Wikimedia Pageviews API (demand signal)", url: "https://wikimedia.org/api/rest_v1/" },
+  { label: "GDELT Project (news-coverage signal)", url: "https://www.gdeltproject.org/" },
+  { label: "Topic Explorer (this site)", url: "topics.html" },
+];
+
+// ---------------------------------------------------------------------------
+// Facts
+// ---------------------------------------------------------------------------
 function facts(iso) {
   const c = COUNTRIES[iso];
   if (!c) return null;
@@ -178,7 +596,7 @@ function facts(iso) {
         conn = c.connectivity || {}, dem = c.demographics || {};
   const tr = TRENDS && TRENDS.countries ? TRENDS.countries[iso] : null;
   return {
-    iso, name: c.name, pop: c.population, subregion: c.subregion,
+    iso, name: c.name, pop: c.population, region: c.region, subregion: c.subregion,
     trust: nc.trust_in_news_pct, tv: nc.tv_as_news_source_pct,
     online: nc.online_as_news_source_pct, social: nc.social_as_news_source_pct,
     radio: nc.radio_as_news_source_pct, surveyNote: nc.survey_note || null,
@@ -189,40 +607,48 @@ function facts(iso) {
     rsf: inf.press_freedom_score, fh: inf.political_freedom_status,
     fotn: inf.internet_freedom_score, electoral: inf.electoral_democracy,
     under15: dem.age_0_14_pct, urban: dem.urban_pct, literacy: dem.literacy_pct,
+    finAccount: conn.financial_account_pct,
     outlets: c.media || {}, languages: c.languages || [],
+    languagesDetail: c.languages_detail || [],
     rising: tr ? (tr.rising_topics || []) : [],
     distinctive: tr ? (tr.distinctive_topics || []) : [],
+    topTopics: tr ? (tr.top_topics || []) : [],
   };
 }
 
 function addCountryEvidence(f, ev) {
-  const bits = [
-    `News use & trust: ${f.survey || "no survey integrated yet"}`,
-  ];
+  const bits = [`News use & trust: ${f.survey || "no survey integrated yet"}`];
   if (f.radio != null) bits.push("radio reach: Afrobarometer Round 9 microdata (2023, weighted)");
   bits.push("press freedom: RSF World Press Freedom Index 2025");
-  bits.push("political & internet freedom: Freedom House 2026 official data files (incl. electoral-democracy designation)");
-  bits.push("connectivity & demographics: World Bank CC BY 4.0 (ICT indicators originally compiled by ITU; literacy by UNESCO Institute for Statistics)");
-  if (f.medianAge != null) bits.push("median age: UN DESA World Population Prospects 2024");
-  if (f.mci != null) bits.push("mobile connectivity: GSMA Mobile Connectivity Index 2024");
-  if (TRENDS) bits.push(`live trends: Wikimedia Pageviews + GDELT, daily engine as of ${TRENDS.generated} (language-weight country attribution — approximation)`);
-  return ev.add(`${f.name} — country profile`, "Atlas record. " + bits.join("; ") + ".");
+  bits.push("political & internet freedom: Freedom House 2026 official data files");
+  bits.push("connectivity & demographics: World Bank CC BY 4.0 (ICT compiled by ITU; literacy by UNESCO UIS)");
+  if (f.medianAge != null) bits.push("median age: UN DESA WPP 2024");
+  if (f.mci != null) bits.push("mobile connectivity: GSMA MCI 2024");
+  if (TRENDS) bits.push(`live trends: Wikimedia Pageviews + GDELT, daily engine as of ${TRENDS.generated} (language-weight attribution — approximation)`);
+  return ev.add(`${f.name} — country profile`, "Atlas record. " + bits.join("; ") + ".", countryLinks(f.iso));
+}
+
+function addTrendEvidence(name, ev) {
+  return ev.add(`${name} — live trends`,
+    `Daily trend engine as of ${TRENDS.generated}. Demand = Wikipedia reading patterns (what people look up); coverage = GDELT news monitoring (what media publish). Country attribution via language-population weights — a documented approximation.`,
+    TREND_LINKS);
 }
 
 const fmt = (v, suffix = "%") => v == null ? "no data" : `${Math.round(v * 10) / 10}${suffix}`;
+const fmtPop = (v) => v == null ? "no data" : v >= 1e9 ? (v / 1e9).toFixed(2) + "B" : v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : Math.round(v / 1000) + "k";
+const titleCase = (s) => s.replace(/\b\w/g, ch => ch.toUpperCase());
 
-function riskLines(f, tag) {
+function riskLines(f) {
   const risks = [];
-  if (f.surveyNote)
-    risks.push(`Survey caveat for ${f.name}: ${f.surveyNote} ${tag}`);
+  if (f.surveyNote) risks.push(`Survey caveat for ${f.name}: ${f.surveyNote}`);
   if (f.internet != null && f.internet < 40)
-    risks.push(`Internet penetration is only ${f.internet}% ${tag} — digital-only campaigns will miss most of the population.`);
+    risks.push(`Internet penetration is only ${f.internet}% in ${f.name} — digital-only campaigns will miss most of the population.`);
   if (f.rsf != null && f.rsf < 40)
-    risks.push(`Press-freedom score ${Math.round(f.rsf)}/100 (RSF 2025) ${tag} — a restrictive media environment; plan messenger and content review carefully.`);
+    risks.push(`${f.name}'s press-freedom score is ${Math.round(f.rsf)}/100 (RSF 2025) — a restrictive media environment; plan messenger and content review carefully.`);
   if (f.fh === "Not Free")
-    risks.push(`Freedom House rates the country **Not Free** ${tag} — state influence over media is likely.`);
+    risks.push(`Freedom House rates ${f.name} **Not Free** — state influence over media is likely.`);
   if (f.trust != null && f.trust < 30)
-    risks.push(`Trust in news is low (${f.trust}%) ${tag} — trusted intermediaries may matter more than outlet reach.`);
+    risks.push(`Trust in news is low in ${f.name} (${f.trust}%) — trusted intermediaries may matter more than outlet reach.`);
   return risks;
 }
 
@@ -233,46 +659,82 @@ function bestChannel(f) {
 }
 
 // ---------------------------------------------------------------------------
-// Composers
+// Composers (no inline citation tags — sources are listed per answer)
 // ---------------------------------------------------------------------------
-function composeCountryBrief(f, ev, wantsTrends) {
-  const tag = `[${addCountryEvidence(f, ev)}]`;
+function audienceNote(audiences, f) {
+  if (!audiences.length) return null;
+  const bits = [];
+  if (audiences.includes("youth")) {
+    bits.push(`For youth targeting: ${f.medianAge != null ? `median age is ${f.medianAge}` : "median age unknown"}${f.under15 != null ? `, ${fmt(f.under15)} of the population is under 15` : ""}. The Atlas has no youth-specific platform crosstabs — treat platform guidance as population-level.`);
+  }
+  if (audiences.includes("women")) bits.push("The Atlas's surveys are not gender-disaggregated — the figures above are population-level, not women-specific. Local partners can advise on gendered media habits.");
+  if (audiences.includes("rural")) bits.push(`For rural audiences: ${f.urban != null ? `${fmt(100 - f.urban)} of the population is rural` : "urban share unknown"}${f.radio != null ? `; radio (${fmt(f.radio)} weekly reach) is typically the strongest rural channel` : "; radio and community channels typically out-reach digital in rural areas"}.`);
+  if (audiences.includes("older")) bits.push("For older audiences: TV and radio typically out-reach social platforms; the Atlas has no age-segmented platform data to quantify this per country.");
+  return bits.length ? bits.join(" ") : null;
+}
+
+function composeCountryBrief(f, ev, ents) {
+  addCountryEvidence(f, ev);
   const lines = [];
   const top = bestChannel(f);
+  const wantsTrends = ents.wantsTrends;
 
   if (wantsTrends && f.rising.length) {
+    addTrendEvidence(f.name, ev);
     lines.push(`**Trending in ${f.name} right now** (as of ${TRENDS.generated}):`);
     for (const r of f.rising.slice(0, 5))
-      lines.push(`- **${r.label_en}** +${Math.round(r.velocity * 100)}% vs its 30-day baseline ${tag}`);
-    if (f.distinctive.length) {
-      lines.push(`\nDistinctive interests vs the world average: ${f.distinctive.slice(0, 4).map(d => `**${d.label_en}** (${d.vs_global_avg}×)`).join(", ")} ${tag}`);
-    }
+      lines.push(`- **${r.label_en}** +${Math.round(r.velocity * 100)}% vs its 30-day baseline`);
+    if (f.distinctive.length)
+      lines.push(`\nDistinctive interests vs the world average: ${f.distinctive.slice(0, 4).map(d => `**${d.label_en}** (${d.vs_global_avg}×)`).join(", ")}`);
     lines.push("");
+  } else if (wantsTrends && !f.rising.length) {
+    lines.push(`*No reliable trend signal is available for ${f.name} right now (below the measurement floor) — here is the country's media profile instead.*\n`);
   }
 
-  if (top && top[1] != null) lines.push(`**${f.name}: ${top[0]} leads for news reach — ${fmt(top[1])} weekly** ${tag}`);
-  else lines.push(`**${f.name} — media profile** ${tag}`);
-  lines.push("");
-  if (f.radio != null) {
-    lines.push(`- Radio as a weekly news source: ${fmt(f.radio)} ${tag} *(Afrobarometer Round 9 microdata — the leading channel in much of Africa)*`);
-  }
-  if (f.tv == null && f.online == null && f.social == null && f.radio == null) {
-    lines.push(`- The Atlas has no news-source survey for ${f.name} (not yet covered by the Reuters Institute DNR or the regional barometers integrated so far) ${tag} — the figures below are connectivity, freedom, and demographics.`);
+  if (ents.intents.includes("recommend") && top) {
+    lines.push(`**Recommendation for ${f.name}: lead with ${top[0]} (${fmt(top[1])} weekly news reach)${f.internet != null && f.internet < 40 ? ", and avoid digital-only plans" : ""}.**`);
+  } else if (top && top[1] != null) {
+    lines.push(`**${f.name}: ${top[0]} leads for news reach — ${fmt(top[1])} weekly.**`);
   } else {
-    lines.push(`- News sources (weekly reach): TV ${fmt(f.tv)}, online ${fmt(f.online)}, social media ${fmt(f.social)} ${tag} *(survey: ${f.survey || "n/a"})*`);
+    lines.push(`**${f.name} — media profile.**`);
   }
-  if (f.trust != null) lines.push(`- Trust in news: ${f.trust}% ${tag}`);
-  lines.push(`- Connectivity: ${fmt(f.internet)} internet penetration${f.smartphone != null ? `, ${fmt(f.smartphone)} smartphone adoption` : ""}${f.mci != null ? `, GSMA mobile connectivity index ${f.mci}/100` : ""} ${tag}`);
-  if (f.rsf != null) lines.push(`- Press freedom: ${Math.round(f.rsf)}/100 (RSF 2025); political status: ${f.fh || "n/a"}${f.electoral != null ? `; electoral democracy: ${f.electoral ? "yes" : "no"}` : ""} ${tag}`);
-  if (f.under15 != null || f.urban != null || f.medianAge != null) lines.push(`- Audience structure: ${f.medianAge != null ? `median age ${f.medianAge}, ` : ""}${f.under15 != null ? `${fmt(f.under15)} under 15, ` : ""}${f.urban != null ? `${fmt(f.urban)} urban, ` : ""}${f.literacy != null ? `${fmt(f.literacy)} literacy` : ""} ${tag}`);
+  lines.push("");
+  if (f.radio != null)
+    lines.push(`- Radio as a weekly news source: ${fmt(f.radio)} *(Afrobarometer Round 9 — the leading channel in much of Africa)*`);
+  if (f.tv == null && f.online == null && f.social == null && f.radio == null) {
+    lines.push(`- The Atlas has no news-source survey for ${f.name} yet (not covered by the Reuters Institute DNR or the regional barometers integrated so far) — the figures below are connectivity, freedom, and demographics.`);
+  } else {
+    lines.push(`- News sources (weekly reach): TV ${fmt(f.tv)}, online ${fmt(f.online)}, social media ${fmt(f.social)} *(survey: ${f.survey || "n/a"})*`);
+  }
+  if (f.trust != null) lines.push(`- Trust in news: ${f.trust}%`);
+  lines.push(`- Connectivity: ${fmt(f.internet)} internet penetration${f.smartphone != null ? `, ${fmt(f.smartphone)} smartphone adoption` : ""}${f.mci != null ? `, GSMA mobile connectivity index ${f.mci}/100` : ""}`);
+  if (f.rsf != null) lines.push(`- Press freedom: ${Math.round(f.rsf)}/100 (RSF 2025); political status: ${f.fh || "n/a"}${f.electoral != null ? `; electoral democracy: ${f.electoral ? "yes" : "no"}` : ""}`);
+  if (f.under15 != null || f.urban != null || f.medianAge != null)
+    lines.push(`- Audience structure: ${f.medianAge != null ? `median age ${f.medianAge}, ` : ""}${f.under15 != null ? `${fmt(f.under15)} under 15, ` : ""}${f.urban != null ? `${fmt(f.urban)} urban` : ""}${f.literacy != null ? `, ${fmt(f.literacy)} literacy` : ""}`);
+  if (f.languagesDetail.length)
+    lines.push(`- Languages (share of population): ${f.languagesDetail.slice(0, 5).map(l => `${l.language} ${Math.round(l.pct)}%${l.official ? " (official)" : ""}`).join(", ")} *(Unicode CLDR)*`);
   const o = f.outlets;
-  if (o.top_tv || o.top_radio) lines.push(`- Leading outlets — TV: ${o.top_tv || "n/a"}; radio: ${o.top_radio || "n/a"}; online: ${o.top_online_news || "n/a"} ${tag}`);
+  if (o.top_tv || o.top_radio) lines.push(`- Leading outlets — TV: ${o.top_tv || "n/a"}; radio: ${o.top_radio || "n/a"}; online: ${o.top_online_news || "n/a"}`);
+
+  // if a specific platform was asked about, say where it stands in this market
+  for (const p of ents.platforms || []) {
+    const pretty = PLATFORM_NAMES[p] || p;
+    const socials = (o.top_social || "").toLowerCase().split(",").map(s => s.trim());
+    const pos = socials.findIndex(s => s.startsWith(p === "x" ? "x" : p));
+    if (pos === 0) lines.push(`- **${pretty}** is the leading social platform in ${f.name} (${o.top_social})`);
+    else if (pos > 0) lines.push(`- **${pretty}** ranks #${pos + 1} among ${f.name}'s top platforms (${o.top_social})`);
+    else if (o.top_social) lines.push(`- **${pretty}** is not among ${f.name}'s leading platforms (${o.top_social})`);
+  }
 
   if (!wantsTrends && f.rising.length) {
-    lines.push(`- Rising topics this week: ${f.rising.slice(0, 3).map(r => `${r.label_en} (+${Math.round(r.velocity * 100)}%)`).join(", ")} ${tag}`);
+    addTrendEvidence(f.name, ev);
+    lines.push(`- Rising topics this week: ${f.rising.slice(0, 3).map(r => `${r.label_en} (+${Math.round(r.velocity * 100)}%)`).join(", ")}`);
   }
 
-  const risks = riskLines(f, tag);
+  const aud = audienceNote(ents.audiences, f);
+  if (aud) { lines.push(""); lines.push(`**Audience note:** ${aud}`); }
+
+  const risks = riskLines(f);
   if (risks.length) {
     lines.push("");
     lines.push("**Risks & caveats:**");
@@ -281,17 +743,19 @@ function composeCountryBrief(f, ev, wantsTrends) {
   return lines.join("\n");
 }
 
-function composeComparison(fs, ev) {
-  const ids = fs.map(f => `[${addCountryEvidence(f, ev)}]`);
+function composeComparison(fs, ev, ents) {
+  fs.forEach(f => addCountryEvidence(f, ev));
   const lines = [];
 
-  // headline: biggest contrast
-  const withTrust = fs.filter(f => f.trust != null);
-  if (withTrust.length >= 2) {
-    const hi = withTrust.reduce((a, b) => a.trust > b.trust ? a : b);
-    const lo = withTrust.reduce((a, b) => a.trust < b.trust ? a : b);
+  // headline: use the asked-about attribute if there is one, else trust
+  const attrKey = ents.attributes[0] || "trust";
+  const attr = ATTRIBUTES[attrKey] || ATTRIBUTES.trust;
+  const withVal = fs.filter(f => attr.get(f) != null);
+  if (withVal.length >= 2) {
+    const hi = withVal.reduce((a, b) => attr.get(a) > attr.get(b) ? a : b);
+    const lo = withVal.reduce((a, b) => attr.get(a) < attr.get(b) ? a : b);
     if (hi.iso !== lo.iso)
-      lines.push(`**${hi.name} leads on news trust (${hi.trust}% vs ${lo.name}'s ${lo.trust}%).**\n`);
+      lines.push(`**${hi.name} leads on ${attr.label.toLowerCase()} (${fmt(attr.get(hi), attr.unit)} vs ${lo.name}'s ${fmt(attr.get(lo), attr.unit)}).**\n`);
   }
 
   lines.push(`| | ${fs.map(f => f.name).join(" | ")} |`);
@@ -307,16 +771,17 @@ function composeComparison(fs, ev) {
   lines.push(row("Press freedom (RSF /100)", "rsf", ""));
   lines.push(`| Political status | ${fs.map(f => f.fh || "n/a").join(" | ")} |`);
   lines.push("");
-  lines.push(fs.map((f, i) => `${f.name} ${ids[i]}`).join(" · "));
-  lines.push("");
 
-  // channel guidance
   const digital = fs.filter(f => f.online != null && f.tv != null && f.online >= f.tv);
   const broadcast = fs.filter(f => f.online != null && f.tv != null && f.tv > f.online);
   if (digital.length && broadcast.length) {
     lines.push(`**Channel guidance:** online-first works in ${digital.map(f => f.name).join(", ")}; in ${broadcast.map(f => f.name).join(", ")} TV still out-reaches online — plan a split strategy.`);
   }
-  const allRisks = fs.flatMap((f, i) => riskLines(f, ids[i]));
+  const surveys = [...new Set(fs.map(f => f.survey).filter(Boolean))];
+  if (surveys.length > 1)
+    lines.push(`\n*Methodology note: these countries are measured by different surveys (${surveys.join(" / ")}) — compare direction, not decimal points.*`);
+
+  const allRisks = fs.flatMap(f => riskLines(f));
   if (allRisks.length) {
     lines.push("");
     lines.push("**Risks & caveats:**");
@@ -325,10 +790,21 @@ function composeComparison(fs, ev) {
   return lines.join("\n");
 }
 
-function composeRegionBrief(fs, ev, topic, regionName) {
+function composeRegionBrief(fs, ev, ents, regionName) {
   const lines = [];
-  const ids = {};
-  for (const f of fs) ids[f.iso] = `[${addCountryEvidence(f, ev)}]`;
+  fs.forEach(f => addCountryEvidence(f, ev));
+
+  // transparency: region analysis covers the most populous countries, not all
+  let totalInRegion = 0;
+  if (ents.regions.length) {
+    const spec = REGION_MAP[ents.regions[0]];
+    for (const [iso, c] of Object.entries(COUNTRIES)) {
+      if (!c || !c.subregion) continue;
+      if (spec.isos ? spec.isos.includes(iso)
+          : spec.region ? c.region === spec.region : spec.subregion ? c.subregion === spec.subregion
+          : spec.subregions.includes(c.subregion)) totalInRegion++;
+    }
+  }
 
   const digital = fs.filter(f => f.internet != null && f.internet >= 55).sort((a, b) => (b.online || 0) - (a.online || 0));
   const mixed = fs.filter(f => f.internet != null && f.internet >= 35 && f.internet < 55);
@@ -336,52 +812,55 @@ function composeRegionBrief(fs, ev, topic, regionName) {
 
   lines.push(`**${regionName}: split the strategy by connectivity — the gap between countries is decisive.**\n`);
   if (digital.length)
-    lines.push(`- **Digital-first:** ${digital.map(f => `${f.name} (online news ${fmt(f.online)}, internet ${f.internet}% ${ids[f.iso]})`).join("; ")}.`);
+    lines.push(`- **Digital-first:** ${digital.map(f => `${f.name} (online news ${fmt(f.online)}, internet ${f.internet}%)`).join("; ")}.`);
   if (mixed.length)
-    lines.push(`- **Mixed digital + broadcast:** ${mixed.map(f => `${f.name} (internet ${f.internet}%, TV ${fmt(f.tv)} ${ids[f.iso]})`).join("; ")}.`);
+    lines.push(`- **Mixed digital + broadcast:** ${mixed.map(f => `${f.name} (internet ${f.internet}%, TV ${fmt(f.tv)}${f.radio != null ? `, radio ${fmt(f.radio)}` : ""})`).join("; ")}.`);
   if (broadcast.length)
-    lines.push(`- **Broadcast/community-first:** ${broadcast.map(f => `${f.name} (internet only ${f.internet}%, TV ${fmt(f.tv)} ${ids[f.iso]})`).join("; ")}. Digital-only campaigns would structurally miss most people here.`);
+    lines.push(`- **Broadcast/community-first:** ${broadcast.map(f => `${f.name} (internet only ${f.internet}%${f.radio != null ? `, radio ${fmt(f.radio)}` : ""}, TV ${fmt(f.tv)})`).join("; ")}. Digital-only campaigns would structurally miss most people here.`);
 
-  if (topic) {
+  const topic = ents.topics[0];
+  if (topic && TRENDS && TRENDS.topics[topic.qid]) {
     const t = TRENDS.topics[topic.qid];
-    if (t) {
-      const tid = `[${ev.add(`Topic: ${t.label_en}`, `Daily trend engine as of ${TRENDS.generated}. Demand = Wikipedia reading patterns; coverage = GDELT news monitoring.`)}]`;
-      lines.push("");
-      lines.push(`**${t.label_en} right now:** globally ${t.momentum} (${t.global_velocity > 0 ? "+" : ""}${Math.round(t.global_velocity * 100)}% vs 30-day baseline) ${tid}.`);
-      const local = fs.filter(f => f.distinctive.some(d => d.label_en === t.label_en) || f.rising.some(r => r.label_en === t.label_en));
-      if (local.length)
-        lines.push(`Above-average or rising attention in: ${local.map(f => f.name).join(", ")} ${local.map(f => ids[f.iso]).join("")}.`);
-    }
+    addTrendEvidence(t.label_en, ev);
+    lines.push("");
+    lines.push(`**${t.label_en} right now:** globally ${t.momentum} (${t.global_velocity > 0 ? "+" : ""}${Math.round(t.global_velocity * 100)}% vs 30-day baseline).`);
+    const local = fs.filter(f => f.distinctive.some(d => d.label_en === t.label_en) || f.rising.some(r => r.label_en === t.label_en));
+    if (local.length)
+      lines.push(`Above-average or rising attention in: ${local.map(f => f.name).join(", ")}.`);
   }
 
-  const allRisks = fs.flatMap(f => riskLines(f, ids[f.iso])).slice(0, 5);
+  const aud = audienceNote(ents.audiences, fs[0] || {});
+  if (aud) { lines.push(""); lines.push(`**Audience note:** ${aud}`); }
+
+  const allRisks = fs.flatMap(f => riskLines(f)).slice(0, 5);
   if (allRisks.length) {
     lines.push("");
     lines.push("**Risks & caveats:**");
     for (const r of allRisks) lines.push("- " + r);
   }
-  lines.push("");
-  lines.push("*The Atlas has no age-segmented platform data for most countries — youth targeting above is inferred from population structure and platform norms, not measured crosstabs.*");
+  if (totalInRegion > fs.length) {
+    lines.push("");
+    lines.push(`*Scope: this analysis covers the region's ${fs.length} most populous countries of ${totalInRegion} total — ask about any specific country for its full profile.*`);
+  }
   return lines.join("\n");
 }
 
 function composeTopicBrief(topic, ev) {
   const t = TRENDS && TRENDS.topics ? TRENDS.topics[topic.qid] : null;
   if (!t) {
-    return `**${topic.label}** is one of the Atlas's 167 tracked topics, but its measured attention is currently below the reliability floor, so no trend report is available for it right now. Country-level media data may still help — try naming a country or region alongside the topic.`;
+    return `**${topic.label}** is one of the Atlas's ${REGISTRY.length} tracked topics, but its measured attention is currently below the reliability floor, so no trend report is available right now. Country-level media data may still help — try naming a country or region alongside the topic.`;
   }
-  const tid = `[${ev.add(`Topic: ${t.label_en}`, `Daily trend engine as of ${TRENDS.generated}. Demand = Wikipedia reading patterns (what people look up); coverage = GDELT news monitoring (what media publish).`)}]`;
+  addTrendEvidence(t.label_en, ev);
   const lines = [];
-  lines.push(`**${t.label_en} — ${t.momentum} globally** (${t.global_velocity > 0 ? "+" : ""}${Math.round(t.global_velocity * 100)}% attention vs its 30-day baseline, as of ${TRENDS.generated}) ${tid}\n`);
+  lines.push(`**${t.label_en} — ${t.momentum} globally** (${t.global_velocity > 0 ? "+" : ""}${Math.round(t.global_velocity * 100)}% attention vs its 30-day baseline, as of ${TRENDS.generated})\n`);
   const langs = Object.entries(t.demand_by_language || {}).slice(0, 6);
   if (langs.length)
-    lines.push(`- Demand by language (daily lookups): ${langs.map(([l, v]) => `${l.toUpperCase()} ${Math.round(v.weekly_daily_avg_views).toLocaleString()}/day (${v.velocity > 0 ? "+" : ""}${Math.round(v.velocity * 100)}%)`).join("; ")} ${tid}`);
+    lines.push(`- Demand by language (daily lookups): ${langs.map(([l, v]) => `${l.toUpperCase()} ${Math.round(v.weekly_daily_avg_views).toLocaleString()}/day (${v.velocity > 0 ? "+" : ""}${Math.round(v.velocity * 100)}%)`).join("; ")}`);
   if (t.news_articles_7d != null)
-    lines.push(`- News coverage: ${t.news_articles_7d.toLocaleString()} articles in the last 7 days (GDELT) ${tid}`);
+    lines.push(`- News coverage: ${t.news_articles_7d.toLocaleString()} articles in the last 7 days (GDELT)`);
   const cov = (t.top_covering_media_countries || []).slice(0, 6);
   if (cov.length)
-    lines.push(`- Media coverage concentrated in: ${cov.map(c => `${c.iso3} (${c.coverage_share_pct}%)`).join(", ")} ${tid}`);
-  // countries where this topic is distinctive
+    lines.push(`- Media coverage concentrated in: ${cov.map(c => `${c.iso3} (${c.coverage_share_pct}%)`).join(", ")}`);
   const hot = [];
   if (TRENDS.countries) {
     for (const [iso, tr] of Object.entries(TRENDS.countries)) {
@@ -391,53 +870,418 @@ function composeTopicBrief(topic, ev) {
   }
   hot.sort((a, b) => b[1] - a[1]);
   if (hot.length)
-    lines.push(`- Countries with above-average attention: ${hot.slice(0, 6).map(([n, x]) => `${n} (${x}×)`).join(", ")} ${tid}`);
+    lines.push(`- Countries with above-average attention: ${hot.slice(0, 6).map(([n, x]) => `${n} (${x}×)`).join(", ")}`);
   return lines.join("\n");
 }
+
+function composeRanking(ents, ev) {
+  const attrKey = ents.attributes[0];
+  const attr = ATTRIBUTES[attrKey];
+  if (!attr) return null;
+
+  // candidate pool: region filter or the whole Atlas
+  let pool = Object.keys(COUNTRIES);
+  let scope = "all 195 countries";
+  if (ents.regions.length) {
+    const spec = REGION_MAP[ents.regions[0]];
+    pool = pool.filter(iso => {
+      const c = COUNTRIES[iso];
+      if (!c || !c.subregion) return false;
+      return spec.isos ? spec.isos.includes(iso)
+        : spec.region ? c.region === spec.region
+        : spec.subregion ? c.subregion === spec.subregion
+        : spec.subregions.includes(c.subregion);
+    });
+    scope = regionDisplay(ents.regions[0]);
+  }
+
+  const rows = pool.map(facts).filter(f => f && attr.get(f) != null);
+  const missing = pool.length - rows.length;
+  if (!rows.length) {
+    return `The Atlas has no ${attr.label.toLowerCase()} data for ${scope} yet. (${attr.source} is the underlying source — its coverage doesn't include these countries.)`;
+  }
+  rows.sort((a, b) => ents.rankDir === "asc" ? attr.get(a) - attr.get(b) : attr.get(b) - attr.get(a));
+  const top = rows.slice(0, ents.rankN);
+
+  ev.add(`Ranking: ${attr.label} (${scope})`,
+    `Computed from Atlas records for ${rows.length} countries with data (${missing} lacking this indicator). Underlying source: ${attr.source}.`,
+    top.length ? countryLinks(top[0].iso) : []);
+
+  const lines = [];
+  const dirWord = ents.rankDir === "asc" ? "lowest" : "highest";
+  lines.push(`**${titleCase(dirWord)} ${attr.label.toLowerCase()} — ${scope}** (${rows.length} countries with data):\n`);
+  lines.push(`| # | Country | ${attr.label} |`);
+  lines.push(`|---|---|---|`);
+  top.forEach((f, i) => {
+    const v = attr.get(f);
+    lines.push(`| ${i + 1} | ${f.name} | ${attr.fmt ? attr.fmt(v) : fmt(v, attr.unit)} |`);
+  });
+  if (missing > 0)
+    lines.push(`\n*${missing} countries in ${scope} have no ${attr.label.toLowerCase()} data in the Atlas — they are excluded, not ranked low.*`);
+  if (attr.surveyMix)
+    lines.push(`*Methodology note: news-consumption figures mix different surveys (Reuters DNR, Afrobarometer, national barometers) — treat cross-country gaps under ~5 points as noise.*`);
+  return lines.join("\n");
+}
+
+function composeLookup(ents, ev) {
+  const iso = ents.countries[0];
+  const f = facts(iso);
+  if (!f || !ents.attributes.length) return null;
+  addCountryEvidence(f, ev);
+  const blocks = [];
+
+  // answer EVERY asked-about measure ("internet and literacy in Chad"), not just the first
+  for (const attrKey of ents.attributes.slice(0, 3)) {
+    const attr = ATTRIBUTES[attrKey];
+    if (!attr) continue;
+    const v = attr.get(f);
+    const lines = [];
+    if (v == null) {
+      lines.push(`**The Atlas has no ${attr.label.toLowerCase()} figure for ${f.name}.** The underlying source (${attr.source}) doesn't cover it${attr.surveyMix ? " — no integrated survey includes this country yet" : ""}.`);
+      const alt = ["internet", "trust", "tv", "press"].map(k => ATTRIBUTES[k]).filter(a => a !== attr && a.get(f) != null);
+      if (alt.length)
+        lines.push(`\nWhat the Atlas does have for ${f.name}: ${alt.map(a => `${a.label.toLowerCase()} ${fmt(a.get(f), a.unit)}`).join(", ")}.`);
+      blocks.push(lines.join("\n"));
+      continue;
+    }
+    // rank among countries with data for context
+    const all = Object.keys(COUNTRIES).map(facts).filter(x => x && attr.get(x) != null);
+    all.sort((a, b) => attr.get(b) - attr.get(a));
+    const rank = all.findIndex(x => x.iso === iso) + 1;
+    const regionAll = all.filter(x => x.subregion === f.subregion && x.iso !== iso);
+    const regionAvg = regionAll.length ? regionAll.reduce((s, x) => s + attr.get(x), 0) / regionAll.length : null;
+
+    lines.push(`**${f.name}: ${attr.label.toLowerCase()} is ${attr.fmt ? attr.fmt(v) : fmt(v, attr.unit)}** — ranked ${rank} of ${all.length} countries with data.`);
+    if (regionAvg != null)
+      lines.push(`\nFor context, the ${f.subregion} average is ${attr.fmt ? attr.fmt(regionAvg) : fmt(regionAvg, attr.unit)} (${regionAll.length} neighbours with data).`);
+    const risks = riskLines(f).filter(r => r.toLowerCase().includes(attrKey === "press" ? "press" : attrKey === "internet" ? "internet" : attrKey === "trust" ? "trust" : "~none~"));
+    if (risks.length) { lines.push(""); risks.forEach(r => lines.push("- " + r)); }
+    blocks.push(lines.join("\n"));
+  }
+  return blocks.length ? blocks.join("\n\n") : null;
+}
+
+function composePlatform(ents, ev) {
+  const p = ents.platforms[0];
+  const pretty = PLATFORM_NAMES[p] || (p.charAt(0).toUpperCase() + p.slice(1));
+  const leaders = [], present = [];
+  for (const [iso, c] of Object.entries(COUNTRIES)) {
+    const socials = ((c.media || {}).top_social || "").toLowerCase();
+    if (!socials) continue;
+    const list = socials.split(",").map(s => s.trim());
+    const idx = list.findIndex(s => s.startsWith(p === "x" ? "x" : p));
+    if (idx === 0) leaders.push([iso, c.population || 0]);
+    else if (idx > 0) present.push([iso, c.population || 0]);
+  }
+  leaders.sort((a, b) => b[1] - a[1]);
+  ev.add(`${pretty} — platform footprint`,
+    `Computed from the Atlas's per-country leading-platform lists (top_social), compiled from Reuters DNR 2026, DataReportal country notes, and national sources; see each country's profile for its citation.`,
+    []);
+  const lines = [];
+  lines.push(`**${pretty} is the #1 social platform in ${leaders.length} of 195 Atlas markets**${present.length ? ` and appears in the top platforms of ${present.length} more` : ""}.`);
+  if (leaders.length) {
+    lines.push(`\nLargest markets where it leads: ${leaders.slice(0, 8).map(([iso]) => COUNTRIES[iso].name).join(", ")}.`);
+    lines.push(`\n*Note: platform lists are editorially compiled per country — they show market presence, not measured reach percentages.*`);
+  }
+  return lines.join("\n");
+}
+
+function composeMeta(ev) {
+  const nCountries = META ? META.country_count : Object.keys(COUNTRIES).length;
+  const gen = META ? String(META.generated_at || "").slice(0, 10) : "n/a";
+  ev.add("Atlas data inventory", `countries.json _meta (generated ${gen}) + daily trend engine${TRENDS ? ` (as of ${TRENDS.generated})` : ""}.`,
+    [{ label: "Methodology & sources (this site)", url: "index.html" }, { label: "Topic Explorer", url: "topics.html" }]);
+  const srcList = META && META.data_sources ? META.data_sources.slice(0, 10) : [];
+  const lines = [];
+  lines.push(`**What I know and where it comes from.** I cover **${nCountries} countries** and **${REGISTRY.length} tracked topics**, refreshed automatically (country data weekly, trends daily${TRENDS ? ` — currently as of ${TRENDS.generated}` : ""}).`);
+  lines.push("");
+  lines.push("**My sources:**");
+  for (const s of srcList) lines.push("- " + s);
+  lines.push("");
+  lines.push("**What you can ask me:** country media profiles (\"How do people in Nigeria get news?\"), comparisons (\"France vs Germany on trust\"), rankings (\"Top 5 African countries by internet access\"), live trends (\"What's trending in Kenya?\"), topics (\"Who covers climate change most?\"), and campaign guidance (\"How should we reach rural audiences in Mali?\").");
+  lines.push("");
+  lines.push("**What I won't do:** guess beyond the data, answer political questions, or use sources outside the Atlas. When I have no data, I say so.");
+  return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Follow-up suggestions
+// ---------------------------------------------------------------------------
+function neighbourOf(iso) {
+  const f = facts(iso);
+  if (!f) return null;
+  let best = null, bestPop = -1;
+  for (const [i2, c] of Object.entries(COUNTRIES)) {
+    if (i2 === iso || !c || c.subregion !== f.subregion) continue;
+    if ((c.population || 0) > bestPop) { bestPop = c.population || 0; best = i2; }
+  }
+  return best;
+}
+
+function buildFollowups(ents, kind) {
+  const chips = [];
+  const iso = ents.countries[0] || ents.regionCountries[0];
+  const cName = iso && COUNTRIES[iso] ? COUNTRIES[iso].name.replace(/,.*$/, "") : null;
+
+  if (kind === "country" && cName) {
+    if (!ents.wantsTrends) chips.push(`What's trending in ${cName}?`);
+    const nb = neighbourOf(iso);
+    if (nb && COUNTRIES[nb]) chips.push(`Compare ${cName} with ${COUNTRIES[nb].name.replace(/,.*$/, "")}`);
+    chips.push(`How do we reach rural audiences in ${cName}?`);
+  } else if (kind === "compare" && ents.countries.length >= 2) {
+    const names = ents.countries.slice(0, 2).map(i => COUNTRIES[i].name.replace(/,.*$/, ""));
+    chips.push(`What's trending in ${names[0]}?`);
+    chips.push(`Press freedom risks in ${names.join(" and ")}`);
+    const nb = neighbourOf(ents.countries[0]);
+    if (nb) chips.push(`Add ${COUNTRIES[nb].name.replace(/,.*$/, "")} to the comparison`);
+  } else if (kind === "region" && ents.regions.length) {
+    const r = regionDisplay(ents.regions[0]);
+    chips.push(`Top 5 countries by internet access in ${r}`);
+    chips.push(`Which ${r} countries rely most on radio?`);
+    if (ents.topics[0]) chips.push(`Where is ${ents.topics[0].label} trending now?`);
+    else chips.push(`What's trending in ${r}'s largest country?`);
+  } else if (kind === "topic" && ents.topics.length) {
+    const t = ents.topics[0].label;
+    chips.push(`Which countries pay most attention to ${t}?`);
+    chips.push(`What's trending worldwide right now?`);
+    chips.push(`Best channels for ${t} content in low-connectivity countries`);
+  } else if (kind === "rank") {
+    chips.push(ents.rankDir === "desc" ? "Show the bottom 5 instead" : "Show the top 5 instead");
+    if (!ents.regions.length) chips.push(`Same ranking for Africa only`);
+    else chips.push(`Same ranking worldwide`);
+    if (cName) chips.push(`Full profile of ${cName}`);
+  } else if (kind === "platform") {
+    chips.push("Which platform leads in the most markets?");
+    chips.push("Compare WhatsApp and Facebook reach");
+  } else {
+    chips.push("What data do you have?");
+    chips.push("What's trending in Kenya this week?");
+    chips.push("Compare news trust in France and Germany");
+    chips.push("Top 5 African countries by radio reliance");
+  }
+  return chips.slice(0, 3);
+}
+
+// ---------------------------------------------------------------------------
+// Clarifying questions for vague asks
+// ---------------------------------------------------------------------------
+function maybeClarify(question, ents) {
+  const q = normalize(question);
+  const noPlace = !ents.countries.length && !ents.regions.length;
+  const noSubject = !ents.topics.length && !ents.attributes.length && !ents.platforms.length;
+
+  // "Where should we focus?" / "Help me plan a campaign" — planning words, no anchors
+  if (noPlace && /\b(focus|campaign|strategy|plan|planning|outreach|launch|priorit\w*|where should)\b/.test(q)) {
+    return {
+      question: "Happy to help plan. To ground the answer in data, I need at least a region — and a topic helps too. Where is this campaign aimed?",
+      options: ["Where should we focus in Africa?", "Where should we focus in South Asia?",
+                "Where should we focus in Latin America?", "What's trending worldwide right now?"],
+    };
+  }
+  // audience given but no place: "how do we reach young people?"
+  if (noPlace && ents.audiences.length) {
+    const aud = ents.audiences[0];
+    return {
+      question: `Reaching ${aud === "youth" ? "young audiences" : aud + " audiences"} depends heavily on the country — connectivity and platform habits differ enormously. Which country or region are you targeting?`,
+      options: [`How do we reach ${aud} audiences in Nigeria?`, `How do we reach ${aud} audiences in India?`,
+                `How do we reach ${aud} audiences in East Africa?`],
+    };
+  }
+  // attribute but no place and no ranking: "what about internet access?"
+  if (noPlace && ents.attributes.length && !ents.intents.includes("rank") && noFollowContext()) {
+    const attr = ATTRIBUTES[ents.attributes[0]];
+    return {
+      question: `I have ${attr.label.toLowerCase()} data for most of the world. For which country or region?`,
+      options: [`${attr.label} in Nigeria`, `Top 5 countries by ${attr.label.toLowerCase()}`,
+                `Lowest ${attr.label.toLowerCase()} in Asia`],
+    };
+  }
+  return null;
+}
+
+function noFollowContext() { return !LAST.isos.length && !LAST.regions.length; }
 
 // ---------------------------------------------------------------------------
 // Main entry
 // ---------------------------------------------------------------------------
 export function answerQuestion(question) {
   const ev = evidenceStore();
-  const ents = detectEntities(question);
-  const parts = [];
 
-  const isoList = [...new Set([...ents.countries, ...ents.regionCountries])];
-
-  if (ents.regions.length && isoList.length > 2) {
-    const fs = isoList.map(facts).filter(Boolean);
-    const regionName = ents.regions.map(r => r.replace(/\b\w/g, ch => ch.toUpperCase())).join(", ");
-    parts.push(composeRegionBrief(fs, ev, ents.topics[0] || null, regionName));
-  } else if (ents.wantsCompare && isoList.length >= 2) {
-    parts.push(composeComparison(isoList.map(facts).filter(Boolean), ev));
-    for (const t of ents.topics) {
-      const tb = composeTopicBrief(t, ev);
-      if (tb) parts.push(tb);
-    }
-  } else if (isoList.length >= 1) {
-    for (const iso of isoList.slice(0, 3)) {
-      const f = facts(iso);
-      if (f) parts.push(composeCountryBrief(f, ev, ents.wantsTrends));
-    }
-    for (const t of ents.topics) {
-      const tb = composeTopicBrief(t, ev);
-      if (tb) parts.push(tb);
-    }
-  } else if (ents.topics.length) {
-    for (const t of ents.topics) {
-      const tb = composeTopicBrief(t, ev);
-      if (tb) parts.push(tb);
-    }
-  }
-
-  if (!parts.length) {
+  // The engine's vocabulary is English (the site UI is multilingual, the
+  // analyst is not yet) — say so instead of returning a confusing refusal.
+  const letters = (question.match(/[a-z]/gi) || []).length;
+  const nonAscii = (question.match(/[^\x00-\x7F]/g) || []).length;
+  if (nonAscii > letters && question.trim().length > 3) {
     return {
-      answer: "I couldn't match your question to the Atlas's data. I can answer questions about **specific countries or regions** (all 195 UN member states) and **167 tracked topics** (climate, health, refugees, AI, misinformation, gender equality…). Try naming a country, a region like *East Africa*, or a topic — for example: *\"Compare news trust in France and Germany\"* or *\"What is trending in Nigeria?\"*",
-      evidence: [],
-      entities: ents,
+      answer: "For now I understand questions in **English** only — the rest of the Atlas is available in six languages, but my question-understanding is English-first. Try rephrasing in English, e.g. *\"What is trending in Kenya?\"*",
+      evidence: [], followups: ["What data do you have?", "What's trending worldwide right now?"], clarify: null, entities: null,
     };
   }
 
-  return { answer: parts.join("\n\n---\n\n"), evidence: ev.list(), entities: ents };
+  // Bare "Congo" is genuinely ambiguous — ask rather than guess
+  const qPre = normalize(question);
+  if (/ congo /.test(qPre) && !/(dr|dem|democratic|kinshasa|brazzaville|republic of the) /.test(qPre) && !/ congo (dr|kinshasa|brazzaville)/.test(qPre)) {
+    return {
+      answer: null, evidence: [], followups: [],
+      clarify: {
+        question: "There are two Congos — which one do you mean?",
+        options: ["Democratic Republic of the Congo (Kinshasa)", "Republic of the Congo (Brazzaville)"],
+      },
+      entities: null,
+    };
+  }
+
+  let ents = detectEntities(question);
+
+  const qNorm = normalize(question);
+
+  // Ranking continuations from our own follow-up chips or natural phrasing:
+  // "Show the bottom 5 instead", "Same ranking for Africa only", "top 10 instead"
+  if (!ents.attributes.length && LAST.attributes.length
+      && /\b(top|bottom|highest|lowest|same ranking|instead)\b/.test(qNorm)) {
+    ents.attributes = [...LAST.attributes];
+    if (!ents.regions.length && !/\bworldwide|world|globally|all countries\b/.test(qNorm)) {
+      ents.regions = [...LAST.regions];
+    }
+    ents.rankDir = /\b(bottom|lowest|least|worst)\b/.test(qNorm) ? "asc"
+      : /\b(top|highest|most|best)\b/.test(qNorm) ? "desc" : (LAST.rankDir || "desc");
+    const n = qNorm.match(/\b(?:top|bottom|first)\s+(\d{1,2})\b/);
+    ents.rankN = n ? Math.min(15, Math.max(1, parseInt(n[1], 10))) : ents.rankN;
+    if (!ents.intents.includes("rank")) ents.intents.push("rank");
+  }
+
+  // "Add Ghana to the comparison" — merge the new country into the last set
+  if (/\badd\b.*\b(comparison|compare)\b/.test(qNorm) && ents.countries.length && LAST.isos.length) {
+    ents.countries = [...new Set([...LAST.isos, ...ents.countries])];
+    ents.wantsCompare = true;
+  }
+
+  // Follow-up resolution: inherit the previous location if this looks like one
+  if (isFollowUp(question, ents)) {
+    ents.countries = [...LAST.isos];
+    ents.regions = [...LAST.regions];
+    if (!ents.topics.length) ents.topics = [...LAST.topics];
+    // re-expand regions
+    if (ents.regions.length) {
+      const re = detectEntities(ents.regions.join(" and "));
+      ents.regionCountries = re.regionCountries;
+    }
+    // re-derive intents that depend on knowing the location
+    if (ents.attributes.length && ents.countries.length === 1 && !ents.intents.includes("rank") && !ents.intents.includes("lookup"))
+      ents.intents.push("lookup");
+  }
+
+  // Greeting / small talk
+  if (ents.intents.includes("greeting")) {
+    const isThanks = /thank|great|perfect|awesome|cool/i.test(question);
+    return {
+      answer: isThanks
+        ? "You're welcome! Anything else you'd like to look into?"
+        : "Hello! I'm the Atlas analyst. Ask me where and how to communicate anywhere in the world — every answer comes from the Atlas's verified, cited data.",
+      evidence: [], followups: buildFollowups(ents, "help"), clarify: null, entities: ents,
+    };
+  }
+
+  // Meta: "what data do you have?" — but never when the question is really
+  // about a place or measure ("help me reach farmers in India")
+  if (ents.intents.includes("meta")
+      && !ents.countries.length && !ents.regions.length && !ents.topics.length && !ents.attributes.length) {
+    const out = { answer: composeMeta(ev), evidence: ev.list(), followups: buildFollowups(ents, "help"), clarify: null, entities: ents };
+    return out;
+  }
+
+  // Clarify vague questions instead of guessing
+  const clar = maybeClarify(question, ents);
+  if (clar) return { answer: null, evidence: [], followups: [], clarify: clar, entities: ents };
+
+  const parts = [];
+  let kind = null;
+  const isoList = [...new Set([...ents.countries, ...ents.regionCountries])];
+
+  // Ranking ("top 5 by radio in Africa")
+  if (ents.intents.includes("rank") && ents.attributes.length) {
+    const r = composeRanking(ents, ev);
+    if (r) { parts.push(r); kind = "rank"; }
+  }
+  // Single-fact lookup ("literacy rate in Chad")
+  else if (ents.intents.includes("lookup")) {
+    const r = composeLookup(ents, ev);
+    if (r) { parts.push(r); kind = "country"; }
+  }
+  // Platform question ("where does WhatsApp lead?")
+  else if (ents.platforms.length && !isoList.length) {
+    parts.push(composePlatform(ents, ev));
+    kind = "platform";
+  }
+  // Region strategy
+  else if (ents.regions.length && isoList.length > 2) {
+    const fs = isoList.map(facts).filter(Boolean);
+    parts.push(composeRegionBrief(fs, ev, ents, ents.regions.map(regionDisplay).join(", ")));
+    kind = "region";
+  }
+  // Comparison
+  else if (ents.wantsCompare && isoList.length >= 2) {
+    parts.push(composeComparison(isoList.slice(0, 6).map(facts).filter(Boolean), ev, ents));
+    for (const t of ents.topics) parts.push(composeTopicBrief(t, ev));
+    kind = "compare";
+  }
+  // Country brief(s)
+  else if (isoList.length >= 1) {
+    for (const iso of isoList.slice(0, 3)) {
+      const f = facts(iso);
+      if (f) parts.push(composeCountryBrief(f, ev, ents));
+    }
+    for (const t of ents.topics) parts.push(composeTopicBrief(t, ev));
+    kind = "country";
+  }
+  // Topic only
+  else if (ents.topics.length) {
+    for (const t of ents.topics) parts.push(composeTopicBrief(t, ev));
+    kind = "topic";
+  }
+  // Global trends ("what's trending worldwide?")
+  else if (ents.wantsTrends && TRENDS) {
+    const movers = Object.values(TRENDS.topics)
+      .filter(t => t.momentum === "rising" || Math.abs(t.global_velocity) >= 0.2)
+      .sort((a, b) => b.global_velocity - a.global_velocity).slice(0, 8);
+    if (movers.length) {
+      addTrendEvidence("Global", ev);
+      const lines = [`**Trending worldwide** (as of ${TRENDS.generated}):\n`];
+      for (const t of movers)
+        lines.push(`- **${t.label_en}** ${t.global_velocity > 0 ? "+" : ""}${Math.round(t.global_velocity * 100)}% vs its 30-day baseline (${t.momentum})`);
+      parts.push(lines.join("\n"));
+      kind = "topic";
+    }
+  }
+
+  // Never dead-end: helpful fallback with pointers
+  if (!parts.length) {
+    return {
+      answer: `I couldn't match that to the Atlas's data — but I likely *can* help if we rephrase. I know **${META ? META.country_count : 195} countries** and **${REGISTRY.length} topics**, and I can compare, rank, and track trends across them.\n\nTry naming a **country** ("media habits in Indonesia"), a **region** ("East Africa"), a **topic** ("climate change"), or a **measure** ("trust in news", "radio reach").`,
+      evidence: [], followups: buildFollowups(ents, "help"), clarify: null, entities: ents,
+    };
+  }
+
+  // Note for territories the UN lists under China: their media environments
+  // differ substantially — say so rather than silently serving PRC data.
+  if (/\b(taiwan|hong kong|macau|macao)\b/.test(qNorm) && ents.countries.includes("CHN")) {
+    parts.push("*Note: the Atlas follows UN country designations, so Taiwan, Hong Kong, and Macau are listed under China — but their media environments (platforms, press freedom, censorship) differ substantially from the mainland's. Treat the figures above as mainland-China data.*");
+  }
+
+  // Remember context for follow-ups
+  LAST = {
+    isos: ents.countries.length ? [...ents.countries] : [...(ents.regionCountries || []).slice(0, 3)],
+    regions: [...ents.regions],
+    topics: [...ents.topics],
+    attributes: [...ents.attributes],
+    rankDir: ents.rankDir,
+  };
+
+  return {
+    answer: parts.join("\n\n---\n\n"),
+    evidence: ev.list(),
+    followups: buildFollowups(ents, kind || "help"),
+    clarify: null,
+    entities: ents,
+  };
 }
