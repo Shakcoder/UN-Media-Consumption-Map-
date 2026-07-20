@@ -1,64 +1,41 @@
-# What to upload to GitHub right now
+# How to upload changes to GitHub (the safe way)
 
-This is a one-time setup: upload these files in this order, then the automation runs itself forever.
+*Updated 2026-07-20. This replaces the old paste-into-the-editor instructions.*
 
----
+## ⚠️ One rule above all: ALWAYS use "Upload files", never paste
 
-## File-by-file checklist
+Pasting file contents into GitHub's web editor **silently truncates large files** — the commit looks fine but the file is cut off partway, and things break in confusing ways later. This has happened on this project. The upload flow below never truncates.
 
-Follow the Method B pattern you already know: on GitHub click **Add file → Create new file**, type the filename (with `/` to create folders), paste the contents from the file on your Mac, commit.
+## The standard upload flow (works for any number of files)
 
-Upload them in this order:
+1. On the repo's main page, click **Add file → Upload files**.
+2. In Finder, select ALL the changed files at once (⌘-click to multi-select) and **drag them into the browser window**.
+   - Files that live in folders (e.g. `scripts/refresh_data.py`, `docs/DATA_SOURCES.md`) must be dropped **while you're inside that folder on GitHub** — open the folder first, then Add file → Upload files.
+   - Easier for many folders: do one upload per folder (root files → `scripts/` → `docs/` → `.github/workflows/` → `data/` → `worker/`).
+3. Write a one-line commit message describing the batch (e.g. "July 2026 upgrade: analyst v2, bug fixes, watchdog").
+4. Click **Commit changes**.
+5. GitHub Pages redeploys automatically — wait ~2 minutes, then hard-refresh the site (⌘⇧R) in a private window.
 
-### 1. `index.html` (edit existing, don't create new)
-Click the existing `index.html` on GitHub → pencil icon → select all → delete → paste new content from `Desktop/UN Project/index.html` → commit.
+## Uploading a whole batch (like today's upgrade)
 
-### 2. `data/static_countries.json`
-On GitHub → Add file → Create new file. Filename: `data/static_countries.json`. Paste contents from your Mac copy. Commit.
+Upload folder by folder, in this order — the order prevents anything half-working in between:
 
-### 3. `scripts/refresh_data.py`
-Same pattern. Filename: `scripts/refresh_data.py`.
+| Step | Open this folder on GitHub | Upload these files from your Mac |
+|---|---|---|
+| 1 | *(repo root)* | `index.html`, `ask.html`, `ask-engine.js`, `topics.html`, `README.md` |
+| 2 | `scripts/` | every changed `.py` file |
+| 3 | `.github/workflows/` | every changed/new `.yml` file |
+| 4 | `docs/` | every changed `.md` file |
+| 5 | `data/` | `countries.json`, `static_countries.json` (only when told they changed) |
+| 6 | `worker/` | `analyst-worker.js`, `DEPLOY_GUIDE.md` (when changed) |
 
-### 4. `.github/workflows/refresh-data.yml`
-Same pattern. Filename: `.github/workflows/refresh-data.yml`. The `.github` leading dot is important — GitHub recognizes this folder specially.
+## After uploading: check the automation
 
-### 5. `docs/SURVEY_SETUP.md`, `docs/AUTOMATION.md`
-Same pattern, into the existing `docs/` folder (or create if needed).
+1. Click the **Actions** tab.
+2. The **Refresh country data** workflow starts by itself whenever `scripts/refresh_data.py` or `data/static_countries.json` changed. Wait for the green checkmark (~2–4 min).
+3. If a run goes red: click it, expand the red step, copy the error text into a new session with Claude. (The workflows also open a GitHub Issue automatically when they fail — check the **Issues** tab.)
 
----
+## If something looks wrong on the site
 
-## After uploading: trigger the first automation run (1 minute)
-
-Don't wait until Monday 3 AM for the first run.
-
-1. On your repo, click the **Actions** tab in the top bar.
-2. In the left sidebar, click **Refresh country data**.
-3. Click **Run workflow** (top-right) → pick the `main` branch → **Run workflow** (green button).
-4. Wait 30–60 seconds. Refresh the Actions page. You should see a green checkmark.
-5. Click into the run to see what it did. You'll see log lines like `→ USA (United States of America)` and the data being fetched.
-6. The workflow will auto-commit a new file — `data/countries.json` — into your repo.
-7. GitHub Pages rebuilds the site automatically. Wait another 60 seconds, reload your site in Incognito, click a country. The "Preliminary" banner should now read "verified" with a real retrieval date.
-
----
-
-## What to do if the first run fails
-
-1. Click into the failed run.
-2. Expand the step that's red.
-3. Copy the error message and send it to me.
-
-The most common cause is permissions. If you see a message about "refusing to allow the bot to push", go to **Settings → Actions → General → Workflow permissions** and set it to **Read and write permissions**. Save. Re-run.
-
----
-
-## After that, you're done
-
-- The workflow runs every Monday at 03:00 UTC automatically.
-- It will also re-run any time you edit `data/static_countries.json` (for example, when you add a country).
-- You never need to touch `data/countries.json` by hand — it's overwritten every run.
-
----
-
-## To add the survey
-
-Follow [SURVEY_SETUP.md](SURVEY_SETUP.md). It's separate from the automation pipeline — no code changes needed beyond swapping one URL in `index.html`.
+- Hard-refresh in a private/incognito window first — it's almost always the browser cache.
+- The site keeps serving the last good data even when a refresh fails, so nothing is ever "down" while you investigate.

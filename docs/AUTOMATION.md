@@ -1,129 +1,57 @@
 # How the automation works — in plain English
 
-The Global Media Consumption Atlas refreshes itself on a schedule. You don't have to do anything to make it run. This document explains what's happening under the hood, so that a maintainer handing over the project can understand and, if needed, adjust it.
+*Updated 2026-07-20. The Atlas refreshes itself on three schedules. You don't have to do anything to keep it running — and when something DOES need a human (a failed run, a new annual report), the automation opens a GitHub Issue to tell you.*
 
 ---
 
 ## The one-paragraph version
 
-Every Monday at 3 AM UTC, GitHub runs a small Python script that talks to the World Bank's free data API and pulls the latest numbers for each country in our atlas — population, GDP per capita, internet penetration, literacy, urbanisation, and so on. The script writes those numbers into a file called `data/countries.json`. The website reads that file every time a visitor loads the page. Then GitHub automatically rebuilds the public site. You receive a notification if anything fails.
+**Daily**, GitHub runs the trend engine: it reads Wikipedia attention data and GDELT news coverage for 167 UN-relevant topics in 22 languages, computes what's rising where, and publishes the result. **Weekly** (Monday 03:00 UTC), a second workflow pulls 15 World Bank indicators plus per-country language data and rebuilds `data/countries.json`. **Monthly** (the 3rd), a watchdog checks whether RSF, Freedom House, Reuters, GSMA, Afrobarometer, or UN DESA have published a new annual edition — and opens an Issue with step-by-step refresh instructions when they have. GitHub Pages republishes the site automatically after every data commit. If any workflow fails, it opens an Issue so failures are never silent.
 
 ---
 
-## The ingredients
+## The three workflows
 
-Three files in the repository make this work:
+| Workflow | Schedule | What it refreshes | Output |
+|---|---|---|---|
+| [`trend-engine.yml`](../.github/workflows/trend-engine.yml) | Daily 05:30 UTC | Wikipedia pageviews (demand) + GDELT coverage (supply) → per-topic and per-country trend intelligence | `data/trends/wiki_pageviews.json`, `data/trends/gdelt_coverage.json`, `data/trends/topic_intelligence.json` |
+| [`refresh-data.yml`](../.github/workflows/refresh-data.yml) | Weekly, Mon 03:00 UTC + whenever `static_countries.json` or `refresh_data.py` changes | World Bank indicators (population, GDP, internet, literacy, Findex financial accounts, …) + Unicode CLDR language shares | `data/countries.json` |
+| [`source-watchdog.yml`](../.github/workflows/source-watchdog.yml) | Monthly, 3rd at 06:00 UTC | Nothing directly — it **watches** the annual sources and opens a GitHub Issue (with non-coder instructions) when a new edition is out | Issues labeled `data-refresh` |
 
-| File | What it does |
-|---|---|
-| [`data/static_countries.json`](../data/static_countries.json) | The **human-written** part — country overviews, industries, focus areas, media outlets. Edited by hand. |
-| [`scripts/refresh_data.py`](../scripts/refresh_data.py) | The **automation brain** — fetches numbers, merges them with the static metadata, writes the output. |
-| [`.github/workflows/refresh-data.yml`](../.github/workflows/refresh-data.yml) | The **scheduler** — tells GitHub when and how to run the script. |
+All three also have a manual **Run workflow** button: GitHub → Actions tab → pick the workflow → Run workflow.
 
-And one file it produces:
+## What the website reads
 
-| File | What it is |
-|---|---|
-| `data/countries.json` | The **merged, live output**. The website reads this at runtime. Do not edit it by hand — it will be overwritten next Monday. |
+| File | Written by | Cadence |
+|---|---|---|
+| `data/countries.json` | weekly refresh | Mondays (or minutes after you upload a changed script/static file) |
+| `data/trends/topic_intelligence.json` | daily trend engine | every morning |
+| `data/topics.json` | `scripts/build_topic_registry.py` (manual, rare) | only when the topic list changes |
+| `data/static_countries.json` | **you** (hand-curated country blurbs, outlets) | whenever you edit it |
 
----
+The "Ask the Analyst" page needs **no backend at all** — `ask-engine.js` runs in the visitor's browser and reads the same published JSON files above.
 
-## What runs, and when
+## Resilience — what happens when things go wrong
 
-The workflow triggers on **three events**:
+- **A daily trend run fails?** The next day's run catches up; partial progress is committed so nothing is lost. The site keeps serving yesterday's trends meanwhile.
+- **Wikimedia rate-limits the fetcher?** It adapts its pace, checkpoints every 250 series, and completes what it can. Sundays do a full refresh of every series.
+- **The World Bank API is down on Monday?** The refresh keeps each country's last good value (with its original source label) rather than writing gaps.
+- **Two workflows commit at the same moment?** Each one commits first, then rebases on the other's commit, then pushes — no lost updates.
+- **A workflow fails outright?** It opens a GitHub Issue automatically (and GitHub also emails the repo owner). One failure is normal noise; the Issue exists so *repeated* failures get noticed.
+- **A file got corrupted mid-write?** Writes are atomic (temp file + rename), and readers rebuild from scratch rather than crashing if they ever meet a bad file.
 
-1. **Every Monday at 03:00 UTC** — the scheduled refresh.
-2. **Any push that touches `static_countries.json`** — so if you add or edit a country's metadata, the numbers auto-populate within a few minutes.
-3. **A manual button press** — on GitHub go to the "Actions" tab → "Refresh country data" → "Run workflow". Useful if you want to test a change immediately.
+## The annual sources (the only human job left)
 
-To change the schedule, edit the `cron` line in [`refresh-data.yml`](../.github/workflows/refresh-data.yml). The online tool https://crontab.guru explains cron syntax in plain English.
+RSF, Freedom House (×2), Reuters DNR, GSMA, Afrobarometer, and UN WPP publish once a year — a human integrates each new edition (the watchdog's Issue explains exactly how, step by step). After integrating, bump that source's year in `scripts/check_source_editions.py` (the `INTEGRATED` map at the top) so the watchdog stops reminding you.
 
----
+**Known pending as of 2026-07-20:** RSF 2026 is already published (Atlas carries 2025) — expect the watchdog's Issue on its first run; DataReportal smartphone estimates are 2024-vintage.
 
-## What gets auto-refreshed vs. what stays manual
+## Things the automation does NOT do (by design)
 
-### Auto-refreshed (via World Bank API — no key needed)
-- Population
-- GDP per capita (USD)
-- Internet users (% of population)
-- Urban population (%)
-- Adult literacy (%)
-- Population by age band (0–14, 15–64, 65+)
-- Mobile subscriptions per 100
-- Fixed broadband per 100
-- Land area (km²)
+- It never edits `data/static_countries.json` (the hand-curated country blurbs and outlet lists — review them opportunistically, e.g. once a year alongside the DNR refresh).
+- It never invents data: missing values stay "no data" on the site and the analyst says so.
+- It never spends money. Everything runs on GitHub's free tier against free public APIs.
 
-### Manual, refreshed once a year
-- **Reporters Without Borders (RSF) Press Freedom Index** — RSF publishes new rankings each May. Update the `RSF_RANK_2024` table in [`refresh_data.py`](../scripts/refresh_data.py) (rename to `RSF_RANK_2025` etc.) after the new release.
-- **Smartphone adoption %** — DataReportal publishes this annually. Update the `SMARTPHONE_PCT_2024` table similarly.
-- **All qualitative fields** — overviews, dominant industries, focus areas, outlet names, topics of interest, languages. Live in `static_countries.json`. Edit whenever the country's reality changes (new government, new dominant platform, etc.).
+## Changing schedules
 
----
-
-## How to add a new country (30 seconds)
-
-1. Open [`data/static_countries.json`](../data/static_countries.json).
-2. Add a new block, copying an existing country as a template. For example, for France:
-
-```json
-"FRA": {
-  "name": "France",
-  "capital": "Paris",
-  "region": "Europe",
-  "subregion": "Western Europe",
-  "flag": "🇫🇷",
-  "overview": "…",
-  "currency": "Euro (EUR)",
-  "languages": ["French"],
-  "government": "Semi-presidential republic",
-  "dominant_industries": […],
-  "focus_areas": […],
-  "media": {
-    "top_tv": "…",
-    "top_radio": "…",
-    "top_online_news": "…",
-    "top_social": "…"
-  },
-  "topics_of_interest": […]
-}
-```
-
-3. Commit the change. The workflow runs automatically within a couple of minutes and populates the country's numbers. Refresh the live site — the new country is there.
-
-The only two fields that need a hand-written source are the ISO-3 alpha code as the key (`"FRA"`) and all the "qualitative" text fields. Everything numeric comes from the World Bank.
-
-If you pick an ISO-3 code the script hasn't seen before, also add it to the `ISO3_TO_ISO2` map inside `refresh_data.py` (e.g. `"FRA": "FR"`).
-
----
-
-## What happens when something goes wrong
-
-- **The World Bank API is unreachable one morning.** The script catches the error, preserves whatever values it fetched last week, and continues. The site never shows blanks.
-- **A new country was added but its data couldn't be fetched.** The country appears on the map with a "preliminary" confidence flag and a note until the next successful refresh.
-- **The workflow itself fails.** GitHub emails the repository owner (you) automatically. Click through to the Actions tab to see the exact error log.
-
-To see a history of refresh runs: on GitHub, click **Actions** in the top bar.
-
----
-
-## Cost
-
-Zero. All of this runs on GitHub's free tier:
-- GitHub Pages hosting: free for public repos
-- GitHub Actions minutes: free (our workflow uses ~1 minute per run)
-- World Bank API: free, no registration
-
----
-
-## What this automation **doesn't** do (and what to watch for)
-
-1. It doesn't scrape sites that block bots. If a source requires logging in or presents CAPTCHAs, we don't touch it.
-2. It doesn't translate country overviews. Those remain hand-curated in English; the UN language service signs off on content translations.
-3. It doesn't validate the data. If the World Bank publishes a bad number, we publish a bad number. Occasional manual sanity-checking is still the right instinct — the [Sources tab](../index.html) on every country profile links back to the primary source, so verification is one click away.
-4. It doesn't touch survey responses. That pipeline is separate and handled manually when you send CSV exports.
-
----
-
-## If you need to hand this off
-
-The entire automation fits in two files totalling about 250 lines of code. A developer, a UN IT staffer with Copilot, or even a motivated non-coder walking through the inline comments can maintain it. Nothing proprietary, nothing paid, nothing exotic.
+Edit the `cron:` line in the relevant workflow file. https://crontab.guru explains cron syntax in plain English. Times are UTC.

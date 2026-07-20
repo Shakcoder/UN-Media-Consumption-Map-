@@ -2,7 +2,7 @@
 
 *The authoritative record of every source in the Global Media Consumption Atlas: what it provides, its license, how often it updates, and how conflicts between sources are resolved. Derived from the UN "Audience Intelligence Database: Feasibility and Data Availability Assessment" (June 2026) — every free source in that report is either integrated, covered by an equivalent, pending a registration only the account holder can complete, or documented as a linked reference tool.*
 
-Last updated: 2026-07-14
+Last updated: 2026-07-20
 
 ## 1. Integrated sources (data flows into the Atlas)
 
@@ -22,6 +22,8 @@ Last updated: 2026-07-14
 | GDELT 2.0 | topic news-coverage volume + source-country mix | Global, 100+ languages | **Automated daily** | Open | ✅ live |
 | DataReportal 2024 | smartphone adoption estimates | 50 countries | Annual | Free, attribution (estimates) | ✅ live, tier-C estimates |
 | CIA World Factbook | cross-reference for curated profile fields (languages, government, media outlines) | Global | Continuous | Public domain | ✅ attributed |
+| World Bank Global Findex (via the same WB API) | financial-account ownership incl. mobile money (% adults 15+) — digital/financial-inclusion signal | ~160 countries | **Automated weekly** (same workflow) | CC BY 4.0 | ✅ added 2026-07-20 |
+| Unicode CLDR territory-language data | per-country language shares (% of population) + official status — "which languages should content use" | all 195 | **Automated weekly** (same workflow; CLDR itself updates ~2×/year) | Unicode License V3 | ✅ added 2026-07-20 |
 
 ## 2. Pending sources (free, but require a personal registration the account holder must complete)
 
@@ -46,7 +48,41 @@ Until these are completed, the affected countries carry clearly-labeled compiled
 7. **Missing values** are shown as "no data" — never imputed, never averaged from neighbors.
 8. **True data years.** World Bank values carry the year of the actual observation (the fetcher scans a 12-year window for each country's latest real value rather than using gap-filled series).
 
-## 4. Reference tools (linked, not ingested)
+## 3b. Freshness automation (added 2026-07-20)
+
+Three GitHub Actions keep everything current without human attention:
+
+| Workflow | Cadence | What it refreshes |
+|---|---|---|
+| `trend-engine.yml` | **Daily** 05:30 UTC | Wikipedia pageviews + GDELT coverage → topic intelligence |
+| `refresh-data.yml` | **Weekly** Mon 03:00 UTC (and on every data/script upload) | All World Bank indicators (incl. Findex), CLDR languages → countries.json |
+| `source-watchdog.yml` | **Monthly** 3rd, 06:00 UTC | Probes RSF / Freedom House / DNR / GSMA / Afrobarometer / UN WPP sites; **opens a GitHub Issue with step-by-step instructions** when a new annual edition is detected. Nothing annual can silently go stale again. |
+
+## 4. Vetted future sources (verified free & working, July 2026 research sweep)
+
+Each was fetch-verified during the 2026-07-20 audit. Ordered by value; integration effort noted.
+
+| Source | Adds | Access | Effort |
+|---|---|---|---|
+| Digital Society Project v8 | per-country disinformation / state-media-manipulation indices (179 countries, thru 2025) | direct zip, no registration | low |
+| ReliefWeb API v2 | UN-owned per-country crisis salience (needs pre-approved `appname` parameter since Nov 2025) | keyless REST | low |
+| OONI Aggregation API | measured blocking of news sites/apps per country | keyless REST | low |
+| IODA API | internet-shutdown detection (5-min granularity) | keyless REST | low |
+| UN SDG Indicators API | gender-disaggregated mobile ownership (5.b.1), journalist-safety (16.10.1) | keyless REST | medium |
+| Our World in Data Grapher API | any context indicator as CSV + ready-made citations | keyless CSV | low |
+| Eurostat `isoc_*` | measured EU social/online usage (44 geos) | keyless REST | low |
+| V-Dem v16 | media-censorship indices (202 countries) | GitHub download | medium |
+| UNDP HDR indices | human-development context | direct CSV (URL changes yearly) | low |
+| GDELT TV API | US-centric broadcast attention | keyless REST | low |
+| Wikimedia Clickstream | where topic attention comes from (search vs. browse) | monthly dumps | medium |
+| Cloudflare Radar API | traffic/outage corroboration | free token (existing CF account) | medium |
+| Media Cloud API | curated national outlet lists (4k req/wk free) | free key via email | medium |
+| Google Trends alpha API | search attention (apply — UN use case is strong) | application-gated | medium |
+| OECD SDMX | measured ICT usage for rich non-EU countries | keyless SDMX | medium |
+
+**Documented exclusions:** DataReportal bulk reuse (license), ITU DataHub API (conflicting access reports — WB already carries the headline ITU indicators; revisit if gender-split data becomes a requirement), Google News RSS (ToS gray zone — validation only).
+
+## 4b. Reference tools (linked, not ingested)
 
 These are cited in the Atlas's Sources page as analyst tools rather than data feeds: **UNESCO World Trends in Freedom of Expression** (sister-agency report; qualitative), **Pew Research Center** (topline reports), **Edison Research** (US podcast/audio), **OECD Data** (overlaps WB for our fields), **Meta Ad Library** and **Google Ads Transparency Center** (real-time ad-activity lookups, no bulk export), **Google Trends** (covered by the Wikipedia+GDELT trend engine, which offers bulk access and clean licensing).
 
