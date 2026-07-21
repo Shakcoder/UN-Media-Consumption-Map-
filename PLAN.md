@@ -99,9 +99,26 @@ Each phase ends with a **live clickable prototype you can show people**, even if
 
 **Prototype:** a self-updating site. You stop touching it; it keeps working.
 
-### Phase 5 — QA, docs, handover (Weeks 12–16)
+### Phase 5 — Production hardening (Weeks 12–13)
+**Goal:** The site is genuinely ready for the public — fast, polished, accurate, robust to edge cases.
+- **Performance:** page weight, load speed on slow connections, images optimized, country boundaries cached.
+- **Cross-browser + device test pass:** Chrome / Safari / Firefox / Edge × desktop / tablet / mobile.
+- **No text overflow anywhere:** every label, panel, card, and stat stays inside its container at every screen width and in every language. Country profiles with long names, long source lists, or long media outlet lists must not leak out of the page.
+- **Continent and region names standardized** to the currently-selected UI language. The map tile layer ships with multilingual labels by default (e.g., "AFRIKA", "AMÉRICA DO SUL") — replace with a single-language label source or our own overlay so everything matches the UI language.
+- **Visual consistency sweep** across all ~195 country profiles — no missing flags, broken layouts, mismatched fonts, or inconsistent spacing.
+- **Citation link check** — automated pass confirming every source URL still resolves with HTTP 200.
+- **Edge cases** — countries with sparse data, slow networks, narrow phone widths, JavaScript disabled.
+- **Translation review** — all UI strings present in EN / FR / ES / AR / ZH; native-speaker spot-check where possible.
+- **Empty-state polish** — friendly messages, banner if auto-refresh ever fails.
+- **SEO basics** — page titles, social-share preview cards (OpenGraph), sitemap.xml, robots.txt.
+- **Privacy notice** — explicit "no cookies, no tracking" language (or whatever the analytics tool requires).
+- **Bug bash** — 5–10 people outside the project try to break it; log + fix.
+- **Final accessibility re-audit** (WCAG 2.1 AA) with a screen reader.
+
+**Prototype:** the site as it will look on launch day, ready to share publicly with confidence.
+
+### Phase 6 — Documentation & handover (Weeks 14–16)
 **Goal:** A UN staffer who has never seen this project can take it over in an afternoon.
-- Full test pass on all browsers + mobile.
 - Write a **handover manual** in plain English: "How to add a country", "How to fix a broken source", "How to change the survey", "Who to call if X breaks".
 - Record 3–5 short screen-recording walkthroughs.
 - Security review (no exposed API keys, no PII leaks from survey).

@@ -37,7 +37,10 @@ env:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 45 min: the refresh itself takes ~2-4 min, but the World Bank API has
+    # slow spells (a 20-min ceiling cancelled run #42 on 2026-07-21). Headroom
+    # costs nothing — the job exits as soon as it's done.
+    timeout-minutes: 45
 
     steps:
       - name: Check out repository

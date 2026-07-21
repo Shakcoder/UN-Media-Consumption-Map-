@@ -611,7 +611,7 @@ def _ssl_context():
 _CTX = _ssl_context()
 
 
-def fetch_json(url: str, max_retries: int = 3, timeout: int = 20) -> Any:
+def fetch_json(url: str, max_retries: int = 3, timeout: int = 90) -> Any:
     last_exc: Exception | None = None
     for attempt in range(max_retries):
         try:
@@ -642,12 +642,21 @@ def fetch_indicator_all_countries(wb_code: str) -> dict[str, tuple[float, int]]:
     country's newest non-null value ourselves — this also preserves the TRUE
     year of each data point for citations, which gapfill would mask.
     """
+    # PER_PAGE (2026-07-21): fetch every row in ONE request. The old value of
+    # 300 needed up to 27 sequential pages for the 30-year sparse indicators;
+    # when the World Bank API is slow (observed: 235s for one indicator, then
+    # a page-23 failure) that pagination blew past the workflow timeout and
+    # the whole refresh was cancelled. One big request is both far faster
+    # (~3s vs ~4min for literacy) and immune to mid-pagination failure.
+    # The loop below is kept as a safety net in case a future indicator
+    # genuinely exceeds one page.
+    PER_PAGE = 20000
     out: dict[str, tuple[float, int]] = {}
     page, pages = 1, 1
     while page <= pages:
         url = (
             f"https://api.worldbank.org/v2/country/all/indicator/{wb_code}"
-            f"?format=json&per_page=300&mrv={SPARSE_WINDOWS.get(wb_code, 12)}&page={page}"
+            f"?format=json&per_page={PER_PAGE}&mrv={SPARSE_WINDOWS.get(wb_code, 12)}&page={page}"
         )
         try:
             payload = fetch_json(url)
@@ -676,6 +685,27 @@ def fetch_indicator_all_countries(wb_code: str) -> dict[str, tuple[float, int]]:
 # --------------------------------------------------------------------------
 # Build one country row
 # --------------------------------------------------------------------------
+# CLDR's English language-name table doesn't cover every ISO 639-3 code that
+# appears in its own territory data — without these, briefs would print raw
+# codes ("haz", "apc") as if they were language names. Names follow ISO 639-3
+# / Ethnologue usage. Add a line here if a new code ever shows up.
+EXTRA_LANGUAGE_NAMES = {
+    "abr": "Abron", "apc": "Levantine Arabic", "apd": "Sudanese Arabic",
+    "bci": "Baoulé", "bsq": "Bassa", "bvb": "Bube", "bzj": "Belizean Creole",
+    "cab": "Garifuna", "cak": "Kaqchikel", "cja": "Western Cham",
+    "dnj": "Dan", "ffm": "Maasina Fulfulde", "fuq": "Central-Eastern Niger Fulfulde",
+    "fuv": "Nigerian Fulfulde", "fvr": "Fur", "haz": "Hazaragi", "ife": "Ifè",
+    "jml": "Jumli", "kck": "Kalanga", "kjg": "Khmu", "knf": "Mankanya",
+    "kro": "Kru", "lep": "Lepcha", "lir": "Liberian English", "mam": "Mam",
+    "mey": "Hassaniyya Arabic", "mfa": "Pattani Malay", "mnw": "Mon",
+    "mop": "Mopan Maya", "mwk": "Kita Maninkakan", "mww": "Hmong Daw",
+    "mxc": "Manyika", "ndc": "Ndau", "ngl": "Lomwe", "nod": "Northern Thai",
+    "nse": "Nsenga", "prd": "Parsi-Dari", "puu": "Punu", "rkt": "Rangpuri",
+    "sav": "Saafi-Saafi", "sef": "Cebaara Senoufo", "sou": "Southern Thai",
+    "syl": "Sylheti", "toi": "Tonga", "tsj": "Tshangla", "tts": "Northeastern Thai",
+    "uli": "Ulithian", "wni": "Ndzwani Comorian", "zdj": "Ngazidja Comorian",
+}
+
 CLDR_TERRITORY_URL = ("https://raw.githubusercontent.com/unicode-org/cldr-json/main/"
                       "cldr-json/cldr-core/supplemental/territoryInfo.json")
 CLDR_LANG_NAMES_URL = ("https://raw.githubusercontent.com/unicode-org/cldr-json/main/"
@@ -723,10 +753,10 @@ def fetch_cldr_languages() -> dict[str, list[dict[str, Any]]]:
             is_official = status in ("official", "de_facto_official")
             # unmapped locale codes ("pa_Arab", "tts") → fall back to the base
             # language's name plus a script note, never leak raw codes
-            name = name_map.get(code)
+            name = name_map.get(code) or EXTRA_LANGUAGE_NAMES.get(code)
             if not name:
                 base = code.split("_")[0]
-                name = name_map.get(base, code)
+                name = name_map.get(base) or EXTRA_LANGUAGE_NAMES.get(base) or code
                 if name != code and code.endswith("_Arab"):
                     name += " (Arabic script)"
             rows.append({
