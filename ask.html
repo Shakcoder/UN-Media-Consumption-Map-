@@ -49,6 +49,14 @@
   .msg.analyst .body ul { margin: 0 0 8px 18px; }
   .msg.analyst .body li { margin-bottom: 3px; }
   .msg.analyst .body hr { border: 0; border-top: 1px solid var(--border-soft); margin: 12px 0; }
+  /* consulting-brief section headings */
+  .msg.analyst .body .sect-h {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--un-blue-ink); margin: 18px 0 8px; padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .msg.analyst .body .sect-h:first-child { margin-top: 4px; }
+  .msg.analyst .body ul + .sect-h, .msg.analyst .body p + .sect-h { margin-top: 20px; }
 
   /* "View sources" — one collapsible per answer, replaces inline citations */
   details.sources { margin-top: 10px; border-top: 1px solid var(--border-soft); padding-top: 8px; }
@@ -214,6 +222,14 @@ function mdLite(s) {
     if (/^\|.*\|$/.test(ln.trim())) { tableBuf.push(ln.trim()); continue; }
     flushTable();
     if (/^---+$/.test(ln.trim())) { if (inUl) { html += "</ul>"; inUl = false; } html += "<hr>"; continue; }
+    // section headings (### / ##) — the consulting briefs are built from these
+    const h = ln.match(/^(#{2,4})\s+(.*)$/);
+    if (h) {
+      if (inUl) { html += "</ul>"; inUl = false; }
+      const lvl = Math.min(h[1].length + 1, 5);
+      html += `<h${lvl} class="sect-h">${h[2]}</h${lvl}>`;
+      continue;
+    }
     if (/^\s*[-•] /.test(ln)) {
       if (!inUl) { html += "<ul>"; inUl = true; }
       html += "<li>" + ln.replace(/^\s*[-•] /, "") + "</li>";

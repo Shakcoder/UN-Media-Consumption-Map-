@@ -173,7 +173,19 @@ const engine = await import(join(ROOT, "ask-engine.js"));
 await engine.initEngine();
 
 if (process.argv[2] === "strategy") {
-  const SECTIONS = ["Who — the audience", "Where — platforms", "What — content formats", "When — timing", "How — execution", "Advisory only", "human review"];
+  // The mandatory consulting structure (DGC spec, 2026-07-21). Every strategic
+  // answer must carry all of these — the consistency is the point.
+  const SECTIONS = [
+    "Decision being addressed",   // step 1: what decision is being made
+    "### Executive summary",      // the 30-second version
+    "### Key insights",
+    "### Strategic assessment",
+    "### Opportunities",          // ranked + justified
+    "### Risks",
+    "### Confidence and limits",
+    "### Evidence used",
+    "Advisory",                   // advisory disclaimer
+  ];
   const out = [];
   let fails = 0;
   for (const prompt of STRATEGY_PROMPTS) {
@@ -182,16 +194,23 @@ if (process.argv[2] === "strategy") {
     try {
       const r = engine.answerQuestion(prompt);
       const a = r.answer || "";
-      const isRegion = /Advisory brief for/.test(a);
+      const isRegion = /Strategic brief — .*across /.test(a);
       entry.answer = a;
       entry.checks = {
-        sections_missing: isRegion ? [] : SECTIONS.filter(s => !a.includes(s)),
+        sections_missing: SECTIONS.filter(s => !a.includes(s)),
         region_form: isRegion,
         null_leak: /\bnull\b|undefined|NaN%/.test(a),
-        has_disclaimer: /Advisory (only|brief)/.test(a),
+        has_disclaimer: /Advisory/i.test(a),
+        // consulting-grade requirements: a stated confidence level, ranked
+        // recommendations that each answer "why", and evidence tiering
+        has_confidence: /Confidence: (High|Medium|Low)/.test(a),
+        has_ranked_why: /- Why:/.test(a),
+        has_evidence_tags: /\[measured\]/.test(a) && /\[inferred\]/.test(a),
         evidence_count: (r.evidence || []).length,
       };
-      if (entry.checks.sections_missing.length || entry.checks.null_leak || !entry.checks.has_disclaimer) fails++;
+      const c = entry.checks;
+      if (c.sections_missing.length || c.null_leak || !c.has_disclaimer
+          || !c.has_confidence || !c.has_ranked_why || !c.has_evidence_tags) fails++;
     } catch (e) {
       entry.error = e.message; fails++;
     }

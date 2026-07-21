@@ -223,9 +223,13 @@ FREEDOM_HOUSE_FOTN_2025: dict[str, int] = {
 # Covers ALL countries. Higher = more free.
 # https://freedomhouse.org/report/freedom-world — data via Our World in Data
 # (ourworldindata.org/grapher/freedom-score-fh), verified against 195 countries.
-# PSE and VAT are not individually rated by Freedom House (Gaza Strip alone is
-# rated but is not representative of Palestine as a whole; Vatican is unrated);
-# both retain the prior compiled estimate.
+# PSE and VAT are NOT rated by Freedom House and are deliberately ABSENT here
+# (removed 2026-07-21). Freedom House rates Gaza Strip and West Bank separately
+# and issues no single Palestine score; it does not rate the Holy See at all.
+# They previously carried a compiled estimate, but every downstream surface
+# attributes this field to Freedom House by name — which misattributed a
+# political judgement FH never made to a UN observer state. Per the project's
+# own rule, "no reliable data" beats a bad estimate: they now render as no-data.
 FREEDOM_HOUSE_FITW_2025: dict[str, int] = {
     "AFG": 8, "AGO": 28, "ALB": 69, "AND": 93, "ARE": 18,
     "ARG": 85, "ARM": 54, "ATG": 83, "AUS": 94, "AUT": 94,
@@ -255,7 +259,7 @@ FREEDOM_HOUSE_FITW_2025: dict[str, int] = {
     "NER": 27, "NGA": 44, "NIC": 14, "NLD": 97, "NOR": 99,
     "NPL": 59, "NRU": 75, "NZL": 99, "OMN": 24, "PAK": 32,
     "PAN": 82, "PER": 66, "PHL": 58, "PLW": 92, "PNG": 61,
-    "POL": 82, "PRK": 3, "PRT": 96, "PRY": 63, "PSE": 27,
+    "POL": 82, "PRK": 3, "PRT": 96, "PRY": 63, 
     "QAT": 25, "ROU": 83, "RUS": 12, "RWA": 21, "SAU": 9,
     "SDN": 1, "SEN": 70, "SGP": 48, "SLB": 74, "SLE": 61,
     "SLV": 42, "SMR": 97, "SOM": 8, "SRB": 53, "SSD": 0,
@@ -264,7 +268,7 @@ FREEDOM_HOUSE_FITW_2025: dict[str, int] = {
     "THA": 33, "TJK": 5, "TKM": 1, "TLS": 73, "TON": 79,
     "TTO": 83, "TUN": 42, "TUR": 32, "TUV": 93, "TZA": 28,
     "UGA": 33, "UKR": 51, "URY": 97, "USA": 81, "UZB": 12,
-    "VAT": 35, "VCT": 90, "VEN": 13, "VNM": 20, "VUT": 82,
+    "VCT": 90, "VEN": 13, "VNM": 20, "VUT": 82,
     "WSM": 84, "YEM": 10, "ZAF": 81, "ZMB": 53, "ZWE": 25,
 }
 
@@ -706,6 +710,14 @@ EXTRA_LANGUAGE_NAMES = {
     "uli": "Ulithian", "wni": "Ndzwani Comorian", "zdj": "Ngazidja Comorian",
 }
 
+# CLDR names a few languages with their TERRITORY's name, which reads as an
+# error in a brief ("Produce in Tuvalu first"). These override CLDR.
+LANGUAGE_NAME_OVERRIDES = {
+    "tvl": "Tuvaluan",   # CLDR: "Tuvalu"
+    "na": "Nauruan",     # CLDR: "Nauru"
+    "toi": "Tonga (Zambia)",  # CLDR: "Tonga" — the Zambian Bantu language, not Tongan
+}
+
 CLDR_TERRITORY_URL = ("https://raw.githubusercontent.com/unicode-org/cldr-json/main/"
                       "cldr-json/cldr-core/supplemental/territoryInfo.json")
 CLDR_LANG_NAMES_URL = ("https://raw.githubusercontent.com/unicode-org/cldr-json/main/"
@@ -753,7 +765,7 @@ def fetch_cldr_languages() -> dict[str, list[dict[str, Any]]]:
             is_official = status in ("official", "de_facto_official")
             # unmapped locale codes ("pa_Arab", "tts") → fall back to the base
             # language's name plus a script note, never leak raw codes
-            name = name_map.get(code) or EXTRA_LANGUAGE_NAMES.get(code)
+            name = LANGUAGE_NAME_OVERRIDES.get(code) or name_map.get(code) or EXTRA_LANGUAGE_NAMES.get(code)
             if not name:
                 base = code.split("_")[0]
                 name = name_map.get(base) or EXTRA_LANGUAGE_NAMES.get(base) or code

@@ -755,6 +755,12 @@ function addTrendEvidence(name, ev) {
 const fmt = (v, suffix = "%") => v == null ? "no data" : `${Math.round(v * 10) / 10}${suffix}`;
 const fmtPop = (v) => v == null ? "no data" : v >= 1e9 ? (v / 1e9).toFixed(2) + "B" : v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : Math.round(v / 1000) + "k";
 const titleCase = (s) => s.replace(/\b\w/g, ch => ch.toUpperCase());
+/** Capitalise and end-stop a fragment so it reads as a sentence. */
+const sentence = (s) => {
+  const t = String(s || "").trim();
+  if (!t) return "";
+  return t.charAt(0).toUpperCase() + t.slice(1) + (/[.!?]$/.test(t) ? "" : ".");
+};
 
 function riskLines(f) {
   const risks = [];
@@ -1212,13 +1218,11 @@ function composeMeta(ev, iso) {
 }
 
 // ---------------------------------------------------------------------------
-// Strategy briefs — the analyst as strategic advisor (added 2026-07-21 at DGC
-// request). One memo answering WHO / WHAT / WHERE / WHEN / WHY / HOW for
-// distributing content in a country, every line tied to Atlas evidence and
-// every inference labeled as such. ADVISORY BY DESIGN: format guidance is
-// feasibility (connectivity/literacy/radio habit), never measured performance;
-// timing is current momentum only. The disclaimer is part of the product.
-// ---------------------------------------------------------------------------
+const LANG_BASE_NAMES = { pa: "Punjabi", pnb: "Western Panjabi", uz: "Uzbek", az: "Azerbaijani",
+  kk: "Kazakh", ms: "Malay", mn: "Mongolian", sr: "Serbian", ku: "Kurdish", zh: "Chinese",
+  bs: "Bosnian", tts: "Northeastern Thai", nod: "Northern Thai", apc: "Levantine Arabic",
+  arz: "Egyptian Arabic", ary: "Moroccan Arabic", apd: "Sudanese Arabic", aeb: "Tunisian Arabic" };
+
 function formatFeasibility(f) {
   const rows = [];
   const net = f.internet, phone = f.smartphone;
@@ -1241,12 +1245,6 @@ function formatFeasibility(f) {
   return rows;
 }
 
-// CLDR sometimes ships locale codes the name table doesn't cover ("pa_Arab",
-// "tts") — resolve to readable names rather than leaking codes into a brief.
-const LANG_BASE_NAMES = { pa: "Punjabi", pnb: "Western Panjabi", uz: "Uzbek", az: "Azerbaijani",
-  kk: "Kazakh", ms: "Malay", mn: "Mongolian", sr: "Serbian", ku: "Kurdish", zh: "Chinese",
-  bs: "Bosnian", tts: "Northeastern Thai", nod: "Northern Thai", apc: "Levantine Arabic",
-  arz: "Egyptian Arabic", ary: "Moroccan Arabic", apd: "Sudanese Arabic", aeb: "Tunisian Arabic" };
 function prettyLang(l) {
   if (l.language && l.language !== l.code) return l.language;
   const base = String(l.code || "").split("_")[0];
@@ -1259,132 +1257,485 @@ function langsByShare(f) {
   return [...f.languagesDetail].sort((a, b) => (b.pct || 0) - (a.pct || 0));
 }
 
-function composeStrategyBrief(f, ev, ents, qNorm) {
+// ---------------------------------------------------------------------------
+// THE CONSULTING ENGINE (rebuilt 2026-07-21 to DGC specification)
+// ===========================================================================
+// ROLE: this is not a repository of media information. It is a strategic
+// intelligence and decision-support system for the UN Department of Global
+// Communications. Its purpose is to synthesise evidence into actionable,
+// well-reasoned recommendations — not to retrieve and reformat data.
+//
+// GUIDING PRINCIPLE: do not answer the question that was asked — answer the
+// DECISION that needs to be made.
+//
+// REASONING WORKFLOW (every strategic question runs all five steps):
+//   1. Infer the objective — what is the user actually trying to accomplish?
+//   2. Retrieve only decision-relevant evidence (what would CHANGE the advice)
+//   3. Evaluate across audience / platform / geography / political sensitivity
+//      / language / media consumption / accessibility / timing / risk
+//   4. Identify tradeoffs — nothing is universally "best"
+//   5. Rank recommendations by confidence, and say why
+//
+// EVIDENCE DISCIPLINE: every claim is tagged at one of three tiers —
+//   [measured]  a real Atlas figure with a named source
+//   [inferred]  a defensible judgement derived from measured figures
+//   [unknown]   the Atlas cannot know this; say so and name what would answer it
+// A senior consultant distinguishes "the data shows" from "in my judgement"
+// from "we'd need to find out". Fabricating the third as the first is the one
+// unforgivable failure, so the tiers are structural, not decorative.
+// ---------------------------------------------------------------------------
+
+/** The decisions a UN comms officer is actually making. */
+const OBJECTIVES = {
+  crisis: {
+    label: "urgent/crisis communication",
+    re: /\b(crisis|emergency|urgent|outbreak|evacuat\w+|early warning|warning|alert|disaster|cyclone|flood|earthquake|conflict|displac\w+|famine)\b/,
+    priority: ["radio", "TV", "social media", "online news"],
+    rationale: "In an emergency the binding constraint is speed and universality of reach, not engagement quality. Broadcast reaches people without electricity-dependent devices or data plans, and keeps working when networks are congested or restricted.",
+  },
+  policymakers: {
+    label: "reaching policymakers and elites",
+    re: /\b(policy ?makers?|policy audience|government officials?|ministers?|diplomat\w*|elite\w*|decision ?makers?|parliament\w*|donors?|delegates?)\b/,
+    priority: ["online news", "TV", "social media", "radio"],
+    rationale: "Elite audiences are reached through the outlets that set the agenda for institutions — national press and broadcast — rather than by mass reach.",
+  },
+  youth: {
+    label: "engaging young people",
+    re: /\b(youth|young people|under ?25|under ?30|gen ?z|adolescents?|teenagers?|students?)\b/,
+    priority: ["social media", "online news", "TV", "radio"],
+    rationale: "Younger audiences skew toward social and short-form digital in most markets — but the Atlas holds no age-segmented platform data, so this is a population-structure inference, not a measurement.",
+  },
+  rural: {
+    label: "reaching rural and remote populations",
+    re: /\b(rural|remote|village\w*|countryside|farmers?|smallholders?|hard to reach)\b/,
+    priority: ["radio", "TV", "social media", "online news"],
+    rationale: "Rural reach is constrained by infrastructure. Radio is the only channel that routinely works without electricity, data, or literacy.",
+  },
+  trust: {
+    label: "countering misinformation / rebuilding credibility",
+    re: /\b(misinformation|disinformation|fake news|rumou?rs?|counter\w*|myth\w*|debunk\w*|credibility|fact ?check\w*)\b/,
+    priority: ["radio", "TV", "online news", "social media"],
+    rationale: "Correction only works through channels the audience already trusts; amplifying a correction on a low-trust channel can entrench the belief it targets.",
+  },
+  behaviour: {
+    label: "driving behaviour change",
+    re: /\b(vaccinat\w+|immunis\w+|immuniz\w+|health campaign|hand ?washing|nutrition|sanitation|behaviou?r change|uptake|adherence|screening)\b/,
+    priority: ["radio", "TV", "social media", "online news"],
+    rationale: "Behaviour change needs repeated exposure through locally trusted voices, not a single high-reach impression.",
+  },
+  awareness: {
+    label: "maximising awareness and reach",
+    re: /\b(awareness|reach|visibility|amplif\w+|launch|promote|publicis\w+|publiciz\w+)\b/,
+    priority: ["radio", "TV", "online news", "social media"],
+    rationale: "With awareness as the goal the ranking follows measured weekly reach, adjusted for how much of the population each channel can physically reach.",
+  },
+};
+
+function inferObjective(qNorm, ents) {
+  const hits = [];
+  for (const [key, o] of Object.entries(OBJECTIVES)) if (o.re.test(qNorm)) hits.push(key);
+  // audience qualifiers detected elsewhere are strong objective signals
+  if (ents.audiences.includes("rural") && !hits.includes("rural")) hits.push("rural");
+  if (ents.audiences.includes("youth") && !hits.includes("youth")) hits.push("youth");
+  if (!hits.length) return { key: "awareness", inferred: true, ...OBJECTIVES.awareness };
+  // crisis outranks everything; otherwise first match wins
+  const key = hits.includes("crisis") ? "crisis" : hits[0];
+  return { key, inferred: false, ...OBJECTIVES[key] };
+}
+
+/**
+ * Score each channel against the inferred objective.
+ * Effective reach caps digital channels at internet penetration: a survey can
+ * report 94% online news use in a country where 41% are online, because it
+ * surveyed the connected population. Treating that as national reach is the
+ * single most expensive mistake this tool can prevent.
+ */
+function evaluateChannels(f, objective) {
+  const raw = { "TV": f.tv, "radio": f.radio, "online news": f.online, "social media": f.social };
+  const rows = [];
+  for (const [name, measured] of Object.entries(raw)) {
+    if (measured == null) continue;
+    const digital = name === "online news" || name === "social media";
+    const capped = digital && f.internet != null ? Math.min(measured, f.internet) : measured;
+    const priorityIdx = objective.priority.indexOf(name);
+    // objective fit: a small deliberate weighting, never enough to override a
+    // large reach gap — the evidence leads, the objective breaks ties
+    const fitBonus = priorityIdx >= 0 ? (objective.priority.length - priorityIdx) * 3 : 0;
+    rows.push({
+      name, measured, effective: capped, capped: digital && capped < measured,
+      score: capped + fitBonus, priorityIdx: priorityIdx < 0 ? 99 : priorityIdx,
+      fit: priorityIdx <= 1 ? "Strong" : priorityIdx === 2 ? "Moderate" : "Weak",
+    });
+  }
+  // Rank by objective FIT first, then by effective reach inside each fit band.
+  // Reach alone would recommend a channel the brief's own table calls "Weak"
+  // for the job — e.g. leading a counter-misinformation push on the channel
+  // most likely to amplify the rumour. Fit decides the band; reach decides
+  // the order within it.
+  const band = { Strong: 0, Moderate: 1, Weak: 2 };
+  rows.sort((a, b) => (band[a.fit] - band[b.fit]) || (b.effective - a.effective));
+  // Flag when fit and reach disagree — that tension is itself a finding the
+  // brief must surface rather than bury.
+  const biggestReach = [...rows].sort((a, b) => b.effective - a.effective)[0];
+  if (biggestReach && rows[0] && biggestReach.name !== rows[0].name) {
+    rows[0].reachTradeoff = biggestReach;
+  }
+  return rows;
+}
+
+/** Confidence in the recommendation, with the reason stated. */
+function assessConfidence(f, channels, objective) {
+  const reasons = [], caveats = [];
+  let level = "High";
+  const hasSurvey = channels.length > 0;
+  const isEstimate = /estimate/i.test(f.survey || "");
+  const nonRep = !!f.surveyNote;
+
+  // "Compiled estimate" sources (DataReportal and similar) are NOT surveys —
+  // calling them one was inflating confidence to High in several markets.
+  const src = String(f.survey || "");
+  const isCompilation = isEstimate || /datareportal|compiled|other:/i.test(src);
+  const isRealSurvey = /reuters|dnr|afrobarometer|arab barometer|asian barometer|latinobar|eurobarometer|world values/i.test(src);
+
+  if (!hasSurvey) {
+    level = "Low";
+    reasons.push(`no news-consumption survey covers ${f.name}, so no channel can be ranked from evidence`);
+  } else if (isCompilation) {
+    level = "Medium";
+    reasons.push(`${f.name}'s channel figures are a compiled estimate (${src || "source unstated"}), not a national survey — treat the ordering as indicative and the exact values as soft`);
+  } else if (nonRep) {
+    level = "Medium";
+    reasons.push(`the underlying survey (${src}) samples online, urban, and more-connected respondents in ${f.name} — it understates rural and offline audiences`);
+  } else if (isRealSurvey) {
+    reasons.push(`channel figures come from a national survey (${src})`);
+  } else {
+    level = "Medium";
+    reasons.push(`channel figures come from ${src || "an unnamed source"}, whose sampling frame the Atlas cannot verify`);
+  }
+
+  // Afrobarometer fieldwork is 2023; in countries that have since entered
+  // large-scale conflict or displacement, pre-crisis media habits are not a
+  // safe basis for a crisis plan.
+  const conflictAffected = ["SDN", "AFG", "MMR", "SYR", "YEM", "HTI", "MLI", "BFA", "NER", "SSD", "COD", "SOM", "LBY", "UKR", "PSE"];
+  if (conflictAffected.includes(f.iso)) {
+    level = "Low";
+    reasons.push(`${f.name} has experienced major conflict or displacement since the survey fieldwork — pre-crisis media habits are a weak guide to current reach, and infrastructure may have changed materially`);
+  }
+  // A question about an elite/occupational/city audience cannot be answered by
+  // national population data at High confidence, however good that data is.
+  if (objective.key === "policymakers") {
+    level = level === "High" ? "Medium" : level;
+    reasons.push(`the request targets an elite/occupational audience and the Atlas holds only national population data — no elite-audience measurement exists`);
+  }
+
+  if (f.internet == null) { level = level === "High" ? "Medium" : level; caveats.push("no internet-penetration figure to sanity-check digital reach against"); }
+  if (objective.key === "youth" || objective.key === "policymakers")
+    caveats.push(`the objective targets a specific segment, and the Atlas holds no age, income, or occupation crosstabs — segment guidance here is inference from population structure, not measurement`);
+  if (objective.key === "rural" && f.radio == null)
+    caveats.push("no measured radio figure for this country, which is the channel that usually decides rural reach");
+  if (f.languagesDetail.length === 0) caveats.push("no language-share data, so production-language advice is unavailable");
+
+  if (caveats.length >= 3 && level === "High") level = "Medium";
+  return { level, reasons, caveats };
+}
+
+/** Tradeoffs — nothing is universally best; name what each choice costs. */
+function buildTradeoffs(f, channels, objective) {
+  const t = [];
+  const byName = Object.fromEntries(channels.map(c => [c.name, c]));
+  const digital = [byName["online news"], byName["social media"]].filter(Boolean);
+  const broadcast = [byName["radio"], byName["TV"]].filter(Boolean);
+
+  for (const d of digital) {
+    if (d.capped)
+      t.push(`**${d.name}** reports ${fmt(d.measured)} weekly use, but only ${fmt(f.internet)} of the country is online — it is strong *among the connected*, and structurally cannot carry a national message alone. [inferred]`);
+  }
+  if (byName["radio"] && byName["online news"] && byName["radio"].effective > byName["online news"].effective)
+    t.push(`**Radio out-reaches online news nationally** (${fmt(byName["radio"].measured)} vs an effective ${fmt(byName["online news"].effective)}) — but it is harder to target, harder to measure, and cannot carry links or visuals. [measured reach, inferred implication]`);
+  if (byName["social media"] && f.rsf != null && f.rsf < 40)
+    t.push(`**Social media** offers the cheapest scale, but with press freedom at ${Math.round(f.rsf)}/100 it also carries the highest exposure to takedowns, throttling, and coordinated pushback. [measured risk]`);
+  if (byName["TV"] && byName["TV"].measured >= 40)
+    t.push(`**TV** reaches ${fmt(byName["TV"].measured)} weekly and confers institutional credibility, but production and placement cost far more per asset than digital, and the Atlas holds no cost data to quantify that. [measured reach, cost unknown]`);
+  if (f.trust != null && f.trust < 40)
+    t.push(`Trust in news is ${f.trust}% — high-reach *outlet* placement buys less persuasion here than a lower-reach trusted intermediary would. Reach and credibility pull in opposite directions in this market. [measured]`);
+  if (objective.key === "youth")
+    t.push(`Youth-targeting pulls toward social platforms, but the Atlas cannot confirm youth platform preferences for this country — choosing social over broadcast here is a judgement call, not an evidence-backed one. [unknown]`);
+  return t;
+}
+
+/** Ranked, justified opportunities — each one answers "why?". */
+function buildOpportunities(f, channels, objective, ev) {
+  const ops = [];
+  const lead = channels[0];
+  // In a state-influenced environment the curated outlet list is NOT a
+  // recommendation — it names who has reach, which is a different question
+  // from who is an appropriate UN partner. Never present it as a placement plan.
+  const restricted = f.fh === "Not Free" || (f.rsf != null && f.rsf < 40);
+  const outletFor = (ch) => ch === "radio" ? f.outlets.top_radio : ch === "TV" ? f.outlets.top_tv
+    : ch === "online news" ? f.outlets.top_online_news : ch === "social media" ? f.outlets.top_social : null;
+
+  if (lead) {
+    const why = [];
+    why.push(`reaches ${fmt(lead.measured)} weekly${lead.capped ? `, though its national-effective reach is nearer ${fmt(lead.effective)} once internet access is accounted for` : ""} [measured]`);
+    if (lead.fit === "Weak")
+      why.push(`chosen on reach despite a weak fit for this objective — ${objective.rationale.replace(/\.$/, "")}. Treat this as a reach-vs-fit tradeoff, not a natural match [inferred]`);
+    else
+      why.push(`fits the inferred objective — ${objective.rationale.replace(/\.$/, "")} [inferred]`);
+    if (lead.reachTradeoff)
+      why.push(`${lead.reachTradeoff.name} has higher raw reach (${fmt(lead.reachTradeoff.effective)} effective) but a weaker fit for ${objective.label}; if raw reach matters more than fit here, invert this ranking [inferred]`);
+    const outlets = outletFor(lead.name);
+    if (outlets && !restricted) why.push(`established outlets to place through: ${outlets} [measured]`);
+    else if (outlets) why.push(`outlets with reach on this channel: ${outlets} — **listed for reach, not endorsed as partners**; vet each for independence before approaching [measured reach, independence unknown]`);
+    ops.push({ title: `Lead on ${lead.name}`, why, confidence: lead.fit === "Weak" ? "Medium" : "High" });
+  }
+  const second = channels[1];
+  if (second && lead) {
+    const leadIsBroadcast = lead.name === "radio" || lead.name === "TV";
+    const secondIsBroadcast = second.name === "radio" || second.name === "TV";
+    let complement;
+    if (leadIsBroadcast && !secondIsBroadcast) complement = "broadcast cannot carry links, forms, or shareable assets — digital closes that gap";
+    else if (!leadIsBroadcast && secondIsBroadcast) complement = f.internet != null && f.internet < 60
+      ? `digital cannot reach the ${fmt(100 - f.internet)} of the population that is offline — broadcast closes that gap`
+      : "broadcast adds passive, lean-back exposure that digital's opt-in model misses";
+    else complement = `both are ${leadIsBroadcast ? "broadcast" : "digital"} channels, so this adds frequency and a second audience slice rather than covering a different access gap`;
+    ops.push({ title: `Pair with ${second.name} as the secondary channel`,
+      why: [`adds ${fmt(second.measured)} weekly reach${second.capped ? ` (${fmt(second.effective)} effective)` : ""} [measured]`, `${complement} [inferred]`],
+      confidence: "Medium" });
+  }
+  if (f.languagesDetail.length) {
+    const by = langsByShare(f);
+    // CLDR shares are speaker-CAPABILITY and overlap (a person counts in
+    // several) — they never sum to 100 and a high second-language share does
+    // not make it a production language. Prefer official/majority status.
+    const primary = by.find(l => l.official && l.pct >= 25) || by[0];
+    const secondL = by.find(l => l !== primary && l.pct >= 25 && (l.official || l.pct >= 40));
+    const why = [`${prettyLang(primary)} is spoken by ${Math.round(primary.pct)}% of the population${primary.official ? " and is official" : ""} [measured, Unicode CLDR]`];
+    if (secondL) why.push(`${prettyLang(secondL)} adds reach at ${Math.round(secondL.pct)}%${secondL.official ? " (also official)" : ""} — CLDR shares overlap, so these are speaker-capability figures, not additive audience slices [measured, inferred implication]`);
+    const eng = f.languagesDetail.find(l => (l.code || "").split("_")[0] === "en");
+    if (eng && eng.pct < 50 && primary !== eng) why.push(`English-only production would leave roughly ${Math.round(100 - eng.pct)}% of people without a version in a language they speak [inferred]`);
+    ops.push({ title: `Produce in ${prettyLang(primary)}${secondL ? ` and ${prettyLang(secondL)}` : ""} first`, why, confidence: "High" });
+  }
+  if (f.trust != null && f.trust < 45)
+    ops.push({ title: `Route through trusted intermediaries, not just outlets`,
+      why: [`trust in news is ${f.trust}% — below the level at which outlet placement reliably persuades [measured]`,
+            `community organisations, local creators and messaging apps carry credibility that mass channels do not [inferred — the Atlas has no intermediary-level data]`],
+      confidence: "Medium" });
+  if (!channels.length)
+    ops.unshift({ title: `Establish a channel baseline before committing budget`,
+      why: [`no news-consumption survey covers ${f.name}, so no channel can be ranked from evidence — any channel claim here would be invented [unknown]`,
+            `the outlet lists and connectivity figures below are the starting point for a local media audit, not a substitute for one [measured]`],
+      confidence: "Low" });
+  // sequential numbering — a list that starts at 3 reads as though items were lost
+  ops.forEach((o, i) => { o.rank = i + 1; });
+  return ops;
+}
+
+/** The consulting brief. Structure is mandatory and identical every time. */
+function composeConsultingBrief(f, ev, ents, qNorm) {
   addCountryEvidence(f, ev);
+  const objective = inferObjective(qNorm, ents);
+  const channels = evaluateChannels(f, objective);
+  const conf = assessConfidence(f, channels, objective);
+  const tradeoffs = buildTradeoffs(f, channels, objective);
+  const ops = buildOpportunities(f, channels, objective, ev);
   const topic = ents.topics[0] || null;
   const t = topic && TRENDS && TRENDS.topics[topic.qid] ? TRENDS.topics[topic.qid] : null;
   if (t) addTrendEvidence(t.label_en, ev);
-  const topicName = t ? t.label_en : (topic ? topic.label : null);
   const L = [];
+  const lead = channels[0];
 
-  L.push(`**Distribution strategy brief — ${topicName ? `${topicName} in ` : ""}${f.name}**`);
-  L.push(`*Advisory only: every figure below is Atlas-verified (sources at the end), but the Atlas has no format-performance, age/gender, or campaign-outcome data — treat this as evidence-based decision support to validate with local teams, not a final plan.*`);
+  L.push(`**Strategic brief — ${t ? `${t.label_en} in ` : topic ? `${topic.label} in ` : ""}${f.name}**`);
+  L.push(`*Decision being addressed: ${objective.label}${objective.inferred ? " (inferred from your question — say the goal explicitly if it's different)" : ""}.*`);
   L.push("");
 
-  // WHO — audience
-  L.push(`**Who — the audience.**`);
-  const whoBits = [];
-  if (f.medianAge != null) whoBits.push(`median age ${f.medianAge}`);
-  if (f.under15 != null) whoBits.push(`${fmt(f.under15)} under 15`);
-  if (f.urban != null) whoBits.push(`${fmt(f.urban)} urban / ${fmt(Math.round((100 - f.urban) * 10) / 10)} rural`);
-  if (whoBits.length) L.push(`- Structure: ${whoBits.join(", ")}`);
-  if (f.languagesDetail.length) {
-    const byShare = langsByShare(f);
-    const langAdvice = byShare.length === 1 || (byShare[0].pct || 0) >= 95
-      ? `${prettyLang(byShare[0])} covers essentially the whole market`
-      : `produce in ${prettyLang(byShare[0])}${byShare[1] ? ` and ${prettyLang(byShare[1])}` : ""} at minimum`;
-    L.push(`- Languages that reach people: ${byShare.slice(0, 4).map(l => `${prettyLang(l)} ${Math.round(l.pct)}%${l.official ? " (official)" : ""}`).join(", ")} — ${langAdvice} *(Unicode CLDR)*`);
-  }
-  if (f.trust != null) L.push(`- Trust in news: ${f.trust}% — ${f.trust >= 50
-    ? `relatively high: established outlets can lend credibility${f.fh === "Not Free" || (f.rsf != null && f.rsf < 40) ? ", though in this state-influenced environment credibility transfer is not automatic — vet outlets individually" : " (a working hypothesis to validate, not a measured outcome)"}`
-    : "low; trusted intermediaries and direct channels matter more than outlet reach"}`);
-  const audNote = audienceNote(ents.audiences, f);
-  if (audNote) L.push(`- ${audNote}`);
+  // ---- EXECUTIVE SUMMARY: the 30-second version ----
+  L.push(`### Executive summary`);
+  const es = [];
+  if (lead) es.push(`**Lead on ${lead.name}** (${fmt(lead.measured)} weekly reach${lead.capped ? `; ~${fmt(lead.effective)} nationally once internet access is accounted for` : ""}).`);
+  if (f.languagesDetail.length) es.push(`**Produce in ${prettyLang(langsByShare(f)[0])} first** — ${Math.round(langsByShare(f)[0].pct)}% of the population.`);
+  const headlineRisk = f.fh === "Not Free" ? `**Treat the media environment as constrained** — Freedom House rates ${f.name} Not Free; vet every partner outlet for independence.`
+    : (f.internet != null && f.internet < 40) ? `**Do not run this digital-only** — ${fmt(f.internet)} internet penetration means a digital-only plan structurally misses most of the country.`
+    : (f.trust != null && f.trust < 40) ? `**Credibility is the binding constraint**, not reach — trust in news is ${f.trust}%.`
+    : conf.level !== "High" ? `**Validate locally before committing budget** — confidence in this recommendation is ${conf.level}.` : null;
+  if (headlineRisk) es.push(headlineRisk);
+  es.slice(0, 3).forEach((s, i) => L.push(`${i + 1}. ${s}`));
+  L.push("");
+  L.push(`**Confidence: ${conf.level}.** ${sentence(conf.reasons.join("; "))}`);
   L.push("");
 
-  // WHERE — platforms & channels
-  L.push(`**Where — platforms and channels.**`);
-  const isEstimate = /estimate/i.test(f.survey || "");
-  const reachWord = isEstimate ? "estimated" : "measured";
-  const ch = [["TV", f.tv], ["radio", f.radio], ["online news", f.online], ["social media", f.social]]
-    .filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
-  // lead-channel choice caps online/social at internet penetration: an online
-  // survey can report 91% online news in a 35%-internet country — that is the
-  // connected population, not the nation
-  const effective = ch.map(([n, v]) => [n, v, (n === "online news" || n === "social media") && f.internet != null ? Math.min(v, f.internet) : v])
-    .sort((a, b) => b[2] - a[2]);
-  const lead = effective[0];
-  const onlineExceeds = f.online != null && f.internet != null && f.online > f.internet + 5;
-  if (ch.length) {
-    L.push(`- Channel mix by ${reachWord} weekly news reach: ${ch.map(([n, v]) => `${lead && n === lead[0] ? "**" : ""}${n} ${fmt(v)}${lead && n === lead[0] ? "**" : ""}`).join(" · ")} *(${f.survey || "survey n/a"}${f.radio != null ? "; radio: Afrobarometer R9" : ""})*`);
-    if (onlineExceeds)
-      L.push(`- ⚠ Online/social figures exceed internet penetration (${fmt(f.internet)}) — the survey reflects the *connected* population, not the nation. Lead-channel choice above accounts for this${lead && lead[0] === "radio" ? `: radio (${fmt(f.radio)}) is the national-reach lead` : ""}`);
-  } else {
-    L.push(`- No news-source survey covers ${f.name} — anchor on connectivity (${fmt(f.internet)} internet) and the outlet lists below, and validate channel choices locally`);
-  }
-  if (f.outlets.top_social) L.push(`- Platforms in market order: ${f.outlets.top_social} — lead where the audience already is; the #1 platform is the distribution floor`);
-  if (f.outlets.top_tv || f.outlets.top_radio || f.outlets.top_online_news) {
-    const restricted = f.fh === "Not Free" || (f.rsf != null && f.rsf < 40);
-    const hasBlocked = /\(blocked/i.test([f.outlets.top_tv, f.outlets.top_radio, f.outlets.top_online_news].join(" "));
-    L.push(`- Partner outlets (earned media / syndication): TV — ${f.outlets.top_tv || "n/a"}; radio — ${f.outlets.top_radio || "n/a"}; online — ${f.outlets.top_online_news || "n/a"}`);
-    if (restricted)
-      L.push(`  - ⚠ **Vet partners before syndicating:** this is a state-influenced media environment (${f.fh || "restricted"}${f.rsf != null ? `, RSF ${Math.round(f.rsf)}/100` : ""}). State-controlled outlets are listed for completeness because they carry reach — they are typically inappropriate partners for content that conflicts with official policy`);
-    if (hasBlocked)
-      L.push(`  - Outlets marked *(blocked)* reach diaspora/VPN audiences only — not an in-country syndication channel`);
-  }
-  if (f.internet != null && f.internet < 40)
-    L.push(`- With internet at ${fmt(f.internet)}, pair every digital channel with broadcast/community distribution or most people never see it`);
-  L.push("");
-
-  // WHAT — formats (feasibility, honestly labeled)
-  L.push(`**What — content formats.** *(Feasibility from infrastructure and literacy — the Atlas does not measure format performance; test formats locally.)*`);
-  for (const row of formatFeasibility(f)) L.push(`- ${row}`);
-  L.push("");
-
-  // WHEN — timing
-  L.push(`**When — timing signals.** *(The Atlas sees ~120 days of attention history — no seasonal or multi-year timing data.)*`);
+  // ---- KEY INSIGHTS ----
+  L.push(`### Key insights`);
+  const ins = [];
+  if (lead && lead.capped)
+    ins.push(`The obvious digital-first read is wrong here. ${lead.name === "online news" || lead.name === "social media" ? "" : "Online news "}figures describe the ${fmt(f.internet)} of the population that is online — not the country. [measured]`);
+  const radio = channels.find(c => c.name === "radio"), online = channels.find(c => c.name === "online news");
+  if (radio && online && radio.effective > online.effective)
+    ins.push(`Radio out-reaches online news in national terms (${fmt(radio.measured)} vs an effective ${fmt(online.effective)}) — a broadcast-led plan is the higher-reach choice, not the conservative one. [measured]`);
+  if (f.medianAge != null && f.medianAge <= 22)
+    ins.push(`This is a very young country (median age ${f.medianAge}${f.under15 != null ? `, ${fmt(f.under15)} under 15` : ""}) — content aimed at adults reaches a smaller share of the population than in most markets. [measured]`);
+  if (f.trust != null) ins.push(`Trust in news is ${f.trust}% — ${f.trust >= 50 ? "high enough that established outlets can lend credibility to the message" : "low enough that placement alone will not persuade; the messenger matters more than the outlet"}. [measured trust, inferred implication]`);
+  if (f.rsf != null && f.rsf < 40) ins.push(`Press freedom is ${Math.round(f.rsf)}/100 — assume editorial interference and plan content review accordingly. [measured]`);
   if (t) {
     const vel = Math.round(t.global_velocity * 100);
-    const risingHere = f.rising.find(r => r.label_en === t.label_en);
-    const distinctHere = f.distinctive.find(d => d.label_en === t.label_en);
-    L.push(`- **${t.label_en}** is ${t.momentum} globally (${vel > 0 ? "+" : ""}${vel}% vs its 30-day baseline)${risingHere ? ` and rising in ${f.name} (+${Math.round(risingHere.velocity * 100)}%) — the window is open now` : distinctHere ? `, and ${f.name} follows it ${distinctHere.vs_global_avg}× more than the world average — a standing interest to build on` : ""}`);
-    if (!risingHere && !distinctHere && t.momentum === "falling")
-      L.push(`- Global attention is currently receding — content will need its own news hook rather than riding a wave`);
-    // underserved signal: readers care, domestic media don't cover it
-    const cov = (t.top_covering_media_countries || []).some(c => c.iso3 === f.iso);
-    if ((risingHere || distinctHere) && !cov && (t.top_covering_media_countries || []).length)
-      L.push(`- **Opportunity signal:** estimated reader attention in ${f.name} is above average, but ${f.name}'s media are not among the topic's top covering countries (GDELT) — a possibly underserved information space *(attention attribution is a documented approximation)*`);
-  } else if (topic && !t) {
-    // the subject IS tracked — momentum just isn't measurable right now
-    L.push(`- **${topic.label}** is a tracked Atlas topic but is currently below the trend-measurement floor — no momentum signal is available for it`);
-    if (f.rising.length)
-      L.push(`- For context, rising in ${f.name} generally: ${f.rising.slice(0, 3).map(r => `${r.label_en} (+${Math.round(r.velocity * 100)}%)`).join(", ")} — possible timely hooks, relevance to your subject varies *(attention attribution is a documented approximation)*`);
-  } else if (f.rising.length) {
-    L.push(`- Rising in ${f.name} right now: ${f.rising.slice(0, 3).map(r => `${r.label_en} (+${Math.round(r.velocity * 100)}%)`).join(", ")} — possible timely hooks, relevance to your subject varies *(attention attribution is a documented approximation)*`);
-  } else {
-    L.push(`- Your subject isn't among the Atlas's 167 tracked topics (or no topic was named), and nothing is spiking sharply in ${f.name} this week — timing guidance is limited to the general momentum picture`);
+    ins.push(`Attention to ${t.label_en} is ${t.momentum} globally (${vel > 0 ? "+" : ""}${vel}% against its 30-day baseline) — ${t.momentum === "rising" ? "the window is open now" : "this content will need its own news hook rather than riding existing attention"}. [measured, ~120-day window]`);
+  }
+  // a mandatory section must never render as a bare header — in a data-poor
+  // market the absence of evidence IS the insight
+  if (!ins.length) {
+    ins.push(`The Atlas holds almost no measured data for ${f.name} — no news-consumption survey${f.internet == null ? ", no connectivity figure" : ""}${f.trust == null ? ", no trust measurement" : ""}. That absence is the finding: any confident channel claim about this market, from any tool, is not evidence-based. [unknown]`);
+    if (f.outlets.top_tv || f.outlets.top_radio || f.outlets.top_online_news)
+      ins.push(`What does exist is a curated list of the outlets operating there — a starting point for a local media audit, not a reach ranking. [measured]`);
+    if (f.languagesDetail.length)
+      ins.push(`Language shares are available and are the most actionable thing the Atlas can offer for ${f.name}. [measured, Unicode CLDR]`);
+  }
+  ins.slice(0, 5).forEach(s => L.push(`- ${s}`));
+  L.push("");
+
+  // ---- STRATEGIC ASSESSMENT ----
+  L.push(`### Strategic assessment`);
+  const bySize = [...channels].sort((a, b) => b.measured - a.measured);
+  // never call a compiled estimate "measured"
+  const reachWord = /estimate|datareportal|compiled|other:/i.test(String(f.survey || "")) ? "estimated" : "measured";
+  const netClause = f.internet != null ? `${fmt(f.internet)} internet penetration` : `no internet-penetration figure on record`;
+  L.push(`**What's happening:** ${f.name} has ${netClause}${f.smartphone != null ? ` and ${fmt(f.smartphone)} smartphone adoption` : ""}, with ${bySize.length ? `${reachWord} weekly news reach of ${bySize.map(c => `${c.name} ${fmt(c.measured)}`).join(", ")}` : "no integrated news-consumption survey"}. ${f.urban != null ? `${fmt(f.urban)} of people live in urban areas.` : ""} ${f.internet != null || bySize.length ? "[measured]" : "[unknown — these fields are empty for this territory]"}`);
+  L.push("");
+  L.push(`**Why it matters for this decision:** ${objective.rationale} [inferred]`);
+  if (channels.length && lead) {
+    L.push("");
+    L.push(`**How the channels compare once corrected for who can actually be reached:**`);
+    L.push(`| Channel | Weekly reach (measured) | Effective national reach | Fit for ${objective.label} |`);
+    L.push(`|---|---|---|---|`);
+    for (const c of channels) {
+      L.push(`| ${c.name} | ${fmt(c.measured)} | ${fmt(c.effective)}${c.capped ? " *(capped at internet access)*" : ""} | ${c.fit} |`);
+    }
+    L.push("");
+    L.push(`*Ranked by fit for this objective first, then by effective national reach — not by headline survey reach.*`);
   }
   L.push("");
 
-  // HOW — execution + risks
-  L.push(`**How — execution notes.**`);
-  if (f.languagesDetail.length) {
-    const byShare = langsByShare(f);
-    const eng = f.languagesDetail.find(l => (l.code || "").split("_")[0] === "en");
-    const engPct = eng ? eng.pct : 0;
-    let langLine = `- Produce in ${prettyLang(byShare[0])}${byShare[1] && (byShare[0].pct || 0) < 95 ? ` and ${prettyLang(byShare[1])}` : ""} first`;
-    if (engPct >= 80) langLine += ` (English alone covers ~${Math.round(engPct)}% here)`;
-    else if (engPct > 0) langLine += `; English-only would miss roughly ${Math.round(100 - engPct)}% of the population`;
-    else langLine += `; English-only content would reach almost no one directly`;
-    L.push(langLine);
-  }
-  if (ch.length) {
-    L.push(`- Sequence: lead on ${lead ? lead[0] : "the top-reach channel"}, syndicate through the partner outlets above${f.fh === "Not Free" || (f.rsf != null && f.rsf < 40) ? " (after the independence vetting flagged above)" : ""}, and adapt the asset to each platform rather than cross-posting`);
-  } else {
-    L.push(`- Sequence: no measured channel ranking exists for ${f.name} — start from the #1 platform${f.outlets.top_social ? ` (${f.outlets.top_social.split(",")[0].trim()})` : ""} plus radio/TV via the partner outlets, and validate the lead channel locally`);
-  }
-  if (ents.audiences.includes("rural") && f.radio != null)
-    L.push(`- For the rural share of the audience, lead with radio and community channels regardless of the population-level ranking above`);
-  if (f.trust != null && f.trust < 50)
-    L.push(`- With trust in news at ${f.trust}%, invest in trusted intermediaries — community organisations, local creators, direct/messaging channels — alongside outlet placement`);
-  const risks = riskLines(f);
-  if (f.fotn != null && f.fotn < 40) risks.push(`Internet freedom is ${f.fotn}/100 (FOTN) — plan for platform restrictions and have a broadcast fallback.`);
-  if (risks.length) {
-    L.push(`- **Risks to plan around:**`);
-    for (const r of risks) L.push(`  - ${r}`);
+  // ---- OPPORTUNITIES (ranked, justified) ----
+  L.push(`### Opportunities — ranked`);
+  ops.forEach(o => {
+    L.push(`**${o.rank}. ${o.title}** — confidence: ${o.confidence}`);
+    o.why.forEach(w => L.push(`   - Why: ${w}`));
+  });
+  L.push("");
+
+  // ---- TRADEOFFS (always emitted — in a data-poor market the absence of a
+  // basis for choosing IS the tradeoff, and hiding it would be the failure) ----
+  L.push(`### Tradeoffs`);
+  L.push(`*Nothing here is universally best — these are the costs of each choice.*`);
+  if (tradeoffs.length) tradeoffs.slice(0, 5).forEach(x => L.push(`- ${x}`));
+  else if (!channels.length)
+    L.push(`- The binding tradeoff is that **no channel evidence exists for ${f.name}** — choosing any lead channel here trades measurable reach for a guess. Commissioning a small local media audit before spending is almost certainly cheaper than a misdirected campaign. [unknown]`);
+  else
+    L.push(`- No sharp tradeoffs surface in the available data for ${f.name}; the channel differences are small enough that execution quality will matter more than channel choice. [inferred]`);
+  L.push("");
+
+  // ---- RISKS ----
+  L.push(`### Risks`);
+  const risks = riskLines(f).map(r => `${r} [measured]`);
+  if (f.fotn != null && f.fotn < 40) risks.push(`Internet freedom is ${f.fotn}/100 (Freedom House) — plan for platform restriction and keep a broadcast fallback. [measured]`);
+  if (f.fh === "Not Free" || (f.rsf != null && f.rsf < 40))
+    risks.push(`Partner outlets must be vetted individually for independence — state-influenced outlets carry reach but are usually inappropriate partners for content that conflicts with official policy. [inferred from measured freedom scores]`);
+  if (!risks.length) risks.push(`No structural red flags in the Atlas's risk indicators for ${f.name}. [measured]`);
+  risks.slice(0, 6).forEach(r => L.push(`- ${r}`));
+  L.push("");
+
+  // ---- CONFIDENCE + WHAT WOULD CHANGE THE ANSWER ----
+  L.push(`### Confidence and limits`);
+  L.push(`**Overall confidence: ${conf.level}** — ${conf.reasons.join("; ")}.`.replace(/\.\.$/, "."));
+  if (conf.caveats.length) {
+    L.push("");
+    L.push(`**What the Atlas cannot tell you here** (and what would raise confidence):`);
+    conf.caveats.forEach(c => L.push(`- ${c}`));
   }
   L.push("");
-  L.push(`*This brief is advisory and data-limited by design — the "View sources" list below shows exactly what it stands on. Final strategy decisions need human review and local validation.*`);
+  L.push(`**Not available at any confidence level:** past campaign performance, format-level effectiveness (video vs text vs audio), age/gender breakdowns, cost per channel, and day-of-week or seasonal timing. No free data source measures these per country — treat any such claim from any tool with suspicion. [unknown]`);
+  L.push("");
+
+  // ---- EVIDENCE USED ----
+  L.push(`### Evidence used`);
+  L.push(`- ${f.name} country record — ${f.survey ? `news consumption: ${f.survey}` : "no news survey integrated"}; connectivity and demographics: World Bank/ITU; press freedom: RSF 2025; political and internet freedom: Freedom House; languages: Unicode CLDR${f.retrievedOn ? ` *(record refreshed ${f.retrievedOn})*` : ""}`);
+  if (t) L.push(`- ${t.label_en} attention trend — daily engine as of ${TRENDS.generated} (Wikipedia reading patterns; country attribution by language weights, a documented approximation)`);
+  L.push(`- Full source links in "View sources" below.`);
+  L.push("");
+  L.push(`*Advisory. This is evidence-based decision support produced by an automated system, not a final strategy. Every recommendation above is tagged [measured] where it rests on Atlas data and [inferred] where it is reasoned judgement; anything marked [unknown] needs human research. Validate with local teams before committing budget.*`);
+  return L.join("\n");
+}
+
+/**
+ * Region-level consulting brief. Same mandatory structure as the single-country
+ * version; the strategic content is the SPREAD between countries, because that
+ * is what actually decides a regional plan.
+ */
+function composeRegionConsultingBrief(fs, ev, ents, qNorm, regionName) {
+  fs.forEach(f => addCountryEvidence(f, ev));
+  const objective = inferObjective(qNorm, ents);
+  const topic = ents.topics[0] || null;
+  const t = topic && TRENDS && TRENDS.topics[topic.qid] ? TRENDS.topics[topic.qid] : null;
+  if (t) addTrendEvidence(t.label_en, ev);
+  const L = [];
+
+  const withSurvey = fs.filter(f => f.tv != null || f.online != null || f.radio != null);
+  const lowNet = fs.filter(f => f.internet != null && f.internet < 35);
+  const strongRadio = fs.filter(f => f.radio != null && f.radio >= 50);
+  const restricted = fs.filter(f => f.fh === "Not Free" || (f.rsf != null && f.rsf < 40));
+  const conf = withSurvey.length === fs.length ? "Medium" : withSurvey.length >= fs.length / 2 ? "Medium" : "Low";
+  const confWhy = `${withSurvey.length} of ${fs.length} covered countries have an integrated news-consumption survey; regional advice averages across very different media systems, so country-level briefs are always sharper`;
+
+  L.push(`**Strategic brief — ${t ? `${t.label_en} across ` : ""}${regionName}**`);
+  L.push(`*Decision being addressed: ${objective.label}${objective.inferred ? " (inferred from your question)" : ""}.*`);
+  L.push("");
+
+  L.push(`### Executive summary`);
+  L.push(`1. **There is no single regional plan.** ${regionName} splits by connectivity — ${lowNet.length ? `${lowNet.map(f => f.name).join(", ")} ${lowNet.length === 1 ? "is" : "are"} below 35% internet and need broadcast-led distribution` : "connectivity is broadly comparable across the covered countries"}. [measured]`);
+  if (strongRadio.length) L.push(`2. **Radio is the regional backbone** — ≥50% weekly reach in ${strongRadio.map(f => f.name).join(", ")}. A digital-only regional plan structurally under-delivers. [measured]`);
+  else L.push(`2. **Lead country-by-country, not region-wide** — channel leadership differs across the covered markets. [measured]`);
+  L.push(`3. **${restricted.length ? `Vet partners in ${restricted.map(f => f.name).join(", ")}` : "No systemic press-freedom red flags across the covered countries"}** — ${restricted.length ? "state-influenced media environments require partner-by-partner independence checks" : "partner selection can follow reach"}. [measured]`);
+  L.push("");
+  L.push(`**Confidence: ${conf}.** ${sentence(confWhy)}`);
+  L.push("");
+
+  L.push(`### Key insights`);
+  L.push(composeRegionBrief(fs, ev, ents, regionName));
+  L.push("");
+
+  L.push(`### Strategic assessment`);
+  L.push(`**Why the split matters for this decision:** ${objective.rationale} [inferred]`);
+  L.push("");
+  L.push(`**Format feasibility across the region** *(inferred from infrastructure and literacy — the Atlas measures no format performance)*:`);
+  if (strongRadio.length) L.push(`- Audio-first is the safest regional bet — radio ≥50% weekly in ${strongRadio.map(f => f.name).join(", ")}. [measured reach, inferred implication]`);
+  if (lowNet.length) L.push(`- Avoid online-video-led plans in ${lowNet.map(f => f.name).join(", ")} (internet <35%); broadcast TV remains viable where TV reach is strong. [inferred]`);
+  L.push(`- Short, low-bandwidth video with subtitles is the format that travels across both connectivity tiers. [inferred]`);
+  L.push("");
+
+  L.push(`### Opportunities — ranked`);
+  L.push(`**1. Segment the region before buying anything** — confidence: High`);
+  L.push(`   - Why: the connectivity spread inside ${regionName} is wider than the gap between channels, so one regional buy wastes budget in half the markets. [measured]`);
+  L.push(`**2. Lead broadcast where connectivity is low, digital where it is high** — confidence: ${conf}`);
+  L.push(`   - Why: effective national reach, not survey headline reach, is what determines who actually sees the content. [inferred]`);
+  L.push(`**3. Produce per-country language versions** — confidence: High`);
+  L.push(`   - Why: ${fs.filter(f => f.languagesDetail.length).slice(0, 3).map(f => `${f.name} (${prettyLang(langsByShare(f)[0])})`).join(", ")} — the region has no shared majority language. [measured, Unicode CLDR]`);
+  L.push("");
+
+  L.push(`### Risks`);
+  const rl = fs.flatMap(f => riskLines(f)).slice(0, 6).map(r => `${r} [measured]`);
+  if (!rl.length) rl.push(`No structural red flags across the covered countries. [measured]`);
+  rl.forEach(r => L.push(`- ${r}`));
+  L.push("");
+
+  L.push(`### Confidence and limits`);
+  L.push(`**Overall confidence: ${conf}** — ${confWhy}.`);
+  L.push(`- Coverage: this brief analyses the region's ${fs.length} most populous countries with data, not every country in ${regionName}.`);
+  L.push(`**Not available at any confidence level:** past campaign performance, format effectiveness, age/gender breakdowns, cost, and seasonal timing. [unknown]`);
+  L.push("");
+  L.push(`### Evidence used`);
+  L.push(`- Country records for ${fs.map(f => f.name).join(", ")} — news consumption (Reuters DNR / regional barometers), connectivity (World Bank/ITU), freedom scores (RSF, Freedom House), languages (Unicode CLDR).`);
+  if (t) L.push(`- ${t.label_en} attention trend — daily engine as of ${TRENDS.generated} (language-weight attribution, a documented approximation).`);
+  L.push(`- Full source links in "View sources" below.`);
+  L.push("");
+  L.push(`*Advisory. Evidence-based decision support from an automated system, not a final strategy. Claims are tagged [measured] or [inferred]; [unknown] items need human research. Validate with local teams before committing budget.*`);
   return L.join("\n");
 }
 
@@ -1643,7 +1994,11 @@ export function answerQuestion(question) {
 
   // Full strategy-brief intent (DGC advisory mode): distribution/campaign/
   // strategy language anchored to a place → the who/what/where/when/how memo
-  const strategyIntent = /\b(strateg\w+|campaign|distribut\w+|roll ?out|launch\w*|opportunit\w+|memo|content plan|media plan|outreach|disseminat\w+|amplif\w+|promote content|publish\w* content)\b/.test(qNorm)
+  // A "decision-shaped" question: the user is deciding what to DO, not asking
+  // what a number is. These all route to the consulting brief.
+  const decisionVerb = /\b(strateg\w+|campaign|distribut\w+|roll ?out|launch\w*|opportunit\w+|memo|brief\b|content plan|media plan|outreach|disseminat\w+|amplif\w+|promote|publish|advertis\w+|market\w*|communicat\w+|messag\w+|engag\w+|target\w*|reach\w*|counter\w*|combat\w*|raise awareness)\b/.test(qNorm);
+  const decisionFrame = /\b(how (do|should|would|can) (we|i|they|dgc|the un)|where should|what.{0,15}best (way|platform|channel|approach|mix)|what should (we|i|dgc)|help (us|me) (reach|plan|decide)|recommend\w*|advise|advice on|plan for)\b/.test(qNorm);
+  const strategyIntent = (decisionVerb || decisionFrame)
     && (ents.countries.length > 0 || ents.regionCountries.length > 0);
   if (strategyIntent) {
     ents.intents = ents.intents.filter(i => i !== "lookup");
@@ -1770,25 +2125,16 @@ export function answerQuestion(question) {
   if (!parts.length && ents.intents.includes("strategy") && ents.countries.length >= 1 && ents.countries.length <= 2) {
     for (const iso of ents.countries.slice(0, 2)) {
       const f = facts(iso);
-      if (f) parts.push(composeStrategyBrief(f, ev, ents, qNorm));
+      if (f) parts.push(composeConsultingBrief(f, ev, ents, qNorm));
     }
     if (parts.length) kind = "strategy";
   }
-  // Strategy over a region: the channel-split brief plus an advisory wrapper
+  // Strategy over a region — same mandatory consulting structure as a single
+  // country, aggregated. A region decision is still a decision.
   if (!parts.length && ents.intents.includes("strategy") && ents.regions.length && isoList.length > 2) {
     const fs = isoList.map(facts).filter(Boolean);
     const regionName = ents.regions.map(regionDisplay).join(", ");
-    const brief = composeRegionBrief(fs, ev, ents, regionName);
-    parts.push(`*Advisory brief for ${regionName} — evidence-based decision support with documented data limits (no format-performance, age/gender, or campaign-outcome data); validate with local teams.*\n\n` + brief);
-    // per-region format-feasibility summary from the tier structure
-    const lowNet = fs.filter(f => f.internet != null && f.internet < 35);
-    const strongRadio = fs.filter(f => f.radio != null && f.radio >= 50);
-    const fmtLines = [`**Format guidance (feasibility, not measured performance):**`];
-    if (strongRadio.length) fmtLines.push(`- Audio-first is the safest bet in ${strongRadio.map(f => f.name).join(", ")} (radio ≥ 50% weekly)`);
-    if (lowNet.length) fmtLines.push(`- Avoid ONLINE-video-led plans in ${lowNet.map(f => f.name).join(", ")} (internet < 35%) — visual/infographic + radio adaptations carry the message there, and broadcast TV stays viable where the tiers above show strong TV reach`);
-    fmtLines.push(`- Where connectivity is strong, short low-bandwidth video with subtitles travels across both tiers`);
-    fmtLines.push(`\n*This brief is advisory and data-limited by design — see "View sources" for exactly what it stands on. Final strategy decisions need human review and local validation.*`);
-    parts.push(fmtLines.join("\n"));
+    parts.push(composeRegionConsultingBrief(fs, ev, ents, qNorm, regionName));
     kind = "strategy";
   }
   // Ranking ("top 5 by radio in Africa")
