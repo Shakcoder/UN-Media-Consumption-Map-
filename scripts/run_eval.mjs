@@ -6,7 +6,11 @@
  * REAL browser engine (ask-engine.js) and writes every answer to
  * eval/golden100_results.json for grading.
  *
- * Usage:  node scripts/run_eval.mjs
+ * Usage:  node scripts/run_eval.mjs            (the 100 golden questions)
+ *         node scripts/run_eval.mjs strategy   (the 18 strategy-brief prompts,
+ *                                               with structural checks: all six
+ *                                               memo sections + disclaimers
+ *                                               present, no null leakage)
  * Needs:  Node 18+ (no packages). Run from anywhere; paths are script-relative.
  *
  * The bar (design doc §11): the system answers with citations, or it
@@ -144,8 +148,61 @@ const QUESTIONS = [
   [100, "campaign-learning", "Draft a one-page strategy memo for a water-sanitation campaign in Bolivia with full citations."],
 ];
 
+const STRATEGY_PROMPTS = [
+  "Distribution strategy for climate change content in Kenya",
+  "Full media strategy for a girls'-education campaign in Afghanistan — what's possible?",
+  "Draft a strategy memo for a water-sanitation campaign in Bolivia",
+  "Best opportunities for distributing vaccination content in Pakistan?",
+  "How should we roll out refugee-awareness content across East Africa?",
+  "Strategy for distributing misinformation-literacy content in Brazil",
+  "Content distribution plan for reaching young people in Indonesia",
+  "How do we launch climate content in Germany?",
+  "Distribution strategy for food security messaging in the Sahel",
+  "Strategy brief for AI-governance content in South Korea",
+  "Opportunities for distributing health content in Egypt",
+  "Media plan for humanitarian messaging in Myanmar",
+  "How should DGC distribute peacekeeping content in the DRC?",
+  "Strategy for launching gender-equality content in Saudi Arabia",
+  "Content strategy for small island states — distribute cyclone-preparedness content in Fiji",
+  "Rollout plan for anti-trafficking content in Thailand",
+  "Distribution opportunities for education content in rural India",
+  "Strategy for promoting content about the UN in the United States",
+];
+
 const engine = await import(join(ROOT, "ask-engine.js"));
 await engine.initEngine();
+
+if (process.argv[2] === "strategy") {
+  const SECTIONS = ["Who — the audience", "Where — platforms", "What — content formats", "When — timing", "How — execution", "Advisory only", "human review"];
+  const out = [];
+  let fails = 0;
+  for (const prompt of STRATEGY_PROMPTS) {
+    engine.resetConversation();
+    let entry = { prompt };
+    try {
+      const r = engine.answerQuestion(prompt);
+      const a = r.answer || "";
+      const isRegion = /Advisory brief for/.test(a);
+      entry.answer = a;
+      entry.checks = {
+        sections_missing: isRegion ? [] : SECTIONS.filter(s => !a.includes(s)),
+        region_form: isRegion,
+        null_leak: /\bnull\b|undefined|NaN%/.test(a),
+        has_disclaimer: /Advisory (only|brief)/.test(a),
+        evidence_count: (r.evidence || []).length,
+      };
+      if (entry.checks.sections_missing.length || entry.checks.null_leak || !entry.checks.has_disclaimer) fails++;
+    } catch (e) {
+      entry.error = e.message; fails++;
+    }
+    out.push(entry);
+  }
+  await mkdir(join(ROOT, "eval"), { recursive: true });
+  await writeFile(join(ROOT, "eval", "strategy_results.json"), JSON.stringify(out, null, 1));
+  console.log(`Strategy suite: ${STRATEGY_PROMPTS.length - fails}/${STRATEGY_PROMPTS.length} structurally sound (sections + disclaimers + no null leakage)`);
+  console.log("Results: eval/strategy_results.json");
+  process.exit(fails ? 1 : 0);
+}
 
 const results = [];
 let crashed = 0, clarified = 0, refused = 0, answered = 0;

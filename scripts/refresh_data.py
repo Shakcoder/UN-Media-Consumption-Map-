@@ -717,11 +717,23 @@ def fetch_cldr_languages() -> dict[str, list[dict[str, Any]]]:
             if pct < 1:                      # ignore sub-1% slivers
                 continue
             status = ldata.get("_officialStatus", "")
+            # "official_regional" (e.g. Spanish in US territories) is NOT a
+            # country-level official language — counting it as one produced
+            # "Spanish (official)" for the United States.
+            is_official = status in ("official", "de_facto_official")
+            # unmapped locale codes ("pa_Arab", "tts") → fall back to the base
+            # language's name plus a script note, never leak raw codes
+            name = name_map.get(code)
+            if not name:
+                base = code.split("_")[0]
+                name = name_map.get(base, code)
+                if name != code and code.endswith("_Arab"):
+                    name += " (Arabic script)"
             rows.append({
-                "language": name_map.get(code, code),
+                "language": name,
                 "code": code,
                 "pct": round(pct, 1),
-                "official": status.startswith("official"),
+                "official": is_official,
             })
         rows.sort(key=lambda r: (-r["official"], -r["pct"]))
         if rows:
