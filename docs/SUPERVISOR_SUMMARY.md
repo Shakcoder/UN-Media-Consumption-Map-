@@ -17,6 +17,8 @@ The **"Ask the Analyst"** page now answers any plain-English question directly i
 
 It understands typos and casual phrasing, asks a clarifying question when the request is vague, suggests follow-up questions after each answer, and shows a **"View sources"** list under every response linking to the original data. When the data can't support an answer, it says so instead of guessing — credibility is the entire point.
 
+**New (July 2026, at DGC request): strategy briefs.** Ask for a distribution strategy — *"How should we distribute vaccination content in Pakistan?"* — and the analyst produces a structured advisory memo: **who** to reach (audience structure, languages, trust), **where** (platform order, channel mix, partner outlets), **what** (format guidance derived from connectivity and literacy — labeled as feasibility, since no source measures format performance), **when** (live attention momentum), and **how** (execution notes and risk flags). Every brief opens with an advisory disclaimer and closes with a human-review reminder: it is evidence-based decision support, not a final plan.
+
 Because it runs in the browser rather than on a server, there is **no subscription, no account, and nothing that can be switched off by a lapsed contract**. (An optional free upgrade adds AI-polished prose via Cloudflare's no-cost tier — documented, not required.)
 
 ## How it stays current — automatically
