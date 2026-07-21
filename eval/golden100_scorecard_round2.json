@@ -1,0 +1,886 @@
+{
+ "final": {
+  "1": "GOOD",
+  "2": "GOOD",
+  "3": "GOOD",
+  "4": "GOOD",
+  "5": "GOOD",
+  "6": "GOOD",
+  "7": "GOOD",
+  "8": "GOOD",
+  "9": "PARTIAL",
+  "10": "PARTIAL",
+  "11": "GOOD",
+  "12": "PARTIAL",
+  "13": "GOOD",
+  "14": "PARTIAL",
+  "15": "PARTIAL",
+  "16": "PARTIAL",
+  "17": "PARTIAL",
+  "18": "PARTIAL",
+  "19": "GOOD",
+  "20": "PARTIAL",
+  "21": "GOOD",
+  "22": "PARTIAL",
+  "23": "GOOD",
+  "24": "GOOD",
+  "25": "GOOD",
+  "26": "GOOD",
+  "27": "GOOD",
+  "28": "GOOD",
+  "29": "GOOD",
+  "30": "GOOD",
+  "31": "GOOD",
+  "32": "GOOD",
+  "33": "PARTIAL",
+  "34": "PARTIAL",
+  "35": "GOOD",
+  "36": "GOOD",
+  "37": "GOOD",
+  "38": "GOOD",
+  "39": "GOOD",
+  "40": "GOOD",
+  "41": "GOOD",
+  "42": "GOOD",
+  "43": "GOOD",
+  "44": "PARTIAL",
+  "45": "PARTIAL",
+  "46": "GOOD",
+  "47": "PARTIAL",
+  "48": "PARTIAL",
+  "49": "GOOD",
+  "50": "PARTIAL",
+  "51": "GOOD",
+  "52": "PARTIAL",
+  "53": "GOOD",
+  "54": "GOOD",
+  "55": "GOOD",
+  "56": "PARTIAL",
+  "57": "GOOD",
+  "58": "GOOD",
+  "59": "GOOD",
+  "60": "PARTIAL",
+  "61": "GOOD",
+  "62": "GOOD",
+  "63": "GOOD",
+  "64": "GOOD",
+  "65": "GOOD",
+  "66": "GOOD",
+  "67": "GOOD",
+  "68": "PARTIAL",
+  "69": "GOOD",
+  "70": "GOOD",
+  "71": "GOOD",
+  "72": "GOOD",
+  "73": "GOOD",
+  "74": "GOOD",
+  "75": "GOOD",
+  "76": "GOOD",
+  "77": "GOOD",
+  "78": "PARTIAL",
+  "79": "GOOD",
+  "80": "GOOD",
+  "81": "GOOD",
+  "82": "GOOD",
+  "83": "GOOD",
+  "84": "PARTIAL",
+  "85": "GOOD",
+  "86": "GOOD",
+  "87": "PARTIAL",
+  "88": "GOOD",
+  "89": "GOOD",
+  "90": "PARTIAL",
+  "91": "GOOD",
+  "92": "GOOD",
+  "93": "GOOD",
+  "94": "GOOD",
+  "95": "GOOD",
+  "96": "GOOD",
+  "97": "GOOD",
+  "98": "GOOD",
+  "99": "PARTIAL",
+  "100": "GOOD"
+ },
+ "grades": [
+  {
+   "num": 1,
+   "verdict": "GOOD",
+   "reasoning": "No geography given ('youth' + topic only), so a scoping question is the rubric-sanctioned response. The clarify text asks for a region, explains why ('to ground the answer in data'), and offers concrete region options. Exactly the sanctioned clarify path."
+  },
+  {
+   "num": 2,
+   "verdict": "GOOD",
+   "reasoning": "Substantive Nigeria answer with citations (DNR 2026, Afrobarometer R9, CLDR). Both qualifiers handled honestly: 'surveys are not gender-disaggregated... population-level, not women-specific' plus rural note (36.2% rural, radio 65% strongest rural channel), and the DNR online-sample skew caveat is stated."
+  },
+  {
+   "num": 3,
+   "verdict": "GOOD",
+   "reasoning": "Directly answers the platform question with Jordan's ordered platform list (WhatsApp, Facebook, YouTube, Instagram, TikTok) and outlets, honestly flags 'no news-source survey for Jordan yet', gives connectivity/demographics as substitutes, and adds the RSF 35/100 restrictive-environment risk flag. Raw 'apc 66%' language code is cosmetic only."
+  },
+  {
+   "num": 4,
+   "verdict": "GOOD",
+   "reasoning": "Directly responsive: 'TikTok ranks #3 among Indonesia's top platforms', backed by connectivity (73% internet, 74% smartphone), online news reach 83%, and outlet lists \u2014 all data the Atlas HAS, with evidence cited."
+  },
+  {
+   "num": 5,
+   "verdict": "GOOD",
+   "reasoning": "Honest decline done right: leads with 'surveys are not age- or gender-disaggregated', names median age/under-15 as nearest structural signals, gives the full Brazil profile, and closes with the useful heuristic that TV/radio typically out-reach social for older audiences while admitting it can't quantify per country."
+  },
+  {
+   "num": 6,
+   "verdict": "GOOD",
+   "reasoning": "States upfront 'does not track platform blocking... in real time', names FOTN as nearest signal, then the curated outlet lists carry the substance: 'WhatsApp (blocked), Telegram (blocked), YouTube (blocked), Instagram (partial)', BBC Persian blocked, plus Not Free and RSF 16/100 flags. Honest and materially useful.",
+   "root_cause": "caveat-missing",
+   "minimal_fix": "Include Iran's FOTN internet-freedom score in the profile since the preamble promises it 'where available'",
+   "fix_effort": "trivial"
+  },
+  {
+   "num": 7,
+   "verdict": "GOOD",
+   "reasoning": "Responsive mix recommendation: 'lead with TV (70% weekly news reach)' fits Pakistan's 57% internet and 39.5% urban profile; gives platform order, languages, RSF 30/100 risk flag, and adds the Vaccination topic trend with GDELT coverage. Grounded and cited."
+  },
+  {
+   "num": 8,
+   "verdict": "GOOD",
+   "reasoning": "Podcasts = format question, and the Atlas has no format data; the answer says exactly that ('no format-level performance data \u2014 no source, free or paid') and offers the documented nearest signals: radio weekly reach 58% as audio-habit proxy, connectivity, leading radio outlets, plus the low-trust (29%) caveat."
+  },
+  {
+   "num": 9,
+   "verdict": "PARTIAL",
+   "reasoning": "Question asks WHERE radio beats digital; answer routes to the connectivity-split template ('split the strategy by connectivity') and never states the finding \u2014 per its own numbers radio reach exceeds internet in all 8 countries, yet Nigeria/Ghana/Senegal are labeled 'Mixed digital', implying otherwise. Data present, comparison unstated.",
+   "root_cause": "routing-error",
+   "minimal_fix": "Map 'radio beats/vs digital|online' phrasing to a per-country radio-reach vs online-reach comparison (or add an explicit radio>online callout line to the region split)",
+   "fix_effort": "small"
+  },
+  {
+   "num": 10,
+   "verdict": "PARTIAL",
+   "reasoning": "Youth qualifier is handled ('no youth-specific platform crosstabs'), but the question's core \u2014 which platform is GROWING fastest \u2014 is never addressed: the Atlas has no platform time-series, and the answer neither says so nor offers the ordered snapshot (WhatsApp, Facebook, TikTok, X, Instagram) as the explicit nearest alternative.",
+   "root_cause": "data-gap-unacknowledged",
+   "minimal_fix": "Detect growth/over-time phrasing about platforms and prepend an honesty note: no platform trend data exists, only the current ordered leading-platform list",
+   "fix_effort": "small"
+  },
+  {
+   "num": 11,
+   "verdict": "GOOD",
+   "reasoning": "Directly answers with Indonesia's standing attention profile (UN 22.5%, ChatGPT 13.3%, Heat wave 9%) plus distinctive-interest multipliers (Corruption 27.7x) \u2014 exactly the Wikipedia-attention data the Atlas has \u2014 with country-profile context and both evidence docs cited. Notes 'nothing is spiking sharply this week' rather than faking a spike."
+  },
+  {
+   "num": 12,
+   "verdict": "PARTIAL",
+   "reasoning": "Question asks WHICH COUNTRIES show rising interest; answer gives a global topic brief (+12% EN lookups) and GDELT media-coverage concentration (UGA, DNK, CAN...) \u2014 media supply, not audience interest by country. The engine's own followup chip ('Which countries pay most attention to...') shows the right handler exists but wasn't invoked.",
+   "root_cause": "routing-error",
+   "minimal_fix": "Route phrasings like 'which countries show rising/growing interest in <topic>' to the existing country-attention handler (the one behind the 'Which countries pay most attention to X' chip) instead of the global topic brief.",
+   "fix_effort": "trivial"
+  },
+  {
+   "num": 13,
+   "verdict": "GOOD",
+   "reasoning": "Fully responsive regional trend brief: rising topics with velocity vs 30-day baseline (Sea level rise +150%, Heat wave +104%) attributed to specific countries, standing distinctive interests, plus an explicit coverage-scope and Wikipedia-approximation methodology note. Exactly what the Atlas's trends layer holds."
+  },
+  {
+   "num": 14,
+   "verdict": "PARTIAL",
+   "reasoning": "The actual question \u2014 is climate-adaptation interest growing in SOUTH ASIA \u2014 gets one buried line, and only globally ('+31% vs 30-day baseline'). The bulk is an off-point connectivity channel-split strategy. Q13 proves regional trend briefs exist, so a South-Asia-scoped trend was answerable but never produced.",
+   "root_cause": "routing-error",
+   "minimal_fix": "When a query contains both a topic and a region with trend intent (growing/declining/rising), route to the regional trend lookup filtered to that topic and lead with it, instead of the region channel-split strategy template.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 15,
+   "verdict": "PARTIAL",
+   "reasoning": "Asked for HEALTH topics; answer returns Egypt's unfiltered top-5 attention profile (AI, same-sex marriage, FGM, tuberculosis, social media). Health items appear only incidentally; health topics ranked below the top-5 cutoff are invisible, and the answer neither filters nor says it can't filter by theme.",
+   "root_cause": "intent-gap",
+   "minimal_fix": "Add a static theme tag (health/climate/rights/tech...) for each of the 167 topics; when a query names a theme, filter the country attention profile to that theme and extend past the top-5 cutoff.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 16,
+   "verdict": "GOOD",
+   "reasoning": "Honest, specific handling: gives the global least-covered ranking (Children's rights 0 articles, GMO 3...) from GDELT the Atlas has, explicitly states 'coverage volume is measured globally; the Atlas cannot restrict it to one region's media,' and points to per-country attention as the separate signal. Passing decline-plus-nearest-alternative per the rubric."
+  },
+  {
+   "num": 17,
+   "verdict": "PARTIAL",
+   "reasoning": "Answer claims quarterly timing questions 'cannot be answered from its data,' but last quarter (Apr\u2013Jun 2026) sits INSIDE the ~120-day history window the Atlas holds \u2014 the decline's premise is wrong for this timeframe. The standing profile offered (ChatGPT 21.4%) is a decent proxy but is never labeled with its window.",
+   "root_cause": "other",
+   "minimal_fix": "Gate the history-limit disclaimer on the requested period actually exceeding the ~120-day window; for in-window periods, aggregate attention over that period (or present the standing profile explicitly labeled as covering it).",
+   "fix_effort": "small"
+  },
+  {
+   "num": 18,
+   "verdict": "PARTIAL",
+   "reasoning": "Says 'Misinformation' is below the reliability floor 'right now', implying the Atlas could otherwise locate trending vaccine misinformation. It cannot \u2014 misinformation-flow measurement is a permanent DOES-NOT-HAVE. The vaccine trend and coverage countries offered are fine, but the decisive capability caveat is misstated, inviting misuse next week.",
+   "root_cause": "data-gap-unacknowledged",
+   "minimal_fix": "When a query contains misinformation/disinformation/fake-news terms, prepend a fixed note: the Atlas tracks reader attention to the topic 'Misinformation', not the flow or spread of misinformation itself \u2014 that is unmeasured at any time.",
+   "fix_effort": "trivial"
+  },
+  {
+   "num": 19,
+   "verdict": "GOOD",
+   "reasoning": "Seasonal patterns are a genuine DOES-NOT-HAVE; the answer states the ~120-day window limit up front, says what it CAN show instead, and delivers the nearest useful thing \u2014 India's current rising environmental topics (Sea level rise +150%, Heat wave +104%) with the survey-skew caveat. Textbook honest decline plus alternative."
+  },
+  {
+   "num": 20,
+   "verdict": "PARTIAL",
+   "reasoning": "The 'link' between food security and migration \u2014 topic co-occurrence \u2014 is never addressed nor declined; the answer substitutes a Sahel channel-split strategy plus two separate global trend one-liners (food security -13%, migration -43%). Useful adjacent data, but the question's actual point is silently dropped without an honesty note.",
+   "root_cause": "data-gap-unacknowledged",
+   "minimal_fix": "Detect multi-topic queries with link/connect/intersection phrasing and prepend a note that the Atlas holds no topic co-occurrence or correlation data, then present each topic's trend separately (as it already does).",
+   "fix_effort": "small"
+  },
+  {
+   "num": 21,
+   "verdict": "GOOD",
+   "reasoning": "Gen Z crosstabs genuinely don't exist in the Atlas. Answer opens with the honest disclaimer ('surveys are not age- or gender-disaggregated'), then offers the nearest useful thing: Mexico's population-level reach, platform order, and a youth-specific audience note (median age 29.6, 24.1% under 15, 'no youth-specific platform crosstabs'). Cited profile + trends. Exactly the passing honest-decline pattern."
+  },
+  {
+   "num": 22,
+   "verdict": "PARTIAL",
+   "reasoning": "Question asks how urban and rural audiences DIFFER. Answer is a standard Tanzania brief plus a rural note (63.1% rural, radio 74.4% 'typically the strongest rural channel') but never contrasts the two segments and never states the decisive caveat \u2014 used in sibling answers \u2014 that figures are population-level with no urban/rural crosstabs.",
+   "root_cause": "caveat-missing",
+   "minimal_fix": "Trigger the 'figures are population-level, not segment-disaggregated' disclaimer when a question pairs urban+rural (or asks how segments 'differ'), and add a one-line contrast framing: rural lean = radio share, urban lean = internet/online reach.",
+   "fix_effort": "trivial"
+  },
+  {
+   "num": 23,
+   "verdict": "GOOD",
+   "reasoning": "Segment-level reach data doesn't exist in the Atlas. Answer honestly leads with that ('not age- or gender-disaggregated... nearest structural signals') and supplies Japan's structural signals \u2014 median age 49.8, social media only 25%, platform order \u2014 from cited profile/trends. Honest decline plus nearest alternative; no fabrication."
+  },
+  {
+   "num": 24,
+   "verdict": "GOOD",
+   "reasoning": "Gender-disaggregated access data is genuinely absent. Answer states surveys 'are not... gender-disaggregated' up front, then gives the nearest real data: per-country Sahel internet penetration (Nigeria 41%, Niger 16%, Chad 13%...) with connectivity-split strategy and risk flags, 9 cited profiles. The stray 'Gender equality' topic-trend line is noise, not misinformation."
+  },
+  {
+   "num": 25,
+   "verdict": "GOOD",
+   "reasoning": "No age-segmented platform data exists. Answer discloses this first, then offers the nearest population-level substitute: the social-media-as-news-source ranking (Mauritius 80.9%, Nigeria 79%...) with the excluded-countries and mixed-survey methodology notes. Honest decline + cited nearest alternative."
+  },
+  {
+   "num": 26,
+   "verdict": "GOOD",
+   "reasoning": "Public-broadcaster trust breakdowns are on the DOES-NOT-HAVE list. Answer says exactly that ('Trust is measured for news overall, not per broadcaster'), names leading-TV lists as the broadcaster signal, and delivers the nearest ranking: Europe trust-in-news top 5 (Finland 63%, Denmark 55%...) with exclusion and noise caveats. Textbook honest substitution."
+  },
+  {
+   "num": 27,
+   "verdict": "GOOD",
+   "reasoning": "Language shares ARE in the Atlas, and the answer delivers them with official status (Moroccan Arabic 87%, Arabic 62% official, French 36%, Tamazight 22%/10% official) plus literacy 64.3%, cited to the profile. The headline mis-frames it as a channel recommendation ('lead with online sources') rather than a language answer, but the decisive data is present and correct \u2014 a framing quibble, not a miss."
+  },
+  {
+   "num": 28,
+   "verdict": "GOOD",
+   "reasoning": "News avoidance is genuinely not measured. Answer's disclaimer explicitly names 'no... news-avoidance... data', then gives the nearest proxy: a cited UK-vs-Germany comparison table (trust 30% vs 46%, reach, freedom scores). Honest, specific decline plus the closest useful comparison."
+  },
+  {
+   "num": 29,
+   "verdict": "GOOD",
+   "reasoning": "Creator-influence data doesn't exist in the Atlas at any price. Answer names the missing thing ('no... creator-level data'), explains what the figures are (population-level), and offers to pull landscape evidence for a named country. Zero evidence is appropriate here \u2014 declining a ranking it can't build beats fabricating one. Thinnest of the passes, but honest and specific."
+  },
+  {
+   "num": 30,
+   "verdict": "GOOD",
+   "reasoning": "Platform-overlap is explicitly on the DOES-NOT-HAVE list. Answer discloses 'no platform-overlap' data first, then gives the nearest real signal: Kenya's ordered platform list with WhatsApp #1 and Facebook #2, plus reach and connectivity context with the DNR sample caveat, cited to the Kenya profile. Honest decline + closest substitute."
+  },
+  {
+   "num": 31,
+   "verdict": "GOOD",
+   "reasoning": "Opens with the honest format-gap disclaimer (format performance is a genuine DOES-NOT-HAVE), then offers the nearest useful thing: East Africa connectivity split (Kenya mixed; Uganda 9% internet, radio 78.8% broadcast-first), plus the gender-disaggregation caveat for 'women's health' and Not Free risk flags. Exactly the passing decline-plus-alternative pattern."
+  },
+  {
+   "num": 32,
+   "verdict": "GOOD",
+   "reasoning": "Honestly states no format-level (short vs long video) data exists, then gives the decision-relevant proxies the Atlas HAS: Vietnam's 84% internet, 80% smartphone, GSMA 79.5 (video feasibility), platform order with YouTube/TikTok, and press-freedom risk flags. No fabrication, evidence cited."
+  },
+  {
+   "num": 33,
+   "verdict": "PARTIAL",
+   "reasoning": "The format disclaimer correctly names adult literacy as the text-reach proxy, but the appended data is the 'Literacy' Wikipedia-topic trend ('-2% attention vs baseline', GDELT articles) \u2014 attention to the topic, not literacy rates. The Atlas HAS per-country literacy % and can rank low-literacy countries; that nearest-useful data was never shown.",
+   "root_cause": "routing-error",
+   "minimal_fix": "When a query uses 'literacy' (or similar attribute words) as a population qualifier rather than a subject, suppress the topic-entity match and attach a bottom-N literacy ranking instead of the 'Literacy' topic-trend brief.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 34,
+   "verdict": "PARTIAL",
+   "reasoning": "Returned the format disclaimer with zero evidence ('Name a country or region...'), but relevant data EXISTS: radio news reach per country (Afrobarometer, ~39 countries) is rankable and is the natural 'audio preference' proxy \u2014 the engine's own followup chip ('Top 5 countries by radio reliance in Africa') proves the route exists and wasn't taken.",
+   "root_cause": "vocab-gap",
+   "minimal_fix": "Map 'audio'/'audio content'/'podcast listeners' with no geography to the radio-news-reach ranking route (worldwide or Africa), keeping the format disclaimer as a preamble.",
+   "fix_effort": "trivial"
+  },
+  {
+   "num": 35,
+   "verdict": "GOOD",
+   "reasoning": "Honest that no podcast/format performance data exists (true \u2014 DOES-NOT-HAVE), then supplies the strongest proxies held: Brazil's 85% internet, 84% smartphone (streaming feasibility), leading radio outlets (audio habit), platform order with YouTube. Cited to Brazil profile + live trends."
+  },
+  {
+   "num": 36,
+   "verdict": "GOOD",
+   "reasoning": "No creator/format performance data exists, and the answer says so, then grounds the decision in HAS-data: Philippines platform order (Facebook/YouTube/TikTok), 85% online news reach, climate-topic trend, and crucially 'Trust in news is low in Philippines (28%) \u2014 trusted intermediaries may matter more than outlet reach', which directly speaks to creator-led strategy. Borderline that it fires the format disclaimer rather than the creator-specific one, but substance is honest and on-point."
+  },
+  {
+   "num": 37,
+   "verdict": "GOOD",
+   "reasoning": "Honest format-gap disclaimer, then Lebanon profile with an additional honesty note that no news-source survey covers Lebanon, plus connectivity (81% internet), languages, outlets, and the Humanitarian aid topic trend showing Lebanon (LBN 0.6479%) in coverage concentration. Decline-plus-nearest-useful, properly cited."
+  },
+  {
+   "num": 38,
+   "verdict": "GOOD",
+   "reasoning": "Live-video viewership is genuinely absent (no platform reach %, no format data), and unlike #34 no direct rankable proxy exists. The answer honestly names the gap, lists the nearest evidence types held, and asks for a country/region to pull landscape data \u2014 a legitimate honest decline with a scoping offer for a geography-free question."
+  },
+  {
+   "num": 39,
+   "verdict": "GOOD",
+   "reasoning": "Correctly resolves 'Brussels' to Belgium (right entity), states the text-vs-video gap honestly, and provides the held proxies: 96% internet, GSMA 90 (video feasibility), leading online outlets and broadcasters, trilingual language shares \u2014 relevant scaffolding for a policy-audience format choice."
+  },
+  {
+   "num": 40,
+   "verdict": "GOOD",
+   "reasoning": "Format disclaimer plus exactly the data that answers the low-bandwidth question: Chad's 13% internet, GSMA 26.9, 30.6% literacy (text-reach limit), radio/TV outlet lists, and the digital-only-will-miss-most-people risk flag. The evidence points unambiguously to broadcast-first formats without fabricating format metrics."
+  },
+  {
+   "num": 41,
+   "verdict": "GOOD",
+   "reasoning": "Directly responsive: recommends leading with online (85% weekly reach), backs it with Reuters DNR channel data, connectivity, languages, curated outlets, plus humanitarian-aid GDELT/Wikipedia trend context. All within HAS-data, three evidence sources cited."
+  },
+  {
+   "num": 42,
+   "verdict": "GOOD",
+   "reasoning": "Model answer: TV-first recommendation with avoid-digital-only warning (16% internet), explicit honesty note that surveys are not gender-disaggregated ('population-level, not women-specific'), RSF 18/100 and Not Free risk flags, education trend data. Exactly the audience-qualifier honesty the rubric rewards."
+  },
+  {
+   "num": 43,
+   "verdict": "GOOD",
+   "reasoning": "Side-by-side table (trust 47% vs 65%, TV, online, RSF, FOTN) gives the decision-relevant contrast, plus a methodology note that different surveys mean 'compare direction, not decimal points' and Not Free risk flags for both. Grounded, cited, honest."
+  },
+  {
+   "num": 44,
+   "verdict": "PARTIAL",
+   "reasoning": "Question asks which outlets to partner with; the Atlas HAS curated leading TV/radio/online outlets for Ghana. The answer instead reports 'no trust in news figure for Ghana' and three stray stats, never listing the outlets. Honest about the trust metric but non-responsive when relevant data exists.",
+   "root_cause": "routing-error",
+   "minimal_fix": "Route 'outlets'/'partner' queries to the curated leading-outlets list; if the trust-in-news figure is missing, append that as a caveat instead of making it the whole answer.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 45,
+   "verdict": "PARTIAL",
+   "reasoning": "Solid Sudan brief (TV 58.6%, radio 45.1% Afrobarometer, 19% internet risk flag) but the question is about displaced populations, and the answer never says these figures are population-level, not IDP-specific \u2014 the decisive caveat #42 gave for women is omitted here.",
+   "root_cause": "caveat-missing",
+   "minimal_fix": "Add 'displaced/refugee/IDP' to the audience-qualifier trigger list so the population-level honesty note fires, as it does for youth/women/rural.",
+   "fix_effort": "trivial"
+  },
+  {
+   "num": 46,
+   "verdict": "GOOD",
+   "reasoning": "Region channel-split does the job: groups 8 Pacific countries into digital-first vs broadcast/community-first by connectivity, flags PNG/Solomon Is./Vanuatu/Samoa where digital-only misses most people, is transparent where TV/online data is missing ('no data'), and states the 8-of-12 scope."
+  },
+  {
+   "num": 47,
+   "verdict": "PARTIAL",
+   "reasoning": "Answers channel mix, not skepticism: headline claims 'split by connectivity \u2014 the gap is decisive' yet all 8 donor countries land digital-first. Never states the Atlas has no attitude/opinion data on aid. Low-trust flags for US/France are useful but the gap goes unnamed.",
+   "root_cause": "data-gap-unacknowledged",
+   "minimal_fix": "Detect attitude/persuasion terms (skepticism, perception, opinion) and prepend a note that the Atlas measures channels and trust, not attitudes toward aid, then offer the trust-in-news view as the nearest proxy.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 48,
+   "verdict": "PARTIAL",
+   "reasoning": "Generic 'Guatemala \u2014 media profile' headline; it does surface CLDR language shares (K'iche', Q'eqchi', mam) \u2014 the key relevant data \u2014 but never addresses reaching those speakers or notes the Atlas can't tie outlets to languages. The minority-language qualifier is ignored rather than honestly handled.",
+   "root_cause": "intent-gap",
+   "minimal_fix": "Add a language-audience qualifier (like youth/women/rural) that leads with CLDR minority-language shares and states the Atlas has no language-tagged outlet or reach data.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 49,
+   "verdict": "GOOD",
+   "reasoning": "Responsive to a risk question: RSF 25/100 restrictive-environment flag, Freedom House Not Free with state-influence warning, and the outlet list itself signals risk (MRTV state, MWD military, Mizzima/DVB in exile). Grounded and cited; headline leads with channel reach but the risk content is there."
+  },
+  {
+   "num": 50,
+   "verdict": "PARTIAL",
+   "reasoning": "Question asks how messaging should differ between francophone and anglophone regions; the answer is a national-level Cameroon profile. Language shares (French 68%, English 38%) appear, but it never acknowledges the Atlas has no subnational data and offers no differentiation \u2014 the question's actual point.",
+   "root_cause": "data-gap-unacknowledged",
+   "minimal_fix": "Detect subnational/split-region phrasing ('francophone vs anglophone', 'north vs south') and prepend a note that Atlas data is national-level, offering language shares and outlet lists as the nearest available split.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 51,
+   "verdict": "GOOD",
+   "reasoning": "Directly answers with a group comparison the Atlas can support: Mediterranean 32.2% (9 countries) vs Nordics 55.8% (4), with a methodology note on unweighted means and mixed surveys. Evidence cited (group comparison). Exactly the HAS-data (trust %, region groups incl. Nordics)."
+  },
+  {
+   "num": 52,
+   "verdict": "PARTIAL",
+   "reasoning": "Question is specifically about TikTok news use, but the answer is a generic 3-country table (trust, TV, online, social %) that never mentions TikTok, its rank in each country's platform list, or the fact that platform-specific reach % doesn't exist. The engine can do both (see #4's 'TikTok ranks #3' line).",
+   "root_cause": "intent-gap",
+   "minimal_fix": "In the comparison route, detect a named platform in the query and add a per-country platform-rank row from the leading-platforms lists plus the 'no platform-specific reach %' note.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 53,
+   "verdict": "GOOD",
+   "reasoning": "Direct hit: ranked lowest-trust table for the G20 (USA 25%, Argentina 26%, ...) with the cross-survey noise caveat. Superlative question answered with the HAS-attribute ranking and the G20 group filter."
+  },
+  {
+   "num": 54,
+   "verdict": "GOOD",
+   "reasoning": "Headline is on the asked attribute ('Kenya leads on radio as weekly news source 85.1% vs Nigeria's 65%'), table includes the radio row for all three countries (SA 74.8%), sources cited, DNR sampling caveats flagged. Fully responsive."
+  },
+  {
+   "num": 55,
+   "verdict": "GOOD",
+   "reasoning": "Multi-year score trends are genuinely absent (DOES-NOT-HAVE list); the answer opens by saying the ~120-day window can't support a 5-year trend, then offers the nearest useful thing: current RSF scores compared (Armenia 74 vs Georgia 50.5) plus FOTN. The appended global 'Freedom of the press' GDELT block is noise but harmless."
+  },
+  {
+   "num": 56,
+   "verdict": "PARTIAL",
+   "reasoning": "Answer is a generic France/Germany table; 'youth' is silently dropped \u2014 no youth honesty note (which the engine emits in single-country briefs, e.g. #10, #21) \u2014 and 'platform preferences' gets only a social-media % row, not the leading-platform ordered lists the Atlas holds. Misses the question's point and omits the decisive no-age-crosstab caveat.",
+   "root_cause": "caveat-missing",
+   "minimal_fix": "Propagate audience-qualifier honesty notes (youth/women/rural/older) into the comparison route and include each country's leading-social-platform ordered list as a table row.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 57,
+   "verdict": "GOOD",
+   "reasoning": "Uses the platform-footprint capability honestly: WhatsApp #1 in 96 of 195 markets, top-list presence in 84 more, largest markets where it leads, plus the explicit caveat that lists show market presence, not measured reach %. Exactly the nearest-useful answer given no platform reach data."
+  },
+  {
+   "num": 58,
+   "verdict": "GOOD",
+   "reasoning": "Addresses both asked dimensions across all six Gulf states: internet penetration (usage) and FOTN internet-freedom scores where they exist (SAU 25, UAE 28, BHR 30), with honest 'no data' cells for FOTN's 70-country coverage and Not Free risk flags. Headline choice is slightly odd (three states tie at 100%) but not misinforming."
+  },
+  {
+   "num": 59,
+   "verdict": "GOOD",
+   "reasoning": "News avoidance is genuinely absent (DOES-NOT-HAVE list) and the answer explicitly names it as missing ('no platform-overlap, news-avoidance, or creator-level data') rather than fabricating a ranking, then offers to pull what the Atlas does hold per country. The canned block is boilerplate-heavy but honest and specific enough to pass."
+  },
+  {
+   "num": 60,
+   "verdict": "PARTIAL",
+   "reasoning": "Asked to compare climate interest across BRICS, the answer leads with an unrequested connectivity/channel-split strategy and gives only one thin interest line ('globally falling -26%; above-average in: South Africa'). The Atlas holds per-country attention/velocity data (cf. #13's per-country multipliers) that could support the actual five-way comparison.",
+   "root_cause": "routing-error",
+   "minimal_fix": "When a query pairs a topic with a country group, route to a per-country topic-attention comparison (attention share/multiplier and velocity for each member) instead of the region channel-split template with a one-line topic append.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 61,
+   "verdict": "GOOD",
+   "reasoning": "Leads with the honest limit ('trend history covers only ~120 days... no seasonal, quarterly, or multi-year archive'), then offers the nearest useful things: Nigeria channel profile (radio 65%, online 94%) and malaria's current momentum (-6% vs baseline), all cited. Exactly the passing pattern for an unanswerable timing ask."
+  },
+  {
+   "num": 62,
+   "verdict": "GOOD",
+   "reasoning": "Seasonal-peak data genuinely doesn't exist; answer says so up front, then gives India's landscape and Education's live trend (-8%, language demand, GDELT volume) with the DNR sample caveat included. Identical rising-topics list to Nigeria reflects the documented language-weight approximation, not fabrication."
+  },
+  {
+   "num": 63,
+   "verdict": "GOOD",
+   "reasoning": "'Best month' honestly declined (no archive beyond ~120 days), then the closest real signal: climate change currently -26% vs baseline with above-average attention in UK and France, plus a Europe channel-split with scope note ('8 most populous of 53'). Substantive, grounded, evidence-cited."
+  },
+  {
+   "num": 64,
+   "verdict": "GOOD",
+   "reasoning": "Spike-timing patterns aren't in the data; answer states the 120-day limit and offers the current humanitarian-aid trend (-8%, 1,355 GDELT articles, coverage concentration). Honest decline plus nearest available signal; no geography was given so no country profile was owed."
+  },
+  {
+   "num": 65,
+   "verdict": "GOOD",
+   "reasoning": "Trend-persistence/duration metrics don't exist; the answer declines that honestly, then pivots to a correct-entity US\u2013Japan comparison (trust 41% vs 25%, platform reach, freedom scores). Marginal: live-trends briefs for both countries would have been a closer alternative, but the decisive limitation is stated and nothing is fabricated."
+  },
+  {
+   "num": 66,
+   "verdict": "GOOD",
+   "reasoning": "Ramadan-cycle habit shifts aren't tracked; the 120-day/no-seasonal-archive decline covers it, then offers a grounded MENA channel-split (digital-first vs broadcast-first, Sudan 19% internet, Yemen 18%) with press-freedom risk flags. Honest decline plus the region's strongest available evidence."
+  },
+  {
+   "num": 67,
+   "verdict": "GOOD",
+   "reasoning": "Day-of-week patterns are explicitly in the never-will-have list; answer names the exact gap ('no seasonal... archive, so timing questions beyond that window cannot be answered') and invites a country/region for landscape evidence. With no geography in the question, this is the correct honest floor."
+  },
+  {
+   "num": 68,
+   "verdict": "PARTIAL",
+   "root_cause": "vocab-gap",
+   "minimal_fix": "Add the noun 'timing' (and named observance-day terms like 'World ... Day') to the temporal-limitation trigger so the 120-day caveat preamble fires; ideally also note the observance's fixed date is outside what trend data can inform.",
+   "fix_effort": "trivial",
+   "reasoning": "Only timing question missing the 120-day limitation preamble: it dumps the Refugee live trend (+7%, 1,778 articles) as if that answers 'timing for amplification', never saying the Atlas can't advise on event timing (World Refugee Day, June 20, already passed). Real data, right topic, but the decisive caveat is omitted \u2014 the temporal detector evidently missed 'Timing'."
+  },
+  {
+   "num": 69,
+   "verdict": "GOOD",
+   "reasoning": "'Last peak and why' needs history and causal attribution the Atlas lacks; answer declines honestly, then gives Sudan's standing attention profile ('nothing is spiking sharply this week'), distinctive interests, and full landscape with 19%-internet and Not Free risk flags. Raw CLDR codes ('apd 61%') are cosmetic, not fabrication."
+  },
+  {
+   "num": 70,
+   "verdict": "GOOD",
+   "reasoning": "'Is now a good moment' is answerable from current data and the answer supplies it: 'Regulation of artificial intelligence' at +12% vs 30-day baseline as of today (closest of the 167 topics to AI safety), plus South Korea's channel profile (online 82%, KakaoTalk-first). A Korea-specific attention line would strengthen it, but it's substantive, on-entity, and grounded."
+  },
+  {
+   "num": 71,
+   "verdict": "GOOD",
+   "reasoning": "Question uses placeholder 'country Y' with no real geography. The engine asked a scoping clarification ('I need at least a region \u2014 and a topic helps too') with concrete region options. Rubric explicitly lists placeholder questions as legitimately needing clarification."
+  },
+  {
+   "num": 72,
+   "verdict": "GOOD",
+   "reasoning": "Backlash/sentiment data genuinely doesn't exist in the Atlas. The answer specifically names what's missing ('no sentiment, framing, or legal-risk data'), names the four nearest proxies (trust, press freedom, Not Free flags, internet freedom), and invites scoping to a country/region. Honest specific decline, not a generic refusal."
+  },
+  {
+   "num": 73,
+   "verdict": "GOOD",
+   "reasoning": "Substantive, grounded answer: routes 'state-controlled media' to the lowest RSF press-freedom ranking (Eritrea 11.3, DPRK 12.6, China 14.8, Syria, Iran) \u2014 the right proxy attribute \u2014 with citation, data coverage (174/195), and an explicit excluded-not-ranked-low note for missing countries."
+  },
+  {
+   "num": 74,
+   "verdict": "GOOD",
+   "reasoning": "Honestly states the Atlas holds no sentiment/framing data, then delivers the nearest useful evidence: US profile with the decisive risk flag (trust in news 25%, flagged as low) plus climate-topic attention/coverage trends. Correct country, correct topic, cited, no fabricated politicization claims."
+  },
+  {
+   "num": 75,
+   "verdict": "GOOD",
+   "reasoning": "Misinformation flow measurement is a documented DOES-NOT-HAVE. Answer says so precisely ('measures attention to topics, not the flow of false content \u2014 no free source measures which platforms carry the most misinformation'), then offers Brazil's platform/trust/press-freedom context and honestly notes the misinformation topic is below its reliability floor."
+  },
+  {
+   "num": 76,
+   "verdict": "GOOD",
+   "reasoning": "Journalist risk maps directly onto RSF press freedom \u2014 the index built around journalist safety. Answer gives the lowest-press-freedom ranking with source, coverage count, and exclusion note. The 'our topics' nuance has no per-topic risk data behind it; the ranking is the nearest useful evidence."
+  },
+  {
+   "num": 77,
+   "verdict": "GOOD",
+   "reasoning": "Platform blocking status is a documented DOES-NOT-HAVE ('does not track platform blocking or shutdowns in real time'). Answer names the nearest proxy (Freedom House internet-freedom score plus press-freedom/political flags) and, since 'a target country' is unspecified, reasonably asks for a country or region to pull evidence."
+  },
+  {
+   "num": 78,
+   "verdict": "PARTIAL",
+   "reasoning": "Honest header promises FOTN, press-freedom and political-status signals 'shown below where available', but the body shows only internet penetration (22%). Ethiopia's RSF 37/100 and Freedom House 'Not Free' flag exist in the Atlas (both appear in Q31's answer) yet are omitted from a shutdown-risk question where they are the named nearest proxies.",
+   "root_cause": "routing-error",
+   "minimal_fix": "Route shutdown/blocking questions to the full country risk brief (FOTN score where present, RSF score, Not Free flag) instead of the single-attribute internet-penetration lookup, so the header's promised signals actually render.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 79,
+   "verdict": "GOOD",
+   "reasoning": "Legal-sensitivity data genuinely doesn't exist; the answer says so upfront and delivers the nearest Gulf-specific evidence: per-country press-freedom scores (Saudi 28/100, UAE 27/100) and Freedom House 'Not Free' flags with a plan-content-review warning. Correct Gulf region filter, six country profiles cited."
+  },
+  {
+   "num": 80,
+   "verdict": "GOOD",
+   "reasoning": "Vague global question; the answer honestly declines the sentiment/neutrality part, names the available risk proxies, and offers the nearest useful signal: the Election topic trend with GDELT coverage concentration (Zambia, Kenya, Malaysia, Nigeria, Hungary, Romania) \u2014 a reasonable pointer to where election-cycle sensitivity is live, with citation."
+  },
+  {
+   "num": 81,
+   "verdict": "GOOD",
+   "reasoning": "Question asks for the source of Kenya's radio number; answer states 85.1% from 'Afrobarometer Round 9 (2023), computed from weighted microdata', refresh date, rank (2 of 39), and regional context. Exactly the provenance requested, with evidence."
+  },
+  {
+   "num": 82,
+   "verdict": "GOOD",
+   "reasoning": "Leads with the decisive confidence statement: Indonesia record refreshed 2026-07-20, news figures from DNR 2026, and 'platform lists are editorially compiled (market presence, not measured reach)' \u2014 which is precisely the honest confidence level for TikTok data. The appended generic inventory is verbose but not penalized."
+  },
+  {
+   "num": 83,
+   "verdict": "GOOD",
+   "reasoning": "Directly answers the freshness question: 'Peru specifically: record last refreshed 2026-07-20', names the survey source, and honestly flags that platform lists are editorially compiled rather than measured. Inventory dump afterwards is style, not substance."
+  },
+  {
+   "num": 84,
+   "verdict": "PARTIAL",
+   "reasoning": "User asked what Afrobarometer says about Uganda's internet use; answer silently substitutes World Bank/ITU internet penetration (9%). Sourcing is transparent, but the Afrobarometer qualifier is ignored \u2014 the Atlas holds Afrobarometer R9 online-news-source figures for Uganda that would have answered, or it should have said Afrobarometer covers news-source use, not penetration.",
+   "root_cause": "routing-error",
+   "minimal_fix": "Recognize named-source qualifiers (Afrobarometer/DNR/RSF) in evidence-lookup queries; when 'Afrobarometer + internet' fires, return the Afrobarometer online-as-news-source figure or explicitly state the requested source does not supply that metric before substituting World Bank.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 85,
+   "verdict": "GOOD",
+   "reasoning": "'Show all evidence behind the Nigeria recommendation' gets the full Nigeria profile with per-metric source attributions (Afrobarometer R9, DNR 2026, RSF 2025, CLDR), trend data, and the non-representative-sample caveat \u2014 a complete evidence disclosure, which is what was asked."
+  },
+  {
+   "num": 86,
+   "verdict": "GOOD",
+   "reasoning": "Ground truth: no country has format-performance data. Answer states 'The Atlas has no format-level performance data \u2014 no source, free or paid, reliably measures... per country' (i.e., all countries lack it), names the nearest proxies (connectivity, literacy, radio reach, outlets by medium), and offers next steps. Honest, specific decline."
+  },
+  {
+   "num": 87,
+   "verdict": "PARTIAL",
+   "reasoning": "Asks specifically for the methodology behind trust scores; answer dumps the full 10-source inventory without ever saying which source produces trust-in-news (DNR 2026) or how, and omits the mixed-survey comparability note used elsewhere. The user must guess which listed source drives trust.",
+   "root_cause": "intent-gap",
+   "minimal_fix": "Add an attribute-level methodology intent: 'methodology/source behind <attribute>' with no country maps to that attribute's source blurb (trust in news -> Reuters DNR 2026, 46 markets, plus the mixed-survey ~5-point-noise note), reusing the per-attribute source path that already works in num 81.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 88,
+   "verdict": "GOOD",
+   "reasoning": "The exact answer appears explicitly: 'Survey sample is online and mainly English-speaking/urban \u2014 not nationally representative; figures skew younger and more connected (per DNR 2026 methodology)'. It sits in a labeled Risks & caveats section under the profile rather than leading, but the decisive content is present and unambiguous."
+  },
+  {
+   "num": 89,
+   "verdict": "GOOD",
+   "reasoning": "Year-over-year change is data the Atlas lacks (only current editions, ~120-day trend window). Answer leads with exactly that limitation \u2014 'no seasonal, quarterly, or multi-year archive... annual editions (current year only)' \u2014 then offers the current T\u00fcrkiye snapshot as the nearest useful thing. Correct entity, honest decline."
+  },
+  {
+   "num": 90,
+   "verdict": "PARTIAL",
+   "reasoning": "Question is about cross-source disagreement for Egypt and why; answer is a plain Egypt profile that never addresses 'disagree' at all. Per-metric sources are shown (Arab Barometer IX + DataReportal), but no acknowledgment that the Atlas keeps one canonical source per metric and cannot surface conflicts.",
+   "root_cause": "intent-gap",
+   "minimal_fix": "Add a source-conflict intent ('disagree', 'conflict', 'differ between sources') that explains each metric has a single canonical source, lists Egypt's per-metric sources, and cites the mixed-survey comparability caveat as the known disagreement surface.",
+   "fix_effort": "small"
+  },
+  {
+   "num": 91,
+   "verdict": "GOOD",
+   "reasoning": "Campaign archives genuinely don't exist in the Atlas. The answer says exactly that ('holds no campaign archive... cannot see any organisation's past campaigns, engagement numbers, or performance benchmarks'), explains why, and offers the nearest useful thing \u2014 landscape evidence once a region is named ('this region' was unresolvable anyway)."
+  },
+  {
+   "num": 92,
+   "verdict": "GOOD",
+   "reasoning": "Honest specific decline on the unanswerable part (own campaign's platform mix and performance), then proactively attaches the nearest useful data: Climate change live trends (-26% vs baseline, per-language demand, GDELT coverage) with evidence. Exactly the passing pattern the rubric defines."
+  },
+  {
+   "num": 93,
+   "verdict": "GOOD",
+   "reasoning": "Declines the campaign-X postmortem honestly, then delivers the genuinely useful nearest thing: full Colombia profile including trust 25% ('trusted intermediaries may matter more than outlet reach') \u2014 directly relevant to diagnosing underperformance. The stray '**X (Twitter)** is not among Colombia's leading platforms' line (placeholder 'X' matched to the platform) is harmless true noise, not misinformation."
+  },
+  {
+   "num": 94,
+   "verdict": "GOOD",
+   "reasoning": "No campaign archive exists; answer says so specifically and offers landscape evidence per country/region. No geography was given, so it couldn't proactively pull rural-reach data; the offer plus the 'Top 5 countries by radio reliance in Africa' followup is an adequate nearest alternative."
+  },
+  {
+   "num": 95,
+   "verdict": "GOOD",
+   "reasoning": "Engagement benchmarks are explicitly in the DOES-NOT-HAVE list. Answer declines specifically ('cannot see... engagement numbers, or performance benchmarks'), then supplies the nearest useful thing: MENA channel-split strategy across 8 countries with connectivity tiers and press-freedom risk flags, with 8 evidence profiles."
+  },
+  {
+   "num": 96,
+   "verdict": "GOOD",
+   "reasoning": "Double honest decline matching ground truth: no campaign archive AND no format-level performance data ('no source, free or paid, reliably measures whether video, audio, text, or infographics perform better'), plus names the nearest proxies (connectivity, literacy, radio reach, outlets by medium). Precise, not lazy."
+  },
+  {
+   "num": 97,
+   "verdict": "GOOD",
+   "reasoning": "Timing effects on their own COP campaign are unanswerable (no campaign archive; only ~120-day trend history). The decline is specific, names what's missing, and offers landscape evidence on request. Attaching climate-topic trends would have been a nice extra, but the core question is 100% outside the data and the refusal is honest, not generic."
+  },
+  {
+   "num": 98,
+   "verdict": "GOOD",
+   "reasoning": "Partnership/trust-lift history doesn't exist in the Atlas; answer declines specifically, then offers the nearest held signal: the trust-in-news ranking (China/Kenya/Nigeria 68%...) with the exclusion note ('132 countries... excluded, not ranked low') and survey-mixing caveat. Honest decline plus adjacent evidence."
+  },
+  {
+   "num": 99,
+   "verdict": "PARTIAL",
+   "reasoning": "Delivers a solid SEA channel-split strategy with risk flags, but never engages the actual ask \u2014 what to A/B test. No test hypotheses framed, and unlike #92/#96 it omits the no-engagement-data honesty note that explains why the Atlas can't rank test ideas. Reads as a region-strategy answer routed to a different question.",
+   "root_cause": "intent-gap",
+   "minimal_fix": "Detect 'A/B test'/'experiment'/'what to test' phrasing: prepend the no-campaign/engagement-benchmark honesty note and reframe the channel-split contrasts as explicit testable hypotheses (e.g. 'digital-first vs broadcast lead in Myanmar', 'WhatsApp vs Facebook entry point').",
+   "fix_effort": "small"
+  },
+  {
+   "num": 100,
+   "verdict": "GOOD",
+   "reasoning": "Substantive and cited: Bolivia profile with the honest survey gap flagged up front ('no news-source survey for Bolivia yet'), connectivity, languages incl. Quechua/Aymara, leading outlets, plus Sanitation and Drinking water live trends (GDELT, per-language demand). Not literally memo-formatted, but rubric says don't penalize style; content is fully responsive."
+  }
+ ],
+ "verifications": [
+  {
+   "num": 9,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "reasoning": "Verified: radio exceeds internet in all 8 countries per the answer's own numbers, yet the finding is never stated and five countries' 'Mixed digital' labels obscure it. Engine already computes radio-vs-online in tierOf but never renders it; data exists, so PARTIAL (adjacent answer, point missed) is correct.",
+   "fix_note": "Grader's second option is the minimal one: add a radio>online callout line in composeRegionBrief when radio is in the detected attributes \u2014 tierOf already computes the comparison."
+  },
+  {
+   "num": 10,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "reasoning": "Youth note fired, but the growth dimension \u2014 the question's core \u2014 is never acknowledged; the platform snapshot is buried, not offered as the nearest alternative. No fabrication, so not BAD; no honest gap statement, so not GOOD. PARTIAL stands (root cause: data-gap-unacknowledged).",
+   "fix_note": "Add a platform-scoped growth-phrasing entry to the existing GAPS array in ask-engine.js (standalone: false), keeping topic-growth questions routed to real trend data. Small effort."
+  },
+  {
+   "num": 12,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": false,
+   "fix_note": "No separate country-attention handler exists; the chip hits the same composeTopicBrief. Fix there: also scan per-country rising topics, and when the country list is empty on a 'which countries' ask, say so explicitly.",
+   "reasoning": "PARTIAL is right: the country dimension of demand was silently dropped, not answered or honestly declined. But grader misdiagnosed routing \u2014 the chip invokes the same composeTopicBrief, which already tries a country-attention line (distinctive_topics only; empty here). Root cause: composer omission, not routing."
+  },
+  {
+   "num": 14,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": false,
+   "fix_note": "In composeRegionBrief, when wantsTrends && topics: lead with the topic-trend block and explicitly state the empty case (\"no South Asian country shows above-baseline/rising attention\"). Grader's re-route returns empty here and would fall through unchanged.",
+   "reasoning": "PARTIAL fair: regional trend direction was the question; engine computed the region-local signal (ask-engine.js:938), found it empty, and silently dropped it, leading with an off-point channel-split and only a global +31%. Honest regional answer existed in per-country rising/distinctive data. Root cause: routing/composition-order, small effort."
+  },
+  {
+   "num": 15,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": false,
+   "fix_note": "Theme tags already exist (`category` in data/topics.json). Engine-only fix: parse theme words (\"health topics\") into a category filter and list matching topics from the country's stored top-15 attention profile, noting the 15-topic depth limit.",
+   "reasoning": "Data exists: Egypt's stored top-15 includes four health-category topics (tuberculosis, Ebola, cancer, diabetes); the unfiltered top-5 answer hid three of them and never acknowledged it couldn't filter. PARTIAL fair, root cause vocab/intent gap. Grader's fix redundantly re-adds existing tags and overpromises extension beyond stored top-15."
+  },
+  {
+   "num": 17,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "fix_note": "Gating is right, but per-period aggregation is large (engine loads only precomputed country snapshots; raw series live in wiki_pageviews.json). Minimal fix: date-check the requested period against TRENDS series_start before firing the line-428 gap note, and label the standing profile's window.",
+   "reasoning": "Q2 2026 lies inside the held window (series_start 2026-03-08, 120-day daily series), yet ask-engine.js line 428 fires the cannot-answer note unconditionally on \"last quarter\". Data exists; answer pivots to an unlabeled now-snapshot. PARTIAL fits: adjacent proxy, wrong premise, no fabrication. Root cause: routing-error, not data gap."
+  },
+  {
+   "num": 18,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "fix_note": "Note already exists in ask-engine.js (GAPS 'misinfo-flow', lines 435-438) with a prepend mechanism; minimal fix is one line \u2014 broaden that regex to fire on bare misinfo terms or add trend\\w*/where \u2014 not a new fixed note.",
+   "reasoning": "Question asks where vaccine misinformation spreads; the 'below reliability floor right now' framing implies flow becomes measurable later, omitting the permanent attention-vs-flow caveat (caveat-missing). Engine's existing misinfo-flow note never fired: its regex needs spread/flow/platform terms, and 'trending' isn't matched. PARTIAL stands."
+  },
+  {
+   "num": 20,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "reasoning": "Atlas has no topic co-occurrence data; passing answer required an honest decline. Answer substitutes a channel-split strategy plus global trend one-liners, never addressing the link ask. PARTIAL fits. Fix is right and trivial: ask-engine.js GAPS array already prepends honesty notes; add a link/connect/correlation entry."
+  },
+  {
+   "num": 22,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "reasoning": "Answer never contrasts segments or states the no-crosstab caveat; engine confirms rural note (ask-engine.js:767) uniquely omits the population-level disclaimer its youth/women/older siblings include, and AUDIENCES lacks an urban key. PARTIAL for caveat-missing/intent-gap is correct; fix is small and correctly targeted."
+  },
+  {
+   "num": 33,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "reasoning": "Traced in ask-engine.js: \"literacy\" collides between TOPIC_SYNONYMS and ATTRIBUTES; \"low\" isn't a rank word, so the topic match blocked the standalone-gap return and composeTopicBrief attached a wrong-entity brief. Honest lead note bars BAD; available-but-unshown literacy ranking bars GOOD. Fix matches engine structure."
+  },
+  {
+   "num": 34,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "reasoning": "Radio news reach is the inventory's audio proxy and is rankable; \"which countries\" needs no scoping. Engine confirmed: \"audio content\" hits the gap regex but never maps to the radio attribute, so the standalone-gap early return (line 1426) fires. Honest text, but clarified when it could answer.",
+   "fix_note": "Agree; implementation detail: add audio/podcast synonyms to the radio attribute plus rank intent for \"which countries prefer\" \u2014 gap-note preamble already auto-prepends (lines 1525-1526)."
+  },
+  {
+   "num": 44,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "fix_note": "Simpler mechanism: when the 'recommend' intent is set, skip the bare attribute lookup \u2014 the existing recommend/brief route (ask-engine.js:802,824) already prints leading outlets plus the missing-survey caveat.",
+   "reasoning": "Confirmed in ask-engine.js: \"trusted\" is a trust-attribute synonym (line 374); lookup route fires before recommend, so Ghana's curated leading-outlets list (line 824) is never reached. Relevant data exists, answer non-responsive but honest \u2014 PARTIAL is correct. Root cause: routing-error/vocab-gap; fix effort trivial."
+  },
+  {
+   "num": 45,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": false,
+   "fix_note": "Trigger list alone won't fire the note: audienceNote() (ask-engine.js ~760) only emits for youth/women/rural/older keys. Add displaced/refugee/IDP to AUDIENCES (~405) AND a matching bits.push branch in audienceNote(). Still trivial.",
+   "reasoning": "Answer gives population-level Sudan figures with no note they aren't IDP-specific; displacement crosstabs don't exist in inventory, and #42 shows the engine emits this exact honesty note for women. Omitted decisive caveat = PARTIAL per rubric. Not BAD: accurate, right country, relevant outlets."
+  },
+  {
+   "num": 47,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": false,
+   "fix_note": "Add a GAPS entry (mechanism exists, ask-engine.js ~358/1524) scoped to attitude-toward-topic phrases ('aid skepticism', 'opinion on/about', 'perceptions of') \u2014 bare 'skepticism' is already a trust synonym (line 375); blanket detection would misfire on legitimate news-trust questions.",
+   "reasoning": "Question asks about attitudes toward aid \u2014 data the Atlas lacks. Answer gives adjacent channel mix, self-contradicts (claims decisive split, one bucket), and never names the gap; trust flags are the right proxy but the omission is decisive. PARTIAL fair. Fix direction right, trigger needs scoping."
+  },
+  {
+   "num": 48,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "reasoning": "Answer surfaces CLDR language shares but never addresses reaching those speakers and omits the decisive caveat that outlets aren't language-tagged (listed outlets are Spanish-language). Engine's AUDIENCE_SYNONYMS/honesty-note mechanism (ask-engine.js ~406, 763-768) lacks a language qualifier; grader's fix mirrors that pattern exactly."
+  },
+  {
+   "num": 50,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "reasoning": "Question demands subnational differentiation the Atlas lacks; answer gives an undifferentiated national profile with no honesty note, missing the question's point \u2014 textbook PARTIAL (data-gap-unacknowledged). Fix fits the existing GAPS regex-note mechanism in ask-engine.js; trivial effort.",
+   "fix_note": "Add a GAPS entry (standalone:false) matching francophone/anglophone/split-region phrasing; guard the \"north vs south\" pattern against country names like North/South Korea."
+  },
+  {
+   "num": 52,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "reasoning": "Answer never mentions TikTok though the Atlas has per-country ordered platform lists and the brief route already renders platform ranks (#4, ask-engine.js:827-833). composeComparison receives ents but ignores ents.platforms. Adjacent-but-unresponsive with data available = PARTIAL, routing/intent-gap.",
+   "fix_agrees": true,
+   "fix_note": "Detection already exists \u2014 ents.platforms is populated and passed to composeComparison but unused. Just add a platform-rank row from each country's top_social list plus the existing \"compiled lists, not measured reach %\" note. Small effort."
+  },
+  {
+   "num": 56,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "reasoning": "Answer silently drops \"youth\" and omits the no-age-crosstab caveat despite audienceNote() existing (line 760) and firing in brief/strategy routes (841, 943) but not composeComparison (853\u2013899); top_social lists the Atlas HAS are also omitted. Accurate data, so PARTIAL not BAD. Grader correct."
+  },
+  {
+   "num": 60,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "fix_note": "Agree; smallest version: in composeRegionBrief's topic loop (ask-engine.js:932-941), render per-country vs_global_avg multipliers/velocities from f.distinctive/f.rising (already computed at line 938) and lead with that block, reusing composeTopicBrief's hot-countries pattern.",
+   "reasoning": "Per-country climate attention exists (vs_global_avg multipliers, rising velocities \u2014 used in composeTopicBrief lines 978-984), yet routing at line 1484 sent the query to the channel-split template, which discards those values into a name list (line 938). Adjacent answer despite available data: PARTIAL, routing-error, fair grade."
+  },
+  {
+   "num": 68,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "reasoning": "Answer dumps Refugee trend data as if it answers event timing; the 120-day caveat exists (GAPS time-series, line 428-430) but its regex misses the bare noun \"timing\" and observance names. Real data, right topic, decisive caveat omitted: PARTIAL, root cause caveat-missing via vocab gap, fix trivial."
+  },
+  {
+   "num": 78,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "fix_note": "Also add an FOTN score line to composeCountryBrief/riskLines \u2014 the brief currently omits it, so routing alone won't render every header-promised signal.",
+   "reasoning": "Header promises RSF/FH/FOTN signals; body shows only internet 22%. Data exists (Q31 renders RSF 37/100, Not Free). Cause: \"internet\" matches the attribute words, routing to single-fact composeLookup which filters risks to internet-only. Honest header but omitted decisive available signals \u2014 PARTIAL, routing-error, small fix."
+  },
+  {
+   "num": 84,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": true,
+   "reasoning": "Verified: countries.json holds Afrobarometer R9 online-news figure for Uganda (16.5%), so responsive data existed. Answer silently substituted World Bank penetration, ignoring the named-source qualifier \u2014 adjacent answer missing the point, decisive caveat omitted. Engine has no source-name vocabulary; grader's fix targets the real gap."
+  },
+  {
+   "num": 87,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "reasoning": "Answer dumps full 10-source inventory without linking trust to Reuters DNR 2026/barometers or the ~5-point mixed-survey caveat, though both exist in the engine (ATTRIBUTES.trust, line 1026). Adjacent answer missing the question's point; data exists, so not GOOD; no fabrication, so not BAD.",
+   "fix_agrees": true,
+   "fix_note": "Direction correct; refinement: no new intent needed \u2014 hardMeta already fires and \"trust\" is already in ents.attributes. Pass ents.attributes into composeMeta (line 1418) and render ATTRIBUTES[attr].source plus the surveyMix caveat when an attribute is present."
+  },
+  {
+   "num": 90,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "reasoning": "Answer is a plain Egypt profile that never addresses disagreement; since the Atlas keeps one canonical source per metric, an honest gap explanation was required and absent \u2014 textbook PARTIAL. Not BAD: right entity, real data, no fabrication, per-metric sources shown.",
+   "fix_agrees": false,
+   "fix_note": "Gap is routing, not a missing intent: 'which sources' already triggers meta, but the country gate (ask-engine.js:1416) reroutes it. Add disagree/conflict/differ to the hardMeta regex (line 1415) plus one canonical-source line in composeMeta, which already outputs per-country survey and caveat."
+  },
+  {
+   "num": 99,
+   "grade_fair": true,
+   "corrected_verdict": "PARTIAL",
+   "fix_agrees": false,
+   "fix_note": "Detection already exists: campaign-history gap regex has 'a b test\\w*' (ask-engine.js:420). Real bug: normalize() (line 473) strips [?!.,;:()\"] but not '/', so 'A/B' slips past. Add '/' to the stripped class; the existing honesty note then auto-prepends.",
+   "reasoning": "PARTIAL is fair: answer never addresses what to test and omits the no-campaign-data honesty note (adjacent answer, decisive caveat omitted). But grader misdiagnosed the fix: 'a b test' detection exists; it fails only because normalize() leaves '/' intact. Verified empirically \u2014 one-character normalization fix suffices."
+  }
+ ],
+ "overturns": [
+  {
+   "num": 16,
+   "should_be": "PARTIAL",
+   "why": "Answer claims the Atlas 'cannot restrict coverage to one region's media,' but gdelt_coverage.json holds per-topic source_countries volume intensity (LatAm well covered: Brazil 112/167 topics). Regional ranking was computable; it answered globally and falsely denied capability. Routing-error; fix: region-filter coverage ranking via source_countries; small effort."
+  }
+ ]
+}
