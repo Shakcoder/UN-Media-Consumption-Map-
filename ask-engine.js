@@ -346,6 +346,11 @@ const TOPIC_SYNONYMS = {
   "clean water": "Drinking water", "sanitation": "Sanitation", "water": "Drinking water",
   // labels too short for the ≥4-char label matcher — reachable via synonyms only
   "war": "War", "armed conflict": "War", "conflict": "War", "5g": "5G",
+  // campaign-subject phrasings that must reach their tracked topic
+  "trafficking": "Human trafficking", "anti trafficking": "Human trafficking",
+  "cyclone": "Tropical cyclone", "cyclones": "Tropical cyclone", "cyclone preparedness": "Tropical cyclone",
+  "hurricane": "Tropical cyclone", "hurricanes": "Tropical cyclone", "typhoon": "Tropical cyclone",
+  "water sanitation": "Sanitation", "wash": "Sanitation",
   // precision synonyms: route to the EXACT tracked topic, not a broader cousin
   "climate adaptation": "Climate change adaptation", "climate change adaptation": "Climate change adaptation",
   "adaptation to climate change": "Climate change adaptation",
@@ -781,7 +786,7 @@ function audienceNote(audiences, f) {
     bits.push(`For youth targeting: ${f.medianAge != null ? `median age is ${f.medianAge}` : "median age unknown"}${f.under15 != null ? `, ${fmt(f.under15)} of the population is under 15` : ""}. The Atlas has no youth-specific platform crosstabs — treat platform guidance as population-level.`);
   }
   if (audiences.includes("women")) bits.push("The Atlas's surveys are not gender-disaggregated — the figures above are population-level, not women-specific. Local partners can advise on gendered media habits.");
-  if (audiences.includes("rural")) bits.push(`For rural audiences: ${f.urban != null ? `${fmt(100 - f.urban)} of the population is rural` : "urban share unknown"}${f.radio != null ? `; radio (${fmt(f.radio)} weekly reach) is typically the strongest rural channel` : "; radio and community channels typically out-reach digital in rural areas"}.`);
+  if (audiences.includes("rural")) bits.push(`For rural audiences: ${f.urban != null ? `${fmt(100 - f.urban)} of the population is rural` : "urban share unknown"}${f.radio != null ? `; radio (${fmt(f.radio)} weekly reach measured nationally) is the strongest rural candidate` : "; industry practice (not Atlas-measured) is that radio and community channels out-reach digital in rural areas"} — the Atlas has no rural-specific media breakdown.`);
   if (audiences.includes("older")) bits.push("For older audiences: TV and radio typically out-reach social platforms; the Atlas has no age-segmented platform data to quantify this per country.");
   if (audiences.includes("displaced")) bits.push("For displaced populations: the Atlas holds no displacement-specific media data — figures are population-level. Radio and messaging apps typically matter most in displacement settings; pair these signals with humanitarian partners' on-the-ground assessments.");
   return bits.length ? bits.join(" ") : null;
@@ -829,7 +834,16 @@ function composeCountryBrief(f, ev, ents) {
   }
 
   if (ents.intents.includes("recommend") && top) {
-    lines.push(`**Recommendation for ${f.name}: lead with ${top[0]} (${fmt(top[1])} weekly news reach)${f.internet != null && f.internet < 40 ? ", and avoid digital-only plans" : ""}.**`);
+    // audience-adjusted headline: a rural/older ask must not lead with a
+    // population-level channel that the data itself contradicts for that group
+    const rural = ents.audiences.includes("rural") && f.radio != null && f.radio > (f.online ?? -1);
+    const older = ents.audiences.includes("older") && f.tv != null;
+    if (rural)
+      lines.push(`**Recommendation for ${f.name}: population-level lead is ${top[0]} (${fmt(top[1])}), but for rural audiences lead with radio (${fmt(f.radio)} weekly reach).**`);
+    else if (older && top[0] !== "TV")
+      lines.push(`**Recommendation for ${f.name}: population-level lead is ${top[0]} (${fmt(top[1])}); for older audiences TV (${fmt(f.tv)}) and radio typically out-reach social platforms.**`);
+    else
+      lines.push(`**Recommendation for ${f.name}: lead with ${top[0]} (${fmt(top[1])} weekly news reach)${f.internet != null && f.internet < 40 ? ", and avoid digital-only plans" : ""}.**`);
   } else if (ents.intents.includes("recommend") && !top) {
     lines.push(`**Recommendation for ${f.name}:** no news-source survey covers this country yet, so anchor on structure: internet penetration is ${fmt(f.internet)}${f.internet != null ? (f.internet >= 60 ? " (digital channels can reach most people)" : f.internet >= 35 ? " (pair digital with broadcast)" : " (broadcast and community channels first — digital-only would miss most people)") : ""}, and the leading outlets below are the practical entry points. Treat any channel mix as a hypothesis to validate with local partners.`);
   } else if (top && top[1] != null) {
@@ -852,7 +866,7 @@ function composeCountryBrief(f, ev, ents) {
   if (f.under15 != null || f.urban != null || f.medianAge != null)
     lines.push(`- Audience structure: ${f.medianAge != null ? `median age ${f.medianAge}, ` : ""}${f.under15 != null ? `${fmt(f.under15)} under 15, ` : ""}${f.urban != null ? `${fmt(f.urban)} urban` : ""}${f.literacy != null ? `, ${fmt(f.literacy)} literacy` : ""}`);
   if (f.languagesDetail.length)
-    lines.push(`- Languages (share of population): ${f.languagesDetail.slice(0, 5).map(l => `${l.language} ${Math.round(l.pct)}%${l.official ? " (official)" : ""}`).join(", ")} *(Unicode CLDR)*`);
+    lines.push(`- Languages (share of population): ${langsByShare(f).slice(0, 5).map(l => `${prettyLang(l)} ${Math.round(l.pct)}%${l.official ? " (official)" : ""}`).join(", ")} *(Unicode CLDR)*`);
   const o = f.outlets;
   if (o.top_tv || o.top_radio) lines.push(`- Leading outlets — TV: ${o.top_tv || "n/a"}; radio: ${o.top_radio || "n/a"}; online: ${o.top_online_news || "n/a"}${o.top_social ? `; social platforms (in order): ${o.top_social}` : ""}`);
 
@@ -965,7 +979,7 @@ function composeRegionBrief(fs, ev, ents, regionName) {
   const mixed = fs.filter(f => tierOf(f) === "mixed");
   const broadcast = fs.filter(f => tierOf(f) === "broadcast");
 
-  lines.push(`**${regionName}: split the strategy by connectivity — the gap between countries is decisive.**\n`);
+  lines.push(`**${regionName.charAt(0).toUpperCase() + regionName.slice(1)}: split the strategy by connectivity — the gap between countries is decisive.**\n`);
   if (digital.length)
     lines.push(`- **Digital-first:** ${digital.map(f => `${f.name} (online news ${fmt(f.online)}, internet ${f.internet}%${f.radio != null ? `, radio ${fmt(f.radio)}` : ""})`).join("; ")}.`);
   if (mixed.length)
@@ -985,16 +999,16 @@ function composeRegionBrief(fs, ev, ents, regionName) {
     const t = TRENDS.topics[topic.qid];
     addTrendEvidence(t.label_en, ev);
     lines.push("");
-    lines.push(`**${t.label_en} right now:** globally ${t.momentum} (${t.global_velocity > 0 ? "+" : ""}${Math.round(t.global_velocity * 100)}% vs 30-day baseline).`);
+    lines.push(`**${t.label_en} right now:** globally ${t.momentum} (${t.global_velocity > 0 ? "+" : ""}${Math.round(t.global_velocity * 100)}% vs 30-day baseline). *(The Atlas sees ~120 days of attention history — no seasonal or multi-year timing data.)*`);
     const local = fs.filter(f => f.distinctive.some(d => d.label_en === t.label_en) || f.rising.some(r => r.label_en === t.label_en));
     if (local.length)
-      lines.push(`Above-average or rising attention in: ${local.map(f => f.name).join(", ")}.`);
+      lines.push(`Above-average or rising attention in: ${local.map(f => f.name).join(", ")} *(attribution approximation)*.`);
   }
 
   const aud = audienceNote(ents.audiences, fs[0] || {});
   if (aud) { lines.push(""); lines.push(`**Audience note:** ${aud}`); }
 
-  const allRisks = fs.flatMap(f => riskLines(f)).slice(0, 5);
+  const allRisks = fs.flatMap(f => riskLines(f)).slice(0, 8);
   if (allRisks.length) {
     lines.push("");
     lines.push("**Risks & caveats:**");
@@ -1197,6 +1211,183 @@ function composeMeta(ev, iso) {
   return lines.join("\n");
 }
 
+// ---------------------------------------------------------------------------
+// Strategy briefs — the analyst as strategic advisor (added 2026-07-21 at DGC
+// request). One memo answering WHO / WHAT / WHERE / WHEN / WHY / HOW for
+// distributing content in a country, every line tied to Atlas evidence and
+// every inference labeled as such. ADVISORY BY DESIGN: format guidance is
+// feasibility (connectivity/literacy/radio habit), never measured performance;
+// timing is current momentum only. The disclaimer is part of the product.
+// ---------------------------------------------------------------------------
+function formatFeasibility(f) {
+  const rows = [];
+  const net = f.internet, phone = f.smartphone;
+  if (net != null) {
+    const vid = net >= 60 && (phone == null || phone >= 55) ? "strong — most of the audience can stream"
+      : net >= 35 ? "mixed — favor short, low-bandwidth video with subtitles; don't rely on online video alone"
+      : "limited — online video reaches a minority";
+    const tvNote = net < 60 && f.tv != null && f.tv >= 40 ? ` — but broadcast-TV video is separately viable (TV reaches ${fmt(f.tv)} weekly)` : "";
+    rows.push(`**Online/streamed video:** ${vid}${tvNote} *(internet ${fmt(net)}${phone != null ? `, smartphones ${fmt(phone)}` : ""})*`);
+  }
+  if (f.radio != null)
+    rows.push(`**Audio/radio:** ${f.radio >= 60 ? "strong daily habit" : f.radio >= 35 ? "established habit" : "modest reach"} — radio reaches ${fmt(f.radio)} weekly *(Afrobarometer R9)*; audio formats ride an existing behavior`);
+  else
+    rows.push(`**Audio/radio:** no measured radio figure for this country — the leading radio outlets in the Where section are a proxy for the audio market`);
+  if (f.literacy != null)
+    rows.push(`**Text:** ${f.literacy >= 90 ? "fully viable" : f.literacy >= 70 ? "viable with plain-language writing" : "limited — " + fmt(100 - f.literacy) + " of adults can't read it; lead with audio/visual"} *(literacy ${fmt(f.literacy)})*`);
+  else
+    rows.push(`**Text:** no literacy figure for this country — validate text-led formats locally before committing`);
+  rows.push(`**Visual/infographic:** literacy-independent and low-bandwidth — safe everywhere, essential where text is limited`);
+  return rows;
+}
+
+// CLDR sometimes ships locale codes the name table doesn't cover ("pa_Arab",
+// "tts") — resolve to readable names rather than leaking codes into a brief.
+const LANG_BASE_NAMES = { pa: "Punjabi", pnb: "Western Panjabi", uz: "Uzbek", az: "Azerbaijani",
+  kk: "Kazakh", ms: "Malay", mn: "Mongolian", sr: "Serbian", ku: "Kurdish", zh: "Chinese",
+  bs: "Bosnian", tts: "Northeastern Thai", nod: "Northern Thai", apc: "Levantine Arabic",
+  arz: "Egyptian Arabic", ary: "Moroccan Arabic", apd: "Sudanese Arabic", aeb: "Tunisian Arabic" };
+function prettyLang(l) {
+  if (l.language && l.language !== l.code) return l.language;
+  const base = String(l.code || "").split("_")[0];
+  const scriptNote = /(_arab)/i.test(l.code || "") ? " (Arabic script)" : "";
+  return (LANG_BASE_NAMES[l.code] || LANG_BASE_NAMES[base] || l.code) + scriptNote;
+}
+
+/** Languages sorted by population share (the "produce in" order). */
+function langsByShare(f) {
+  return [...f.languagesDetail].sort((a, b) => (b.pct || 0) - (a.pct || 0));
+}
+
+function composeStrategyBrief(f, ev, ents, qNorm) {
+  addCountryEvidence(f, ev);
+  const topic = ents.topics[0] || null;
+  const t = topic && TRENDS && TRENDS.topics[topic.qid] ? TRENDS.topics[topic.qid] : null;
+  if (t) addTrendEvidence(t.label_en, ev);
+  const topicName = t ? t.label_en : (topic ? topic.label : null);
+  const L = [];
+
+  L.push(`**Distribution strategy brief — ${topicName ? `${topicName} in ` : ""}${f.name}**`);
+  L.push(`*Advisory only: every figure below is Atlas-verified (sources at the end), but the Atlas has no format-performance, age/gender, or campaign-outcome data — treat this as evidence-based decision support to validate with local teams, not a final plan.*`);
+  L.push("");
+
+  // WHO — audience
+  L.push(`**Who — the audience.**`);
+  const whoBits = [];
+  if (f.medianAge != null) whoBits.push(`median age ${f.medianAge}`);
+  if (f.under15 != null) whoBits.push(`${fmt(f.under15)} under 15`);
+  if (f.urban != null) whoBits.push(`${fmt(f.urban)} urban / ${fmt(Math.round((100 - f.urban) * 10) / 10)} rural`);
+  if (whoBits.length) L.push(`- Structure: ${whoBits.join(", ")}`);
+  if (f.languagesDetail.length) {
+    const byShare = langsByShare(f);
+    const langAdvice = byShare.length === 1 || (byShare[0].pct || 0) >= 95
+      ? `${prettyLang(byShare[0])} covers essentially the whole market`
+      : `produce in ${prettyLang(byShare[0])}${byShare[1] ? ` and ${prettyLang(byShare[1])}` : ""} at minimum`;
+    L.push(`- Languages that reach people: ${byShare.slice(0, 4).map(l => `${prettyLang(l)} ${Math.round(l.pct)}%${l.official ? " (official)" : ""}`).join(", ")} — ${langAdvice} *(Unicode CLDR)*`);
+  }
+  if (f.trust != null) L.push(`- Trust in news: ${f.trust}% — ${f.trust >= 50
+    ? `relatively high: established outlets can lend credibility${f.fh === "Not Free" || (f.rsf != null && f.rsf < 40) ? ", though in this state-influenced environment credibility transfer is not automatic — vet outlets individually" : " (a working hypothesis to validate, not a measured outcome)"}`
+    : "low; trusted intermediaries and direct channels matter more than outlet reach"}`);
+  const audNote = audienceNote(ents.audiences, f);
+  if (audNote) L.push(`- ${audNote}`);
+  L.push("");
+
+  // WHERE — platforms & channels
+  L.push(`**Where — platforms and channels.**`);
+  const isEstimate = /estimate/i.test(f.survey || "");
+  const reachWord = isEstimate ? "estimated" : "measured";
+  const ch = [["TV", f.tv], ["radio", f.radio], ["online news", f.online], ["social media", f.social]]
+    .filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
+  // lead-channel choice caps online/social at internet penetration: an online
+  // survey can report 91% online news in a 35%-internet country — that is the
+  // connected population, not the nation
+  const effective = ch.map(([n, v]) => [n, v, (n === "online news" || n === "social media") && f.internet != null ? Math.min(v, f.internet) : v])
+    .sort((a, b) => b[2] - a[2]);
+  const lead = effective[0];
+  const onlineExceeds = f.online != null && f.internet != null && f.online > f.internet + 5;
+  if (ch.length) {
+    L.push(`- Channel mix by ${reachWord} weekly news reach: ${ch.map(([n, v]) => `${lead && n === lead[0] ? "**" : ""}${n} ${fmt(v)}${lead && n === lead[0] ? "**" : ""}`).join(" · ")} *(${f.survey || "survey n/a"}${f.radio != null ? "; radio: Afrobarometer R9" : ""})*`);
+    if (onlineExceeds)
+      L.push(`- ⚠ Online/social figures exceed internet penetration (${fmt(f.internet)}) — the survey reflects the *connected* population, not the nation. Lead-channel choice above accounts for this${lead && lead[0] === "radio" ? `: radio (${fmt(f.radio)}) is the national-reach lead` : ""}`);
+  } else {
+    L.push(`- No news-source survey covers ${f.name} — anchor on connectivity (${fmt(f.internet)} internet) and the outlet lists below, and validate channel choices locally`);
+  }
+  if (f.outlets.top_social) L.push(`- Platforms in market order: ${f.outlets.top_social} — lead where the audience already is; the #1 platform is the distribution floor`);
+  if (f.outlets.top_tv || f.outlets.top_radio || f.outlets.top_online_news) {
+    const restricted = f.fh === "Not Free" || (f.rsf != null && f.rsf < 40);
+    const hasBlocked = /\(blocked/i.test([f.outlets.top_tv, f.outlets.top_radio, f.outlets.top_online_news].join(" "));
+    L.push(`- Partner outlets (earned media / syndication): TV — ${f.outlets.top_tv || "n/a"}; radio — ${f.outlets.top_radio || "n/a"}; online — ${f.outlets.top_online_news || "n/a"}`);
+    if (restricted)
+      L.push(`  - ⚠ **Vet partners before syndicating:** this is a state-influenced media environment (${f.fh || "restricted"}${f.rsf != null ? `, RSF ${Math.round(f.rsf)}/100` : ""}). State-controlled outlets are listed for completeness because they carry reach — they are typically inappropriate partners for content that conflicts with official policy`);
+    if (hasBlocked)
+      L.push(`  - Outlets marked *(blocked)* reach diaspora/VPN audiences only — not an in-country syndication channel`);
+  }
+  if (f.internet != null && f.internet < 40)
+    L.push(`- With internet at ${fmt(f.internet)}, pair every digital channel with broadcast/community distribution or most people never see it`);
+  L.push("");
+
+  // WHAT — formats (feasibility, honestly labeled)
+  L.push(`**What — content formats.** *(Feasibility from infrastructure and literacy — the Atlas does not measure format performance; test formats locally.)*`);
+  for (const row of formatFeasibility(f)) L.push(`- ${row}`);
+  L.push("");
+
+  // WHEN — timing
+  L.push(`**When — timing signals.** *(The Atlas sees ~120 days of attention history — no seasonal or multi-year timing data.)*`);
+  if (t) {
+    const vel = Math.round(t.global_velocity * 100);
+    const risingHere = f.rising.find(r => r.label_en === t.label_en);
+    const distinctHere = f.distinctive.find(d => d.label_en === t.label_en);
+    L.push(`- **${t.label_en}** is ${t.momentum} globally (${vel > 0 ? "+" : ""}${vel}% vs its 30-day baseline)${risingHere ? ` and rising in ${f.name} (+${Math.round(risingHere.velocity * 100)}%) — the window is open now` : distinctHere ? `, and ${f.name} follows it ${distinctHere.vs_global_avg}× more than the world average — a standing interest to build on` : ""}`);
+    if (!risingHere && !distinctHere && t.momentum === "falling")
+      L.push(`- Global attention is currently receding — content will need its own news hook rather than riding a wave`);
+    // underserved signal: readers care, domestic media don't cover it
+    const cov = (t.top_covering_media_countries || []).some(c => c.iso3 === f.iso);
+    if ((risingHere || distinctHere) && !cov && (t.top_covering_media_countries || []).length)
+      L.push(`- **Opportunity signal:** estimated reader attention in ${f.name} is above average, but ${f.name}'s media are not among the topic's top covering countries (GDELT) — a possibly underserved information space *(attention attribution is a documented approximation)*`);
+  } else if (topic && !t) {
+    // the subject IS tracked — momentum just isn't measurable right now
+    L.push(`- **${topic.label}** is a tracked Atlas topic but is currently below the trend-measurement floor — no momentum signal is available for it`);
+    if (f.rising.length)
+      L.push(`- For context, rising in ${f.name} generally: ${f.rising.slice(0, 3).map(r => `${r.label_en} (+${Math.round(r.velocity * 100)}%)`).join(", ")} — possible timely hooks, relevance to your subject varies *(attention attribution is a documented approximation)*`);
+  } else if (f.rising.length) {
+    L.push(`- Rising in ${f.name} right now: ${f.rising.slice(0, 3).map(r => `${r.label_en} (+${Math.round(r.velocity * 100)}%)`).join(", ")} — possible timely hooks, relevance to your subject varies *(attention attribution is a documented approximation)*`);
+  } else {
+    L.push(`- Your subject isn't among the Atlas's 167 tracked topics (or no topic was named), and nothing is spiking sharply in ${f.name} this week — timing guidance is limited to the general momentum picture`);
+  }
+  L.push("");
+
+  // HOW — execution + risks
+  L.push(`**How — execution notes.**`);
+  if (f.languagesDetail.length) {
+    const byShare = langsByShare(f);
+    const eng = f.languagesDetail.find(l => (l.code || "").split("_")[0] === "en");
+    const engPct = eng ? eng.pct : 0;
+    let langLine = `- Produce in ${prettyLang(byShare[0])}${byShare[1] && (byShare[0].pct || 0) < 95 ? ` and ${prettyLang(byShare[1])}` : ""} first`;
+    if (engPct >= 80) langLine += ` (English alone covers ~${Math.round(engPct)}% here)`;
+    else if (engPct > 0) langLine += `; English-only would miss roughly ${Math.round(100 - engPct)}% of the population`;
+    else langLine += `; English-only content would reach almost no one directly`;
+    L.push(langLine);
+  }
+  if (ch.length) {
+    L.push(`- Sequence: lead on ${lead ? lead[0] : "the top-reach channel"}, syndicate through the partner outlets above${f.fh === "Not Free" || (f.rsf != null && f.rsf < 40) ? " (after the independence vetting flagged above)" : ""}, and adapt the asset to each platform rather than cross-posting`);
+  } else {
+    L.push(`- Sequence: no measured channel ranking exists for ${f.name} — start from the #1 platform${f.outlets.top_social ? ` (${f.outlets.top_social.split(",")[0].trim()})` : ""} plus radio/TV via the partner outlets, and validate the lead channel locally`);
+  }
+  if (ents.audiences.includes("rural") && f.radio != null)
+    L.push(`- For the rural share of the audience, lead with radio and community channels regardless of the population-level ranking above`);
+  if (f.trust != null && f.trust < 50)
+    L.push(`- With trust in news at ${f.trust}%, invest in trusted intermediaries — community organisations, local creators, direct/messaging channels — alongside outlet placement`);
+  const risks = riskLines(f);
+  if (f.fotn != null && f.fotn < 40) risks.push(`Internet freedom is ${f.fotn}/100 (FOTN) — plan for platform restrictions and have a broadcast fallback.`);
+  if (risks.length) {
+    L.push(`- **Risks to plan around:**`);
+    for (const r of risks) L.push(`  - ${r}`);
+  }
+  L.push("");
+  L.push(`*This brief is advisory and data-limited by design — the "View sources" list below shows exactly what it stands on. Final strategy decisions need human review and local validation.*`);
+  return L.join("\n");
+}
+
 /** "What's trending in <region>?" — aggregate rising topics across the region. */
 function composeRegionTrends(fs, ev, regionName) {
   if (!TRENDS) return null;
@@ -1330,6 +1521,11 @@ function buildFollowups(ents, kind) {
   } else if (kind === "platform") {
     chips.push("Which platform leads in the most markets?");
     chips.push("Compare WhatsApp and Facebook reach");
+  } else if (kind === "strategy" && cName) {
+    chips.push(`Which languages should content use in ${cName}?`);
+    const nb = neighbourOf(iso);
+    if (nb && COUNTRIES[nb]) chips.push(`Same strategy brief for ${COUNTRIES[nb].name.replace(/,.*$/, "")}`);
+    chips.push(`What's trending in ${cName}?`);
   } else {
     chips.push("What data do you have?");
     chips.push("What's trending in Kenya this week?");
@@ -1444,6 +1640,15 @@ export function answerQuestion(question) {
   // "trusted OUTLETS to partner with" wants the outlet lists, not a trust number
   if (/\b(outlets?|broadcasters?|stations?|newspapers?|partner with)\b/.test(qNorm) && ents.countries.length)
     ents.intents = ents.intents.filter(i => i !== "lookup");
+
+  // Full strategy-brief intent (DGC advisory mode): distribution/campaign/
+  // strategy language anchored to a place → the who/what/where/when/how memo
+  const strategyIntent = /\b(strateg\w+|campaign|distribut\w+|roll ?out|launch\w*|opportunit\w+|memo|content plan|media plan|outreach|disseminat\w+|amplif\w+|promote content|publish\w* content)\b/.test(qNorm)
+    && (ents.countries.length > 0 || ents.regionCountries.length > 0);
+  if (strategyIntent) {
+    ents.intents = ents.intents.filter(i => i !== "lookup");
+    if (!ents.intents.includes("strategy")) ents.intents.push("strategy");
+  }
 
   // "which countries prefer audio" — radio reach is the audio-habit ranking
   if (/\b(audio|podcasts?)\b/.test(qNorm) && /\b(which countries|where)\b/.test(qNorm) && !ents.countries.length) {
@@ -1560,6 +1765,31 @@ export function answerQuestion(question) {
   if (!parts.length && ents.regions.length === 1 && ents.wantsCompare && ents.attributes.length && !ents.countries.length && isoList.length >= 2) {
     parts.push(composeComparison(isoList.slice(0, 6).map(facts).filter(Boolean), ev, ents));
     kind = "compare";
+  }
+  // Strategy brief — the full advisory memo for 1–2 named countries
+  if (!parts.length && ents.intents.includes("strategy") && ents.countries.length >= 1 && ents.countries.length <= 2) {
+    for (const iso of ents.countries.slice(0, 2)) {
+      const f = facts(iso);
+      if (f) parts.push(composeStrategyBrief(f, ev, ents, qNorm));
+    }
+    if (parts.length) kind = "strategy";
+  }
+  // Strategy over a region: the channel-split brief plus an advisory wrapper
+  if (!parts.length && ents.intents.includes("strategy") && ents.regions.length && isoList.length > 2) {
+    const fs = isoList.map(facts).filter(Boolean);
+    const regionName = ents.regions.map(regionDisplay).join(", ");
+    const brief = composeRegionBrief(fs, ev, ents, regionName);
+    parts.push(`*Advisory brief for ${regionName} — evidence-based decision support with documented data limits (no format-performance, age/gender, or campaign-outcome data); validate with local teams.*\n\n` + brief);
+    // per-region format-feasibility summary from the tier structure
+    const lowNet = fs.filter(f => f.internet != null && f.internet < 35);
+    const strongRadio = fs.filter(f => f.radio != null && f.radio >= 50);
+    const fmtLines = [`**Format guidance (feasibility, not measured performance):**`];
+    if (strongRadio.length) fmtLines.push(`- Audio-first is the safest bet in ${strongRadio.map(f => f.name).join(", ")} (radio ≥ 50% weekly)`);
+    if (lowNet.length) fmtLines.push(`- Avoid ONLINE-video-led plans in ${lowNet.map(f => f.name).join(", ")} (internet < 35%) — visual/infographic + radio adaptations carry the message there, and broadcast TV stays viable where the tiers above show strong TV reach`);
+    fmtLines.push(`- Where connectivity is strong, short low-bandwidth video with subtitles travels across both tiers`);
+    fmtLines.push(`\n*This brief is advisory and data-limited by design — see "View sources" for exactly what it stands on. Final strategy decisions need human review and local validation.*`);
+    parts.push(fmtLines.join("\n"));
+    kind = "strategy";
   }
   // Ranking ("top 5 by radio in Africa")
   if (!parts.length && ents.intents.includes("rank") && ents.attributes.length) {
