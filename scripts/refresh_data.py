@@ -563,7 +563,8 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     "MWI": {"trust": None, "tv": 18.7, "online": 10.6, "social": 18.6, "src": "Afrobarometer Round 9 (2023)"},
     "NAM": {"trust": None, "tv": 50.2, "online": 49.1, "social": 49.6, "src": "Afrobarometer Round 9 (2023)"},
     "NER": {"trust": None, "tv": 17.3, "online": 17.4, "social": 23.6, "src": "Afrobarometer Round 9 (2023)"},
-    "SDN": {"trust": None, "tv": 58.6, "online": 45.5, "social": 45.4, "src": "Afrobarometer Round 9 (2023)"},
+    "SDN": {"trust": None, "tv": 58.6, "online": 45.5, "social": 45.4, "src": "Afrobarometer Round 9 (2023)",
+            "note": "Online-news use (45.5%, 2023 face-to-face survey) exceeds the internet-access figure because Sudan's World Bank/ITU internet series last reported in 2017 — a stale denominator, not a survey error. Treat the access figure as a lower bound."},
     "SEN": {"trust": None, "tv": 71.9, "online": 46.0, "social": 55.1, "src": "Afrobarometer Round 9 (2023)"},
     "SLE": {"trust": None, "tv": 14.9, "online": 27.2, "social": 33.4, "src": "Afrobarometer Round 9 (2023)"},
     "STP": {"trust": None, "tv": 75.9, "online": 57.1, "social": 55.9, "src": "Afrobarometer Round 9 (2023)"},
@@ -575,8 +576,12 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     "UGA": {"trust": None, "tv": 35.4, "online": 16.5, "social": 16.4, "src": "Afrobarometer Round 9 (2023)"},
     "ZMB": {"trust": None, "tv": 45.9, "online": 32.4, "social": 36.3, "src": "Afrobarometer Round 9 (2023)"},
     "ZWE": {"trust": None, "tv": 28.2, "online": 25.5, "social": 41.4, "src": "Afrobarometer Round 9 (2023)"},
-    # DRC not covered by Afrobarometer Round 9 (only Congo-Brazzaville was) — kept as prior estimate.
-    "COD": {"trust": 47, "tv": 38, "online": 22, "social": 18, "src": "Estimate (DataReportal 2024)"},
+    # DRC: REMOVED 2026-07-22. The old entry ("Estimate (DataReportal 2024)",
+    # trust 47 / tv 38 / online 22 / social 18) had no checkable source —
+    # DataReportal measures neither trust nor news-source mix. Same class as
+    # the 15 fabricated entries removed earlier today, just labeled "estimate".
+    # Afrobarometer Round 10 (releasing 2025-2026) is expected to cover DRC —
+    # integrate the real figures when that lands.
     # ---- Arab Barometer Wave VIII (2023-2024), weighted from real microdata ----
     # Wave VIII is the only Arab Barometer edition with public data (Wave IX's
     # fieldwork runs through May 2026; nothing is released yet). Q421 asks
@@ -587,6 +592,98 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     "IRQ": {"trust": None, "tv": 26.7, "online": None, "social": 44.4, "radio": 1.2,
             "src": "Arab Barometer Wave VIII (2023-2024) microdata",
             "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
+    # ---- World Values Survey Wave 7 (2017-2022), weighted microdata ----
+    # Computed by scripts/compute_wvs_news.py from the registered download
+    # (raw .sav NOT in this repo — WVSA prohibits redistribution). Only
+    # countries with no newer survey are listed; DNR/Afrobarometer/Arab
+    # Barometer entries above always take precedence. Constructs differ
+    # from DNR (see each entry's note) — never strip these notes.
+    # Citation: Haerpfer et al. (eds.) 2022, WVS Round Seven v6.0,
+    # doi:10.14281/18241.24
+    "AND": {"trust": 36.9, "tv": 84.0, "online": 66.0, "social": 66.0, "radio": 42.0,
+            "src": "World Values Survey Wave 7 (2018), weighted microdata (n=1,004)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "ARM": {"trust": 12.1, "tv": 81.0, "online": 75.4, "social": 72.9, "radio": 18.1,
+            "src": "World Values Survey Wave 7 (2021), weighted microdata (n=1,223)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "BGD": {"trust": 71.6, "tv": 87.7, "online": 19.1, "social": 22.4, "radio": 12.3,
+            "src": "World Values Survey Wave 7 (2018), weighted microdata (n=1,200)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "BOL": {"trust": 25.3, "tv": 92.6, "online": 44.9, "social": 45.7, "radio": 59.7,
+            "src": "World Values Survey Wave 7 (2017), weighted microdata (n=2,067)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "CHN": {"trust": 68.5, "tv": 75.2, "online": 36.6, "social": 65.6, "radio": 16.8,
+            "src": "World Values Survey Wave 7 (2018), weighted microdata (n=3,036)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "CYP": {"trust": 36.2, "tv": 88.3, "online": 65.2, "social": 57.2, "radio": 59.3,
+            "src": "World Values Survey Wave 7 (2019), weighted microdata (n=1,000)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "ECU": {"trust": 36.4, "tv": 88.7, "online": 66.7, "social": 67.1, "radio": 51.7,
+            "src": "World Values Survey Wave 7 (2018), weighted microdata (n=1,200)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "EGY": {"trust": 9.5, "tv": 66.2, "online": 22.3, "social": 35.2, "radio": 14.1,
+            "src": "World Values Survey Wave 7 (2018), weighted microdata (n=1,200)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "GTM": {"trust": 20.2, "tv": 72.8, "online": 79.8, "social": 83.8, "radio": 46.8,
+            "src": "World Values Survey Wave 7 (2020), weighted microdata (n=1,229)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "IRN": {"trust": 60.6, "tv": 85.4, "online": 69.5, "social": 69.4, "radio": 32.9,
+            "src": "World Values Survey Wave 7 (2020), weighted microdata (n=1,499)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "JOR": {"trust": 32.8, "tv": 66.0, "online": 49.0, "social": 60.1, "radio": 16.9,
+            "src": "World Values Survey Wave 7 (2018), weighted microdata (n=1,203)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "KAZ": {"trust": 60.0, "tv": 80.4, "online": 61.8, "social": 47.5, "radio": 36.4,
+            "src": "World Values Survey Wave 7 (2018), weighted microdata (n=1,276)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "KGZ": {"trust": 45.2, "tv": 84.1, "online": 70.6, "social": 57.8, "radio": 34.3,
+            "src": "World Values Survey Wave 7 (2020), weighted microdata (n=1,200)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "LBN": {"trust": 20.4, "tv": 74.0, "online": 47.8, "social": 63.5, "radio": 24.3,
+            "src": "World Values Survey Wave 7 (2018), weighted microdata (n=1,200)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "LBY": {"trust": 11.5, "tv": 65.1, "online": 64.6, "social": 75.8, "radio": 30.1,
+            "src": "World Values Survey Wave 7 (2022), weighted microdata (n=1,196)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "MDV": {"trust": 25.9, "tv": 56.8, "online": 89.1, "social": 88.6, "radio": 26.2,
+            "src": "World Values Survey Wave 7 (2021), weighted microdata (n=1,039)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "MMR": {"trust": 57.2, "tv": 65.8, "online": 25.1, "social": 47.5, "radio": 34.1,
+            "src": "World Values Survey Wave 7 (2020), weighted microdata (n=1,200)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "MNG": {"trust": 35.8, "tv": 69.0, "online": 63.9, "social": 70.3, "radio": 26.9,
+            "src": "World Values Survey Wave 7 (2020), weighted microdata (n=1,638)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "NIC": {"trust": 18.4, "tv": 70.8, "online": 49.1, "social": 49.0, "radio": 37.2,
+            "src": "World Values Survey Wave 7 (2020), weighted microdata (n=1,200)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "NZL": {"trust": 27.9, "tv": 81.9, "online": 80.9, "social": 54.3, "radio": 73.6,
+            "src": "World Values Survey Wave 7 (2020), weighted microdata (n=1,057)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "PAK": {"trust": 56.2, "tv": 71.3, "online": 20.5, "social": 21.5, "radio": 10.5,
+            "src": "World Values Survey Wave 7 (2018), weighted microdata (n=1,995)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "RUS": {"trust": 33.0, "tv": 82.4, "online": 49.4, "social": 31.3, "radio": 38.3,
+            "src": "World Values Survey Wave 7 (2017), weighted microdata (n=1,810)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "TJK": {"trust": 61.2, "tv": 87.9, "online": 36.1, "social": 24.2, "radio": 34.1,
+            "src": "World Values Survey Wave 7 (2020), weighted microdata (n=1,200)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "UKR": {"trust": 31.4, "tv": 73.5, "online": 58.0, "social": 53.4, "radio": 31.8,
+            "src": "World Values Survey Wave 7 (2020), weighted microdata (n=1,289)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "URY": {"trust": 30.9, "tv": 71.1, "online": 72.2, "social": 65.4, "radio": 44.4,
+            "src": "World Values Survey Wave 7 (2022), weighted microdata (n=1,000)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "UZB": {"trust": 68.2, "tv": 85.5, "online": 83.2, "social": 70.7, "radio": 48.3,
+            "src": "World Values Survey Wave 7 (2022), weighted microdata (n=1,250)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "VEN": {"trust": 24.9, "tv": 64.6, "online": 55.6, "social": 56.9, "radio": 47.4,
+            "src": "World Values Survey Wave 7 (2021), weighted microdata (n=1,190)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    "VNM": {"trust": 80.6, "tv": 89.0, "online": 75.2, "social": 78.2, "radio": 11.8,
+            "src": "World Values Survey Wave 7 (2020), weighted microdata (n=1,200)",
+            "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
     # 2026-07-22: EGY, SAU, YEM, DZA, PAK, BGD, MMR, NPL, VEN, CHN, RUS, VNM,
     # IRN, AFG, UKR were REMOVED here. They carried source labels like "Arab
     # Barometer IX + DataReportal 2024" and "WVS Wave 7 + DataReportal 2024"
@@ -595,6 +692,9 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     # mix at all (it never has). No commit or note documents where these
     # numbers actually came from. Treat them as unverified, not as a "close
     # enough" estimate — restore only with a real, checkable source.
+    # UPDATE 2026-07-22 (later same day): EGY, PAK, BGD, MMR, VEN, CHN,
+    # RUS, VNM, IRN, UKR restored ABOVE with real WVS Wave 7 microdata.
+    # Still unverified (no free survey found yet): SAU, YEM, DZA, NPL, AFG.
 }
 
 
@@ -1142,6 +1242,7 @@ def main() -> int:
             "Afrobarometer Round 9 microdata (news sources incl. radio, 35-39 African countries, weighted)",
             "DataReportal 2024 (smartphone penetration estimates, 50 countries)",
             "Arab Barometer Wave VIII (Iraq — real weighted microdata, 2,408 respondents)",
+            "World Values Survey Wave 7 v6.0 (28 countries — weighted microdata computed by scripts/compute_wvs_news.py; doi:10.14281/18241.24; constructs differ from DNR and are labeled per country)",
             "Trend engine: Wikimedia Pageviews API (CC0) + GDELT 2.0 (daily, 167 topics, 22 languages)",
             "CIA World Factbook, Broadcast media entries (public domain, auto-ingested weekly via the factbook.json mirror)",
             "Statcounter GlobalStats (social web-traffic referral shares, 195 countries, automated weekly, 3-month average — web-referral measure only; app-first platforms like WhatsApp/TikTok are not visible to it)",
