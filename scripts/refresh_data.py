@@ -9,12 +9,14 @@ Primary sources (all free, no API key):
   - Freedom House: Freedom in the World (195 countries, manual annual)
   - Reuters Institute Digital News Report (46 of 48 markets, manual annual)
   - Afrobarometer (35 of 39 surveyed African countries, manual per wave)
-  - Arab Barometer (16+ MENA countries, manual per wave)
-  - Asian Barometer (13+ Asian countries, manual per wave)
-  - Latinobarometro (18 Latin American countries, manual annual)
-  - Eurobarometer (27 EU states, manual per wave)
-  - World Values Survey (~100 countries, manual per wave)
+  - Arab Barometer (Iraq only, real Wave VIII microdata — see 2026-07-22 note below)
   - DataReportal (smartphone penetration, manual annual)
+
+Not yet integrated, pending free registration (see NEWS_CONSUMPTION's removal
+note, 2026-07-22): Asian Barometer, Latinobarometro, Eurobarometer, World
+Values Survey. Each would extend real news-consumption coverage once its
+microdata is downloaded and computed the way Iraq's was — do not re-add a
+country under one of these names without an actual downloaded file behind it.
 """
 
 from __future__ import annotations
@@ -478,11 +480,11 @@ WB_DATA_ORIGINS = {
 DNR_NON_REPRESENTATIVE = {"IND", "KEN", "NGA", "ZAF", "MAR"}
 
 # Reuters Institute Digital News Report 2026 for markets they cover (46 of the
-# 48 surveyed — Hong Kong and Taiwan excluded as non-UN-member entities).
-# Afrobarometer R9/R10, Arab Barometer Wave IX, Asian Barometer Wave 6,
-# Latinobarometro 2024, Eurobarometer, World Values Survey Wave 7, and
-# DataReportal 2024 for the remaining markets DNR does not survey.
-# Each entry: trust_pct, tv_pct, online_pct, social_pct, source label.
+# 48 surveyed — Hong Kong and Taiwan excluded as non-UN-member entities),
+# Afrobarometer for African markets, DataReportal 2024 for a few remaining
+# markets DNR does not survey, and Arab Barometer Wave VIII for Iraq.
+# Each entry: trust_pct, tv_pct, online_pct, social_pct, source label,
+# optionally radio_pct and note (see the IRQ entry for the pattern).
 NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     # ---- Reuters Institute Digital News Report 2026 (46 markets) ----
     # Europe
@@ -575,26 +577,24 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     "ZWE": {"trust": None, "tv": 28.2, "online": 25.5, "social": 41.4, "src": "Afrobarometer Round 9 (2023)"},
     # DRC not covered by Afrobarometer Round 9 (only Congo-Brazzaville was) — kept as prior estimate.
     "COD": {"trust": 47, "tv": 38, "online": 22, "social": 18, "src": "Estimate (DataReportal 2024)"},
-    # ---- Arab Barometer Wave IX + DataReportal 2024 (MENA) ----
-    "EGY": {"trust": 45, "tv": 72, "online": 68, "social": 48, "src": "Arab Barometer IX + DataReportal 2024"},
-    "SAU": {"trust": 55, "tv": 58, "online": 88, "social": 62, "src": "Arab Barometer IX + DataReportal 2024"},
-    "IRQ": {"trust": 38, "tv": 65, "online": 62, "social": 50, "src": "Arab Barometer IX + DataReportal 2024"},
-    "YEM": {"trust": 40, "tv": 55, "online": 30, "social": 28, "src": "Arab Barometer IX + DataReportal 2024"},
-    "DZA": {"trust": 48, "tv": 65, "online": 60, "social": 42, "src": "Arab Barometer IX + DataReportal 2024"},
-    # ---- Asian Barometer Wave 6 + DataReportal 2024 (Asia) ----
-    "PAK": {"trust": 42, "tv": 70, "online": 58, "social": 42, "src": "Asian Barometer W6 + DataReportal 2024"},
-    "BGD": {"trust": 50, "tv": 65, "online": 55, "social": 40, "src": "Asian Barometer W6 + DataReportal 2024"},
-    "MMR": {"trust": 35, "tv": 45, "online": 55, "social": 48, "src": "DataReportal 2024"},
-    "NPL": {"trust": 48, "tv": 52, "online": 48, "social": 38, "src": "Asian Barometer W6 + DataReportal 2024"},
-    # ---- Latinobarometro 2024 + DataReportal (Latin America) ----
-    "VEN": {"trust": 30, "tv": 48, "online": 65, "social": 50, "src": "Latinobarometro 2024 + DataReportal"},
-    # ---- World Values Survey Wave 7 + DataReportal (rest) ----
-    "CHN": {"trust": 68, "tv": 55, "online": 82, "social": 48, "src": "WVS Wave 7 + DataReportal 2024"},
-    "RUS": {"trust": 29, "tv": 65, "online": 72, "social": 38, "src": "WVS Wave 7 + DataReportal 2024"},
-    "VNM": {"trust": 65, "tv": 60, "online": 78, "social": 55, "src": "WVS Wave 7 + DataReportal 2024"},
-    "IRN": {"trust": 35, "tv": 62, "online": 70, "social": 52, "src": "WVS Wave 7 + DataReportal 2024"},
-    "AFG": {"trust": 42, "tv": 55, "online": 30, "social": 25, "src": "Asia Foundation + DataReportal 2024"},
-    "UKR": {"trust": 34, "tv": 55, "online": 72, "social": 45, "src": "Internews/EBU + DataReportal 2024"},
+    # ---- Arab Barometer Wave VIII (2023-2024), weighted from real microdata ----
+    # Wave VIII is the only Arab Barometer edition with public data (Wave IX's
+    # fieldwork runs through May 2026; nothing is released yet). Q421 asks
+    # respondents their SINGLE primary source for breaking news — a different
+    # question from the multi-select "used weekly" figures elsewhere in this
+    # table, so it is not directly comparable across countries. No trust-in-media
+    # question exists anywhere in Wave VIII's questionnaire, so "trust" is None.
+    "IRQ": {"trust": None, "tv": 26.7, "online": None, "social": 44.4, "radio": 1.2,
+            "src": "Arab Barometer Wave VIII (2023-2024) microdata",
+            "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
+    # 2026-07-22: EGY, SAU, YEM, DZA, PAK, BGD, MMR, NPL, VEN, CHN, RUS, VNM,
+    # IRN, AFG, UKR were REMOVED here. They carried source labels like "Arab
+    # Barometer IX + DataReportal 2024" and "WVS Wave 7 + DataReportal 2024"
+    # that do not hold up: the cited wave was either not yet publicly released
+    # (Arab Barometer IX) or DataReportal does not measure trust/news-source
+    # mix at all (it never has). No commit or note documents where these
+    # numbers actually came from. Treat them as unverified, not as a "close
+    # enough" estimate — restore only with a real, checkable source.
 }
 
 
@@ -953,13 +953,21 @@ def build_country(
             values["news_survey_note"] = ("Survey sample is online and mainly English-speaking/urban — "
                                           "not nationally representative; figures skew younger and more connected "
                                           "(per DNR 2026 methodology).")
+        elif nc.get("note"):
+            values["news_survey_note"] = nc["note"]
 
     # Radio (Afrobarometer R9 microdata — independent of the dicts above,
     # because DNR reports radio only per-brand, not as a single reach figure)
+    radio_source_label = None
     radio = AFRO_RADIO_2023.get(iso3)
     if radio is not None:
         values["news_radio_pct"] = radio
+        radio_source_label = "Afrobarometer Round 9 (2023)"
         sources["news_radio"] = "Afrobarometer Round 9 (2023), computed from weighted microdata — https://www.afrobarometer.org/data/"
+    elif nc and nc.get("radio") is not None:
+        values["news_radio_pct"] = nc["radio"]
+        radio_source_label = nc["src"]
+        sources["news_radio"] = nc["src"]
 
     # Median age (UN DESA WPP 2024)
     ma = WPP_MEDIAN_AGE_2025.get(iso3)
@@ -1056,7 +1064,7 @@ def build_country(
             "online_as_news_source_pct": values.get("news_online_pct"),
             "social_as_news_source_pct": values.get("news_social_pct"),
             "radio_as_news_source_pct": values.get("news_radio_pct"),
-            "radio_source": "Afrobarometer Round 9 (2023)" if values.get("news_radio_pct") is not None else None,
+            "radio_source": radio_source_label,
             "survey_note": values.get("news_survey_note"),
             "source": nc["src"] if nc else None,
         },
@@ -1133,11 +1141,7 @@ def main() -> int:
             "Reuters Institute Digital News Report 2026 (46 markets; non-representative samples flagged for IND/KEN/NGA/ZAF/MAR)",
             "Afrobarometer Round 9 microdata (news sources incl. radio, 35-39 African countries, weighted)",
             "DataReportal 2024 (smartphone penetration estimates, 50 countries)",
-            "Arab Barometer Wave IX (6 MENA countries — compiled estimates pending microdata registration)",
-            "Asian Barometer Wave 6 (4 Asian countries — compiled estimates pending microdata registration)",
-            "Latinobarometro 2024 (1 country — compiled estimate pending microdata registration)",
-            "World Values Survey Wave 7 (4 countries — compiled estimates pending microdata registration)",
-            "Other: Asia Foundation, Internews/EBU (2 countries)",
+            "Arab Barometer Wave VIII (Iraq — real weighted microdata, 2,408 respondents)",
             "Trend engine: Wikimedia Pageviews API (CC0) + GDELT 2.0 (daily, 167 topics, 22 languages)",
             "CIA World Factbook, Broadcast media entries (public domain, auto-ingested weekly via the factbook.json mirror)",
             "WPP Media 'This Year, Next Year' Dec 2025 + Dentsu Global Ad Spend Forecasts Dec 2025 (regional ad-market signals, annual hand-update in data/ad_market.json)",

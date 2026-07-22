@@ -732,7 +732,7 @@ function facts(iso) {
     iso, name: c.name, pop: c.population, region: c.region, subregion: c.subregion,
     trust: nc.trust_in_news_pct, tv: nc.tv_as_news_source_pct,
     online: nc.online_as_news_source_pct, social: nc.social_as_news_source_pct,
-    radio: nc.radio_as_news_source_pct, surveyNote: nc.survey_note || null,
+    radio: nc.radio_as_news_source_pct, radioSource: nc.radio_source || null, surveyNote: nc.survey_note || null,
     survey: nc.source,
     internet: conn.internet_pct == null ? null : Math.round(conn.internet_pct),
     smartphone: conn.smartphone_pct, mci: conn.mobile_connectivity_index,
@@ -760,7 +760,7 @@ function facts(iso) {
 
 function addCountryEvidence(f, ev) {
   const bits = [`News use & trust: ${f.survey || "no survey integrated yet"}`];
-  if (f.radio != null) bits.push("radio reach: Afrobarometer Round 9 microdata (2023, weighted)");
+  if (f.radio != null) bits.push(`radio reach: ${f.radioSource === "Afrobarometer Round 9 (2023)" ? "Afrobarometer Round 9 microdata (2023, weighted)" : (f.radioSource || "source unspecified")}`);
   bits.push("press freedom: RSF World Press Freedom Index 2025");
   bits.push("political & internet freedom: Freedom House 2026 official data files");
   bits.push("connectivity & demographics: World Bank CC BY 4.0 (ICT compiled by ITU; literacy by UNESCO UIS)");
@@ -911,8 +911,10 @@ function composeCountryBrief(f, ev, ents) {
     lines.push(`**${f.name} — media profile.**`);
   }
   lines.push("");
-  if (f.radio != null)
-    lines.push(`- Radio as a weekly news source: ${fmt(f.radio)} *(Afrobarometer Round 9 — the leading channel in much of Africa)*`);
+  if (f.radio != null) {
+    const cap = f.radioSource === "Afrobarometer Round 9 (2023)" ? "Afrobarometer Round 9 — the leading channel in much of Africa" : (f.radioSource || "source unspecified");
+    lines.push(`- Radio as a weekly news source: ${fmt(f.radio)} *(${cap})*`);
+  }
   if (f.tv == null && f.online == null && f.social == null && f.radio == null) {
     lines.push(`- The Atlas has no news-source survey for ${f.name} yet (not covered by the Reuters Institute DNR or the regional barometers integrated so far) — the figures below are connectivity, freedom, and demographics.`);
   } else {
@@ -1287,7 +1289,7 @@ function formatFeasibility(f) {
     rows.push(`**Online/streamed video:** ${vid}${tvNote} *(internet ${fmt(net)}${phone != null ? `, smartphones ${fmt(phone)}` : ""})*`);
   }
   if (f.radio != null)
-    rows.push(`**Audio/radio:** ${f.radio >= 60 ? "strong daily habit" : f.radio >= 35 ? "established habit" : "modest reach"} — radio reaches ${fmt(f.radio)} weekly *(Afrobarometer R9)*; audio formats ride an existing behavior`);
+    rows.push(`**Audio/radio:** ${f.radio >= 60 ? "strong daily habit" : f.radio >= 35 ? "established habit" : "modest reach"} — radio reaches ${fmt(f.radio)} weekly *(${f.radioSource || "source unspecified"})*; audio formats ride an existing behavior`);
   else
     rows.push(`**Audio/radio:** no measured radio figure for this country — the leading radio outlets in the Where section are a proxy for the audio market`);
   if (f.literacy != null)
