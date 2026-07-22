@@ -783,12 +783,98 @@ def fetch_cldr_languages() -> dict[str, list[dict[str, Any]]]:
     return out
 
 
+# --------------------------------------------------------------------------
+# CIA World Factbook (public domain) — media-landscape narrative
+# --------------------------------------------------------------------------
+# The Factbook's "Broadcast media" entry is the best free per-country
+# DESCRIPTION of a media landscape (state vs. private TV/radio, satellite and
+# cable reach). Ingested from the factbook.json mirror
+# (github.com/factbook/factbook.json), which tracks the CIA site weekly.
+# CIA Factbook content is a US-government work: public domain.
+#
+# The mirror keys files by GEC (FIPS) code, not ISO3 — the public-domain
+# datasets/country-codes CSV provides the FIPS-to-ISO3 join.
+
+FACTBOOK_TREE_URL = ("https://api.github.com/repos/factbook/factbook.json/"
+                     "git/trees/master?recursive=1")
+FACTBOOK_RAW_BASE = "https://raw.githubusercontent.com/factbook/factbook.json/master/"
+COUNTRY_CODES_CSV_URL = ("https://raw.githubusercontent.com/datasets/"
+                         "country-codes/main/data/country-codes.csv")
+
+
+def _fetch_text(url: str, timeout: int = 30) -> str:
+    req = Request(url, headers={
+        "User-Agent": "UN-Media-Consumption-Atlas/1.0 (+github actions)",
+    })
+    with urlopen(req, timeout=timeout, context=_CTX) as resp:
+        return resp.read().decode("utf-8")
+
+
+def fetch_factbook_media(wanted_iso3: set[str]) -> dict[str, str]:
+    """ISO3 → 'Broadcast media' text for every wanted country the mirror has.
+
+    Returns {} on an infrastructure failure (tree or codes fetch) so the
+    refresh keeps previous values instead of failing — the same
+    degrade-gracefully rule the CLDR fetch follows. A single country's
+    failure is silently skipped (its previous value survives via
+    build_country's prev fallback).
+    """
+    import csv as _csv
+    from io import StringIO
+
+    try:
+        fips_to_iso3: dict[str, str] = {}
+        for r in _csv.DictReader(StringIO(_fetch_text(COUNTRY_CODES_CSV_URL))):
+            fips = (r.get("FIPS") or "").strip()
+            iso3 = (r.get("ISO3166-1-Alpha-3") or "").strip()
+            if fips and iso3:
+                fips_to_iso3[fips.lower()] = iso3
+
+        tree = fetch_json(FACTBOOK_TREE_URL, max_retries=2, timeout=30)
+        paths: dict[str, str] = {}
+        for node in tree.get("tree", []):
+            p = node.get("path", "")
+            if p.endswith(".json") and "/" in p and not p.startswith("meta"):
+                paths[p.rsplit("/", 1)[1][:-5]] = p
+    except Exception as exc:
+        print(f"  ! Factbook index fetch failed ({exc}) — keeping previous media-landscape notes")
+        return {}
+
+    out: dict[str, str] = {}
+    fetched = 0
+    for gec, path in sorted(paths.items()):
+        iso3 = fips_to_iso3.get(gec)
+        if iso3 not in wanted_iso3:
+            continue
+        try:
+            data = fetch_json(FACTBOOK_RAW_BASE + path, max_retries=2, timeout=20)
+            text = (((data.get("Communications") or {}).get("Broadcast media") or {})
+                    .get("text") or "").strip()
+            if text:
+                # Keep it brief-friendly: cap ~700 chars on a clause boundary.
+                if len(text) > 700:
+                    cut = text[:700]
+                    boundary = max(cut.rfind("; "), cut.rfind(". "))
+                    if boundary > 200:
+                        cut = cut[:boundary]
+                    text = cut.rstrip(";. ") + " …"
+                out[iso3] = text
+        except Exception:
+            pass          # single-country miss — previous value survives
+        fetched += 1
+        if fetched % 40 == 0:
+            print(f"  · Factbook: {fetched} files checked, {len(out)} with media text")
+        time.sleep(0.15)  # polite pacing for raw.githubusercontent
+    return out
+
+
 def build_country(
     iso3: str,
     static_meta: dict[str, Any],
     prev: dict[str, Any] | None,
     wb_data: dict[str, dict[str, tuple[float, int]]],
     cldr_langs: dict[str, list[dict[str, Any]]] | None = None,
+    factbook_media: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     iso2 = ISO3_TO_ISO2.get(iso3, iso3)
     print(f"→ {iso3} ({static_meta.get('name', iso3)})")
@@ -899,6 +985,20 @@ def build_country(
         if prev_src:
             sources["languages_detail"] = prev_src
 
+    # Media-landscape narrative (CIA World Factbook, public domain)
+    landscape_note = (factbook_media or {}).get(iso3)
+    if landscape_note:
+        sources["media_landscape"] = (
+            "CIA World Factbook, Broadcast media (public domain; auto-ingested weekly "
+            "via the factbook.json mirror) — https://www.cia.gov/the-world-factbook/"
+        )
+    elif prev:
+        landscape_note = (prev.get("media") or {}).get("landscape_note")
+        if landscape_note:
+            prev_src = (prev.get("sources") or {}).get("media_landscape")
+            if prev_src:
+                sources["media_landscape"] = prev_src
+
     # Assemble the country object
     country: dict[str, Any] = {
         **static_meta,
@@ -930,6 +1030,8 @@ def build_country(
         "languages_detail": languages_detail or None,
         "media": {
             **static_meta.get("media", {}),
+            "landscape_note": landscape_note,
+            "landscape_note_source": "CIA World Factbook" if landscape_note else None,
             "press_freedom_rank": values.get("press_freedom_rank"),
             "press_freedom_score": values.get("press_freedom_score"),
             "press_freedom_source": "RSF 2025",
@@ -1003,9 +1105,13 @@ def main() -> int:
     cldr_langs = fetch_cldr_languages()
     print(f"  · language shares for {len(cldr_langs)} territories")
 
+    print("Fetching CIA World Factbook media-landscape notes (~200 small requests)...")
+    factbook_media = fetch_factbook_media(set(static.keys()))
+    print(f"  · Broadcast-media text for {len(factbook_media)} countries")
+
     result: dict[str, Any] = {}
     for iso3, meta in sorted(static.items()):
-        result[iso3] = build_country(iso3, meta, previous.get(iso3), wb_data, cldr_langs)
+        result[iso3] = build_country(iso3, meta, previous.get(iso3), wb_data, cldr_langs, factbook_media)
 
     world_pop_row = wb_data.get("population", {}).get("WLD")
     result["_meta"] = {
@@ -1033,7 +1139,9 @@ def main() -> int:
             "World Values Survey Wave 7 (4 countries — compiled estimates pending microdata registration)",
             "Other: Asia Foundation, Internews/EBU (2 countries)",
             "Trend engine: Wikimedia Pageviews API (CC0) + GDELT 2.0 (daily, 167 topics, 22 languages)",
-            "Curated country profiles cross-referenced with the CIA World Factbook and national sources",
+            "CIA World Factbook, Broadcast media entries (public domain, auto-ingested weekly via the factbook.json mirror)",
+            "WPP Media 'This Year, Next Year' Dec 2025 + Dentsu Global Ad Spend Forecasts Dec 2025 (regional ad-market signals, annual hand-update in data/ad_market.json)",
+            "Curated country profiles cross-referenced with national sources",
             "Reference tools (linked, not ingested): UNESCO World Trends in Freedom of Expression, Pew Research Center, Edison Research, OECD Data, Meta Ad Library, Google Ads Transparency Center",
         ],
     }

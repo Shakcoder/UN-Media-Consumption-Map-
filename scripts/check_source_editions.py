@@ -44,6 +44,7 @@ INTEGRATED = {
     "gsma": 2024,         # GSMA Mobile Connectivity Index
     "afrobarometer": 9,   # Afrobarometer survey round (not a year)
     "wpp": 2024,          # UN DESA World Population Prospects (biennial)
+    "ad_market": 2025,    # WPP Media TYNY / Dentsu year-end ad forecasts (December editions)
 }
 
 SOURCES = [
@@ -141,6 +142,25 @@ SOURCES = [
             "3. Update the median-age table/year labels in scripts/refresh_data.py.\n"
             "4. Bump the 'wpp' year in scripts/check_source_editions.py.\n"
             "5. Upload via GitHub → Add file → Upload files (one batch)."
+        ),
+    },
+    {
+        "key": "ad_market",
+        "name": "Ad-market forecasts (WPP Media TYNY + Dentsu, December editions)",
+        # Wikipedia is not reliable here; probe the trade press index instead.
+        # Both publishers put the year in their year-end release headlines.
+        "check_url": "https://www.dentsu.com/news-releases",
+        "fallback_url": "https://www.wppmedia.com/",
+        "pattern": r"[Aa]d [Ss]pend [Ff]orecasts?[^0-9]{0,40}(20\d\d)|This Year,? Next Year[^0-9]{0,40}(20\d\d)",
+        "instructions": (
+            "1. Each December, WPP Media ('This Year, Next Year') and Dentsu ('Global Ad Spend\n"
+            "   Forecasts') publish free year-end summaries. Download both PDFs/press pages.\n"
+            "2. Open data/ad_market.json — its _meta.how_to_update field walks through every step.\n"
+            "3. Replace the figures with the new edition's numbers (keep the same field names),\n"
+            "   update _meta.sources edition labels and the 'updated' date.\n"
+            "4. Bump the 'ad_market' year in scripts/check_source_editions.py.\n"
+            "5. Commit data/ad_market.json + scripts/check_source_editions.py in one batch.\n"
+            "   No other file changes — the analyst reads ad_market.json directly."
         ),
     },
 ]

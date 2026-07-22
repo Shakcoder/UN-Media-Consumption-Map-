@@ -31,22 +31,26 @@ const DATA_BASE = "data";
 // ---------------------------------------------------------------------------
 // Data loading
 // ---------------------------------------------------------------------------
-let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null;
+let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null, AD_MARKET = null;
 let NAME_TO_ISO = {};   // every recognizable name/alias/demonym -> ISO3
 let GENERATED = new Set();  // machine-generated demonyms: exact-match only, never fuzzy targets
 
 export async function initEngine() {
   if (COUNTRIES) return true;
-  const [cRes, tRes, gRes] = await Promise.all([
+  const [cRes, tRes, gRes, aRes] = await Promise.all([
     fetch(`${DATA_BASE}/countries.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/trends/topic_intelligence.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/topics.json`, { cache: "no-cache" }),
+    fetch(`${DATA_BASE}/ad_market.json`, { cache: "no-cache" }).catch(() => null),
   ]);
   if (!cRes.ok) throw new Error("countries.json failed to load (" + cRes.status + ")");
   COUNTRIES = await cRes.json();
   META = COUNTRIES._meta || null;
   delete COUNTRIES._meta;
   TRENDS = tRes.ok ? await tRes.json() : null;
+  // Ad-market signals (industry estimates, annual hand-update) — optional:
+  // the analyst degrades gracefully when the file is absent.
+  AD_MARKET = (aRes && aRes.ok) ? await aRes.json().catch(() => null) : null;
   // full registry: all tracked topics, including ones currently below the
   // trend-measurement floor (they match questions and report honestly)
   if (gRes.ok) {
@@ -401,6 +405,9 @@ const ATTRIBUTES = {
   finaccount: { label: "Financial account ownership", unit: "%", get: f => f.finAccount,
                 words: ["financial account", "bank account", "mobile money", "financial inclusion", "digital payments"],
                 source: "World Bank Global Findex" },
+  english:    { label: "English speakers", unit: "%", get: f => f.englishPct,
+                words: ["english", "english speakers", "english speaking", "english-speaking", "anglophone"],
+                source: "Unicode CLDR territory-language data (speaker capability — shares overlap with other languages)" },
 };
 
 const PLATFORMS = ["whatsapp", "facebook", "tiktok", "instagram", "youtube", "telegram", "x", "twitter", "wechat", "snapchat", "viber", "line"];
@@ -578,6 +585,15 @@ export function detectEntities(question) {
   if (found.attributes.includes("medianage") && !/median age|average age|how old/.test(q)) {
     found.attributes = found.attributes.filter(a => a !== "medianage");
   }
+  // "english" is both the GBR demonym and the language attribute. When the
+  // question is about the LANGUAGE ("produce English content for Nigeria"),
+  // the demonym-derived GBR match is spurious — drop it unless the UK is
+  // actually named. Without this, that question becomes a Nigeria-vs-UK
+  // comparison instead of a language recommendation.
+  if (found.attributes.includes("english") &&
+      !/\b(uk|britain|united kingdom|england|british)\b/.test(q)) {
+    found.countries = found.countries.filter(iso => iso !== "GBR");
+  }
 
   // --- platforms ---
   for (const p of PLATFORMS) {
@@ -687,7 +703,7 @@ function parseSource(s) {
 function countryLinks(iso) {
   const c = COUNTRIES[iso];
   if (!c || !c.sources) return [];
-  const pick = ["news_consumption", "news_radio", "press_freedom_rank", "political_freedom", "internet_freedom", "internet_pct", "median_age"];
+  const pick = ["news_consumption", "news_radio", "press_freedom_rank", "political_freedom", "internet_freedom", "internet_pct", "median_age", "media_landscape", "languages_detail"];
   const links = [];
   const seen = new Set();
   for (const k of pick) {
@@ -727,6 +743,14 @@ function facts(iso) {
     finAccount: conn.financial_account_pct,
     outlets: c.media || {}, languages: c.languages || [],
     languagesDetail: c.languages_detail || [],
+    // CLDR speaker-capability share for English (overlaps with other languages
+    // by design — invariant #6: language shares are capability, not additive)
+    englishPct: (() => {
+      const e = (c.languages_detail || []).find(l => l.code === "en");
+      return e ? e.pct : null;
+    })(),
+    // CIA World Factbook "Broadcast media" narrative (public domain, weekly)
+    landscapeNote: (c.media || {}).landscape_note || null,
     sourcesMap: c.sources || {}, retrievedOn: c.retrieved_on || null,
     rising: tr ? (tr.rising_topics || []) : [],
     distinctive: tr ? (tr.distinctive_topics || []) : [],
@@ -742,6 +766,7 @@ function addCountryEvidence(f, ev) {
   bits.push("connectivity & demographics: World Bank CC BY 4.0 (ICT compiled by ITU; literacy by UNESCO UIS)");
   if (f.medianAge != null) bits.push("median age: UN DESA WPP 2024");
   if (f.mci != null) bits.push("mobile connectivity: GSMA MCI 2024");
+  if (f.landscapeNote) bits.push("media landscape: CIA World Factbook (public domain, weekly)");
   if (TRENDS) bits.push(`live trends: Wikimedia Pageviews + GDELT, daily engine as of ${TRENDS.generated} (language-weight attribution — approximation)`);
   return ev.add(`${f.name} — country profile`, "Atlas record. " + bits.join("; ") + ".", countryLinks(f.iso));
 }
@@ -750,6 +775,34 @@ function addTrendEvidence(name, ev) {
   return ev.add(`${name} — live trends`,
     `Daily trend engine as of ${TRENDS.generated}. Demand = Wikipedia reading patterns (what people look up); coverage = GDELT news monitoring (what media publish). Country attribution via language-population weights — a documented approximation.`,
     TREND_LINKS);
+}
+
+// ---------------------------------------------------------------------------
+// Ad-market signal (data/ad_market.json — industry forecasts, annual update).
+// Where commercial media money flows is a market-opportunity signal; these
+// are directional industry estimates, never presented as surveys.
+// ---------------------------------------------------------------------------
+const AD_MARKET_LINKS = [
+  { label: "WPP Media — This Year, Next Year", url: "https://www.wppmedia.com/" },
+  { label: "Dentsu — Global Ad Spend Forecasts", url: "https://www.dentsu.com/" },
+];
+
+function adMarketSignal(f) {
+  if (!AD_MARKET) return null;
+  const m = (AD_MARKET.markets || {})[f.iso];
+  if (!m) return null;
+  const label = m.source === "wpp_tyny"
+    ? "WPP Media 'This Year, Next Year', Dec 2025"
+    : "Dentsu Global Ad Spend Forecasts, Dec 2025";
+  const bits = [];
+  if (m.ad_spend_2026_usd_bn != null) bits.push(`US$${m.ad_spend_2026_usd_bn}B forecast total ad spend in 2026`);
+  if (m.growth_2026_pct != null) bits.push(`${m.growth_2026_pct >= 0 ? "+" : ""}${m.growth_2026_pct}% forecast ad-spend growth in 2026`);
+  if (!bits.length) return null;
+  return {
+    text: `Commercial ad market: ${bits.join("; ")}${m.note ? ` — ${m.note}` : ""} (${label}). Rising commercial investment signals where paid attention is flowing — a directional market-opportunity indicator. [industry estimate — directional, not a survey]`,
+    evTitle: `${f.name} — ad-market signal`,
+    evDetail: `Industry forecast, hand-updated annually from the free year-end reports (${label}). ${AD_MARKET._meta ? AD_MARKET._meta.method_note : ""}`,
+  };
 }
 
 const fmt = (v, suffix = "%") => v == null ? "no data" : `${Math.round(v * 10) / 10}${suffix}`;
@@ -1579,6 +1632,14 @@ function composeConsultingBrief(f, ev, ents, qNorm) {
     const vel = Math.round(t.global_velocity * 100);
     ins.push(`Attention to ${t.label_en} is ${t.momentum} globally (${vel > 0 ? "+" : ""}${vel}% against its 30-day baseline) — ${t.momentum === "rising" ? "the window is open now" : "this content will need its own news hook rather than riding existing attention"}. [measured, ~120-day window]`);
   }
+  if (f.englishPct != null && /\benglish\b/.test(qNorm))
+    // asked-about explicitly — must survive the 5-insight cap, so it leads
+    ins.unshift(`English reaches about ${Math.round(f.englishPct)}% of ${f.name} — a CLDR speaker-capability share, so it overlaps with other languages rather than adding to them. [measured]`);
+  const adm = adMarketSignal(f);
+  if (adm) {
+    ins.push(adm.text);
+    ev.add(adm.evTitle, adm.evDetail, AD_MARKET_LINKS);
+  }
   // a mandatory section must never render as a bare header — in a data-poor
   // market the absence of evidence IS the insight
   if (!ins.length) {
@@ -1598,6 +1659,12 @@ function composeConsultingBrief(f, ev, ents, qNorm) {
   const reachWord = /estimate|datareportal|compiled|other:/i.test(String(f.survey || "")) ? "estimated" : "measured";
   const netClause = f.internet != null ? `${fmt(f.internet)} internet penetration` : `no internet-penetration figure on record`;
   L.push(`**What's happening:** ${f.name} has ${netClause}${f.smartphone != null ? ` and ${fmt(f.smartphone)} smartphone adoption` : ""}, with ${bySize.length ? `${reachWord} weekly news reach of ${bySize.map(c => `${c.name} ${fmt(c.measured)}`).join(", ")}` : "no integrated news-consumption survey"}. ${f.urban != null ? `${fmt(f.urban)} of people live in urban areas.` : ""} ${f.internet != null || bySize.length ? "[measured]" : "[unknown — these fields are empty for this territory]"}`);
+  if (f.landscapeNote) {
+    let note = f.landscapeNote;
+    if (note.length > 340) note = note.slice(0, 340).replace(/[;,.\s]+\S*$/, "") + " …";
+    L.push("");
+    L.push(`**Media landscape:** ${note} *(CIA World Factbook)* [measured]`);
+  }
   L.push("");
   L.push(`**Why it matters for this decision:** ${objective.rationale} [inferred]`);
   if (channels.length && lead) {
@@ -1657,6 +1724,8 @@ function composeConsultingBrief(f, ev, ents, qNorm) {
   // ---- EVIDENCE USED ----
   L.push(`### Evidence used`);
   L.push(`- ${f.name} country record — ${f.survey ? `news consumption: ${f.survey}` : "no news survey integrated"}; connectivity and demographics: World Bank/ITU; press freedom: RSF 2025; political and internet freedom: Freedom House; languages: Unicode CLDR${f.retrievedOn ? ` *(record refreshed ${f.retrievedOn})*` : ""}`);
+  if (f.landscapeNote) L.push(`- Media landscape narrative — CIA World Factbook, Broadcast media (public domain; auto-refreshed weekly)`);
+  if (adm) L.push(`- Ad-market signal — WPP Media / Dentsu December 2025 industry forecasts (annual hand-update; directional, not a survey)`);
   if (t) L.push(`- ${t.label_en} attention trend — daily engine as of ${TRENDS.generated} (Wikipedia reading patterns; country attribution by language weights, a documented approximation)`);
   L.push(`- Full source links in "View sources" below.`);
   L.push("");
