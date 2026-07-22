@@ -54,6 +54,16 @@ jobs:
       - name: Run refresh script
         run: |
           python scripts/refresh_data.py
+
+      - name: Fetch Statcounter platform web shares (non-fatal)
+        # Monthly data; running weekly just keeps the 3-month window fresh.
+        # A Statcounter outage must never block the main country refresh,
+        # hence the || true — the previous JSON simply stays in place.
+        run: |
+          python scripts/fetch_statcounter.py || echo "::warning::Statcounter fetch failed — keeping previous platform_web_shares.json"
+
+      - name: Post-run diagnostic
+        run: |
           echo ""
           echo "=================================================="
           echo "=== After-script diagnostic: contents of data/ ==="
@@ -79,6 +89,7 @@ jobs:
           # pull --rebase to replay on top of any concurrent trend-engine
           # commit, then push.
           git add data/countries.json
+          git add data/platform_web_shares.json 2>/dev/null || true
           echo "=== git status ==="
           git status
           echo "=== git diff --cached summary ==="
