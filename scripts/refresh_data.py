@@ -598,6 +598,14 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     "PSE": {"trust": None, "tv": 16.5, "online": None, "social": 70.1, "radio": 4.1,
             "src": "Arab Barometer Wave VIII (2023-2024) microdata",
             "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
+    # ---- Arab Barometer Wave VII (2021-2022) — gap countries only ----
+    # Computed by scripts/compute_arabbarometer_w7.py. Algeria is W7's one
+    # true gap-fill: Libya already has WVS Wave 7 (2022) data with a richer
+    # construct (weekly multi-select + trust), so it stays on WVS. Same Q421
+    # primary-source construct and caveats as Wave VIII.
+    "DZA": {"trust": None, "tv": 47.1, "online": None, "social": 33.3, "radio": 5.1,
+            "src": "Arab Barometer Wave VII (2021-2022) microdata",
+            "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
     # ---- World Values Survey Wave 7 (2017-2022), weighted microdata ----
     # Computed by scripts/compute_wvs_news.py from the registered download
     # (raw .sav NOT in this repo — WVSA prohibits redistribution). Only
@@ -1350,6 +1358,7 @@ def main() -> int:
             "Afrobarometer Round 9 microdata (news sources incl. radio, 35-39 African countries, weighted)",
             "DataReportal 2024 (smartphone penetration estimates, 50 countries)",
             "Arab Barometer Wave VIII (Iraq, Kuwait, Palestine — real weighted microdata, computed by scripts/compute_arabbarometer_w8.py)",
+            "Arab Barometer Wave VII, 2021-2022 (Algeria — real weighted microdata, computed by scripts/compute_arabbarometer_w7.py)",
             "World Values Survey Wave 7 v6.0 (28 countries — weighted microdata computed by scripts/compute_wvs_news.py; doi:10.14281/18241.24; constructs differ from DNR and are labeled per country)",
             "Latinobarometro 2024 (17 countries — measured social-platform use, weighted microdata computed by scripts/compute_latinobarometro.py; platform use is a separate construct from news consumption)",
             "Eurobarometer 102.2, Oct-Nov 2024 (12 countries — weekly media use, weighted microdata computed by scripts/compute_eurobarometer.py; GESIS ZA8905, doi:10.4232/1.14726)",

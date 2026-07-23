@@ -43,6 +43,7 @@ NEWS_SOURCE_WHITELIST = [
     r"^Reuters Institute DNR 2026$",
     r"^Afrobarometer Round 9 \(2023\)$",
     r"^Arab Barometer Wave VIII \(2023-2024\) microdata$",
+    r"^Arab Barometer Wave VII \(2021-2022\) microdata$",
     r"^World Values Survey Wave 7 \(20(1[7-9]|2[0-3])\), weighted microdata \(n=[\d,]+\)$",
     r"^Eurobarometer 102\.2 \(Oct-Nov 2024\), weighted microdata \(n=[\d,]+\)$",
     # NOTE: no "Estimate" labels are whitelisted, deliberately. An estimate
@@ -57,6 +58,7 @@ PLATFORM_USE_SOURCE_WHITELIST = [
 RADIO_SOURCE_WHITELIST = [
     r"^Afrobarometer Round 9 \(2023\)$",
     r"^Arab Barometer Wave VIII \(2023-2024\) microdata$",
+    r"^Arab Barometer Wave VII \(2021-2022\) microdata$",
     r"^World Values Survey Wave 7 \(20(1[7-9]|2[0-3])\), weighted microdata \(n=[\d,]+\)$",
     r"^Eurobarometer 102\.2 \(Oct-Nov 2024\), weighted microdata \(n=[\d,]+\)$",
 ]
@@ -66,7 +68,35 @@ def pct_ok(v, lo=0.0, hi=100.0):
     return v is None or (isinstance(v, (int, float)) and lo <= v <= hi)
 
 
+def check_duplicate_dict_keys() -> None:
+    """Guard against silent dict-literal shadowing in refresh_data.py.
+
+    Python allows duplicate keys in a dict literal — the later one silently
+    wins. In a 200-entry hand-maintained table that means a country can be
+    invisibly overwritten (nearly happened with Libya, 2026-07-23: an Arab
+    Barometer W7 entry was added for a country that already had a WVS entry
+    later in the same dict). This walks refresh_data.py's AST and errors on
+    any dict literal with a repeated constant key.
+    """
+    import ast as _ast
+    src = (ROOT / "scripts" / "refresh_data.py").read_text(encoding="utf-8")
+    tree = _ast.parse(src)
+    for node in _ast.walk(tree):
+        if isinstance(node, _ast.Dict):
+            seen: dict[object, int] = {}
+            for k in node.keys:
+                if isinstance(k, _ast.Constant):
+                    if k.value in seen:
+                        ERRORS.append(
+                            f"refresh_data.py: duplicate dict key {k.value!r} "
+                            f"(lines {seen[k.value]} and {k.lineno}) — the later "
+                            f"entry silently overwrites the earlier one")
+                    else:
+                        seen[k.value] = k.lineno
+
+
 def main() -> int:
+    check_duplicate_dict_keys()
     d = json.loads((ROOT / "data" / "countries.json").read_text(encoding="utf-8"))
     countries = {k: v for k, v in d.items() if not k.startswith("_")}
 
