@@ -684,6 +684,50 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     "VNM": {"trust": 80.6, "tv": 89.0, "online": 75.2, "social": 78.2, "radio": 11.8,
             "src": "World Values Survey Wave 7 (2020), weighted microdata (n=1,200)",
             "note": "WVS constructs: use = daily or weekly (vs DNR's 'past week'); trust = confidence in the press as an institution, not DNR's trust-in-news"},
+    # ---- Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata ----
+    # Computed by scripts/compute_eurobarometer.py from the registered GESIS
+    # download (ZA8905; raw .sav stays local). Only countries with no other
+    # survey are listed — EU members covered by Reuters DNR 2026 are skipped,
+    # as are non-UN samples (Kosovo, Turkish Cypriot Community). Constructs
+    # differ from DNR (general media use vs news use) — see each entry's note.
+    # Citation: European Commission (2026), Eurobarometer 102.2, GESIS ZA8905
+    # v1.0.0, doi:10.4232/1.14726.
+    "ALB": {"trust": None, "tv": 94.5, "online": 71.0, "social": 77.5, "radio": 14.4,
+            "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,009)",
+            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+    "BIH": {"trust": None, "tv": 97.5, "online": 69.8, "social": 75.0, "radio": 52.7,
+            "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,000)",
+            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+    "EST": {"trust": None, "tv": 88.0, "online": 79.2, "social": 75.6, "radio": 74.6,
+            "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,001)",
+            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+    "GEO": {"trust": None, "tv": 82.8, "online": 71.0, "social": 78.4, "radio": 11.8,
+            "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,007)",
+            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+    "LTU": {"trust": None, "tv": 90.2, "online": 79.1, "social": 76.0, "radio": 63.3,
+            "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,018)",
+            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+    "LUX": {"trust": None, "tv": 86.7, "online": 84.7, "social": 72.9, "radio": 71.2,
+            "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=512)",
+            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+    "LVA": {"trust": None, "tv": 81.5, "online": 79.0, "social": 77.3, "radio": 64.3,
+            "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,005)",
+            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+    "MDA": {"trust": None, "tv": 74.4, "online": 69.9, "social": 76.8, "radio": 29.0,
+            "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,014)",
+            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+    "MKD": {"trust": None, "tv": 96.2, "online": 65.3, "social": 80.1, "radio": 39.1,
+            "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,014)",
+            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+    "MLT": {"trust": None, "tv": 92.7, "online": 78.0, "social": 80.2, "radio": 62.3,
+            "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=500)",
+            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+    "MNE": {"trust": None, "tv": 94.8, "online": 72.7, "social": 75.0, "radio": 60.3,
+            "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=519)",
+            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+    "SVN": {"trust": None, "tv": 86.0, "online": 75.8, "social": 68.0, "radio": 79.9,
+            "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,004)",
+            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     # 2026-07-22: EGY, SAU, YEM, DZA, PAK, BGD, MMR, NPL, VEN, CHN, RUS, VNM,
     # IRN, AFG, UKR were REMOVED here. They carried source labels like "Arab
     # Barometer IX + DataReportal 2024" and "WVS Wave 7 + DataReportal 2024"
@@ -1302,6 +1346,7 @@ def main() -> int:
             "Arab Barometer Wave VIII (Iraq — real weighted microdata, 2,408 respondents)",
             "World Values Survey Wave 7 v6.0 (28 countries — weighted microdata computed by scripts/compute_wvs_news.py; doi:10.14281/18241.24; constructs differ from DNR and are labeled per country)",
             "Latinobarometro 2024 (17 countries — measured social-platform use, weighted microdata computed by scripts/compute_latinobarometro.py; platform use is a separate construct from news consumption)",
+            "Eurobarometer 102.2, Oct-Nov 2024 (12 countries — weekly media use, weighted microdata computed by scripts/compute_eurobarometer.py; GESIS ZA8905, doi:10.4232/1.14726)",
             "Trend engine: Wikimedia Pageviews API (CC0) + GDELT 2.0 (daily, 167 topics, 22 languages)",
             "CIA World Factbook, Broadcast media entries (public domain, auto-ingested weekly via the factbook.json mirror)",
             "Statcounter GlobalStats (social web-traffic referral shares, 195 countries, automated weekly, 3-month average — web-referral measure only; app-first platforms like WhatsApp/TikTok are not visible to it)",

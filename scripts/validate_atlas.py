@@ -44,6 +44,7 @@ NEWS_SOURCE_WHITELIST = [
     r"^Afrobarometer Round 9 \(2023\)$",
     r"^Arab Barometer Wave VIII \(2023-2024\) microdata$",
     r"^World Values Survey Wave 7 \(20(1[7-9]|2[0-3])\), weighted microdata \(n=[\d,]+\)$",
+    r"^Eurobarometer 102\.2 \(Oct-Nov 2024\), weighted microdata \(n=[\d,]+\)$",
     # NOTE: no "Estimate" labels are whitelisted, deliberately. An estimate
     # without a checkable source is a fabrication with a modest label — the
     # COD entry of that kind was removed 2026-07-22.
@@ -57,6 +58,7 @@ RADIO_SOURCE_WHITELIST = [
     r"^Afrobarometer Round 9 \(2023\)$",
     r"^Arab Barometer Wave VIII \(2023-2024\) microdata$",
     r"^World Values Survey Wave 7 \(20(1[7-9]|2[0-3])\), weighted microdata \(n=[\d,]+\)$",
+    r"^Eurobarometer 102\.2 \(Oct-Nov 2024\), weighted microdata \(n=[\d,]+\)$",
 ]
 
 
