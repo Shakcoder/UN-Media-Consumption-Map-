@@ -589,7 +589,13 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     # question from the multi-select "used weekly" figures elsewhere in this
     # table, so it is not directly comparable across countries. No trust-in-media
     # question exists anywhere in Wave VIII's questionnaire, so "trust" is None.
-    "IRQ": {"trust": None, "tv": 26.7, "online": None, "social": 44.4, "radio": 1.2,
+    "IRQ": {"trust": None, "tv": 27.2, "online": None, "social": 45.3, "radio": 1.3,
+            "src": "Arab Barometer Wave VIII (2023-2024) microdata",
+            "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
+    "KWT": {"trust": None, "tv": 18.2, "online": None, "social": 65.3, "radio": 1.0,
+            "src": "Arab Barometer Wave VIII (2023-2024) microdata",
+            "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
+    "PSE": {"trust": None, "tv": 16.5, "online": None, "social": 70.1, "radio": 4.1,
             "src": "Arab Barometer Wave VIII (2023-2024) microdata",
             "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
     # ---- World Values Survey Wave 7 (2017-2022), weighted microdata ----
@@ -1343,7 +1349,7 @@ def main() -> int:
             "Reuters Institute Digital News Report 2026 (46 markets; non-representative samples flagged for IND/KEN/NGA/ZAF/MAR)",
             "Afrobarometer Round 9 microdata (news sources incl. radio, 35-39 African countries, weighted)",
             "DataReportal 2024 (smartphone penetration estimates, 50 countries)",
-            "Arab Barometer Wave VIII (Iraq — real weighted microdata, 2,408 respondents)",
+            "Arab Barometer Wave VIII (Iraq, Kuwait, Palestine — real weighted microdata, computed by scripts/compute_arabbarometer_w8.py)",
             "World Values Survey Wave 7 v6.0 (28 countries — weighted microdata computed by scripts/compute_wvs_news.py; doi:10.14281/18241.24; constructs differ from DNR and are labeled per country)",
             "Latinobarometro 2024 (17 countries — measured social-platform use, weighted microdata computed by scripts/compute_latinobarometro.py; platform use is a separate construct from news consumption)",
             "Eurobarometer 102.2, Oct-Nov 2024 (12 countries — weekly media use, weighted microdata computed by scripts/compute_eurobarometer.py; GESIS ZA8905, doi:10.4232/1.14726)",

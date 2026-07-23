@@ -11953,10 +11953,10 @@
     },
     "news_consumption": {
       "trust_in_news_pct": null,
-      "tv_as_news_source_pct": 26.7,
+      "tv_as_news_source_pct": 27.2,
       "online_as_news_source_pct": null,
-      "social_as_news_source_pct": 44.4,
-      "radio_as_news_source_pct": 1.2,
+      "social_as_news_source_pct": 45.3,
+      "radio_as_news_source_pct": 1.3,
       "radio_source": "Arab Barometer Wave VIII (2023-2024) microdata",
       "survey_note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave",
       "source": "Arab Barometer Wave VIII (2023-2024) microdata"
@@ -13901,13 +13901,13 @@
     },
     "news_consumption": {
       "trust_in_news_pct": null,
-      "tv_as_news_source_pct": null,
+      "tv_as_news_source_pct": 18.2,
       "online_as_news_source_pct": null,
-      "social_as_news_source_pct": null,
-      "radio_as_news_source_pct": null,
-      "radio_source": null,
-      "survey_note": null,
-      "source": null
+      "social_as_news_source_pct": 65.3,
+      "radio_as_news_source_pct": 1.0,
+      "radio_source": "Arab Barometer Wave VIII (2023-2024) microdata",
+      "survey_note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave",
+      "source": "Arab Barometer Wave VIII (2023-2024) microdata"
     },
     "sources": {
       "population": "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=KW",
@@ -13927,6 +13927,8 @@
       "financial_account_pct": "World Bank (Global Findex Database) — https://data.worldbank.org/indicator/FX.OWN.TOTL.ZS?locations=KW",
       "press_freedom_rank": "RSF 2025 — https://rsf.org/en/country/kwt",
       "political_freedom": "Freedom House: Freedom in the World 2026 — official data files provided by Freedom House (July 2026) — https://freedomhouse.org/report/freedom-world",
+      "news_consumption": "Arab Barometer Wave VIII (2023-2024) microdata",
+      "news_radio": "Arab Barometer Wave VIII (2023-2024) microdata",
       "median_age": "UN DESA, World Population Prospects 2024 (2025 estimate) — https://population.un.org/wpp/",
       "mobile_connectivity_index": "GSMA Mobile Connectivity Index 2024 — https://www.mobileconnectivityindex.com/",
       "languages_detail": "Unicode CLDR territory-language data (Unicode License V3) — https://github.com/unicode-org/cldr-json",
@@ -21236,13 +21238,13 @@
     },
     "news_consumption": {
       "trust_in_news_pct": null,
-      "tv_as_news_source_pct": null,
+      "tv_as_news_source_pct": 16.5,
       "online_as_news_source_pct": null,
-      "social_as_news_source_pct": null,
-      "radio_as_news_source_pct": null,
-      "radio_source": null,
-      "survey_note": null,
-      "source": null
+      "social_as_news_source_pct": 70.1,
+      "radio_as_news_source_pct": 4.1,
+      "radio_source": "Arab Barometer Wave VIII (2023-2024) microdata",
+      "survey_note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave",
+      "source": "Arab Barometer Wave VIII (2023-2024) microdata"
     },
     "sources": {
       "population": "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=PS",
@@ -21261,6 +21263,8 @@
       "edu_spending_gdp_pct": "World Bank (data originally compiled by UNESCO Institute for Statistics) — https://data.worldbank.org/indicator/SE.XPD.TOTL.GD.ZS?locations=PS",
       "financial_account_pct": "World Bank (Global Findex Database) — https://data.worldbank.org/indicator/FX.OWN.TOTL.ZS?locations=PS",
       "press_freedom_rank": "RSF 2025 — https://rsf.org/en/country/pse",
+      "news_consumption": "Arab Barometer Wave VIII (2023-2024) microdata",
+      "news_radio": "Arab Barometer Wave VIII (2023-2024) microdata",
       "median_age": "UN DESA, World Population Prospects 2024 (2025 estimate) — https://population.un.org/wpp/",
       "languages_detail": "Unicode CLDR territory-language data (Unicode License V3) — https://github.com/unicode-org/cldr-json"
     },
@@ -28453,7 +28457,7 @@
     "retrieved_on": "2026-07-23"
   },
   "_meta": {
-    "generated_at": "2026-07-23T18:37:23+00:00",
+    "generated_at": "2026-07-23T18:43:49+00:00",
     "country_count": 195,
     "world_population": 8215424893.0,
     "schema_version": 2,
@@ -28468,7 +28472,7 @@
       "Reuters Institute Digital News Report 2026 (46 markets; non-representative samples flagged for IND/KEN/NGA/ZAF/MAR)",
       "Afrobarometer Round 9 microdata (news sources incl. radio, 35-39 African countries, weighted)",
       "DataReportal 2024 (smartphone penetration estimates, 50 countries)",
-      "Arab Barometer Wave VIII (Iraq — real weighted microdata, 2,408 respondents)",
+      "Arab Barometer Wave VIII (Iraq, Kuwait, Palestine — real weighted microdata, computed by scripts/compute_arabbarometer_w8.py)",
       "World Values Survey Wave 7 v6.0 (28 countries — weighted microdata computed by scripts/compute_wvs_news.py; doi:10.14281/18241.24; constructs differ from DNR and are labeled per country)",
       "Latinobarometro 2024 (17 countries — measured social-platform use, weighted microdata computed by scripts/compute_latinobarometro.py; platform use is a separate construct from news consumption)",
       "Eurobarometer 102.2, Oct-Nov 2024 (12 countries — weekly media use, weighted microdata computed by scripts/compute_eurobarometer.py; GESIS ZA8905, doi:10.4232/1.14726)",
