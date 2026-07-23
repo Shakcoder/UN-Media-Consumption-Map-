@@ -49,6 +49,10 @@ NEWS_SOURCE_WHITELIST = [
     # COD entry of that kind was removed 2026-07-22.
 ]
 
+PLATFORM_USE_SOURCE_WHITELIST = [
+    r"^Latinobarometro 2024$",
+]
+
 RADIO_SOURCE_WHITELIST = [
     r"^Afrobarometer Round 9 \(2023\)$",
     r"^Arab Barometer Wave VIII \(2023-2024\) microdata$",
@@ -93,6 +97,21 @@ def main() -> int:
                 ERRORS.append(f"{iso} {name}: radio value without radio_source")
             elif not any(re.match(p, rsrc) for p in RADIO_SOURCE_WHITELIST):
                 ERRORS.append(f"{iso} {name}: radio source label not in whitelist: {rsrc!r}")
+
+        # --- platform_use fabrication guard ---
+        pu = c.get("platform_use")
+        if pu:
+            psrc = pu.get("source")
+            if not psrc or not any(re.match(p, psrc) for p in PLATFORM_USE_SOURCE_WHITELIST):
+                ERRORS.append(f"{iso} {name}: platform_use source not in whitelist: {psrc!r}")
+            if not sources.get("platform_use"):
+                ERRORS.append(f"{iso} {name}: platform_use present but no citation in sources{{}}")
+            pu_vals = [v for k, v in pu.items() if k not in ("source", "year", "n") and isinstance(v, (int, float))]
+            for v in pu_vals:
+                if not pct_ok(v):
+                    ERRORS.append(f"{iso} {name}: platform_use value out of [0,100]: {v}")
+            if not pu.get("n") or pu["n"] < 300:
+                WARNS.append(f"{iso} {name}: platform_use sample size suspiciously small (n={pu.get('n')})")
 
         # --- range checks ---
         for label, v in [

@@ -2201,6 +2201,22 @@ function tabMedia(d) {
     </div>`;
   }
 
+  // Measured platform use (Latinobarometro 2024, LatAm only) — real survey
+  // measurement of who actively uses each service. Distinct from BOTH the
+  // curated top_social list and Statcounter's web-referral shares.
+  const pu = d.platform_use;
+  if (pu) {
+    html += `<h3>Measured platform use <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">${pu.source || "survey"} · % of adults using</span></h3>`;
+    const order = [["WhatsApp","whatsapp"],["Facebook","facebook"],["Instagram","instagram"],["TikTok","tiktok"],["YouTube","youtube"],["X (Twitter)","x"]];
+    for (const [label, key] of order) {
+      const v = pu[key];
+      if (v == null || v < 1) continue;
+      html += `<div class="data-row"><span class="label">${label}</span><span class="value">${v}%</span></div>`;
+      html += `<div class="bar"><div class="bar-fill" style="width:${Math.min(v, 100)}%"></div></div>`;
+    }
+    if (pu.none != null) html += `<div style="font-size:10px;color:var(--muted-2);margin-top:2px;">${pu.none}% use no social network (n=${(pu.n||0).toLocaleString()}, face-to-face survey)</div>`;
+  }
+
   // Social web-traffic shares (Statcounter, monthly, referral-based).
   // Deliberately labeled as web-traffic, NOT platform usage: app-first
   // platforms (WhatsApp/TikTok/Telegram) barely refer web traffic and are

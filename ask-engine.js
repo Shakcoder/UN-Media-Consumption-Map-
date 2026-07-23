@@ -751,6 +751,9 @@ function facts(iso) {
     })(),
     // CIA World Factbook "Broadcast media" narrative (public domain, weekly)
     landscapeNote: (c.media || {}).landscape_note || null,
+    // Measured platform use (Latinobarometro 2024, LatAm only) — usage
+    // construct, distinct from curated top_social and Statcounter referrals
+    platformUse: c.platform_use || null,
     sourcesMap: c.sources || {}, retrievedOn: c.retrieved_on || null,
     rising: tr ? (tr.rising_topics || []) : [],
     distinctive: tr ? (tr.distinctive_topics || []) : [],
@@ -934,6 +937,12 @@ function composeCountryBrief(f, ev, ents) {
   // if a specific platform was asked about, say where it stands in this market
   for (const p of ents.platforms || []) {
     const pretty = PLATFORM_NAMES[p] || p;
+    // measured usage first (Latinobarometro battery), curated rank as fallback
+    const measured = f.platformUse ? f.platformUse[p === "twitter" ? "x" : p] : null;
+    if (measured != null) {
+      lines.push(`- **${pretty}** is actively used by **${measured}% of adults** in ${f.name} *(${f.platformUse.source}, weighted survey, n=${(f.platformUse.n || 0).toLocaleString()})* — a measured figure, not an estimate`);
+      continue;
+    }
     const socials = (o.top_social || "").toLowerCase().split(",").map(s => s.trim());
     const pos = socials.findIndex(s => s.startsWith(p === "x" ? "x" : p));
     if (pos === 0) lines.push(`- **${pretty}** is the leading social platform in ${f.name} (${o.top_social})`);

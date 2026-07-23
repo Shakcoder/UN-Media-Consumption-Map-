@@ -699,6 +699,54 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
 
 
 # --------------------------------------------------------------------------
+# Measured social-platform use — Latinobarometro 2024 (17 countries)
+# --------------------------------------------------------------------------
+# % of adults who mention actively using each service (S14M battery),
+# WT-weighted, base excludes explicit non-response. Computed by
+# scripts/compute_latinobarometro.py from the registered download (raw
+# .sav stays local). This is PLATFORM USE, not news consumption — the
+# 2024 wave dropped the channel-of-news battery, so news_consumption
+# cannot be filled from it. A separate construct, a separate field.
+# Citation: Latinobarómetro 2024, Corporación Latinobarómetro, Santiago.
+PLATFORM_USE_2024: dict[str, dict[str, Any]] = {
+    "ARG": {"whatsapp": 85.0, "facebook": 62.4, "instagram": 53.6, "tiktok": 25.3, "youtube": 53.2,
+            "x": 15.2, "snapchat": 4.0, "linkedin": 6.3, "none": 9.4, "n": 1205},
+    "BOL": {"whatsapp": 81.9, "facebook": 66.2, "instagram": 20.7, "tiktok": 44.3, "youtube": 39.7,
+            "x": 7.7, "snapchat": 7.8, "linkedin": 2.3, "none": 14.4, "n": 1191},
+    "BRA": {"whatsapp": 78.9, "facebook": 49.7, "instagram": 52.5, "tiktok": 28.4, "youtube": 41.1,
+            "x": 6.5, "snapchat": 3.2, "linkedin": 5.8, "none": 14.4, "n": 1200},
+    "CHL": {"whatsapp": 93.3, "facebook": 71.6, "instagram": 58.5, "tiktok": 46.9, "youtube": 63.7,
+            "x": 19.0, "snapchat": 4.0, "linkedin": 5.8, "none": 4.2, "n": 1192},
+    "COL": {"whatsapp": 85.2, "facebook": 69.5, "instagram": 34.0, "tiktok": 30.9, "youtube": 41.7,
+            "x": 9.5, "snapchat": 5.8, "linkedin": 3.9, "none": 10.7, "n": 1200},
+    "CRI": {"whatsapp": 90.5, "facebook": 76.7, "instagram": 46.4, "tiktok": 44.0, "youtube": 55.7,
+            "x": 9.9, "snapchat": 8.6, "linkedin": 8.7, "none": 5.6, "n": 996},
+    "DOM": {"whatsapp": 85.1, "facebook": 73.3, "instagram": 55.4, "tiktok": 50.9, "youtube": 59.5,
+            "x": 11.4, "snapchat": 21.8, "linkedin": 3.9, "none": 9.5, "n": 999},
+    "ECU": {"whatsapp": 88.4, "facebook": 83.6, "instagram": 50.4, "tiktok": 55.7, "youtube": 56.1,
+            "x": 13.3, "snapchat": 10.3, "linkedin": 5.8, "none": 5.2, "n": 1199},
+    "GTM": {"whatsapp": 71.9, "facebook": 66.5, "instagram": 21.6, "tiktok": 36.1, "youtube": 27.0,
+            "x": 6.8, "snapchat": 8.1, "linkedin": 1.9, "none": 18.3, "n": 981},
+    "HND": {"whatsapp": 77.7, "facebook": 66.4, "instagram": 24.7, "tiktok": 40.8, "youtube": 34.9,
+            "x": 7.0, "snapchat": 10.7, "linkedin": 2.2, "none": 18.1, "n": 999},
+    "MEX": {"whatsapp": 76.3, "facebook": 70.8, "instagram": 26.7, "tiktok": 27.3, "youtube": 44.6,
+            "x": 12.8, "snapchat": 10.5, "linkedin": 2.5, "none": 14.4, "n": 1189},
+    "PAN": {"whatsapp": 80.9, "facebook": 54.2, "instagram": 58.9, "tiktok": 44.6, "youtube": 46.3,
+            "x": 13.8, "snapchat": 15.0, "linkedin": 4.9, "none": 12.9, "n": 993},
+    "PER": {"whatsapp": 76.6, "facebook": 70.7, "instagram": 28.9, "tiktok": 39.0, "youtube": 46.7,
+            "x": 6.8, "snapchat": 4.4, "linkedin": 5.2, "none": 17.5, "n": 1197},
+    "PRY": {"whatsapp": 89.1, "facebook": 76.4, "instagram": 44.3, "tiktok": 47.2, "youtube": 53.3,
+            "x": 9.6, "snapchat": 9.1, "linkedin": 2.7, "none": 8.6, "n": 1200},
+    "SLV": {"whatsapp": 81.4, "facebook": 72.7, "instagram": 29.9, "tiktok": 43.0, "youtube": 47.1,
+            "x": 10.9, "snapchat": 10.5, "linkedin": 4.0, "none": 12.6, "n": 998},
+    "URY": {"whatsapp": 90.9, "facebook": 66.9, "instagram": 55.1, "tiktok": 31.6, "youtube": 60.1,
+            "x": 15.1, "snapchat": 2.7, "linkedin": 7.9, "none": 5.1, "n": 1197},
+    "VEN": {"whatsapp": 85.0, "facebook": 78.2, "instagram": 55.2, "tiktok": 54.8, "youtube": 39.7,
+            "x": 15.0, "snapchat": 11.2, "linkedin": 2.1, "none": 8.2, "n": 1190},
+}
+
+
+# --------------------------------------------------------------------------
 # HTTP helpers
 # --------------------------------------------------------------------------
 def _ssl_context():
@@ -1093,6 +1141,14 @@ def build_country(
         if prev_src:
             sources["languages_detail"] = prev_src
 
+    # Measured platform use (Latinobarometro 2024, 17 LatAm countries)
+    platform_use = PLATFORM_USE_2024.get(iso3)
+    if platform_use:
+        sources["platform_use"] = (
+            "Latinobarometro 2024, weighted microdata (S14M battery; % of adults actively using each service) — "
+            "https://www.latinobarometro.org/"
+        )
+
     # Media-landscape narrative (CIA World Factbook, public domain)
     landscape_note = (factbook_media or {}).get(iso3)
     if landscape_note:
@@ -1136,6 +1192,8 @@ def build_country(
             "financial_account_pct": values.get("financial_account_pct"),
         },
         "languages_detail": languages_detail or None,
+        "platform_use": ({**platform_use, "source": "Latinobarometro 2024", "year": 2024}
+                         if platform_use else None),
         "media": {
             **static_meta.get("media", {}),
             "landscape_note": landscape_note,
@@ -1243,6 +1301,7 @@ def main() -> int:
             "DataReportal 2024 (smartphone penetration estimates, 50 countries)",
             "Arab Barometer Wave VIII (Iraq — real weighted microdata, 2,408 respondents)",
             "World Values Survey Wave 7 v6.0 (28 countries — weighted microdata computed by scripts/compute_wvs_news.py; doi:10.14281/18241.24; constructs differ from DNR and are labeled per country)",
+            "Latinobarometro 2024 (17 countries — measured social-platform use, weighted microdata computed by scripts/compute_latinobarometro.py; platform use is a separate construct from news consumption)",
             "Trend engine: Wikimedia Pageviews API (CC0) + GDELT 2.0 (daily, 167 topics, 22 languages)",
             "CIA World Factbook, Broadcast media entries (public domain, auto-ingested weekly via the factbook.json mirror)",
             "Statcounter GlobalStats (social web-traffic referral shares, 195 countries, automated weekly, 3-month average — web-referral measure only; app-first platforms like WhatsApp/TikTok are not visible to it)",
