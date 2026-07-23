@@ -612,7 +612,8 @@
     <div id="map"></div>
     <div class="map-legend">
       <div class="legend-title" data-i18n="legend_title">Data status</div>
-      <div class="row"><div class="swatch" style="background:#009EDB"></div><span data-i18n="legend_profiled">Covered (data available)</span></div>
+      <div class="row"><div class="swatch" style="background:#009EDB"></div><span data-i18n="legend_profiled">Media data verified (survey-backed)</span></div>
+      <div class="row"><div class="swatch" style="background:#BBC7D1"></div><span data-i18n="legend_limited">Profile only — no media survey yet</span></div>
       <div class="row"><div class="swatch" style="background:#8FCBEA"></div><span data-i18n="legend_territory">Territory (see sovereign state)</span></div>
       <div class="row"><div class="swatch" style="background:#E4D9BE"></div><span data-i18n="legend_not_profiled">Non-sovereign area (no data)</span></div>
     </div>
@@ -1076,7 +1077,7 @@ window.TRANSLATIONS = {
     chip_all: "All regions", chip_africa: "Africa", chip_americas: "Americas",
     chip_asia: "Asia", chip_europe: "Europe", chip_oceania: "Oceania",
     map_hint: "Click any country to open its profile →",
-    legend_title: "Data status", legend_profiled: "Covered (data available)", legend_territory: "Territory (see sovereign state)",
+    legend_title: "Data status", legend_profiled: "Media data verified (survey-backed)", legend_limited: "Profile only — no media survey yet", legend_territory: "Territory (see sovereign state)",
     legend_not_profiled: "Non-sovereign area (no data)",
     stat_pilot_countries: "Countries covered",
     stat_across_continents: "across {n} continents",
@@ -1157,7 +1158,7 @@ window.TRANSLATIONS = {
     chip_all: "Toutes les régions", chip_africa: "Afrique", chip_americas: "Amériques",
     chip_asia: "Asie", chip_europe: "Europe", chip_oceania: "Océanie",
     map_hint: "Cliquez sur un pays pour ouvrir son profil →",
-    legend_title: "Statut des données", legend_profiled: "Couvert (données disponibles)", legend_territory: "Territoire (voir l'État souverain)",
+    legend_title: "Statut des données", legend_profiled: "Données médias vérifiées (enquêtes)", legend_limited: "Profil seul — pas encore d'enquête média", legend_territory: "Territoire (voir l'État souverain)",
     legend_not_profiled: "Zone non souveraine (pas de données)",
     stat_pilot_countries: "Pays couverts",
     stat_across_continents: "sur {n} continents",
@@ -1237,7 +1238,7 @@ window.TRANSLATIONS = {
     chip_all: "Todas las regiones", chip_africa: "África", chip_americas: "Américas",
     chip_asia: "Asia", chip_europe: "Europa", chip_oceania: "Oceanía",
     map_hint: "Haga clic en cualquier país para abrir su perfil →",
-    legend_title: "Estado de los datos", legend_profiled: "Cubierto (datos disponibles)", legend_territory: "Territorio (ver Estado soberano)",
+    legend_title: "Estado de los datos", legend_profiled: "Datos de medios verificados (encuestas)", legend_limited: "Solo perfil — aún sin encuesta de medios", legend_territory: "Territorio (ver Estado soberano)",
     legend_not_profiled: "Zona no soberana (sin datos)",
     stat_pilot_countries: "Países cubiertos",
     stat_across_continents: "en {n} continentes",
@@ -1317,7 +1318,7 @@ window.TRANSLATIONS = {
     chip_all: "جميع المناطق", chip_africa: "أفريقيا", chip_americas: "الأمريكتان",
     chip_asia: "آسيا", chip_europe: "أوروبا", chip_oceania: "أوقيانوسيا",
     map_hint: "← انقر على أي دولة لفتح ملفها",
-    legend_title: "حالة البيانات", legend_profiled: "مشمول (البيانات متاحة)", legend_territory: "إقليم (انظر الدولة ذات السيادة)",
+    legend_title: "حالة البيانات", legend_profiled: "بيانات إعلامية موثقة (مسوح)", legend_limited: "ملف فقط — لا مسح إعلامي بعد", legend_territory: "إقليم (انظر الدولة ذات السيادة)",
     legend_not_profiled: "منطقة غير ذات سيادة (لا بيانات)",
     stat_pilot_countries: "الدول المشمولة",
     stat_across_continents: "عبر {n} قارات",
@@ -1397,7 +1398,7 @@ window.TRANSLATIONS = {
     chip_all: "所有地区", chip_africa: "非洲", chip_americas: "美洲",
     chip_asia: "亚洲", chip_europe: "欧洲", chip_oceania: "大洋洲",
     map_hint: "点击任意国家以打开其资料 →",
-    legend_title: "数据状态", legend_profiled: "已覆盖（有数据）", legend_territory: "属地（见主权国家）",
+    legend_title: "数据状态", legend_profiled: "媒体数据已验证（基于调查）", legend_limited: "仅有档案 — 尚无媒体调查", legend_territory: "属地（见主权国家）",
     legend_not_profiled: "非主权地区（无数据）",
     stat_pilot_countries: "覆盖国家",
     stat_across_continents: "覆盖 {n} 个大洲",
@@ -1477,7 +1478,7 @@ window.TRANSLATIONS = {
     chip_all: "Все регионы", chip_africa: "Африка", chip_americas: "Америки",
     chip_asia: "Азия", chip_europe: "Европа", chip_oceania: "Океания",
     map_hint: "Нажмите на любую страну, чтобы открыть её профиль →",
-    legend_title: "Статус данных", legend_profiled: "Охвачено (данные доступны)", legend_territory: "Территория (см. суверенное государство)",
+    legend_title: "Статус данных", legend_profiled: "Медиаданные подтверждены (опросы)", legend_limited: "Только профиль — медиаопроса пока нет", legend_territory: "Территория (см. суверенное государство)",
     legend_not_profiled: "Несуверенная зона (нет данных)",
     stat_pilot_countries: "Охвачено стран",
     stat_across_continents: "на {n} континентах",
@@ -1685,9 +1686,20 @@ function resolveIso(feature) {
   if (!iso || iso === "-99") iso = GEO_NAME_TO_ISO[p.name] || null;
   return iso;
 }
+function hasMediaData(iso) {
+  // "Media-backed" = at least one real, measured media-consumption source:
+  // a news-consumption survey (Reuters DNR / Afrobarometer / Arab Barometer /
+  // WVS / Eurobarometer) or measured platform use (Latinobarometro).
+  // Structural indicators (internet %, press freedom) exist for nearly every
+  // country and deliberately do NOT count here.
+  const c = window.COUNTRY_DATA && window.COUNTRY_DATA[iso];
+  if (!c) return false;
+  return !!(((c.news_consumption || {}).source) || c.platform_use);
+}
 function featureKind(feature) {
   const iso = resolveIso(feature);
-  if (iso && window.COUNTRY_DATA && window.COUNTRY_DATA[iso]) return "covered";
+  if (iso && window.COUNTRY_DATA && window.COUNTRY_DATA[iso])
+    return hasMediaData(iso) ? "covered" : "profiled";
   if (iso && TERRITORY_OF[iso] && window.COUNTRY_DATA && window.COUNTRY_DATA[TERRITORY_OF[iso]]) return "territory";
   return "none";
 }
@@ -1696,6 +1708,8 @@ function styleCountry(feature) {
   const kind = featureKind(feature);
   if (kind === "covered")
     return { fillColor: "#009EDB", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.75 };
+  if (kind === "profiled")
+    return { fillColor: "#BBC7D1", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.65 };
   if (kind === "territory")
     return { fillColor: "#8FCBEA", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.55 };
   return { fillColor: "#E4D9BE", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.7 };
@@ -1704,6 +1718,8 @@ function styleCountryHover(feature) {
   const kind = featureKind(feature);
   if (kind === "covered")
     return { fillColor: "#0072BC", weight: 1.5, color: "#003D6B", fillOpacity: 0.9 };
+  if (kind === "profiled")
+    return { fillColor: "#93A3B1", weight: 1.5, color: "#4A5A68", fillOpacity: 0.85 };
   if (kind === "territory")
     return { fillColor: "#5FB3DF", weight: 1.5, color: "#003D6B", fillOpacity: 0.75 };
   return { fillColor: "#D3C49B", weight: 1.5, color: "#8A7A50", fillOpacity: 0.85 };
