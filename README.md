@@ -1,4 +1,6 @@
-# Global Media Consumption Atlas
+# Audience Intelligence Atlas
+
+*(formerly “Global Media Consumption Atlas”)*
 ### An AI-assisted Content Intelligence Platform for UN communications
 
 An interactive, source-cited public resource showing **where and how the world gets its information** — and **what each country is paying attention to right now** — across all 195 UN-recognised countries.

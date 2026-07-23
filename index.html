@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="An interactive, source-cited global map of media consumption patterns. A public research resource prepared for the United Nations.">
-<title>Global Media Consumption Atlas</title>
+<title>Audience Intelligence Atlas — United Nations</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='42' fill='%23009EDB'/><circle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='5'/><path d='M20 50h60M50 20c12 10 12 50 0 60M50 20c-12 10-12 50 0 60' stroke='white' stroke-width='5' fill='none'/></svg>">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
@@ -58,7 +58,7 @@
     height: 60px;
   }
   header.site .brand { display: flex; align-items: center; gap: 12px; }
-  header.site .logo { width: 36px; height: 36px; display: block; flex-shrink: 0; }
+  header.site .logo { width: 40px; height: auto; display: block; flex-shrink: 0; }
   header.site .title { font-weight: 600; font-size: 15px; letter-spacing: 0.1px; }
   header.site .subtitle { font-size: 12px; color: var(--muted); margin-top: 1px; }
   header.site .spacer { flex: 1; }
@@ -155,7 +155,7 @@
 
   .stats-strip {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 1px;
     background: var(--border);
     border-bottom: 1px solid var(--border);
@@ -442,6 +442,10 @@
   }
   .confidence-banner strong { color: #6B4510; }
 
+  .sources-registry { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px 26px; margin: 4px 0 2px; }
+  .sources-registry .src-group h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-2); margin: 0 0 5px; }
+  .sources-registry .src-group a { display: block; padding: 2.5px 0; font-size: 13px; color: var(--un-blue-dark); text-decoration: none; }
+  .sources-registry .src-group a:hover { text-decoration: underline; }
   .sources-list { font-size: 12px; color: var(--muted); }
   .sources-list div { padding: 6px 0; border-bottom: 1px dashed var(--border); }
   .sources-list div:last-child { border-bottom: none; }
@@ -547,31 +551,11 @@
 <a class="skip-link" href="#country-list">Skip to country list</a>
 <header class="site">
   <div class="brand">
-    <!-- UN-styled placeholder logo (blue circle with polar-projection-style gridlines + olive branch underline).
-         Swap the SVG below for the official UN emblem once the project is formally adopted by the UN. -->
-    <svg class="logo" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Project emblem">
-      <defs><clipPath id="globeClip"><circle cx="20" cy="18" r="12"/></clipPath></defs>
-      <circle cx="20" cy="18" r="13" fill="#009EDB"/>
-      <g clip-path="url(#globeClip)" stroke="#FFFFFF" stroke-width="0.5" fill="none" opacity="0.85">
-        <circle cx="20" cy="18" r="3.5"/>
-        <circle cx="20" cy="18" r="7"/>
-        <circle cx="20" cy="18" r="10.5"/>
-        <line x1="8" y1="18" x2="32" y2="18"/>
-        <line x1="20" y1="6" x2="20" y2="30"/>
-        <line x1="11" y1="9" x2="29" y2="27"/>
-        <line x1="11" y1="27" x2="29" y2="9"/>
-      </g>
-      <!-- Stylised olive branches curving below the globe -->
-      <path d="M9,33 Q20,38 31,33" fill="none" stroke="#009EDB" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="12" cy="33" r="0.8" fill="#009EDB"/>
-      <circle cx="15.5" cy="35" r="0.8" fill="#009EDB"/>
-      <circle cx="20" cy="36" r="0.8" fill="#009EDB"/>
-      <circle cx="24.5" cy="35" r="0.8" fill="#009EDB"/>
-      <circle cx="28" cy="33" r="0.8" fill="#009EDB"/>
-    </svg>
+    <!-- Official United Nations emblem (public domain UN document artwork). -->
+    <img class="logo" src="assets/un_emblem.png" alt="United Nations emblem" width="40" height="33">
     <div>
-      <h1 class="title" style="margin:0; font-size:15px;" data-i18n="brand_title">Global Media Consumption Atlas</h1>
-      <div class="subtitle" data-i18n="brand_subtitle">An open, source-cited public research resource</div>
+      <div class="subtitle" style="text-transform:uppercase; letter-spacing:0.08em; font-weight:600;" data-i18n="brand_un">United Nations</div>
+      <h1 class="title" style="margin:0; font-size:15px;" data-i18n="brand_title">Audience Intelligence Atlas</h1>
     </div>
   </div>
   <div class="spacer"></div>
@@ -589,7 +573,6 @@
       <span aria-hidden="true">▾</span>
     </button>
   </nav>
-  <div class="badge" data-i18n="badge_phase">Phase 2 · Expansion</div>
 </header>
 
 <div class="lang-menu" id="lang-menu" role="menu">
@@ -631,7 +614,7 @@
       <div class="legend-title" data-i18n="legend_title">Data status</div>
       <div class="row"><div class="swatch" style="background:#009EDB"></div><span data-i18n="legend_profiled">Covered (data available)</span></div>
       <div class="row"><div class="swatch" style="background:#8FCBEA"></div><span data-i18n="legend_territory">Territory (see sovereign state)</span></div>
-      <div class="row"><div class="swatch" style="background:#D4DEE8"></div><span data-i18n="legend_not_profiled">Non-sovereign area (no data)</span></div>
+      <div class="row"><div class="swatch" style="background:#E4D9BE"></div><span data-i18n="legend_not_profiled">Non-sovereign area (no data)</span></div>
     </div>
   </div>
 </main>
@@ -684,19 +667,58 @@
       <p style="color: var(--muted);" data-i18n="modal_refresh_body">Topic trends refresh daily (Wikimedia + GDELT). Country indicators refresh weekly via the World Bank API. Annual flagship reports (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobarometer) are integrated once a year — a monthly watchdog opens a reminder automatically when a new edition is published.</p>
 
       <h3 style="font-size: 14px; color: var(--ink); margin: 18px 0 6px;" data-i18n="modal_sources_heading">Integrated data sources</h3>
-      <p style="color: var(--muted); font-size: 13px; line-height: 1.7;">
-        <a href="https://data.worldbank.org" target="_blank" rel="noopener">World Bank Open Data</a> (ICT indicators originally compiled by <a href="https://datahub.itu.int" target="_blank" rel="noopener">ITU</a>; education by <a href="https://uis.unesco.org" target="_blank" rel="noopener">UNESCO UIS</a>) ·
-        <a href="https://population.un.org/wpp/" target="_blank" rel="noopener">UN DESA World Population Prospects 2024</a> ·
-        <a href="https://www.mobileconnectivityindex.com" target="_blank" rel="noopener">GSMA Mobile Connectivity Index 2024</a> ·
-        <a href="https://rsf.org/en/index" target="_blank" rel="noopener">RSF World Press Freedom Index 2025</a> ·
-        <a href="https://freedomhouse.org/report/freedom-world" target="_blank" rel="noopener">Freedom House: Freedom in the World 2026</a> (official data files) ·
-        <a href="https://freedomhouse.org/report/freedom-net" target="_blank" rel="noopener">Freedom on the Net 2025</a> ·
-        <a href="https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2026" target="_blank" rel="noopener">Reuters Institute Digital News Report 2026</a> ·
-        <a href="https://www.afrobarometer.org/data/" target="_blank" rel="noopener">Afrobarometer Round 9</a> (weighted microdata incl. radio) ·
-        <a href="https://datareportal.com" target="_blank" rel="noopener">DataReportal 2024</a> ·
-        <a href="https://www.cia.gov/the-world-factbook/" target="_blank" rel="noopener">CIA World Factbook</a> (profile cross-reference) ·
-        <a href="https://wikimedia.org/api/rest_v1/" target="_blank" rel="noopener">Wikimedia Pageviews</a> + <a href="https://www.gdeltproject.org" target="_blank" rel="noopener">GDELT 2.0</a> (daily trend engine).
-        <br><span data-i18n="modal_sources_note">Reference tools (linked, not ingested): UNESCO World Trends, Pew Research, Edison Research, OECD, Meta Ad Library, Google Ads Transparency. Full registry &amp; conflict-resolution rules:</span>
+      <div class="sources-registry">
+        <div class="src-group">
+          <h4>Country indicators</h4>
+          <a href="https://data.worldbank.org" target="_blank" rel="noopener">World Bank Open Data</a>
+          <a href="https://datahub.itu.int" target="_blank" rel="noopener">ITU DataHub</a>
+          <a href="https://uis.unesco.org" target="_blank" rel="noopener">UNESCO Institute for Statistics</a>
+          <a href="https://www.worldbank.org/en/publication/globalfindex" target="_blank" rel="noopener">World Bank Global Findex</a>
+          <a href="https://population.un.org/wpp/" target="_blank" rel="noopener">UN DESA World Population Prospects</a>
+          <a href="https://www.mobileconnectivityindex.com" target="_blank" rel="noopener">GSMA Mobile Connectivity Index</a>
+        </div>
+        <div class="src-group">
+          <h4>Media freedom</h4>
+          <a href="https://rsf.org/en/index" target="_blank" rel="noopener">RSF World Press Freedom Index</a>
+          <a href="https://freedomhouse.org/report/freedom-world" target="_blank" rel="noopener">Freedom House — Freedom in the World</a>
+          <a href="https://freedomhouse.org/report/freedom-net" target="_blank" rel="noopener">Freedom House — Freedom on the Net</a>
+        </div>
+        <div class="src-group">
+          <h4>News &amp; media surveys</h4>
+          <a href="https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2026" target="_blank" rel="noopener">Reuters Institute Digital News Report</a>
+          <a href="https://www.afrobarometer.org/data/" target="_blank" rel="noopener">Afrobarometer</a>
+          <a href="https://www.arabbarometer.org/survey-data/data-downloads/" target="_blank" rel="noopener">Arab Barometer (Waves VII &amp; VIII)</a>
+          <a href="https://www.worldvaluessurvey.org/WVSDocumentationWV7.jsp" target="_blank" rel="noopener">World Values Survey (Wave 7)</a>
+          <a href="https://doi.org/10.4232/1.14726" target="_blank" rel="noopener">Eurobarometer 102.2 (GESIS ZA8905)</a>
+          <a href="https://www.latinobarometro.org/" target="_blank" rel="noopener">Latinobarómetro 2024</a>
+          <a href="https://datareportal.com" target="_blank" rel="noopener">DataReportal</a>
+        </div>
+        <div class="src-group">
+          <h4>Media landscape &amp; platforms</h4>
+          <a href="https://www.cia.gov/the-world-factbook/" target="_blank" rel="noopener">CIA World Factbook</a>
+          <a href="https://github.com/unicode-org/cldr-json" target="_blank" rel="noopener">Unicode CLDR</a>
+          <a href="https://gs.statcounter.com" target="_blank" rel="noopener">Statcounter GlobalStats</a>
+        </div>
+        <div class="src-group">
+          <h4>Live trends</h4>
+          <a href="https://wikimedia.org/api/rest_v1/" target="_blank" rel="noopener">Wikimedia Pageviews API</a>
+          <a href="https://www.gdeltproject.org" target="_blank" rel="noopener">GDELT 2.0</a>
+        </div>
+        <div class="src-group">
+          <h4>Ad market (industry estimates)</h4>
+          <a href="https://www.wppmedia.com/" target="_blank" rel="noopener">WPP Media — This Year, Next Year</a>
+          <a href="https://www.dentsu.com/" target="_blank" rel="noopener">Dentsu — Global Ad Spend Forecasts</a>
+        </div>
+        <div class="src-group">
+          <h4>Reference tools (linked, not ingested)</h4>
+          <a href="https://www.unesco.org/en/world-media-trends" target="_blank" rel="noopener">UNESCO World Trends in Freedom of Expression</a>
+          <a href="https://www.pewresearch.org" target="_blank" rel="noopener">Pew Research Center</a>
+          <a href="https://www.facebook.com/ads/library/" target="_blank" rel="noopener">Meta Ad Library</a>
+          <a href="https://adstransparency.google.com" target="_blank" rel="noopener">Google Ads Transparency Center</a>
+        </div>
+      </div>
+      <p style="color: var(--muted); font-size: 12px; margin-top: 10px;">
+        <span data-i18n="modal_sources_note2">Full registry &amp; conflict-resolution rules:</span>
         <a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-/blob/main/docs/DATA_SOURCES.md" target="_blank" rel="noopener">docs/DATA_SOURCES.md</a>
       </p>
 
@@ -707,7 +729,7 @@
 </div>
 
 <footer class="site">
-  <div><span data-i18n="footer_copyright">© 2026 · An independent research project prepared for the United Nations · Data last checked</span> <span id="last-check"></span></div>
+  <div><span data-i18n="footer_copyright">© 2026 · United Nations · Audience Intelligence Atlas · Data last checked</span> <span id="last-check"></span></div>
   <div>
     <a id="footer-methodology" data-i18n="footer_methodology">Methodology</a> &nbsp;·&nbsp;
     <a href="https://github.com/shakcoder/UN-Media-Consumption-Map-" target="_blank" data-i18n="footer_github">GitHub</a> &nbsp;·&nbsp;
@@ -1045,11 +1067,11 @@ window.COUNTRY_DATA = {
 window.TRANSLATIONS = {
   en: {
     _name: "English", _native: "English", _rtl: false,
-    brand_title: "Global Media Consumption Atlas",
+    brand_un: "United Nations",
+    brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "An open, source-cited public research resource",
     nav_map: "Map", nav_topics: "Topic Explorer", nav_ask: "Ask the Analyst", nav_methodology: "Methodology", nav_sources: "Sources",
     nav_survey: "Take the survey", nav_about: "About",
-    badge_phase: "Phase 2 · Expansion",
     search_placeholder: "Search a country…",
     chip_all: "All regions", chip_africa: "Africa", chip_americas: "Americas",
     chip_asia: "Asia", chip_europe: "Europe", chip_oceania: "Oceania",
@@ -1120,17 +1142,17 @@ window.TRANSLATIONS = {
     modal_refresh_body: "Topic trends refresh daily (Wikimedia + GDELT). Country indicators refresh weekly via the World Bank API. Annual flagship reports (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobarometer) are integrated once a year — a monthly watchdog opens a reminder automatically when a new edition appears.",
     modal_confidence_flags: "Confidence flags",
     modal_confidence_body: "Each country record carries a confidence flag: verified (checked against its primary sources) or preliminary (not yet verified — must not be cited publicly). Individual figures always name their source in the Sources tab.",
-    footer_copyright: "© 2026 · An independent research project prepared for the United Nations · Data last checked",
+    footer_copyright: "© 2026 · United Nations · Audience Intelligence Atlas · Data last checked",
     footer_methodology: "Methodology", footer_github: "GitHub", footer_report: "Report an error"
   },
 
   fr: {
     _name: "French", _native: "Français", _rtl: false,
-    brand_title: "Atlas mondial de la consommation des médias",
+    brand_un: "Nations Unies",
+    brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "Une ressource publique de recherche, ouverte et sourcée",
     nav_map: "Carte", nav_topics: "Explorateur de thèmes", nav_ask: "Interroger l'analyste", nav_methodology: "Méthodologie", nav_sources: "Sources",
     nav_survey: "Répondre au sondage", nav_about: "À propos",
-    badge_phase: "Phase 2 · Expansion",
     search_placeholder: "Rechercher un pays…",
     chip_all: "Toutes les régions", chip_africa: "Afrique", chip_americas: "Amériques",
     chip_asia: "Asie", chip_europe: "Europe", chip_oceania: "Océanie",
@@ -1200,17 +1222,17 @@ window.TRANSLATIONS = {
     modal_refresh_body: "Les tendances thématiques sont mises à jour quotidiennement (Wikimedia + GDELT). Les indicateurs pays sont actualisés chaque semaine via l'API de la Banque mondiale. Les rapports annuels de référence (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobaromètre) sont intégrés une fois par an — un dispositif de veille mensuel ouvre automatiquement un rappel dès la parution d'une nouvelle édition.",
     modal_confidence_flags: "Indicateurs de confiance",
     modal_confidence_body: "Chaque fiche pays porte un indicateur de confiance : vérifié (contrôlé auprès de ses sources primaires) ou préliminaire (non encore vérifié — à ne pas citer publiquement). Chaque chiffre nomme sa source dans l'onglet Sources.",
-    footer_copyright: "© 2026 · Un projet de recherche indépendant préparé pour les Nations Unies · Données vérifiées le",
+    footer_copyright: "© 2026 · Nations Unies · Audience Intelligence Atlas · Données vérifiées le",
     footer_methodology: "Méthodologie", footer_github: "GitHub", footer_report: "Signaler une erreur"
   },
 
   es: {
     _name: "Spanish", _native: "Español", _rtl: false,
-    brand_title: "Atlas mundial del consumo de medios",
+    brand_un: "Naciones Unidas",
+    brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "Un recurso público de investigación, abierto y con citas",
     nav_map: "Mapa", nav_topics: "Explorador de temas", nav_ask: "Pregunte al analista", nav_methodology: "Metodología", nav_sources: "Fuentes",
     nav_survey: "Responder la encuesta", nav_about: "Acerca de",
-    badge_phase: "Fase 2 · Expansión",
     search_placeholder: "Buscar un país…",
     chip_all: "Todas las regiones", chip_africa: "África", chip_americas: "Américas",
     chip_asia: "Asia", chip_europe: "Europa", chip_oceania: "Oceanía",
@@ -1280,17 +1302,17 @@ window.TRANSLATIONS = {
     modal_refresh_body: "Las tendencias temáticas se actualizan a diario (Wikimedia + GDELT). Los indicadores por país se actualizan semanalmente mediante la API del Banco Mundial. Los informes anuales de referencia (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobarómetro) se integran una vez al año — un mecanismo de vigilancia mensual abre automáticamente un recordatorio cuando aparece una nueva edición.",
     modal_confidence_flags: "Indicadores de confianza",
     modal_confidence_body: "Cada ficha de país lleva un indicador de confianza: verificado (contrastado con sus fuentes primarias) o preliminar (aún sin verificar — no debe citarse públicamente). Cada cifra nombra su fuente en la pestaña Fuentes.",
-    footer_copyright: "© 2026 · Proyecto de investigación independiente preparado para las Naciones Unidas · Datos verificados el",
+    footer_copyright: "© 2026 · Naciones Unidas · Audience Intelligence Atlas · Datos verificados el",
     footer_methodology: "Metodología", footer_github: "GitHub", footer_report: "Informar de un error"
   },
 
   ar: {
     _name: "Arabic", _native: "العربية", _rtl: true,
-    brand_title: "أطلس الاستهلاك الإعلامي العالمي",
+    brand_un: "الأمم المتحدة",
+    brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "مورد بحثي عام مفتوح مع توثيق المصادر",
     nav_map: "الخريطة", nav_topics: "مستكشف المواضيع", nav_ask: "اسأل المحلل", nav_methodology: "المنهجية", nav_sources: "المصادر",
     nav_survey: "المشاركة في الاستبيان", nav_about: "حول",
-    badge_phase: "المرحلة 2 · التوسع",
     search_placeholder: "ابحث عن دولة…",
     chip_all: "جميع المناطق", chip_africa: "أفريقيا", chip_americas: "الأمريكتان",
     chip_asia: "آسيا", chip_europe: "أوروبا", chip_oceania: "أوقيانوسيا",
@@ -1360,17 +1382,17 @@ window.TRANSLATIONS = {
     modal_refresh_body: "تُحدَّث اتجاهات الموضوعات يوميًا (ويكيميديا + GDELT)، وتُحدَّث مؤشرات الدول أسبوعيًا عبر واجهة البنك الدولي. أما التقارير السنوية الرئيسية (رويترز، مراسلون بلا حدود، فريدم هاوس، GSMA، أفروباروميتر) فتُدمَج مرة في السنة — وتفتح آلية مراقبة شهرية تذكيرًا تلقائيًا عند صدور إصدار جديد.",
     modal_confidence_flags: "مستويات الثقة",
     modal_confidence_body: "يحمل سجل كل دولة مؤشر ثقة: مُتحقَّق منه (رُوجع مقابل مصادره الأولية) أو أولي (لم يُتحقق منه بعد — لا يجوز الاستشهاد به علنًا). ويُسمّي كل رقم مصدره في تبويب المصادر.",
-    footer_copyright: "© ٢٠٢٦ · مشروع بحثي مستقل أُعدّ للأمم المتحدة · آخر تحقق من البيانات",
+    footer_copyright: "© ٢٠٢٦ · الأمم المتحدة · Audience Intelligence Atlas · آخر تحقق من البيانات",
     footer_methodology: "المنهجية", footer_github: "GitHub", footer_report: "الإبلاغ عن خطأ"
   },
 
   zh: {
     _name: "Chinese", _native: "中文", _rtl: false,
-    brand_title: "全球媒体消费地图",
+    brand_un: "联合国",
+    brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "一个公开、附有来源引用的公共研究资源",
     nav_map: "地图", nav_topics: "话题浏览器", nav_ask: "询问分析师", nav_methodology: "方法论", nav_sources: "来源",
     nav_survey: "参与调查", nav_about: "关于",
-    badge_phase: "第 2 阶段 · 扩展",
     search_placeholder: "搜索国家……",
     chip_all: "所有地区", chip_africa: "非洲", chip_americas: "美洲",
     chip_asia: "亚洲", chip_europe: "欧洲", chip_oceania: "大洋洲",
@@ -1440,17 +1462,17 @@ window.TRANSLATIONS = {
     modal_refresh_body: "自动化指标通过公开 API（世界银行、国际电联）每日更新。人工更新指标每年在重要报告（路透研究所 DNR、无国界记者、自由之家）发布新版时更新一次。",
     modal_confidence_flags: "可信度标记",
     modal_confidence_body: "每个单元格均带有可信度标记（高 / 中 / 低 / 估算 / 初步）。标记为初步的单元格尚未对照主要来源独立核实，不得公开引用。",
-    footer_copyright: "© 2026 · 为联合国准备的独立研究项目 · 数据最近核查",
+    footer_copyright: "© 2026 · 联合国 · Audience Intelligence Atlas · 数据最近核查",
     footer_methodology: "方法论", footer_github: "GitHub", footer_report: "报告错误"
   },
 
   ru: {
     _name: "Russian", _native: "Русский", _rtl: false,
-    brand_title: "Глобальный атлас медиапотребления",
+    brand_un: "Организация Объединённых Наций",
+    brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "Открытый общественный исследовательский ресурс с указанием источников",
     nav_map: "Карта", nav_topics: "Обзор тем", nav_ask: "Спросить аналитика", nav_methodology: "Методология", nav_sources: "Источники",
     nav_survey: "Пройти опрос", nav_about: "О проекте",
-    badge_phase: "Фаза 2 · Расширение",
     search_placeholder: "Поиск страны…",
     chip_all: "Все регионы", chip_africa: "Африка", chip_americas: "Америки",
     chip_asia: "Азия", chip_europe: "Европа", chip_oceania: "Океания",
@@ -1520,7 +1542,7 @@ window.TRANSLATIONS = {
     modal_refresh_body: "Автоматические показатели обновляются ежедневно через публичные API (Всемирный банк, МСЭ). Ручные показатели обновляются раз в год при выходе флагманских отчётов (Reuters Institute DNR, RSF, Freedom House).",
     modal_confidence_flags: "Флаги достоверности",
     modal_confidence_body: "Каждая ячейка имеет флаг достоверности (высокая / средняя / низкая / оценочная / предварительная). Ячейки с флагом «предварительная» ещё не прошли независимую верификацию по первичному источнику и не должны цитироваться публично.",
-    footer_copyright: "© 2026 · Независимый исследовательский проект, подготовленный для Организации Объединённых Наций · Данные проверены",
+    footer_copyright: "© 2026 · Организация Объединённых Наций · Audience Intelligence Atlas · Данные проверены",
     footer_methodology: "Методология", footer_github: "GitHub", footer_report: "Сообщить об ошибке"
   }
 };
@@ -1676,7 +1698,7 @@ function styleCountry(feature) {
     return { fillColor: "#009EDB", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.75 };
   if (kind === "territory")
     return { fillColor: "#8FCBEA", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.55 };
-  return { fillColor: "#D4DEE8", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.55 };
+  return { fillColor: "#E4D9BE", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.7 };
 }
 function styleCountryHover(feature) {
   const kind = featureKind(feature);
@@ -1684,7 +1706,7 @@ function styleCountryHover(feature) {
     return { fillColor: "#0072BC", weight: 1.5, color: "#003D6B", fillOpacity: 0.9 };
   if (kind === "territory")
     return { fillColor: "#5FB3DF", weight: 1.5, color: "#003D6B", fillOpacity: 0.75 };
-  return { fillColor: "#B8C4D3", weight: 1.5, color: "#003D6B", fillOpacity: 0.75 };
+  return { fillColor: "#D3C49B", weight: 1.5, color: "#8A7A50", fillOpacity: 0.85 };
 }
 
 let countryLayer;
@@ -1830,9 +1852,7 @@ function renderAggregateStats() {
     statsStrip.innerHTML = `
       <div class="stat"><div class="label">${t("stat_pilot_countries")}</div><div class="value">—</div></div>
       <div class="stat"><div class="label">${t("stat_people_covered")}</div><div class="value">—</div></div>
-      <div class="stat"><div class="label">${t("stat_avg_internet")}</div><div class="value">—</div></div>
-      <div class="stat"><div class="label">${t("stat_leading_platform")}</div><div class="value">—</div></div>
-      <div class="stat"><div class="label">${t("stat_top_industries")}</div><div class="value">—</div></div>`;
+      <div class="stat"><div class="label">${t("stat_avg_internet")}</div><div class="value">—</div></div>`;
     return;
   }
   const totalPop = entries.reduce((a, b) => a + (b.population || 0), 0);
@@ -1865,16 +1885,7 @@ function renderAggregateStats() {
       <div class="value">${avgInternet == null ? "—" : avgInternet.toFixed(0) + "%"}</div>
       <div class="delta">${t("stat_weighted")}</div>
     </div>
-    <div class="stat">
-      <div class="label">${t("stat_leading_platform")}</div>
-      <div class="value">${topEntry ? topEntry[0] : "—"}</div>
-      <div class="delta">${topEntry ? t("stat_markets_led", { n: topEntry[1], t: entries.length }) : ""}</div>
-    </div>
-    <div class="stat">
-      <div class="label">${t("stat_top_industries")}</div>
-      <div class="value" style="font-size:13px;">${topIndustries(entries, 3).join(" · ")}</div>
-      <div class="delta">${t("stat_across_pilot")}</div>
-    </div>`;
+`;
 }
 function topIndustries(entries, n) {
   const counts = {};

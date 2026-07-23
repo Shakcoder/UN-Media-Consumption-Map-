@@ -12,7 +12,7 @@
  *   2. RETRIEVES the matching records from the Atlas's published data files.
  *      Retrieval is deterministic — every number in an answer is real.
  *   3. COMPOSES a structured answer with recommendation logic, risk flags,
- *      and a per-answer source list (rendered by ask.html as "View sources").
+ *      and a per-answer source list (rendered by ask.html as numbered footnotes).
  *
  * The public contract (used by ask.html):
  *   await initEngine()
@@ -673,7 +673,7 @@ function isFollowUp(question, ents) {
 }
 
 // ---------------------------------------------------------------------------
-// Evidence store — now with clickable links (rendered as "View sources")
+// Evidence store — clickable links (rendered as numbered footnotes under each answer)
 // ---------------------------------------------------------------------------
 function evidenceStore() {
   const items = [];
@@ -1733,12 +1733,11 @@ function composeConsultingBrief(f, ev, ents, qNorm) {
   L.push("");
 
   // ---- EVIDENCE USED ----
+  // Kept as a mandatory section header, but the listing itself is now the
+  // numbered footnote block the app renders beneath every answer (2026-07-23
+  // directive: cite sources footnote-style, not verbatim in the response).
   L.push(`### Evidence used`);
-  L.push(`- ${f.name} country record — ${f.survey ? `news consumption: ${f.survey}` : "no news survey integrated"}; connectivity and demographics: World Bank/ITU; press freedom: RSF 2025; political and internet freedom: Freedom House; languages: Unicode CLDR${f.retrievedOn ? ` *(record refreshed ${f.retrievedOn})*` : ""}`);
-  if (f.landscapeNote) L.push(`- Media landscape narrative — CIA World Factbook, Broadcast media (public domain; auto-refreshed weekly)`);
-  if (adm) L.push(`- Ad-market signal — WPP Media / Dentsu December 2025 industry forecasts (annual hand-update; directional, not a survey)`);
-  if (t) L.push(`- ${t.label_en} attention trend — daily engine as of ${TRENDS.generated} (Wikipedia reading patterns; country attribution by language weights, a documented approximation)`);
-  L.push(`- Full source links in "View sources" below.`);
+  L.push(`*Every figure above traces to the numbered sources beneath this answer${f.retrievedOn ? ` (country record refreshed ${f.retrievedOn})` : ""} — each source name is a clickable link.*`);
   L.push("");
   L.push(`*Advisory. This is evidence-based decision support produced by an automated system, not a final strategy. Every recommendation above is tagged [measured] where it rests on Atlas data and [inferred] where it is reasoned judgement; anything marked [unknown] needs human research. Validate with local teams before committing budget.*`);
   return L.join("\n");
@@ -1811,9 +1810,7 @@ function composeRegionConsultingBrief(fs, ev, ents, qNorm, regionName) {
   L.push(`**Not available at any confidence level:** past campaign performance, format effectiveness, age/gender breakdowns, cost, and seasonal timing. [unknown]`);
   L.push("");
   L.push(`### Evidence used`);
-  L.push(`- Country records for ${fs.map(f => f.name).join(", ")} — news consumption (Reuters DNR / regional barometers), connectivity (World Bank/ITU), freedom scores (RSF, Freedom House), languages (Unicode CLDR).`);
-  if (t) L.push(`- ${t.label_en} attention trend — daily engine as of ${TRENDS.generated} (language-weight attribution, a documented approximation).`);
-  L.push(`- Full source links in "View sources" below.`);
+  L.push(`*Covers ${fs.map(f => f.name).join(", ")}. Every figure traces to the numbered sources beneath this answer — each source name is a clickable link.*`);
   L.push("");
   L.push(`*Advisory. Evidence-based decision support from an automated system, not a final strategy. Claims are tagged [measured] or [inferred]; [unknown] items need human research. Validate with local teams before committing budget.*`);
   return L.join("\n");
