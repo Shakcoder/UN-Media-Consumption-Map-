@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Market Finder — Audience Intelligence Atlas</title>
+<style>
+  :root {
+    --un-blue: #009EDB; --un-blue-dark: #0072BC; --ink: #1A2733; --bg: #F7FAFC;
+    --card: #FFFFFF; --border: #E2E8F0; --border-soft: #EDF2F7; --muted: #5F6B7A;
+    --muted-2: #94A3B2; --accent-soft: #EAF6FD; --warn: #B45309; --positive: #15803D;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         background: var(--bg); color: var(--ink); }
+  header.site { display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+    background: #fff; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; }
+  header.site .brand { display: flex; align-items: center; gap: 12px; }
+  header.site .logo { width: 40px; height: auto; flex-shrink: 0; }
+  header.site .un { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 600; color: var(--muted); }
+  header.site .title { font-size: 15px; font-weight: 700; margin: 0; }
+  header.site .spacer { flex: 1; }
+  header.site nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+  header.site nav a { color: var(--muted); text-decoration: none; font-size: 13.5px;
+    padding: 6px 10px; border-radius: 8px; }
+  header.site nav a:hover { background: var(--accent-soft); color: var(--un-blue-dark); }
+  header.site nav a[aria-current="page"] { background: var(--accent-soft); color: var(--un-blue-dark); font-weight: 600; }
+
+  main { max-width: 1060px; margin: 0 auto; padding: 22px 18px 60px; }
+  .lead { color: var(--muted); margin: 4px 0 18px; max-width: 70ch; }
+
+  form.finder { background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px 16px; }
+  form.finder label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted-2); margin-bottom: 5px; }
+  form.finder select, form.finder input {
+    width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: 9px;
+    font: inherit; background: #fff; color: var(--ink); }
+  form.finder .actions { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; }
+  form.finder button { background: var(--un-blue-dark); border: 0; color: #fff; font: inherit;
+    font-weight: 600; padding: 10px 22px; border-radius: 999px; cursor: pointer; }
+  form.finder button:hover { background: var(--un-blue); }
+  .hint { font-size: 12px; color: var(--muted-2); }
+
+  #status { margin: 16px 2px; color: var(--muted); }
+  .results { margin-top: 18px; display: none; }
+  .method { background: var(--accent-soft); border: 1px solid #CBE8F8; border-radius: 10px;
+    padding: 10px 14px; font-size: 12.5px; color: var(--ink); margin-bottom: 14px; }
+  table.rank { width: 100%; border-collapse: collapse; background: var(--card);
+    border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  table.rank th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted-2); padding: 10px 12px; border-bottom: 1px solid var(--border); background: #FBFDFE; }
+  table.rank td { padding: 10px 12px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+  table.rank tr:last-child td { border-bottom: none; }
+  .scorebar { display: inline-block; width: 74px; height: 7px; background: var(--border-soft);
+    border-radius: 4px; overflow: hidden; vertical-align: middle; margin-right: 7px; }
+  .scorebar i { display: block; height: 100%; background: var(--un-blue); }
+  .risk { color: var(--warn); font-size: 12px; }
+  .ok { color: var(--positive); font-size: 12px; }
+  td .why { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  a.profile { font-size: 12px; color: var(--un-blue-dark); text-decoration: none; white-space: nowrap; }
+  a.profile:hover { text-decoration: underline; }
+
+  details.excluded { margin-top: 14px; font-size: 13px; color: var(--muted); }
+  details.excluded summary { cursor: pointer; font-weight: 600; color: var(--un-blue-dark); }
+  details.excluded ul { columns: 3; margin: 8px 0 0; padding-left: 18px; }
+  @media (max-width: 700px) { details.excluded ul { columns: 1; } }
+  footer.site { border-top: 1px solid var(--border); color: var(--muted-2); font-size: 12px;
+    padding: 14px 20px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="brand">
+    <img class="logo" src="assets/un_emblem.png" alt="United Nations emblem" width="40" height="33">
+    <div>
+      <div class="un">United Nations</div>
+      <h1 class="title">Market Finder</h1>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <nav aria-label="Atlas pages">
+    <a href="index.html">Map</a>
+    <a href="topics.html">Topic Explorer</a>
+    <a href="finder.html" aria-current="page">Market Finder</a>
+    <a href="ask.html">Ask the Analyst</a>
+  </nav>
+</header>
+
+<main>
+  <p class="lead">Describe the campaign — the Finder screens every country with verified media data and
+  ranks the best-fit markets, with the reasoning and every excluded country shown. It is a shortlisting
+  tool: validate top candidates with a full country brief in <a href="ask.html">Ask the Analyst</a>.</p>
+
+  <form class="finder" id="finder-form">
+    <div>
+      <label for="f-objective">Campaign goal</label>
+      <select id="f-objective">
+        <option value="awareness">Maximise awareness / reach</option>
+        <option value="youth">Engage young people</option>
+        <option value="behaviour">Drive behaviour change (health etc.)</option>
+        <option value="crisis">Urgent / crisis communication</option>
+        <option value="trust">Counter misinformation</option>
+        <option value="rural">Reach rural populations</option>
+        <option value="policymakers">Reach policymakers</option>
+      </select>
+    </div>
+    <div>
+      <label for="f-audience">Audience focus</label>
+      <select id="f-audience">
+        <option value="">General population</option>
+        <option value="youth">Young people</option>
+        <option value="rural">Rural communities</option>
+      </select>
+    </div>
+    <div>
+      <label for="f-language">Content language</label>
+      <select id="f-language">
+        <option value="">Any / local languages</option>
+        <option value="en">English</option>
+        <option value="fr">French</option>
+        <option value="es">Spanish</option>
+        <option value="ar">Arabic</option>
+        <option value="pt">Portuguese</option>
+        <option value="ru">Russian</option>
+      </select>
+    </div>
+    <div>
+      <label for="f-region">Region</label>
+      <select id="f-region">
+        <option value="">Worldwide</option>
+        <option value="Africa">Africa</option>
+        <option value="Americas">Americas</option>
+        <option value="Asia">Asia</option>
+        <option value="Europe">Europe</option>
+        <option value="Oceania">Oceania</option>
+      </select>
+    </div>
+    <div>
+      <label for="f-channel">Channel (optional)</label>
+      <select id="f-channel">
+        <option value="">Best fit per country</option>
+        <option value="radio">Radio</option>
+        <option value="TV">TV</option>
+        <option value="online news">Online news</option>
+        <option value="social media">Social media</option>
+      </select>
+    </div>
+    <div>
+      <label for="f-topic">Topic (optional — adds live-trend boost)</label>
+      <input id="f-topic" list="topic-list" placeholder="e.g. Climate change">
+      <datalist id="topic-list"></datalist>
+    </div>
+    <div class="actions">
+      <button type="submit">Find markets</button>
+      <span class="hint">Every weight is disclosed with the results. Countries without the needed
+      survey data are listed as excluded — never silently ranked low.</span>
+    </div>
+  </form>
+
+  <div id="status">Loading the Atlas's data…</div>
+
+  <section class="results" id="results">
+    <div class="method" id="method"></div>
+    <table class="rank" id="rank-table">
+      <thead><tr id="rank-head"></tr></thead>
+      <tbody id="rank-body"></tbody>
+    </table>
+    <details class="excluded" id="excluded"></details>
+  </section>
+</main>
+
+<footer class="site">
+  <div>© 2026 · United Nations · Audience Intelligence Atlas</div>
+  <div>Screening is decision support, not a final market selection — validate with local teams.</div>
+</footer>
+
+<script type="module">
+import { initEngine, findMarkets } from "./ask-engine.js";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+let TOPIC_INDEX = [];   // [label, qid]
+
+(async function boot() {
+  try {
+    await initEngine();
+    try {
+      const r = await fetch("data/topics.json", { cache: "no-cache" });
+      if (r.ok) {
+        const reg = await r.json();
+        TOPIC_INDEX = (reg.topics || []).map(t => [t.label_en, t.qid]);
+        $("topic-list").innerHTML = TOPIC_INDEX.map(([l]) => `<option value="${esc(l)}">`).join("");
+      }
+    } catch (e) { /* topic boost simply unavailable */ }
+    $("status").textContent = "Ready — describe the campaign above and press “Find markets”.";
+  } catch (e) {
+    $("status").textContent = "The Atlas's data could not be loaded (" + e.message + "). If you opened this page from a file, use the published site.";
+  }
+})();
+
+$("finder-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const topicLabel = $("f-topic").value.trim().toLowerCase();
+  const topic = topicLabel ? TOPIC_INDEX.find(([l]) => l.toLowerCase() === topicLabel) : null;
+  const language = $("f-language").value || null;
+  const res = findMarkets({
+    objectiveKey: $("f-objective").value,
+    audience: $("f-audience").value || null,
+    language,
+    region: $("f-region").value || null,
+    channel: $("f-channel").value || null,
+    topicQid: topic ? topic[1] : null,
+    limit: 15,
+  });
+
+  const langCol = !!language;
+  $("method").innerHTML =
+    `<strong>How this ranking works:</strong> ${Object.entries(res.weights)
+      .map(([k, w]) => `${k} ${w}%`).join(" · ")}. ${esc(res.methodNote)}` +
+    (topicLabel && !topic ? ` <span class="risk">Topic “${esc($("f-topic").value)}” is not in the tracked registry — no trend boost applied.</span>` : "");
+
+  $("rank-head").innerHTML =
+    `<th>#</th><th>Country</th><th>Score</th><th>Lead channel</th>` +
+    (langCol ? `<th>${esc(($("f-language").selectedOptions[0] || {}).textContent || "Language")}</th>` : "") +
+    `<th>Est. people reachable</th><th>Notes</th><th></th>`;
+
+  $("rank-body").innerHTML = res.top.map((r, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><strong>${r.flag ? esc(r.flag) + " " : ""}${esc(r.name)}</strong>
+        <div class="why">${esc(r.survey || "")}${r.constructNote ? " · " + esc(r.constructNote) : ""}</div></td>
+      <td><span class="scorebar"><i style="width:${Math.min(100, r.score)}%"></i></span>${r.score}</td>
+      <td>${esc(r.lead.name)} ${r.lead.effective}%${r.lead.capped ? " <span class='hint'>(capped at internet)</span>" : ""}</td>
+      ${langCol ? `<td>${r.langPct != null ? Math.round(r.langPct) + "%" : "<span class='hint'>no data</span>"}</td>` : ""}
+      <td>${r.reachPeople != null ? fmtPeople(r.reachPeople) : "n/a"}</td>
+      <td>${r.flags.length ? `<span class="risk">⚠ ${esc(r.flags.join("; "))}</span>` : `<span class="ok">no structural red flags</span>`}</td>
+      <td><a class="profile" href="index.html" title="Open the country profile on the map page">Profile ↗</a></td>
+    </tr>`).join("");
+
+  const byReason = {};
+  res.excluded.forEach(x => { (byReason[x.reason] = byReason[x.reason] || []).push(x.name); });
+  $("excluded").innerHTML = res.excluded.length
+    ? `<summary>Excluded — missing the required survey data (${res.excluded.length} countries; not ranked low)</summary>` +
+      Object.entries(byReason).map(([reason, names]) =>
+        `<p><strong>${esc(reason)} (${names.length}):</strong></p><ul>${names.map(n => `<li>${esc(n)}</li>`).join("")}</ul>`).join("")
+    : "";
+  $("excluded").style.display = res.excluded.length ? "block" : "none";
+
+  $("results").style.display = "block";
+  $("status").textContent = res.top.length
+    ? `Top ${res.top.length} of ${res.ranked.length} rankable countries — scores are comparative within this search only.`
+    : "No countries in this scope have the required survey data for that combination — try removing the channel or language filter.";
+});
+
+function fmtPeople(v) {
+  return v >= 1e9 ? (v / 1e9).toFixed(2) + "B" : v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : Math.round(v / 1000) + "k";
+}
+</script>
+
+</body>
+</html>

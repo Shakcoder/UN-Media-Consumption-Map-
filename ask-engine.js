@@ -1395,6 +1395,173 @@ const OBJECTIVES = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// Market Finder — reverse search: "which countries best fit this campaign?"
+// Deterministic multi-criteria screening over every country with usable
+// media-survey data. Countries lacking the required data are EXCLUDED with an
+// explicit reason — never silently ranked low (same honesty rule as
+// composeRanking). Weights are fixed, disclosed, and renormalized over the
+// criteria a given search actually uses.
+// ---------------------------------------------------------------------------
+const FINDER_WEIGHTS = { reach: 45, language: 20, audience: 15, momentum: 10, openness: 10 };
+
+function langShare(c, code) {
+  const e = (c.languages_detail || []).find(l => l.code === code);
+  return e ? e.pct : null;
+}
+
+export function findMarkets(opts = {}) {
+  const objective = OBJECTIVES[opts.objectiveKey] || OBJECTIVES.awareness;
+  const audience = opts.audience || null;               // "youth" | "rural" | null
+  const language = opts.language || null;               // CLDR code, e.g. "en"
+  const topicQid = opts.topicQid || null;
+  const channelOverride = opts.channel || null;         // "radio"|"TV"|"online news"|"social media"
+  const limit = opts.limit || 15;
+
+  // active criteria and renormalized weights
+  const active = { reach: true, openness: true, language: !!language,
+                   audience: audience === "youth" || audience === "rural",
+                   momentum: !!(topicQid && TRENDS) };
+  const totalW = Object.entries(FINDER_WEIGHTS).filter(([k]) => active[k]).reduce((a, [, w]) => a + w, 0);
+  const W = {}; for (const [k, w] of Object.entries(FINDER_WEIGHTS)) W[k] = active[k] ? w / totalW : 0;
+
+  let pool = Object.keys(COUNTRIES);
+  if (opts.isos && opts.isos.length) pool = pool.filter(iso => opts.isos.includes(iso));
+  else if (opts.region) pool = pool.filter(iso => (COUNTRIES[iso].region || "") === opts.region);
+
+  const ranked = [], excluded = [];
+  for (const iso of pool) {
+    const c = COUNTRIES[iso];
+    const f = facts(iso);
+    if (!f) continue;
+    const rows = evaluateChannels(f, objective);
+    if (!rows.length) {
+      excluded.push({ iso, name: f.name, reason: (c.platform_use ? "platform-use data only — no news-channel survey" : "no media survey data") });
+      continue;
+    }
+    let lead = rows[0];
+    if (channelOverride) {
+      lead = rows.find(r => r.name === channelOverride);
+      if (!lead) { excluded.push({ iso, name: f.name, reason: `no ${channelOverride} survey data` }); continue; }
+    }
+
+    const comp = {};
+    comp.reach = lead.effective;                               // 0-100 (digital already capped at internet)
+    comp.openness = f.rsf != null ? f.rsf : (f.fh != null && COUNTRIES[iso].information_freedom
+      ? (COUNTRIES[iso].information_freedom.political_freedom_score ?? 50) : 50);
+    let langPct = null;
+    if (language) { langPct = langShare(c, language); comp.language = langPct ?? 0; }
+    if (audience === "youth")
+      comp.audience = f.under15 != null ? Math.max(0, Math.min(100, ((f.under15 - 12) / (47 - 12)) * 100)) : 0;
+    else if (audience === "rural")
+      comp.audience = f.urban != null ? (100 - f.urban) : 0;
+    let risingHit = null;
+    if (active.momentum) {
+      risingHit = (f.rising || []).find(r => r.qid === topicQid) || null;
+      comp.momentum = risingHit ? 100 : 0;
+    }
+
+    const score = Object.entries(comp).reduce((a, [k, v]) => a + (W[k] || 0) * v, 0);
+    const flags = [];
+    if (f.fh === "Not Free") flags.push("Not Free — vet partner outlets individually");
+    if (f.rsf != null && f.rsf < 40) flags.push(`press freedom ${Math.round(f.rsf)}/100`);
+    if (f.fotn != null && f.fotn < 40) flags.push(`internet freedom ${f.fotn}/100 — platform-restriction risk`);
+    const constructNote = /Arab Barometer/.test(f.survey || "") ? "primary-source construct"
+      : /Eurobarometer/.test(f.survey || "") ? "general media-use construct"
+      : /World Values/.test(f.survey || "") ? "daily+weekly construct" : null;
+
+    ranked.push({
+      iso, name: f.name, flag: c.flag || "", score: Math.round(score * 10) / 10,
+      components: comp, lead: { name: lead.name, effective: lead.effective, measured: lead.measured, capped: lead.capped },
+      langPct, under15: f.under15, urban: f.urban, internet: f.internet,
+      population: f.pop, reachPeople: f.pop != null ? Math.round((lead.effective / 100) * f.pop) : null,
+      risingHit, flags, survey: f.survey, constructNote, rsf: f.rsf, fh: f.fh,
+    });
+  }
+  ranked.sort((a, b) => b.score - a.score);
+  return {
+    objective, audience, language, topicQid, channel: channelOverride,
+    weights: Object.fromEntries(Object.entries(W).filter(([, v]) => v > 0)
+      .map(([k, v]) => [k, Math.round(v * 100)])),
+    ranked, top: ranked.slice(0, limit), excluded,
+    methodNote: "Scores mix survey constructs (Reuters DNR weekly use, WVS daily+weekly, Eurobarometer general media use, Arab Barometer primary source) — treat close scores as ties. Digital reach is capped at internet penetration. Excluded countries lack the required survey data; they are not ranked low.",
+  };
+}
+
+const LANG_NAMES_FINDER = { en: "English", fr: "French", es: "Spanish", ar: "Arabic", pt: "Portuguese", ru: "Russian", zh: "Chinese", sw: "Swahili", hi: "Hindi" };
+
+function composeMarketFinder(ents, ev, qNorm) {
+  const objective = inferObjective(qNorm, ents);
+  const audience = (ents.audiences || []).includes("youth") ? "youth"
+    : (ents.audiences || []).includes("rural") ? "rural" : null;
+  // language ask ("english-speaking", "francophone")
+  const language = /\benglish\b|anglophone/.test(qNorm) ? "en"
+    : /\bfrench\b|francophone/.test(qNorm) ? "fr"
+    : /\bspanish\b|hispanophone/.test(qNorm) ? "es"
+    : /\barabic\b/.test(qNorm) ? "ar"
+    : /\bportuguese\b|lusophone/.test(qNorm) ? "pt" : null;
+  const topic = ents.topics[0] || null;
+  // explicit channel ask ("a RADIO health campaign") becomes a hard filter —
+  // countries without that channel's survey data are excluded, not guessed
+  const channel = /\bradio\b/.test(qNorm) ? "radio"
+    : /\b(tv|television)\b/.test(qNorm) ? "TV"
+    : /\bsocial media\b/.test(qNorm) ? "social media"
+    : /\bonline news\b/.test(qNorm) ? "online news" : null;
+  const regionKey = ents.regions[0] || null;
+  let isos = null, scopeName = "all 195 countries";
+  if (regionKey && REGION_MAP[regionKey]) {
+    isos = Object.keys(COUNTRIES).filter(iso => inRegionSpec(REGION_MAP[regionKey], iso, COUNTRIES[iso]));
+    scopeName = regionDisplay(regionKey);
+  }
+  const res = findMarkets({
+    objectiveKey: objective.key, audience, language, channel,
+    topicQid: topic ? topic.qid : null, isos, limit: 10,
+  });
+  if (!res.ranked.length) {
+    return `The Atlas cannot rank markets in ${scopeName} for this ask — none of the countries in scope have the required media-survey data. ${res.excluded.length} countries were checked; all lack a news-channel survey. This is a data gap, not a judgement on those markets.`;
+  }
+
+  const L = [];
+  L.push(`**Market screening — ${objective.label}${topic ? ` · ${topic.label}` : ""}${channel ? ` · ${channel}-led` : ""}${language ? ` · ${LANG_NAMES_FINDER[language]} content` : ""}${audience ? ` · ${audience} audience` : ""} · ${scopeName}**`);
+  L.push("");
+  L.push(`*How this ranking works: ${Object.entries(res.weights).map(([k, w]) => `${k} ${w}%`).join(" · ")} — weights fixed and disclosed; every input figure is cited in the country's profile. [method]*`);
+  L.push("");
+  L.push(`| # | Country | Score | Lead channel (effective reach) |${language ? ` ${LANG_NAMES_FINDER[language]} |` : ""} Est. people reachable | Risk notes |`);
+  L.push(`|---|---|---|---|${language ? "---|" : ""}---|---|`);
+  res.top.forEach((r, i) => {
+    L.push(`| ${i + 1} | ${r.name} | ${r.score} | ${r.lead.name} ${fmt(r.lead.effective)}${r.lead.capped ? " *(capped at internet access)*" : ""} |${language ? ` ${r.langPct != null ? Math.round(r.langPct) + "%" : "no data"} |` : ""} ${r.reachPeople != null ? fmtPop(r.reachPeople) : "n/a"} | ${r.flags.length ? r.flags[0] : "—"} |`);
+  });
+  L.push("");
+  L.push(`**Why the top picks:**`);
+  res.top.slice(0, 5).forEach((r, i) => {
+    const why = [];
+    why.push(`${r.lead.name} reaches ${fmt(r.lead.effective)} effectively [measured${r.constructNote ? ` — ${r.constructNote}` : ""}]`);
+    if (language && r.langPct != null) why.push(`${LANG_NAMES_FINDER[language]} reaches ~${Math.round(r.langPct)}% (CLDR speaker capability) [measured]`);
+    if (audience === "youth" && r.under15 != null) why.push(`${fmt(r.under15)} of the population is under 15 — youth-heavy structure [measured, structural inference for youth fit]`);
+    if (audience === "rural" && r.urban != null) why.push(`${fmt(100 - r.urban)} rural population [measured]`);
+    if (r.risingHit) why.push(`attention to ${topic.label} is currently rising in this market (+${Math.round(r.risingHit.velocity * 100)}% vs baseline) [measured, ~120-day window]`);
+    if (r.flags.length) why.push(`caution: ${r.flags.join("; ")} [measured]`);
+    L.push(`${i + 1}. **${r.name}** — ${why.join("; ")}.`);
+    ev.add(`${r.name} — screening inputs`, `Score ${r.score}/100. Survey: ${r.survey || "n/a"}. All inputs from the Atlas country record.`, countryLinks(r.iso));
+  });
+  L.push("");
+  if (res.excluded.length) {
+    const byReason = {};
+    res.excluded.forEach(x => { byReason[x.reason] = (byReason[x.reason] || 0) + 1; });
+    const exNames = res.excluded.length <= 10 ? ` (${res.excluded.map(x => x.name).join(", ")})` : "";
+    L.push(`**Not rankable (${res.excluded.length} countries)${exNames}:** ${Object.entries(byReason).map(([r, n]) => `${n} with ${r}`).join("; ")}. They are excluded for missing data — not ranked low; the map's grey tier shows them.`);
+    L.push("");
+  }
+  L.push(`**Confidence: Medium.** ${res.methodNote}`);
+  L.push("");
+  L.push(`### Evidence used`);
+  L.push(`*Every input figure traces to the numbered sources beneath this answer — each source name is a clickable link.*`);
+  L.push("");
+  L.push(`*Advisory. Screening is decision support for shortlisting, not a final market selection — validate top candidates with the full country brief ("How should we run this in [country]?") and local teams before committing budget.*`);
+  ev.add("Market screening method", `Deterministic multi-criteria screen. Weights: ${JSON.stringify(res.weights)}. ${res.methodNote}`, []);
+  return L.join("\n");
+}
+
 function inferObjective(qNorm, ents) {
   const hits = [];
   for (const [key, o] of Object.entries(OBJECTIVES)) if (o.re.test(qNorm)) hits.push(key);
@@ -1970,6 +2137,9 @@ function maybeClarify(question, ents) {
   const q = normalize(question);
   // a rankable question never needs a location — "where/which countries" IS the ask
   if (ents.intents.includes("rank") && ents.attributes.length) return null;
+  // market-discovery questions are deliberately placeless — the engine's job
+  // is to PICK the places, so asking "which region?" would be backwards
+  if (ents.discovery) return null;
   const noPlace = !ents.countries.length && !ents.regions.length;
   const noSubject = !ents.topics.length && !ents.attributes.length && !ents.platforms.length;
 
@@ -2075,7 +2245,18 @@ export function answerQuestion(question) {
   // what a number is. These all route to the consulting brief.
   const decisionVerb = /\b(strateg\w+|campaign|distribut\w+|roll ?out|launch\w*|opportunit\w+|memo|brief\b|content plan|media plan|outreach|disseminat\w+|amplif\w+|promote|publish|advertis\w+|market\w*|communicat\w+|messag\w+|engag\w+|target\w*|reach\w*|counter\w*|combat\w*|raise awareness)\b/.test(qNorm);
   const decisionFrame = /\b(how (do|should|would|can) (we|i|they|dgc|the un)|where should|what.{0,15}best (way|platform|channel|approach|mix)|what should (we|i|dgc)|help (us|me) (reach|plan|decide)|recommend\w*|advise|advice on|plan for)\b/.test(qNorm);
-  const strategyIntent = (decisionVerb || decisionFrame)
+  // Market-discovery ("WHICH countries/markets for this campaign?") outranks
+  // both the strategy briefs (which answer HOW for a place already chosen)
+  // and attribute rankings — but only when no specific country is named and
+  // a campaign verb makes the screening intent unambiguous.
+  const discovery = ents.countries.length === 0
+    && /\b(countries|markets|market)\b/.test(qNorm)
+    && /\b(campaign|launch\w*|prioriti[sz]e|expand\w*|distribute|roll ?out|invest\w*|focus|pilot|deploy\w*|screen\w*|best fit)\b/.test(qNorm);
+  if (discovery) {
+    ents.discovery = true;
+    ents.intents = ents.intents.filter(i => i !== "rank" && i !== "lookup");
+  }
+  const strategyIntent = !discovery && (decisionVerb || decisionFrame)
     && (ents.countries.length > 0 || ents.regionCountries.length > 0);
   if (strategyIntent) {
     ents.intents = ents.intents.filter(i => i !== "lookup");
@@ -2218,6 +2399,13 @@ export function answerQuestion(question) {
   if (!parts.length && ents.intents.includes("rank") && ents.attributes.length) {
     const r = composeRanking(ents, ev);
     if (r) { parts.push(r); kind = "rank"; }
+  }
+  // Market Finder — reverse search; the discovery flag is computed upstream
+  // (before strategy/rank routing) so region-scoped and attribute-flavoured
+  // screening questions land here instead of being intercepted.
+  else if (!parts.length && ents.discovery) {
+    parts.push(composeMarketFinder(ents, ev, qNorm));
+    kind = "finder";
   }
   // Single-fact lookup ("literacy rate in Chad")
   else if (!parts.length && ents.intents.includes("lookup")) {
