@@ -139,7 +139,12 @@
     <button id="send" type="submit">Ask</button>
   </div>
 </form>
-<div class="footer-note">The analyst only cites the Atlas's own sources and refuses to guess. Answers are decision support, not policy positions.</div>
+<div class="footer-note">The analyst only cites the Atlas's own sources and refuses to guess. Answers are decision support, not policy positions.
+  <span id="qlog-ui" hidden> · Questions are remembered <em>only in this browser</em> (never uploaded) so coverage gaps can be reviewed:
+    <a href="#" id="qlog-download" title="Download every question asked in this browser as a CSV (opens in Excel) — timestamp, question, and whether the analyst answered, asked to clarify, or missed">download log (<span id="qlog-count">0</span>)</a> ·
+    <a href="#" id="qlog-clear" title="Erase the local question log">clear</a>
+  </span>
+</div>
 
 <script type="module">
 import { initEngine, answerQuestion } from "./ask-engine.js";
@@ -320,9 +325,53 @@ async function askLocal(question) {
     return;
   }
   const r = answerQuestion(question);
+  logQuestion(question, r.clarify ? "clarify"
+    : /couldn't match that to the Atlas/.test(r.answer || "") ? "no-match" : "answered");
   if (r.clarify) { addClarify(r.clarify); return; }
   addAnalyst(r.answer, r.evidence, "", r.followups);
 }
+
+/* ---------- Local question log (improvement loop, 2026-07-23) ----------
+ * Every question is recorded ONLY in this browser's localStorage — nothing
+ * is uploaded, so the page's privacy promise stays intact. The download
+ * button exports a CSV (Excel-ready) so recurring misses can be reviewed
+ * and turned into new analyst capabilities or documented gaps. */
+const QLOG_KEY = "atlas_question_log_v1";
+function qlogRead() {
+  try { return JSON.parse(localStorage.getItem(QLOG_KEY) || "[]"); } catch (e) { return []; }
+}
+function logQuestion(question, outcome) {
+  try {
+    const log = qlogRead();
+    log.push({ t: new Date().toISOString(), q: question, outcome });
+    while (log.length > 1000) log.shift();          // cap: newest 1,000
+    localStorage.setItem(QLOG_KEY, JSON.stringify(log));
+    qlogRefresh();
+  } catch (e) { /* storage blocked (private browsing) — log silently off */ }
+}
+function qlogRefresh() {
+  const ui = document.getElementById("qlog-ui");
+  const n = qlogRead().length;
+  if (ui) { ui.hidden = n === 0; const c = document.getElementById("qlog-count"); if (c) c.textContent = n; }
+}
+document.getElementById("qlog-download").addEventListener("click", (e) => {
+  e.preventDefault();
+  const rows = [["timestamp", "question", "outcome"]]
+    .concat(qlogRead().map(r => [r.t, r.q, r.outcome]));
+  const csv = "﻿" + rows.map(r =>
+    r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = "atlas-question-log-" + new Date().toISOString().slice(0, 10) + ".csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById("qlog-clear").addEventListener("click", (e) => {
+  e.preventDefault();
+  try { localStorage.removeItem(QLOG_KEY); } catch (err) {}
+  qlogRefresh();
+});
+qlogRefresh();
 
 async function askWorker(question) {
   const ctrl = new AbortController();
@@ -340,6 +389,7 @@ async function askWorker(question) {
     const note = data.engine === "workers-ai" ? "Written by the Atlas's free AI engine strictly from the cited Atlas data."
       : data.engine === "claude" ? "Written by Claude strictly from the cited Atlas data." : "";
     addAnalyst(data.answer, data.evidence || [], note, []);
+    logQuestion(question, "answered-worker");
     return true;
   } catch (e) {
     clearTimeout(timer);
