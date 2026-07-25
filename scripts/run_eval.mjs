@@ -11,6 +11,11 @@
  *                                               with structural checks: all six
  *                                               memo sections + disclaimers
  *                                               present, no null leakage)
+ *         node scripts/run_eval.mjs market     (Market Finder invariants: the
+ *                                               findMarkets() honesty contract —
+ *                                               named exclusions, disclosed
+ *                                               weights, digital reach capped —
+ *                                               plus composed-answer checks)
  * Needs:  Node 18+ (no packages). Run from anywhere; paths are script-relative.
  *
  * The bar (design doc §11): the system answers with citations, or it
@@ -220,6 +225,153 @@ if (process.argv[2] === "strategy") {
   await writeFile(join(ROOT, "eval", "strategy_results.json"), JSON.stringify(out, null, 1));
   console.log(`Strategy suite: ${STRATEGY_PROMPTS.length - fails}/${STRATEGY_PROMPTS.length} structurally sound (sections + disclaimers + no null leakage)`);
   console.log("Results: eval/strategy_results.json");
+  process.exit(fails ? 1 : 0);
+}
+
+if (process.argv[2] === "market") {
+  // Market Finder acceptance suite (added 2026-07-25, the day after the
+  // feature shipped). Two layers:
+  //   A. findMarkets() API invariants — the honesty contract the commit
+  //      message promises: countries without data are EXCLUDED with a named
+  //      reason (never silently ranked low), weights are disclosed and
+  //      renormalized over active criteria, digital reach is capped at
+  //      internet penetration, an explicit channel ask is a hard filter,
+  //      Not-Free markets always carry the partner-vetting flag.
+  //   B. Composed answers — natural-language prompts that route to the
+  //      finder must disclose method + weights, list the not-rankable
+  //      countries, carry the Advisory disclaimer, and leak no nulls.
+  const checks = [];
+  let fails = 0;
+  const check = (name, pass, detail = "") => {
+    checks.push({ name, pass: !!pass, ...(detail ? { detail } : {}) });
+    if (!pass) { fails++; console.log(`  FAIL ${name}${detail ? " — " + detail : ""}`); }
+  };
+  const DIGITAL = new Set(["online news", "social media"]);
+  const sortedDesc = (rows) => rows.every((r, i) => i === 0 || rows[i - 1].score >= r.score);
+  const weightSum = (res) => Object.values(res.weights).reduce((a, b) => a + b, 0);
+  const structurallySound = (name, res) => {
+    check(`${name}: scores in [0,100]`, res.ranked.every(r => r.score >= 0 && r.score <= 100));
+    check(`${name}: ranked sorted by score desc`, sortedDesc(res.ranked));
+    check(`${name}: weights sum to ~100`, Math.abs(weightSum(res) - 100) <= 1, `sum=${weightSum(res)}`);
+    const rankedIsos = new Set(res.ranked.map(r => r.iso));
+    check(`${name}: ranked/excluded disjoint`, !res.excluded.some(x => rankedIsos.has(x.iso)));
+    check(`${name}: every exclusion has a named reason`,
+      res.excluded.every(x => typeof x.reason === "string" && x.reason.length > 0));
+    check(`${name}: reachPeople = effective% of population`,
+      res.ranked.every(r => r.population == null || r.reachPeople === Math.round((r.lead.effective / 100) * r.population)));
+  };
+
+  // --- A. API invariants -----------------------------------------------------
+  const base = engine.findMarkets({});
+  const base2 = engine.findMarkets({});
+  const radio = engine.findMarkets({ objectiveKey: "behaviour", channel: "radio" });
+  const french = engine.findMarkets({ language: "fr" });
+  const youth = engine.findMarkets({ objectiveKey: "youth", audience: "youth" });
+  const scoped = engine.findMarkets({ isos: ["KEN", "NGA", "GHA", "TCD"] });
+  const nodata = engine.findMarkets({ isos: ["TCD", "SSD", "ERI"] }); // none has a news-channel survey
+
+  check("determinism: identical opts give identical results",
+    JSON.stringify(base) === JSON.stringify(base2));
+  structurallySound("base", base);
+  structurallySound("radio-filter", radio);
+  structurallySound("language=fr", french);
+  structurallySound("youth", youth);
+  structurallySound("iso-scoped", scoped);
+
+  // weights renormalize over ACTIVE criteria only — inactive ones must not appear
+  check("base: only reach+openness weighted (no language/audience/momentum)",
+    Object.keys(base.weights).sort().join(",") === "openness,reach", JSON.stringify(base.weights));
+  check("language=fr: language criterion active and weighted", french.weights.language > 0);
+  check("youth: audience criterion active and weighted", youth.weights.audience > 0);
+
+  // the single most expensive mistake this tool prevents: survey reach of the
+  // connected population presented as national reach
+  check("digital cap: effective reach never exceeds internet penetration",
+    base.ranked.every(r => !DIGITAL.has(r.lead.name) || r.internet == null || r.lead.effective <= r.internet + 1e-9));
+  check("digital cap: capped flag set exactly when the cap binds",
+    base.ranked.every(r => DIGITAL.has(r.lead.name)
+      ? r.lead.capped === (r.lead.effective < r.lead.measured)
+      : (r.lead.capped === false && r.lead.effective === r.lead.measured)));
+
+  // an explicit channel ask is a hard filter, not a preference
+  check("radio-filter: every ranked country led by radio",
+    radio.ranked.length > 0 && radio.ranked.every(r => r.lead.name === "radio"));
+  check("radio-filter: countries without radio data excluded with the named reason",
+    radio.excluded.every(x => /no radio survey data|platform-use data only|no media survey data/.test(x.reason)));
+
+  // Not-Free invariant (2026-07-21: never remove the partner-vetting warning)
+  const notFree = base.ranked.filter(r => r.fh === "Not Free");
+  check("Not-Free markets appear in world ranking (check is non-vacuous)", notFree.length > 0);
+  check("every ranked Not-Free market carries the partner-vetting flag",
+    notFree.every(r => r.flags.some(fl => /Not Free/.test(fl))));
+
+  // scoping is exact: nothing outside the requested pool, in either list
+  const inScope = new Set(["KEN", "NGA", "GHA", "TCD"]);
+  check("iso scope respected in ranked+excluded",
+    [...scoped.ranked, ...scoped.excluded].every(r => inScope.has(r.iso)));
+  check("iso scope: unsurveyed Chad excluded, surveyed Kenya ranked",
+    scoped.excluded.some(x => x.iso === "TCD") && scoped.ranked.some(r => r.iso === "KEN"));
+  check("all-unsurveyed pool: zero ranked, all three excluded",
+    nodata.ranked.length === 0 && nodata.excluded.length === 3);
+
+  // missing language data scores 0 and stays ranked — missing data must never
+  // silently exclude, only missing SURVEY data excludes (with its reason)
+  check("language=fr: countries without a French figure ranked at language=0, not dropped",
+    french.ranked.some(r => r.langPct == null && r.components.language === 0)
+    && french.ranked.every(r => typeof r.components.language === "number"));
+
+  // --- B. composed natural-language answers ---------------------------------
+  const COMPOSED = [
+    { prompt: "Which countries should we prioritize for a radio vaccination campaign?",
+      expect: { header: true, table: true, notRankable: true, marker: "· radio-led" } },
+    { prompt: "Best markets to launch English-language content for young people?",
+      expect: { header: true, table: true, notRankable: true, marker: "English content", marker2: "youth audience" } },
+    { prompt: "Which countries in West Africa best fit a climate change campaign?",
+      expect: { header: true, table: true, scoped: true } },
+    { prompt: "Which Caribbean markets should we prioritize for a campaign?",
+      expect: { emptyGraceful: true } },  // no Caribbean country has a news-channel survey
+  ];
+  const composed = [];
+  for (const { prompt, expect } of COMPOSED) {
+    engine.resetConversation();
+    let entry = { prompt };
+    try {
+      const r = engine.answerQuestion(prompt);
+      const a = r.answer || "";
+      entry.answer = a;
+      const p = (name, pass, detail) => check(`"${prompt.slice(0, 40)}…": ${name}`, pass, detail);
+      p("no null/undefined/NaN leakage", !/\bnull\b|\bundefined\b|\bNaN\b/.test(a));
+      if (expect.emptyGraceful) {
+        p("declines gracefully, names the data gap",
+          /cannot rank markets/.test(a) && /data gap/.test(a));
+      } else {
+        p("finder header present", /\*\*Market screening — /.test(a));
+        p("method + weights disclosed", /How this ranking works:/.test(a) && /reach \d+%/.test(a));
+        p("results table present", /\| # \| Country \| Score \|/.test(a));
+        p("advisory disclaimer present", /Advisory\./.test(a));
+        p("evidence includes the screening method", (r.evidence || []).some(e => /Market screening method/.test(e.title)));
+        p("per-country evidence attached", (r.evidence || []).filter(e => /screening inputs/.test(e.title)).length > 0);
+        if (expect.notRankable) p("not-rankable countries listed", /\*\*Not rankable \(\d+ countries\)/.test(a));
+        if (expect.marker) p(`routed with "${expect.marker}"`, a.includes(expect.marker));
+        if (expect.marker2) p(`routed with "${expect.marker2}"`, a.includes(expect.marker2));
+        if (expect.scoped) p("region scope applied (not all 195)", !a.includes("all 195 countries"));
+      }
+      entry.evidence_titles = (r.evidence || []).map(e => e.title);
+    } catch (e) {
+      entry.error = e.message;
+      check(`"${prompt.slice(0, 40)}…": no crash`, false, e.message);
+    }
+    composed.push(entry);
+  }
+
+  await mkdir(join(ROOT, "eval"), { recursive: true });
+  await writeFile(join(ROOT, "eval", "market_results.json"), JSON.stringify({
+    run_note: "Market Finder invariant suite — findMarkets() API contract + composed answers.",
+    counts: { passed: checks.filter(c => c.pass).length, failed: fails, total: checks.length },
+    checks, composed,
+  }, null, 1));
+  console.log(`Market Finder suite: ${checks.length - fails}/${checks.length} invariants hold`);
+  console.log("Results: eval/market_results.json");
   process.exit(fails ? 1 : 0);
 }
 
