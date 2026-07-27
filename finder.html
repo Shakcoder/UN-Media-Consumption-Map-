@@ -106,14 +106,14 @@
     <a href="index.html">Map</a>
     <a href="topics.html">Topic Explorer</a>
     <a href="finder.html" aria-current="page">Market Finder</a>
-    <a href="ask.html">Ask the Analyst</a>
+    <a href="ask.html">AI Analyst</a>
   </nav>
 </header>
 
 <main>
   <p class="lead">Describe the campaign — the Finder screens every country with verified media data and
   ranks the best-fit markets, with the reasoning and every excluded country shown. It is a shortlisting
-  tool: validate top candidates with a full country brief in <a href="ask.html">Ask the Analyst</a>.</p>
+  tool: validate top candidates with a full country brief in the <a href="ask.html">AI Analyst</a>.</p>
 
   <form class="finder" id="finder-form">
     <div>
@@ -287,7 +287,7 @@ $("finder-form").addEventListener("submit", (e) => {
     : "";
   $("excluded").style.display = res.excluded.length ? "block" : "none";
 
-  // Numbered footnotes, matching Ask the Analyst. Every column above is a
+  // Numbered footnotes, matching the AI Analyst page. Every column above is a
   // figure a comms officer might quote, so the page has to say where each
   // one came from — the surveys actually used in THIS result set are listed
   // by name rather than a generic "various sources".

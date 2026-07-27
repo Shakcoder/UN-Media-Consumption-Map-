@@ -22,7 +22,7 @@
 
 ## 1. The headline capability — a full strategy brief (2 minutes)
 
-**Do:** Click **Ask the Analyst** in the top navigation. Type exactly:
+**Do:** Click **AI Analyst** in the top navigation. Type exactly:
 
 ```
 Distribution strategy for vaccination content in Nigeria
@@ -89,7 +89,7 @@ It answers: **"The Atlas holds no campaign archive."** — then explains what it
 
 ## 4. Speed round — the range (1.5 minutes)
 
-*Back in **Ask the Analyst**. Type these back to back. Don't over-explain; the pace is the point.*
+*Back in the **AI Analyst**. Type these back to back. Don't over-explain; the pace is the point.*
 
 ```
 Compare news trust in France and Germany

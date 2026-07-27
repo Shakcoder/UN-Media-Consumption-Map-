@@ -12,7 +12,7 @@ Every number is traceable to a reputable source — the World Bank, Reporters Wi
 
 ## The AI analyst is live — and it costs nothing
 
-The **"Ask the Analyst"** page now answers any plain-English question directly in the visitor's browser:
+The **"AI Analyst"** page (renamed from "Ask the Analyst", July 2026) now answers any plain-English question directly in the visitor's browser:
 
 > *"Where should we publish climate content targeting youth in East Africa?"*
 > *"Which country trusts the news most?"* · *"Top 5 African countries by radio"* · *"Compare France and Germany"*

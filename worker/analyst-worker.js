@@ -1,5 +1,5 @@
 /**
- * UN Media Atlas — "Ask the Analyst" backend (Cloudflare Worker)
+ * UN Media Atlas — AI Analyst backend (Cloudflare Worker)
  * ==============================================================
  *
  * ⚠️ STATUS: EXPERIMENTAL — NOT SUPPORTED, AND SWITCHED OFF IN CODE.

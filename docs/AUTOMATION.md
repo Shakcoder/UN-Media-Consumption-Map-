@@ -26,13 +26,13 @@ These five files ARE the site. Every page loads them straight from the repo — 
 
 | File | Written by | Cadence | Which pages read it |
 |---|---|---|---|
-| `data/countries.json` | weekly refresh | Mondays (or minutes after you upload a changed script/static file) | Map, Ask the Analyst, Market Finder |
-| `data/trends/topic_intelligence.json` | daily trend engine | every morning | Topic Explorer, Map, Ask the Analyst |
-| `data/topics.json` | `scripts/build_topic_registry.py` (manual, rare) | only when the topic list changes | Ask the Analyst, Market Finder (the topic list) |
+| `data/countries.json` | weekly refresh | Mondays (or minutes after you upload a changed script/static file) | Map, AI Analyst, Market Finder |
+| `data/trends/topic_intelligence.json` | daily trend engine | every morning | Topic Explorer, Map, AI Analyst |
+| `data/topics.json` | `scripts/build_topic_registry.py` (manual, rare) | only when the topic list changes | AI Analyst, Market Finder (the topic list) |
 | `data/platform_web_shares.json` | weekly refresh, via `scripts/fetch_statcounter.py` | Mondays | Map — the "social web-traffic share" block on a country's Media tab |
-| `data/ad_market.json` | **you**, by hand | once a year, each December/January | Ask the Analyst — ad-market context inside strategy briefs |
+| `data/ad_market.json` | **you**, by hand | once a year, each December/January | AI Analyst — ad-market context inside strategy briefs |
 
-The "Ask the Analyst" and "Market Finder" pages need **no backend at all** — `ask-engine.js` runs in the visitor's browser and reads the published JSON files above.
+The "AI Analyst" and "Market Finder" pages need **no backend at all** — `ask-engine.js` runs in the visitor's browser and reads the published JSON files above.
 
 **Two of these degrade quietly on purpose.** If `platform_web_shares.json` or `ad_market.json` is missing or fails to load, the page simply leaves out that block instead of showing an error — the rest of the profile or brief is unaffected. That is why a Statcounter outage is not an emergency, and also why a *silently missing* file can go unnoticed: if the social-share block has vanished from the Media tab, that file is the thing to check.
 
