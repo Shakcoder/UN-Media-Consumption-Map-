@@ -28,6 +28,7 @@ An interactive, source-cited public resource showing **where and how the world g
 - [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) — every source: license, cadence, conflict-resolution rules
 - [`docs/AUTOMATION.md`](docs/AUTOMATION.md) — how the automated pipelines work, for non-coders
 - [`docs/SUPERVISOR_SUMMARY.md`](docs/SUPERVISOR_SUMMARY.md) — one-page summary for supervisors
+- [`docs/AUDIT_2026-07.md`](docs/AUDIT_2026-07.md) — July 2026 production-readiness audit: what was checked, what was wrong, what changed, and what is still open
 - [`worker/DEPLOY_GUIDE.md`](worker/DEPLOY_GUIDE.md) — **experimental, switched off**: an unfinished Cloudflare prose layer. The analyst does not need it and nothing on the site calls it.
 
 ## Repository layout
