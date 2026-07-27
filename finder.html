@@ -7,8 +7,12 @@
 <style>
   :root {
     --un-blue: #009EDB; --un-blue-dark: #0072BC; --ink: #1A2733; --bg: #F7FAFC;
-    --card: #FFFFFF; --border: #E2E8F0; --border-soft: #EDF2F7; --muted: #5F6B7A;
-    --muted-2: #94A3B2; --accent-soft: #EAF6FD; --warn: #B45309; --positive: #15803D;
+    --card: #FFFFFF; --border: #E2E8F0; --border-soft: #EDF2F7; --muted: #5C6B7E;
+    /* --muted-2 was #94A3B2: 2.6:1 on this page's background, so every form
+       label, the weights caption and the footer failed WCAG AA (4.5:1 for
+       text under 18.66px). Matched to the other three pages' secondary text,
+       which measures 5.2:1 here. Hierarchy comes from size and weight. */
+    --muted-2: #5C6B7E; --accent-soft: #EAF6FD; --warn: #B45309; --positive: #15803D;
   }
   * { box-sizing: border-box; }
   body { margin: 0; font: 14px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -238,7 +242,7 @@ $("finder-form").addEventListener("submit", (e) => {
       ${langCol ? `<td>${r.langPct != null ? Math.round(r.langPct) + "%" : "<span class='hint'>no data</span>"}</td>` : ""}
       <td>${r.reachPeople != null ? fmtPeople(r.reachPeople) : "n/a"}</td>
       <td>${r.flags.length ? `<span class="risk">⚠ ${esc(r.flags.join("; "))}</span>` : `<span class="ok">no structural red flags</span>`}</td>
-      <td><a class="profile" href="index.html" title="Open the country profile on the map page">Profile ↗</a></td>
+      <td><a class="profile" href="index.html?country=${esc(r.iso)}" title="Open ${esc(r.name)}'s full profile on the map page">Profile ↗</a></td>
     </tr>`).join("");
 
   const byReason = {};

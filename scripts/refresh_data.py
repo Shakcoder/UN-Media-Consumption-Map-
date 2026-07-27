@@ -22,6 +22,7 @@ country under one of these names without an actual downloaded file behind it.
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from datetime import datetime, timezone
@@ -118,86 +119,33 @@ SMARTPHONE_PCT_2024: dict[str, float] = {
     "POL": 85, "PER": 70, "VEN": 65, "CMR": 45, "MDG": 25,
 }
 
-# --- RSF Press Freedom Index 2025 (lower rank = more free, 180 countries) ---
-# https://rsf.org/en/index
-# Verified against rsf.org, statranker.org, Wikipedia (June 2026)
-# Small Caribbean states (ATG, BHS, BRB, DMA, GRD, KNA, LCA, VCT) grouped
-# as "OECS" by RSF and not ranked individually.
-RSF_RANK_2025: dict[str, int] = {
-    "AFG": 176, "AGO": 100, "ALB": 80, "AND": 65, "ARE": 158,
-    "ARG": 87, "ARM": 34, "AUS": 29, "AUT": 22, "AZE": 167,
-    "BDI": 125, "BEL": 18, "BEN": 92, "BFA": 106, "BGD": 152,
-    "BGR": 70, "BHR": 165, "BIH": 86, "BLR": 166, "BLZ": 47,
-    "BOL": 93, "BRA": 63, "BRN": 97, "BTN": 153, "BWA": 81,
-    "CAF": 72, "CAN": 21, "CHE": 9, "CHL": 69, "CHN": 179,
-    "CIV": 64, "CMR": 131, "COD": 133, "COG": 71, "COL": 113,
-    "COM": 75, "CPV": 30, "CRI": 36, "CUB": 161, "CYP": 77,
-    "CZE": 10, "DEU": 11, "DJI": 168, "DNK": 6, "DOM": 43,
-    "DZA": 126, "ECU": 94, "EGY": 170, "ERI": 181, "ESP": 23,
-    "EST": 2, "ETH": 145, "FIN": 5, "FJI": 40, "FRA": 25,
-    "GAB": 41, "GBR": 20, "GEO": 115, "GHA": 52, "GIN": 103,
-    "GMB": 58, "GNB": 110, "GNQ": 119, "GRC": 89, "GTM": 135,
-    "GUY": 73, "HND": 138, "HRV": 60, "HUN": 68, "IDN": 127,
-    "IND": 151, "IRL": 7, "IRN": 177, "IRQ": 156, "ISL": 17,
-    "ISR": 114, "ITA": 49, "JAM": 26, "JOR": 147, "JPN": 66,
-    "KAZ": 141, "KEN": 118, "KGZ": 144, "KHM": 163, "KOR": 61,
-    "KWT": 128, "LAO": 150, "LBN": 132, "LBR": 54, "LBY": 137,
-    "LIE": 12, "LKA": 139, "LSO": 91, "LTU": 14, "LUX": 13,
-    "LVA": 15, "MAR": 121, "MDA": 35, "MDG": 101, "MDV": 104,
-    "MEX": 124, "MKD": 42, "MLI": 120, "MLT": 67, "MMR": 169,
-    "MNE": 37, "MNG": 102, "MOZ": 105, "MRT": 50, "MUS": 51,
-    "MWI": 76, "MYS": 88, "NAM": 28, "NER": 83, "NGA": 112,
-    "NIC": 173, "NLD": 3, "NOR": 1, "NPL": 90, "NZL": 16,
-    "OMN": 134, "PAK": 155, "PAN": 53, "PER": 130, "PHL": 116,
-    "PNG": 78, "POL": 31, "PRK": 180, "PRT": 8, "PRY": 84,
-    "PSE": 162, "QAT": 79, "ROU": 55, "RUS": 172, "RWA": 143,
-    "SAU": 164, "SDN": 157, "SEN": 74, "SGP": 123, "SLE": 56,
-    "SLV": 148, "SOM": 136, "SRB": 96, "SSD": 109, "SUR": 32,
-    "SVK": 38, "SVN": 33, "SWE": 4, "SWZ": 98, "SYC": 45,
-    "SYR": 178, "TCD": 108, "TGO": 122, "THA": 85, "TJK": 154,
-    "TKM": 175, "TLS": 39, "TON": 46, "TTO": 19, "TUN": 129,
-    "TUR": 160, "TZA": 95, "UGA": 111, "UKR": 62, "URY": 59,
-    "USA": 57, "UZB": 146, "VEN": 159, "VNM": 174, "WSM": 44,
-    "YEM": 171, "ZAF": 27, "ZMB": 82, "ZWE": 107,
-}
+# --- RSF Press Freedom Index (fetched, not hand-typed) ---
+# Until 2026-07-26 this file carried RSF_RANK_2025 / RSF_SCORE_2025 as two
+# hand-transcribed dictionaries. Cross-checking them against RSF's own
+# "previous edition" column showed 45 ranks that disagreed with RSF's record
+# and a rank of 181 in a 180-country index — transcription drift, invisible
+# because nothing could check it. The index now comes from RSF's published
+# CSV via scripts/fetch_rsf.py, so refreshing it is one command and the
+# numbers are whatever RSF published.
+RSF_PATH = Path(__file__).resolve().parent.parent / "data" / "sources" / "rsf" / "rsf_index.json"
 
-RSF_SCORE_2025: dict[str, float] = {
-    "AFG": 17.88, "AGO": 52.67, "ALB": 58.18, "AND": 63.30, "ARE": 26.91,
-    "ARG": 56.14, "ARM": 73.96, "AUS": 75.15, "AUT": 78.12, "AZE": 25.47,
-    "BDI": 45.44, "BEL": 80.12, "BEN": 54.60, "BFA": 51.50, "BGD": 33.71,
-    "BGR": 60.78, "BHR": 30.24, "BIH": 56.33, "BLR": 25.73, "BLZ": 68.32,
-    "BOL": 54.09, "BRA": 63.80, "BRN": 53.47, "BTN": 32.00, "BWA": 57.64,
-    "CAF": 60.15, "CAN": 78.75, "CHE": 83.98, "CHL": 62.25, "CHN": 14.80,
-    "CIV": 63.69, "CMR": 42.75, "COD": 42.31, "COG": 60.58, "COL": 49.80,
-    "COM": 59.27, "CPV": 74.98, "CRI": 73.09, "CUB": 26.03, "CYP": 59.04,
-    "CZE": 83.96, "DEU": 83.85, "DJI": 25.36, "DNK": 86.93, "DOM": 69.87,
-    "DZA": 44.64, "ECU": 53.76, "EGY": 24.74, "ERI": 11.32, "ESP": 77.35,
-    "EST": 89.46, "ETH": 36.92, "FIN": 87.18, "FJI": 71.20, "FRA": 76.62,
-    "GAB": 70.65, "GBR": 78.89, "GEO": 50.53, "GHA": 67.13, "GIN": 52.53,
-    "GMB": 65.49, "GNB": 51.36, "GNQ": 48.68, "GRC": 55.37, "GTM": 40.32,
-    "GUY": 60.12, "HND": 38.51, "HRV": 64.20, "HUN": 62.82, "IDN": 44.13,
-    "IND": 32.96, "IRL": 86.92, "IRN": 16.22, "IRQ": 30.69, "ISL": 81.36,
-    "ISR": 50.00, "ITA": 68.01, "JAM": 75.83, "JOR": 35.25, "JPN": 63.14,
-    "KAZ": 39.34, "KEN": 49.41, "KGZ": 37.46, "KHM": 25.90, "KOR": 64.06,
-    "KWT": 44.06, "LAO": 33.22, "LBN": 42.62, "LBR": 66.61, "LBY": 40.42,
-    "LIE": 83.42, "LKA": 39.93, "LSO": 52.07, "LTU": 82.27, "LUX": 83.04,
-    "LVA": 81.82, "MAR": 48.04, "MDA": 73.36, "MDG": 50.80, "MDV": 52.46,
-    "MEX": 45.55, "MKD": 70.44, "MLI": 48.23, "MLT": 62.96, "MMR": 25.32,
-    "MNE": 72.83, "MNG": 52.57, "MOZ": 52.63, "MRT": 67.52, "MUS": 67.31,
-    "MWI": 59.20, "MYS": 56.09, "NAM": 75.35, "NER": 57.05, "NGA": 46.81,
-    "NIC": 22.83, "NLD": 88.64, "NOR": 92.31, "NPL": 55.20, "NZL": 81.37,
-    "OMN": 42.29, "PAK": 29.62, "PAN": 66.75, "PER": 42.88, "PHL": 49.57,
-    "PNG": 58.35, "POL": 74.79, "PRK": 12.64, "PRT": 84.26, "PRY": 56.84,
-    "PSE": 27.41, "QAT": 58.25, "ROU": 66.42, "RUS": 24.57, "RWA": 35.84,
-    "SAU": 27.94, "SDN": 30.34, "SEN": 59.43, "SGP": 45.78, "SLE": 66.36,
-    "SLV": 41.19, "SOM": 40.49, "SRB": 53.55, "SSD": 51.63, "SUR": 74.49,
-    "SVK": 71.93, "SVN": 74.06, "SWE": 88.13, "SWZ": 52.86, "SYC": 68.56,
-    "SYR": 15.82, "TCD": 51.89, "TGO": 48.03, "THA": 56.72, "TJK": 32.21,
-    "TKM": 19.14, "TLS": 71.79, "TON": 68.39, "TTO": 79.71, "TUN": 43.48,
-    "TUR": 29.40, "TZA": 53.68, "UGA": 37.61, "UKR": 63.93, "URY": 65.18,
-    "USA": 65.49, "UZB": 35.24, "VEN": 29.21, "VNM": 19.74, "WSM": 69.28,
-    "YEM": 31.45, "ZAF": 75.71, "ZMB": 57.33, "ZWE": 51.40,
-}
+
+def _load_rsf() -> tuple[dict, int]:
+    """Read the fetched RSF index. Fail loudly: silently dropping press
+    freedom for 180 countries would be worse than stopping the refresh."""
+    if not RSF_PATH.exists():
+        raise SystemExit(
+            f"Missing {RSF_PATH}.\n"
+            "Run:  python3 scripts/fetch_rsf.py\n"
+            "(downloads the current RSF World Press Freedom Index)")
+    doc = json.loads(RSF_PATH.read_text(encoding="utf-8"))
+    countries = doc.get("countries") or {}
+    if len(countries) < 150:
+        raise SystemExit(f"{RSF_PATH} holds only {len(countries)} countries — refusing to publish a truncated index.")
+    return doc, int(doc["_meta"]["edition"])
+
+
+RSF_INDEX, RSF_EDITION = _load_rsf()
 
 # --- Freedom House: Freedom on the Net 2025 (internet-specific, 0–100) ---
 # https://freedomhouse.org/country/scores?type=fotn
@@ -606,6 +554,16 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     "DZA": {"trust": None, "tv": 47.1, "online": None, "social": 33.3, "radio": 5.1,
             "src": "Arab Barometer Wave VII (2021-2022) microdata",
             "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
+    # ---- Asian Barometer Wave 6, weighted microdata ----
+    # Computed by scripts/compute_asianbarometer.py from the registered
+    # download (asianbarometer.org). Same single-choice "most important
+    # channel" construct as Arab Barometer, so the same caveat travels with
+    # it. Only Cambodia is taken: Mongolia and Vietnam already carry WVS
+    # Wave 7 entries, and mixing two constructs for one country would make
+    # its figures incomparable with its own history.
+    "KHM": {"trust": None, "tv": 13.2, "online": 63.3, "social": None, "radio": 5.5,
+            "src": "Asian Barometer Wave 6 (2024) microdata, weighted (n=1,030)",
+            "note": "q53: single most-important news channel (not multi-select weekly use — not directly comparable to other countries' figures); the answer option combines internet and social media, so social media is not separable; no trust-in-media question in this wave"},
     # ---- World Values Survey Wave 7 (2017-2022), weighted microdata ----
     # Computed by scripts/compute_wvs_news.py from the registered download
     # (raw .sav NOT in this repo — WVSA prohibits redistribution). Only
@@ -1118,11 +1076,21 @@ def build_country(
         values["smartphone_pct"] = SMARTPHONE_PCT_2024[iso3]
         sources["smartphone_pct"] = "DataReportal 2024 — https://datareportal.com/"
 
-    # Press freedom (RSF)
-    if iso3 in RSF_RANK_2025:
-        values["press_freedom_rank"] = RSF_RANK_2025[iso3]
-        values["press_freedom_score"] = RSF_SCORE_2025.get(iso3)
-        sources["press_freedom_rank"] = f"RSF 2025 — https://rsf.org/en/country/{iso3.lower()}"
+    # Press freedom (RSF) — from the fetched index file, never hand-typed
+    rsf = RSF_INDEX["countries"].get(iso3)
+    if rsf:
+        values["press_freedom_rank"] = rsf["rank"]
+        values["press_freedom_score"] = rsf["score"]
+        values["press_freedom_edition"] = RSF_EDITION
+        # RSF's five sub-scores explain WHY a market is rated as it is —
+        # a legal-environment problem calls for different comms handling
+        # than a safety-of-journalists problem.
+        values["press_freedom_indicators"] = rsf.get("indicators")
+        prev = (rsf.get("prev") or {}).get("rank")
+        if prev:
+            values["press_freedom_rank_prev"] = prev
+        sources["press_freedom_rank"] = (
+            f"RSF {RSF_EDITION} — https://rsf.org/en/country/{iso3.lower()}")
 
     # Internet freedom (Freedom House FOTN)
     fotn_score = FREEDOM_HOUSE_FOTN_2025.get(iso3)
@@ -1214,10 +1182,16 @@ def build_country(
             "CIA World Factbook, Broadcast media (public domain; auto-ingested weekly "
             "via the factbook.json mirror) — https://www.cia.gov/the-world-factbook/"
         )
-    elif prev:
-        landscape_note = (prev.get("media") or {}).get("landscape_note")
+    elif isinstance(prev, dict):
+        # Defensive: `prev` comes from the previous countries.json, which a
+        # killed or concurrent run could have left malformed. One odd record
+        # must not abort a refresh that is 170 countries in — carry nothing
+        # forward for that country instead.
+        prev_media = prev.get("media")
+        landscape_note = prev_media.get("landscape_note") if isinstance(prev_media, dict) else None
         if landscape_note:
-            prev_src = (prev.get("sources") or {}).get("media_landscape")
+            prev_sources = prev.get("sources")
+            prev_src = prev_sources.get("media_landscape") if isinstance(prev_sources, dict) else None
             if prev_src:
                 sources["media_landscape"] = prev_src
 
@@ -1258,12 +1232,17 @@ def build_country(
             "landscape_note_source": "CIA World Factbook" if landscape_note else None,
             "press_freedom_rank": values.get("press_freedom_rank"),
             "press_freedom_score": values.get("press_freedom_score"),
-            "press_freedom_source": "RSF 2025",
+            # edition comes from the fetched index, so it can never drift
+            # out of step with the numbers it labels
+            "press_freedom_source": f"RSF {RSF_EDITION}",
         },
         "information_freedom": {
             "press_freedom_rank": values.get("press_freedom_rank"),
             "press_freedom_score": values.get("press_freedom_score"),
-            "press_freedom_source": "RSF 2025 — https://rsf.org/en/index",
+            "press_freedom_source": f"RSF {RSF_EDITION} — https://rsf.org/en/index",
+            "press_freedom_edition": RSF_EDITION,
+            "press_freedom_indicators": values.get("press_freedom_indicators"),
+            "press_freedom_rank_prev": values.get("press_freedom_rank_prev"),
             "internet_freedom_score": values.get("internet_freedom_score"),
             "internet_freedom_status": values.get("internet_freedom_status"),
             "internet_freedom_source": "Freedom House: Freedom on the Net 2025",
@@ -1371,10 +1350,17 @@ def main() -> int:
         ],
     }
 
-    OUTPUT_PATH.write_text(
+    # ATOMIC write (same policy as fetch_trends_wikipedia.py): serialise to a
+    # temp file in the same directory, then os.replace(). A direct write_text
+    # leaves the published countries.json truncated if the process is killed
+    # or the disk fills mid-write — and anything reading it in that window
+    # (the site, the validator, the next run) sees a half-written file.
+    tmp = OUTPUT_PATH.with_suffix(".json.tmp")
+    tmp.write_text(
         json.dumps(result, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
+    os.replace(tmp, OUTPUT_PATH)
     print(f"\nWrote {OUTPUT_PATH} with {result['_meta']['country_count']} countries.")
     print(f"Data sources: {len(result['_meta']['data_sources'])}")
     return 0

@@ -16,6 +16,16 @@ name: Trend engine (daily)
 #   run continues incrementally. A bad day degrades gracefully; it never
 #   breaks the site or loses data.
 #
+# STALENESS ALERT (added 2026-07-26): "degrades gracefully" was hiding a
+# real failure. The Wikipedia step had been hitting its timeout every day
+# for three weeks; continue-on-error meant the run still reported SUCCESS,
+# and two-thirds of series stayed frozen at 2026-07-05 while the published
+# file said it was updated daily. Two changes prevent a repeat:
+#   * the fetcher now works stalest-series-first, so a truncated run
+#     refreshes exactly what the previous one missed (self-healing);
+#   * the step below fails the run when most series are stale, so the
+#     failure-alert issue actually fires instead of a green tick.
+#
 # Runs at 05:30 UTC daily (after Wikimedia finalizes yesterday's pageviews).
 
 on:
@@ -66,6 +76,7 @@ jobs:
         run: python scripts/compute_topic_intelligence.py
 
       - name: Commit updated trend data (if changed)
+        id: commit
         if: always()
         run: |
           set -e
@@ -85,6 +96,33 @@ jobs:
             echo "Pushed."
           fi
 
+      # The data is committed by now, so the site always has the freshest
+      # available figures — but if most of the tracked universe is stale the
+      # run must NOT report success, or nobody learns the fetch is starving.
+      - name: Fail if most trend series are stale
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+          p = Path("data/trends/topic_intelligence.json")
+          if not p.exists():
+              print("::warning::topic_intelligence.json missing — nothing to check")
+              sys.exit(0)
+          cov = json.loads(p.read_text()).get("coverage", {})
+          cur, stale = cov.get("series_current", 0), cov.get("series_stale_excluded", 0)
+          total = cur + stale
+          print(f"Series current: {cur} / {total}; topics scored: {cov.get('topics_scored')}")
+          if total and stale > cur:
+              print(f"::error::{stale} of {total} demand series are stale (no data in the "
+                    f"measured 7-day window). The Wikipedia fetch is not completing — topic "
+                    f"momentum now covers only a minority of tracked topics.")
+              sys.exit(1)
+          if total and stale > total * 0.25:
+              print(f"::warning::{stale} of {total} demand series are stale — watch this; "
+                    f"if it keeps climbing the fetch step needs more time or fewer series.")
+          PY
+
       - name: Open an issue if this run failed
         if: failure()
         env:
@@ -93,9 +131,17 @@ jobs:
           title="Trend engine failed on $(date -u +%Y-%m-%d)"
           existing=$(gh issue list --state open --search "in:title \"Trend engine failed\"" --json number --jq 'length')
           if [ "$existing" = "0" ]; then
-            gh issue create --title "$title" \
-              --body "The daily trend-engine workflow failed. Open the Actions tab, click the failed run, and check which step went red. A single bad day is usually harmless (the next run catches up) — this issue exists so repeated failures never go unnoticed. Close it once a later run succeeds." \
-              --label "automation"
+            cat > /tmp/trend_issue.md <<'BODY'
+          The daily trend-engine workflow failed. Open the Actions tab, click the failed run, and check which step went red.
+
+          If the red step is **Fail if most trend series are stale**, the data is still published, but the Wikipedia fetch is not keeping up: most tracked series have no data in the measured 7-day window, so topic momentum covers only a minority of topics. The fetcher works stalest-first, so a few consecutive successful runs normally clear it. If it persists beyond a week, see docs/AUTOMATION.md, section "trend engine falls behind".
+
+          A single bad day is usually harmless (the next run catches up) — this issue exists so repeated failures never go unnoticed. Close it once a later run succeeds.
+          BODY
+            sed -i 's/^          //' /tmp/trend_issue.md
+            # --label is best-effort — never let a missing label swallow the alert.
+            gh issue create --title "$title" --body-file /tmp/trend_issue.md --label "automation" \
+              || gh issue create --title "$title" --body-file /tmp/trend_issue.md
           else
             echo "An open failure issue already exists — not duplicating."
           fi

@@ -86,7 +86,11 @@ const COUNTRY_ALIASES = {
   "holy see": "VAT", "netherlands": "NLD", "holland": "NLD", "macedonia": "MKD",
   "north macedonia": "MKD", "bosnia": "BIH", "bosnia and herzegovina": "BIH",
   "sri lanka": "LKA", "new zealand": "NZL", "png": "PNG", "papua new guinea": "PNG",
-  "central african republic": "CAF", "car": "CAF", "south sudan": "SSD",
+  // NOTE: no "car" alias. It resolved the ordinary English noun — "which
+  // platform for a car safety campaign?" returned a full strategic brief on
+  // the Central African Republic. The country stays reachable by its name
+  // and by "centrafrique"; a bare "CAR" is too costly to guess at.
+  "central african republic": "CAF", "centrafrique": "CAF", "south sudan": "SSD",
   "south africa": "ZAF", "burkina": "BFA", "burkina faso": "BFA",
   "philippines": "PHL", "the philippines": "PHL", "china": "CHN", "prc": "CHN",
   "hong kong": "CHN", "taiwan": "CHN",
@@ -142,7 +146,12 @@ const FUZZY_STOPWORDS = new Set(("about media radio trust trends trend where whi
   "highest lowest largest smallest better worse worst rising falling popular attention interest interested local " +
   "national levels level rates rate percent percentage share tell show give list find help plan advice info " +
   "trending comparing ranking targeting reaching publishing measuring growing changing " +
-  "child children woman women man men adult adults human humans person little large small major minor").split(/\s+/));
+  "child children woman women man men adult adults human humans person little large small major minor " +
+  // Gender vocabulary is core to audience segmentation here, so it must never
+  // resolve to a place: the Maldives' capital normalises to "male", which made
+  // "how do we reach male audiences in Brazil?" pull the Maldives into the
+  // answer alongside Brazil. The Maldives stays reachable by name.
+  "male female males females boy boys girl girls").split(/\s+/));
 
 function buildNameIndex() {
   NAME_TO_ISO = {};
@@ -413,6 +422,23 @@ const ATTRIBUTES = {
 const PLATFORMS = ["whatsapp", "facebook", "tiktok", "instagram", "youtube", "telegram", "x", "twitter", "wechat", "snapchat", "viber", "line"];
 const PLATFORM_NAMES = { whatsapp: "WhatsApp", facebook: "Facebook", tiktok: "TikTok", instagram: "Instagram",
   youtube: "YouTube", telegram: "Telegram", x: "X (Twitter)", wechat: "WeChat", snapchat: "Snapchat", viber: "Viber", line: "LINE" };
+
+/**
+ * Does one entry in a country's leading-platform list name this platform?
+ *
+ * The list is free text ("WhatsApp, Facebook, X (Twitter), TikTok"), so a
+ * plain startsWith() was used — which made every single-letter platform match
+ * anything beginning with that letter: China's "Xiaohongshu" was counted as X
+ * (Twitter), inflating X's footprint. Requiring the match to end on a word
+ * boundary keeps "x (twitter)" working while rejecting "xiaohongshu".
+ */
+function platformMatches(entry, p) {
+  const e = String(entry || "").trim().toLowerCase();
+  const k = String(p || "").toLowerCase();
+  if (!e || !k) return false;
+  if (e === k) return true;
+  return e.startsWith(k) && /[^a-z0-9]/.test(e.charAt(k.length));
+}
 
 const AUDIENCES = {
   youth: ["youth", "young", "young people", "under 25", "under-25", "gen z", "students", "teenagers", "teens"],
@@ -944,7 +970,7 @@ function composeCountryBrief(f, ev, ents) {
       continue;
     }
     const socials = (o.top_social || "").toLowerCase().split(",").map(s => s.trim());
-    const pos = socials.findIndex(s => s.startsWith(p === "x" ? "x" : p));
+    const pos = socials.findIndex(s => platformMatches(s, p));
     if (pos === 0) lines.push(`- **${pretty}** is the leading social platform in ${f.name} (${o.top_social})`);
     else if (pos > 0) lines.push(`- **${pretty}** ranks #${pos + 1} among ${f.name}'s top platforms (${o.top_social})`);
     else if (o.top_social) lines.push(`- **${pretty}** is not among ${f.name}'s leading platforms (${o.top_social})`);
@@ -1000,7 +1026,7 @@ function composeComparison(fs, ev, ents) {
     const pretty = PLATFORM_NAMES[p] || p;
     lines.push(`| ${pretty} rank among leading platforms | ${fs.map(f => {
       const list = ((f.outlets || {}).top_social || "").toLowerCase().split(",").map(s => s.trim());
-      const pos = list.findIndex(s => s.startsWith(p === "x" ? "x" : p));
+      const pos = list.findIndex(s => platformMatches(s, p));
       return pos >= 0 ? "#" + (pos + 1) : "not listed";
     }).join(" | ")} |`);
   }
@@ -1239,7 +1265,7 @@ function composePlatform(ents, ev) {
     const socials = ((c.media || {}).top_social || "").toLowerCase();
     if (!socials) continue;
     const list = socials.split(",").map(s => s.trim());
-    const idx = list.findIndex(s => s.startsWith(p === "x" ? "x" : p));
+    const idx = list.findIndex(s => platformMatches(s, p));
     if (idx === 0) leaders.push([iso, c.population || 0]);
     else if (idx > 0) present.push([iso, c.population || 0]);
   }

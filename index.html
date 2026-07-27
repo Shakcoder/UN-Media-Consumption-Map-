@@ -18,8 +18,11 @@
     --accent-soft: #E6F4FB;
     --ink: #0F1A2B;
     --muted: #5C6B7E;
-    /* AA-compliant secondary text (≥4.5:1 on white) — was #94A3B8 (2.56:1) */
-    --muted-2: #64748B;
+    /* Secondary text. #64748B clears 4.5:1 on pure white but only reaches
+       4.33:1 over the tinted card backgrounds where it is actually used at
+       10–11px, so it failed WCAG AA there. #5C6B7E measures ≥5.1:1 on every
+       surface on this site and is the shared value across all four pages. */
+    --muted-2: #5C6B7E;
     --bg: #F7FAFC;
     --surface: #FFFFFF;
     --border: #E3EBF1;
@@ -27,7 +30,7 @@
     /* AA-compliant status colors for text — were #16A34A (3.3:1) / #F59E0B (2.15:1) */
     --positive: #15803D;
     --warn: #B45309;
-    --danger: #DC2626;
+    --danger: #C81E1E;   /* was #DC2626 — 4.2:1 on the .badge.falling chip, below AA */
     --shadow: 0 1px 2px rgba(15,26,43,0.04), 0 4px 14px rgba(15,26,43,0.06);
     --shadow-lg: 0 8px 32px rgba(15,26,43,0.12);
     --radius: 10px;
@@ -1121,7 +1124,7 @@ window.TRANSLATIONS = {
     label_fixed_broadband: "Fixed broadband per 100",
     label_tv: "Television", label_radio: "Radio",
     label_online_news: "Online news", label_social_platforms: "Social platforms",
-    label_rsf_rank: "RSF 2025 rank (lower = freer)",
+    label_rsf_rank: "RSF rank (lower = freer)",
     label_under_15: "Under 15", label_15_64: "15–64", label_65_plus: "65+",
     label_urban_pop: "Urban population", label_literacy: "Adult literacy",
     confidence_banner_title: "Preliminary data.",
@@ -1202,7 +1205,7 @@ window.TRANSLATIONS = {
     label_fixed_broadband: "Haut débit fixe pour 100 habitants",
     label_tv: "Télévision", label_radio: "Radio",
     label_online_news: "Presse en ligne", label_social_platforms: "Réseaux sociaux",
-    label_rsf_rank: "Classement RSF 2025 (plus bas = plus libre)",
+    label_rsf_rank: "Classement RSF (plus bas = plus libre)",
     label_under_15: "Moins de 15 ans", label_15_64: "15–64 ans", label_65_plus: "65 ans et plus",
     label_urban_pop: "Population urbaine", label_literacy: "Alphabétisation des adultes",
     confidence_banner_title: "Données préliminaires.",
@@ -1282,7 +1285,7 @@ window.TRANSLATIONS = {
     label_fixed_broadband: "Banda ancha fija por cada 100",
     label_tv: "Televisión", label_radio: "Radio",
     label_online_news: "Noticias en línea", label_social_platforms: "Plataformas sociales",
-    label_rsf_rank: "Clasificación RSF 2025 (menor = más libre)",
+    label_rsf_rank: "Clasificación RSF (menor = más libre)",
     label_under_15: "Menores de 15", label_15_64: "15–64", label_65_plus: "65 y más",
     label_urban_pop: "Población urbana", label_literacy: "Alfabetización adulta",
     confidence_banner_title: "Datos preliminares.",
@@ -1442,7 +1445,7 @@ window.TRANSLATIONS = {
     label_fixed_broadband: "每 100 人固定宽带数",
     label_tv: "电视", label_radio: "广播",
     label_online_news: "网络新闻", label_social_platforms: "社交平台",
-    label_rsf_rank: "RSF 2025 排名（越低越自由）",
+    label_rsf_rank: "RSF 排名（越低越自由）",
     label_under_15: "15 岁以下", label_15_64: "15–64 岁", label_65_plus: "65 岁及以上",
     label_urban_pop: "城市人口", label_literacy: "成人识字率",
     confidence_banner_title: "初步数据。",
@@ -1522,7 +1525,7 @@ window.TRANSLATIONS = {
     label_fixed_broadband: "Фиксированный ШПД на 100 человек",
     label_tv: "Телевидение", label_radio: "Радио",
     label_online_news: "Онлайн-новости", label_social_platforms: "Соцсети",
-    label_rsf_rank: "Рейтинг RSF 2025 (меньше = свободнее)",
+    label_rsf_rank: "Рейтинг RSF (меньше = свободнее)",
     label_under_15: "До 15", label_15_64: "15–64", label_65_plus: "65 и старше",
     label_urban_pop: "Городское население", label_literacy: "Грамотность взрослых",
     confidence_banner_title: "Предварительные данные.",
@@ -1555,6 +1558,16 @@ window.TRANSLATIONS = {
      ============================================================ -->
 <script>
 if (!window.COUNTRY_DATA) window.COUNTRY_DATA = {};
+
+/* Escape data-file strings before they are interpolated into innerHTML.
+   Country names, outlet lists, source labels and landscape notes are all
+   ingested from upstream files (World Bank, CIA World Factbook, survey
+   exports), so they are data, not trusted markup — a stray "<" or "&" in an
+   outlet name would corrupt the panel, and a future source carrying markup
+   would otherwise execute it. Matches ask.html / finder.html / topics.html. */
+const esc = (s) => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;");
 
 /* ---------- i18n ---------- */
 /* localStorage can THROW (private browsing, blocked storage) — never let a
@@ -1775,7 +1788,12 @@ if (map) fetch(COUNTRY_BOUNDARIES_URL)
           click: () => {
             // evaluated at click time: live data may arrive after the map loads
             const k = featureKind(feature);
-            if (k === "covered") openDetail(iso);
+            // "profiled" countries have a full profile (population, languages,
+            // connectivity, press freedom) and only lack a media survey — the
+            // sidebar offers them a PROFILE button, so the map must open them
+            // too. Until 2026-07-26 clicking any of the 64 grey countries did
+            // nothing at all, which read as a broken map.
+            if (k === "covered" || k === "profiled") openDetail(iso);
             else if (k === "territory") openDetail(TERRITORY_OF[iso]);
           }
         });
@@ -1920,7 +1938,7 @@ function renderCountryStats(iso) {
   statsStrip.innerHTML = `
     <div class="stat highlight">
       <div class="label">${t("stat_country")}</div>
-      <div class="value">${d.flag || ""} ${d.name}</div>
+      <div class="value">${esc(d.flag || "")} ${esc(d.name)}</div>
       <div class="delta">${[d.capital, d.subregion].filter(Boolean).join(" · ")}</div>
     </div>
     <div class="stat">
@@ -1931,7 +1949,7 @@ function renderCountryStats(iso) {
     <div class="stat">
       <div class="label">${t("stat_gdp")}</div>
       <div class="value">${d.gdp_per_capita_usd == null ? "—" : "$" + fmtNum(d.gdp_per_capita_usd)}</div>
-      <div class="delta">${d.currency ? d.currency.split("(")[0].trim() : ""}</div>
+      <div class="delta">${esc(d.currency ? d.currency.split("(")[0].trim() : "")}</div>
     </div>
     <div class="stat">
       <div class="label">${t("stat_internet_access")}</div>
@@ -1964,10 +1982,10 @@ function renderList() {
       : "";
     return `
     <div class="country-card" data-iso="${iso}" role="button" tabindex="0"
-         aria-label="${d.name} — ${t("tag_profile")}">
+         aria-label="${esc(d.name)} — ${t("tag_profile")}">
       <div class="flag" aria-hidden="true">${d.flag || "🌐"}</div>
       <div class="meta">
-        <div class="name">${d.name}</div>
+        <div class="name">${esc(d.name)}</div>
         <div class="sub">${[d.subregion, popTxt].filter(Boolean).join(" · ")}</div>
       </div>
       <div class="tag" aria-hidden="true">${t("tag_profile")}</div>
@@ -2047,7 +2065,7 @@ function openDetail(iso) {
     panelFlag.textContent = d.flag || "🌐";
     panelName.textContent = d.name;
     panelSubline.textContent = [d.subregion,
-      d.capital ? `${t("subline_capital")}: ${d.capital}` : null,
+      d.capital ? `${t("subline_capital")}: ${esc(d.capital)}` : null,
       d.population != null ? `${t("subline_pop")} ${formatPop(d.population)}` : null,
     ].filter(Boolean).join(" · ");
     renderCountryStats(iso);
@@ -2126,17 +2144,17 @@ function translationNotice() {
 function tabOverview(d) {
   return confidenceBanner(d) + translationNotice() + `
     <h3>${t("section_overview")}</h3>
-    <p>${d.overview || ""}</p>
+    <p>${esc(d.overview || "")}</p>
     <div class="kv-grid">
-      <div class="kv"><div class="label">${t("label_capital")}</div><div class="value">${d.capital || "—"}</div></div>
-      <div class="kv"><div class="label">${t("label_government")}</div><div class="value">${d.government || "—"}</div></div>
-      <div class="kv"><div class="label">${t("label_region")}</div><div class="value">${d.subregion || "—"}</div></div>
-      <div class="kv"><div class="label">${t("label_currency")}</div><div class="value">${d.currency || "—"}</div></div>
+      <div class="kv"><div class="label">${t("label_capital")}</div><div class="value">${esc(d.capital || "—")}</div></div>
+      <div class="kv"><div class="label">${t("label_government")}</div><div class="value">${esc(d.government || "—")}</div></div>
+      <div class="kv"><div class="label">${t("label_region")}</div><div class="value">${esc(d.subregion || "—")}</div></div>
+      <div class="kv"><div class="label">${t("label_currency")}</div><div class="value">${esc(d.currency || "—")}</div></div>
     </div>
     ${(d.languages_detail || []).length ? `<h3>${t("section_languages")} <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Unicode CLDR — share of population</span></h3>
-    <div class="pills">${d.languages_detail.map(l => `<div class="pill">${l.language} · ${l.pct}%${l.official ? " · official" : ""}</div>`).join("")}</div>`
+    <div class="pills">${d.languages_detail.map(l => `<div class="pill">${esc(l.language)} · ${l.pct}%${l.official ? " · official" : ""}</div>`).join("")}</div>`
     : (d.languages || []).length ? `<h3>${t("section_languages")}</h3>
-    <div class="pills">${d.languages.map(l => `<div class="pill">${l}</div>`).join("")}</div>` : ""}
+    <div class="pills">${d.languages.map(l => `<div class="pill">${esc(l)}</div>`).join("")}</div>` : ""}
     ${(d.focus_areas || []).length ? `<h3>${t("section_focus_areas")}</h3>
     <div class="pills">${d.focus_areas.map(f => `<div class="pill neutral">${f}</div>`).join("")}</div>` : ""}`;
 }
@@ -2211,7 +2229,7 @@ function tabMedia(d) {
   // Media landscape narrative (CIA World Factbook, public domain, weekly)
   if (m.landscape_note) {
     html += `<h3>Media landscape <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">CIA World Factbook</span></h3>`;
-    html += `<p style="font-size:12px;color:var(--muted);line-height:1.55;margin:4px 0 10px;">${m.landscape_note}</p>`;
+    html += `<p style="font-size:12px;color:var(--muted);line-height:1.55;margin:4px 0 10px;">${esc(m.landscape_note)}</p>`;
   }
 
   // Live ad-market activity — outbound transparency tools (links only; the
@@ -2266,10 +2284,13 @@ function tabMedia(d) {
   const rsfScore = m.press_freedom_score;
   if (m.press_freedom_rank != null || rsfScore != null) {
     const rsfColor = rsfScore == null ? "var(--muted)" : rsfScore >= 70 ? "var(--positive)" : rsfScore >= 40 ? "var(--warn)" : "var(--danger)";
-    html += `<div class="data-row"><span class="label">${t("label_rsf_rank")} <span style="font-size:10px;color:var(--muted-2);">RSF 2025</span></span><span class="value" style="color:${rsfColor}">${m.press_freedom_rank != null ? "#" + m.press_freedom_rank + " / 180 · " : ""}${rsfScore != null ? rsfScore.toFixed(1) : "—"}</span></div>`;
+    // Edition label comes from the record, never a hardcoded year: the index
+    // is refreshed annually and a stale caption would misattribute the figure.
+    const rsfEd = esc(inf.press_freedom_source || m.press_freedom_source || "RSF");
+    html += `<div class="data-row"><span class="label">${t("label_rsf_rank")} <span style="font-size:10px;color:var(--muted-2);">${rsfEd.split(" — ")[0]}</span></span><span class="value" style="color:${rsfColor}">${m.press_freedom_rank != null ? "#" + m.press_freedom_rank + " / 180 · " : ""}${rsfScore != null ? rsfScore.toFixed(1) : "—"}</span></div>`;
     if (rsfScore != null) { html += `<div class="bar"><div class="bar-fill" style="width:${rsfScore}%; background:${rsfColor}"></div></div>`; }
   } else {
-    html += `<div class="data-row"><span class="label" style="color:var(--muted-2);">Not assessed by RSF (2025 index covers 180 countries)</span></div>`;
+    html += `<div class="data-row"><span class="label" style="color:var(--muted-2);">Not assessed by RSF (the index covers 180 countries)</span></div>`;
   }
   if (inf.internet_freedom_score != null) {
     const score = inf.internet_freedom_score;
@@ -2377,14 +2398,28 @@ function tabSources(d) {
     <p style="color: var(--muted); font-size: 13px;">${t("sources_intro")}</p>
     <div class="sources-list">
       ${Object.entries(d.sources || {}).map(([field, url]) => {
-        const parts = url.split(" — ");
-        const org = parts[0];
-        const link = parts[1] || "";
-        return `<div><strong>${capitalize(field)}:</strong> ${org}<br>${link ? `<a href="${link}" target="_blank" rel="noopener">${link}</a>` : ""}</div>`;
+        // A citation is "Organisation — detail", where the detail is USUALLY a
+        // URL but not always: Freedom House's reads "official data files
+        // provided by Freedom House (July 2026)", which the old parser turned
+        // into a clickable link to a non-existent page. Only linkify an actual
+        // URL; render any other trailing detail as the text it is. Splitting
+        // on the FIRST separator also keeps citations that contain more than
+        // one dash intact.
+        const raw = String(url == null ? "" : url);
+        const i = raw.indexOf(" — ");
+        const org = i === -1 ? raw : raw.slice(0, i);
+        const detail = i === -1 ? "" : raw.slice(i + 3).trim();
+        const isUrl = /^https?:\/\//i.test(detail);
+        return `<div><strong>${esc(capitalize(field))}:</strong> ${esc(org)}<br>${
+          detail
+            ? (isUrl
+                ? `<a href="${esc(detail)}" target="_blank" rel="noopener noreferrer">${esc(detail)}</a>`
+                : `<span style="color:var(--muted);">${esc(detail)}</span>`)
+            : ""}</div>`;
       }).join("")}
     </div>
     <h3>${t("section_confidence_level")}</h3>
-    <div class="pill" style="background: #FFF4E5; color: #B4651A;">${d.confidence}</div>
+    <div class="pill" style="background: #FFF4E5; color: #B4651A;">${esc(d.confidence)}</div>
     <p style="font-size: 12px; color: var(--muted); margin-top: 14px;">${t("sources_confidence_note")}</p>`;
 }
 
@@ -2432,6 +2467,23 @@ setLanguage(currentLang);
    printing today's date before the data loads would overstate freshness. */
 document.getElementById("last-check").textContent = "…";
 
+/* ---------- Deep links (index.html?country=KEN) ----------
+ * Market Finder and the analyst both point users at "the country profile",
+ * which previously landed them on the bare world map with nothing selected.
+ * The ISO code is looked up in COUNTRY_DATA and ignored unless it matches a
+ * real record, so nothing from the URL is ever rendered directly.
+ */
+function openDeepLinkedCountry() {
+  let iso;
+  try {
+    iso = new URLSearchParams(window.location.search).get("country");
+  } catch (e) { return; }
+  if (!iso) return;
+  iso = String(iso).toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+  if (iso.length !== 3 || !window.COUNTRY_DATA[iso]) return;
+  openDetail(iso);
+}
+
 /* ---------- Live data loader ----------
  * Try to fetch data/countries.json (written weekly by the GitHub Actions
  * refresh workflow). If found, it replaces the inline fallback above and
@@ -2463,10 +2515,21 @@ document.getElementById("last-check").textContent = "…";
       renderList();
       // Re-style, re-tooltip, and re-label the map with the full dataset
       refreshMapAnnotations();
+      openDeepLinkedCountry();
       console.log("[atlas] live data loaded:", meta);
     }
   } catch (err) {
+    // The inline fallback covers 10 countries and is a frozen snapshot, so
+    // silently falling back to it left the page looking authoritative while
+    // showing a fraction of the Atlas with older figures. Say so on screen.
     console.info("[atlas] using inline fallback data:", err.message);
+    const banner = document.getElementById("error-banner");
+    if (banner) {
+      banner.classList.add("show");
+      banner.textContent = "⚠ Live country data could not be loaded, so this page is showing a small "
+        + "built-in sample (10 countries, older figures) instead of all 195. Check your connection and "
+        + "refresh — if it persists, the data file may not have published.";
+    }
   }
 })();
 

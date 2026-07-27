@@ -28,7 +28,7 @@ from __future__ import annotations
 import json
 import re
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -121,18 +121,59 @@ def _mean(vals: list) -> float | None:
     return sum(xs) / len(xs) if xs else None
 
 
-def series_stats(values: list) -> dict | None:
-    """Velocity stats for one daily series (most recent value last)."""
-    if len(values) < 45:
+def _date_map(series: dict) -> dict:
+    """{date: views} for one stored series, skipping days with no data."""
+    start = date.fromisoformat(series["start"])
+    return {
+        start + timedelta(days=i): v
+        for i, v in enumerate(series["values"])
+        if v is not None
+    }
+
+
+# A series must have at least this many real days inside each window for its
+# mean to mean anything. Wikimedia occasionally drops a day; a handful of
+# gaps is fine, a mostly-empty window is not.
+MIN_RECENT_DAYS = 4      # of the 7-day window
+MIN_BASE_DAYS = 15       # of the 30-day baseline
+
+
+def series_stats(series: dict, as_of: date) -> dict | None:
+    """
+    Velocity stats for one daily series, measured on CALENDAR DATES.
+
+    Why dates and not array positions (fixed 2026-07-26): every stored series
+    is WINDOW_DAYS long, but different series can end on different days — a
+    fetch that times out leaves some series windowed weeks behind while
+    others are current. Reading `values[-7:]` as "the last 7 days" therefore
+    silently reported three-week-old numbers as this week's, for two-thirds
+    of series, while the file's header still said it was updated today.
+
+    Anchoring to `as_of` makes staleness self-declaring: a series with no
+    data in the last 7 days returns None and is excluded rather than
+    contributing stale figures to a "rising this week" panel.
+    """
+    dmap = _date_map(series)
+    if not dmap:
         return None
-    recent = _mean(values[-7:])
-    base = _mean(values[-37:-7])
+
+    recent_days = [as_of - timedelta(days=i) for i in range(0, 7)]
+    base_days = [as_of - timedelta(days=i) for i in range(7, 37)]
+    recent_vals = [dmap[d] for d in recent_days if d in dmap]
+    base_vals = [dmap[d] for d in base_days if d in dmap]
+
+    if len(recent_vals) < MIN_RECENT_DAYS or len(base_vals) < MIN_BASE_DAYS:
+        return None
+    recent = _mean(recent_vals)
+    base = _mean(base_vals)
     if recent is None or base is None or base <= 0:
         return None
     return {
         "mean_7d": round(recent, 1),
         "mean_30d_prior": round(base, 1),
         "velocity": round((recent - base) / base, 3),
+        "last_data": max(dmap).isoformat(),
+        "days_measured_7d": len(recent_vals),
     }
 
 
@@ -170,6 +211,18 @@ def main() -> None:
     country_scores: dict[str, dict[str, float]] = {}   # iso3 -> {qid: score}
     country_rising: dict[str, list] = {}               # iso3 -> rising topics
 
+    # The measurement anchor: the day the demand file says its window ends.
+    # Every velocity below is computed against THIS date, so a series that
+    # stopped updating cannot pass its old numbers off as current.
+    try:
+        as_of = date.fromisoformat(str(wiki.get("updated", "")))
+    except ValueError:
+        as_of = date.today()
+        print(f"WARNING: wiki_pageviews.json has no usable 'updated' date — anchoring to today ({as_of})")
+
+    n_series_fresh = n_series_stale = 0
+    stale_topics: list[str] = []
+
     for qid, langs in wiki.get("series", {}).items():
         meta = topics.get(qid)
         if not meta:
@@ -177,10 +230,20 @@ def main() -> None:
 
         lang_stats: dict[str, dict] = {}
         for lang, s in langs.items():
-            st = series_stats(s["values"])
-            if st and st["mean_7d"] >= INCLUDE_FLOOR:
+            st = series_stats(s, as_of)
+            if st is None:
+                n_series_stale += 1
+                continue
+            n_series_fresh += 1
+            if st["mean_7d"] >= INCLUDE_FLOOR:
                 lang_stats[lang] = st
         if not lang_stats:
+            # Either genuinely low-traffic everywhere, or every series for
+            # this topic is stale. Record the latter so the count of
+            # "topics we cannot currently speak to" is visible rather than
+            # silently absent from the output.
+            if all(series_stats(s, as_of) is None for s in langs.values()):
+                stale_topics.append(qid)
             continue
 
         # volume-weighted global velocity (only series above the rising floor
@@ -207,14 +270,19 @@ def main() -> None:
              if GDELT_NAME_TO_ISO3.get(k)),
             key=lambda kv: -kv[1])[:10]
 
-        # compact global daily series (sum across tracked languages) so the
-        # Topic Explorer can draw trend lines without the full raw dataset
-        n_days = max(len(s["values"]) for s in langs.values())
-        global_series = [0] * n_days
+        # Compact global daily series (sum across tracked languages) so the
+        # Topic Explorer can draw trend lines without the full raw dataset.
+        # Summed BY CALENDAR DATE, not by array index: series can start on
+        # different days, so index-summing silently added Monday's views to
+        # another edition's Thursday.
+        by_date: dict[date, int] = {}
         for s in langs.values():
-            for i, v in enumerate(s["values"]):
-                if v is not None:
-                    global_series[i] += v
+            for d, v in _date_map(s).items():
+                by_date[d] = by_date.get(d, 0) + v
+        series_start = min(by_date) if by_date else as_of
+        n_days = (max(by_date) - series_start).days + 1 if by_date else 0
+        global_series = [by_date.get(series_start + timedelta(days=i), 0)
+                         for i in range(n_days)]
 
         topic_out[qid] = {
             "label_en": meta["label_en"],
@@ -230,8 +298,10 @@ def main() -> None:
             "news_articles_7d": news_7d,
             "top_covering_media_countries": [
                 {"iso3": c, "coverage_share_pct": v} for c, v in top_media],
-            "series_start": next(iter(langs.values()))["start"],
+            "series_start": series_start.isoformat(),
             "global_series": global_series,
+            # the newest day of real demand data behind this topic's figures
+            "as_of": max(st["last_data"] for st in lang_stats.values()),
         }
 
         # country attribution (documented heuristic)
@@ -296,8 +366,25 @@ def main() -> None:
     OUTPUT_PATH.write_text(
         json.dumps({
             "generated": date.today().isoformat(),
+            # What the numbers below actually measure, and how much of the
+            # tracked universe was current enough to measure at all. The
+            # Topic Explorer and the analyst both surface this rather than
+            # implying full coverage.
+            "measured_as_of": as_of.isoformat(),
+            "coverage": {
+                "series_current": n_series_fresh,
+                "series_stale_excluded": n_series_stale,
+                "topics_scored": len(topic_out),
+                "topics_stale_excluded": len(stale_topics),
+                "note": (
+                    "Velocity windows are anchored to measured_as_of by calendar date. "
+                    "Series with no data in that 7-day window are excluded rather than "
+                    "contributing older figures; a large series_stale_excluded count means "
+                    "the daily fetch has not been completing (see docs/AUTOMATION.md)."
+                ),
+            },
             "method_notes": {
-                "velocity": "(mean last 7d − mean prior 30d) / prior mean, per language series, volume-weighted globally",
+                "velocity": "(mean last 7d − mean prior 30d) / prior mean, per language series, volume-weighted globally; windows are calendar-dated against measured_as_of",
                 "country_attribution": "HEURISTIC: language-edition demand mapped to countries by speaker-population weights; approximation, not measurement",
                 "demand_vs_supply": "Wikipedia pageviews = demand (what people look up); GDELT = supply (what media publish); never merged",
                 "include_floor_daily_views": INCLUDE_FLOOR,
@@ -312,6 +399,12 @@ def main() -> None:
     n_rising = sum(1 for t in topic_out.values() if t["momentum"] == "rising")
     print(f"Wrote {OUTPUT_PATH} — {len(topic_out)} topics scored "
           f"({n_rising} rising globally), {len(country_out)} countries profiled.")
+    print(f"  measured as of {as_of}: {n_series_fresh} current series, "
+          f"{n_series_stale} stale series excluded, {len(stale_topics)} topics unscorable today.")
+    if n_series_stale > n_series_fresh:
+        print("  WARNING: most series are stale — the daily Wikipedia fetch is not "
+              "completing. Topic momentum is being computed from a minority of the "
+              "tracked universe. See docs/AUTOMATION.md → 'trend engine falls behind'.")
 
 
 if __name__ == "__main__":

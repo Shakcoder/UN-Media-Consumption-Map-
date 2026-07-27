@@ -80,6 +80,16 @@ jobs:
             exit 1
           fi
 
+      # THE PUBLICATION GATE (added 2026-07-26). Before this existed, whatever
+      # refresh_data.py produced was committed and published straight to the
+      # live site — the fabrication guard, range checks and citation checks in
+      # validate_atlas.py only ran if someone remembered to run them by hand.
+      # An upstream API returning garbage would therefore have auto-published.
+      # Now a validation failure stops the commit: the site keeps serving the
+      # last known-good data and the failure-alert step opens an issue.
+      - name: Validate refreshed data (blocks publication on error)
+        run: python scripts/validate_atlas.py
+
       - name: Commit updated data (if changed)
         run: |
           set -e
@@ -111,9 +121,14 @@ jobs:
           title="Weekly data refresh failed on $(date -u +%Y-%m-%d)"
           existing=$(gh issue list --state open --search "in:title \"Weekly data refresh failed\"" --json number --jq 'length')
           if [ "$existing" = "0" ]; then
+            # --label is best-effort: if the label has been deleted, gh exits
+            # non-zero and the alert itself is lost (this happened to the
+            # source watchdog). Retry unlabelled rather than lose the alarm.
             gh issue create --title "$title" \
               --body "The weekly refresh-data workflow failed. Open the Actions tab, click the failed run, and check which step went red. The site keeps serving the last good data meanwhile. Close this once a later run succeeds." \
-              --label "automation"
+              --label "automation" \
+            || gh issue create --title "$title" \
+              --body "The weekly refresh-data workflow failed. Open the Actions tab, click the failed run, and check which step went red. The site keeps serving the last good data meanwhile. Close this once a later run succeeds."
           else
             echo "An open failure issue already exists — not duplicating."
           fi

@@ -152,6 +152,15 @@ def main() -> None:
         vals = [v for v in prev["values"] if v is not None]
         return (sum(vals) / len(vals)) if vals else 0.0
 
+    def stored_last_data(qid: str, lang: str) -> date | None:
+        """Newest day this series actually holds data for (None = never fetched)."""
+        prev = existing.get(qid, {}).get(lang)
+        if not prev:
+            return None
+        pstart = datetime.strptime(prev["start"], "%Y-%m-%d").date()
+        idx = [i for i, v in enumerate(prev["values"]) if v is not None]
+        return pstart + timedelta(days=idx[-1]) if idx else None
+
     # Build the work list, then fetch in parallel. Dormant series (see note
     # at top) are skipped on weekdays: their stored history is carried
     # forward untouched and they refresh on the Sunday full pass.
@@ -165,8 +174,26 @@ def main() -> None:
                 carried.append((t["qid"], lang))
                 continue
             jobs.append((t["qid"], lang, title, incremental))
+
+    # STALEST FIRST (added 2026-07-26). Wikimedia rate-limits shared CI IPs
+    # hard enough that this step regularly hits its 85-minute cap around
+    # series ~800 of ~3,100. Because the work list was previously built in
+    # registry order, the SAME leading series were refreshed every day and
+    # the tail was never reached — by 2026-07-26 two-thirds of stored series
+    # had been frozen since 2026-07-05 while the file still advertised
+    # itself as updated daily.
+    #
+    # Ordering by "oldest data first" makes a truncated run self-healing:
+    # whatever the timeout cuts off is exactly what runs first tomorrow, so
+    # coverage rotates instead of starving. Never-fetched series (None) sort
+    # first so a newly added topic is backfilled promptly.
+    _EPOCH = date(1970, 1, 1)
+    jobs.sort(key=lambda j: (stored_last_data(j[0], j[1]) or _EPOCH, j[0], j[1]))
+
     total = len(jobs)
-    print(f"Fetching {total} series "
+    oldest = stored_last_data(jobs[0][0], jobs[0][1]) if jobs else None
+    print(f"Fetching {total} series, stalest first"
+          f"{f' (oldest stored data: {oldest})' if oldest else ''} "
           f"({'full Sunday refresh' if FULL_REFRESH else f'{len(carried)} dormant series carried forward'})",
           flush=True)
 
