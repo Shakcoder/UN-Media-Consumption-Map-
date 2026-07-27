@@ -90,6 +90,13 @@
   @media (max-width: 600px) { .movers { grid-template-columns: 1fr; } }
   .movers .topic-row { border: 1px solid var(--border-soft); }
   .empty { color: var(--muted-2); font-size: 13px; padding: 8px; }
+  .sources { margin-top: 14px; border-top: 1px solid var(--border-soft); padding-top: 10px;
+    font-size: 11px; color: var(--muted-2); line-height: 1.55; }
+  .sources .fn-label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 5px; }
+  .sources ol { margin: 0; padding-left: 18px; }
+  .sources li { margin-bottom: 3px; }
+  .sources a { color: var(--un-blue-dark); }
 
   footer.site { border-top: 1px solid var(--border); color: var(--muted-2); font-size: 12px;
     padding: 14px 20px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; }
@@ -292,8 +299,16 @@ function renderDetail() {
     A small media market covering a topic heavily therefore ranks above a large one publishing more
     articles about it in absolute terms.</div>` : ""}
     <div class="note">Demand (Wikipedia lookups) and supply (news coverage) are deliberately separate
-    signals — a gap between them can mean an under-served information need.
-    Sources: Wikimedia Pageviews API (CC0), GDELT 2.0 DOC API. Attention data through ${esc(DATA.measured_as_of || DATA.generated)}.</div>`;
+    signals — a gap between them can mean an under-served information need.</div>
+    <div class="sources"><span class="fn-label">Sources</span><ol>
+      <li>Attention / demand — Wikimedia Pageviews API (CC0), per language edition, measured through
+        ${esc(DATA.measured_as_of || DATA.generated)}.
+        <a href="https://wikimedia.org/api/rest_v1/" target="_blank" rel="noopener noreferrer">API ↗</a></li>
+      <li>News coverage / supply — GDELT 2.0 DOC API, attributed to where the outlet is based.
+        <a href="https://www.gdeltproject.org" target="_blank" rel="noopener noreferrer">GDELT ↗</a></li>
+      <li>Country attribution of demand is a documented approximation: language-edition traffic is
+        mapped to countries by speaker-population weights, never measured per country.</li>
+    </ol></div>`;
 }
 
 function bindMoverClicks(scope) {

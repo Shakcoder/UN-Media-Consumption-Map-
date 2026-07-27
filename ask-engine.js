@@ -1335,7 +1335,7 @@ function composePlatform(ents, ev) {
   }
   leaders.sort((a, b) => b[1] - a[1]);
   ev.add(`${pretty} — platform footprint`,
-    `Computed from the Atlas's per-country leading-platform lists (top_social), compiled from Reuters DNR 2026, DataReportal country notes, and national sources; see each country's profile for its citation.`,
+    `Counted from the Atlas's per-country leading-platform lists. Those lists are an editorial compilation cross-referenced with national media directories — an ordering, not measured audience share, and not a survey ranking. For measured platform use, see the countries carrying a Latinobarómetro platform-use battery. Each country's Sources tab names this provenance under "Leading outlets".`,
     []);
   const lines = [];
   lines.push(`**${pretty} is the #1 social platform in ${leaders.length} of 195 Atlas markets**${present.length ? ` and appears in the top platforms of ${present.length} more` : ""}.`);

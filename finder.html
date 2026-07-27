@@ -73,6 +73,13 @@
   a.profile { font-size: 12px; color: var(--un-blue-dark); text-decoration: none; white-space: nowrap; }
   a.profile:hover, a.profile:focus-visible { text-decoration: underline; }
 
+  .sources { margin-top: 18px; border-top: 1px solid var(--border-soft); padding-top: 12px;
+    font-size: 12px; color: var(--muted); }
+  .sources .fn-label { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted-2); margin-bottom: 6px; }
+  .sources ol { margin: 0; padding-left: 20px; }
+  .sources li { margin-bottom: 4px; line-height: 1.5; }
+  .sources a { color: var(--un-blue-dark); }
   details.excluded { margin-top: 14px; font-size: 13px; color: var(--muted); }
   details.excluded summary { cursor: pointer; font-weight: 600; color: var(--un-blue-dark); }
   details.excluded ul { columns: 3; margin: 8px 0 0; padding-left: 18px; }
@@ -186,6 +193,7 @@
       <tbody id="rank-body"></tbody>
     </table>
     <details class="excluded" id="excluded"></details>
+    <div class="sources" id="sources"></div>
   </section>
 </main>
 
@@ -278,6 +286,28 @@ $("finder-form").addEventListener("submit", (e) => {
         `<p><strong>${esc(reason)} (${names.length}):</strong></p><ul>${names.map(n => `<li>${esc(n)}</li>`).join("")}</ul>`).join("")
     : "";
   $("excluded").style.display = res.excluded.length ? "block" : "none";
+
+  // Numbered footnotes, matching Ask the Analyst. Every column above is a
+  // figure a comms officer might quote, so the page has to say where each
+  // one came from — the surveys actually used in THIS result set are listed
+  // by name rather than a generic "various sources".
+  // Group by survey family: the per-country sample size ("… (n=1,014)") makes
+  // every Eurobarometer row a distinct string, which would print the same
+  // survey twenty times. The per-country n stays visible under each row.
+  const surveysUsed = [...new Set(res.top.map(r => r.survey).filter(Boolean)
+    .map(x => x.replace(/,?\s*weighted microdata\s*\(n=[\d,]+\)/i, "")
+               .replace(/\s*\(n=[\d,]+\)/i, "").trim()))].sort();
+  const notes = [
+    `Channel reach — the survey named under each country: ${surveysUsed.length ? surveysUsed.join("; ") : "none in this result set"}. Constructs differ between surveys and are not directly comparable; each row states its own.`,
+    `Internet penetration (used to cap digital reach) — World Bank, data originally compiled by the ITU. <a href="https://data.worldbank.org/indicator/IT.NET.USER.ZS" target="_blank" rel="noopener noreferrer">Series ↗</a>`,
+    `Population (used for "est. people reachable") — World Bank. <a href="https://data.worldbank.org/indicator/SP.POP.TOTL" target="_blank" rel="noopener noreferrer">Series ↗</a>`,
+    `Language shares — Unicode CLDR territory data (speaker capability, not first language). <a href="https://cldr.unicode.org/" target="_blank" rel="noopener noreferrer">CLDR ↗</a>`,
+    `Press freedom and political status — Reporters Without Borders World Press Freedom Index and Freedom House Freedom in the World. <a href="https://rsf.org/en/index" target="_blank" rel="noopener noreferrer">RSF ↗</a> · <a href="https://freedomhouse.org/countries/freedom-world/scores" target="_blank" rel="noopener noreferrer">Freedom House ↗</a>`,
+  ];
+  if (res.weights && res.weights.momentum)
+    notes.push(`Topic momentum — Wikimedia Pageviews API, measured over the window stated in the Topic Explorer. <a href="topics.html">Topic Explorer</a>`);
+  notes.push(`Every figure above also appears, with its own citation and retrieval date, on that country's profile — open "Profile ↗" on any row.`);
+  $("sources").innerHTML = `<span class="fn-label">Sources</span><ol>${notes.map(n => `<li>${n}</li>`).join("")}</ol>`;
 
   $("results").style.display = "block";
   $("status").textContent = res.top.length

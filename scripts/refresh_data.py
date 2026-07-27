@@ -1274,6 +1274,20 @@ def build_country(
         )
 
     # Media-landscape narrative (CIA World Factbook, public domain)
+    # The leading-outlet lists (top_tv / top_radio / top_online_news /
+    # top_social) come from data/static_countries.json — hand-compiled, not
+    # fetched from anything. They had no sources{} entry at all, while the
+    # Sources tab promised that every figure on the page traces to a primary
+    # source. Naming their real provenance is the honest fix: they are
+    # editorial, and a reader deserves to know that before quoting them.
+    media_meta = static_meta.get("media") or {}
+    if any(media_meta.get(k) for k in ("top_tv", "top_radio", "top_online_news", "top_social")):
+        sources["leading_outlets"] = (
+            "Atlas editorial compilation — cross-referenced with national media directories "
+            "and the CIA World Factbook's Broadcast media entries; not a survey ranking, "
+            "and not audience-share data"
+        )
+
     landscape_note = (factbook_media or {}).get(iso3)
     if landscape_note:
         sources["media_landscape"] = (
