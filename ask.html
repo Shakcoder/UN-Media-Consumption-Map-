@@ -93,6 +93,11 @@
   .askbar button:hover, .askbar button:focus-visible { background: var(--un-blue-ink); }
   .askbar button:disabled { background: var(--muted-2); cursor: default; }
   .footer-note { text-align: center; font-size: 11px; color: var(--muted-2); padding: 0 16px 14px; }
+  /* the answer shown when something goes wrong tells the reader to use
+     "Report an error" — the link has to exist on this page for that to work */
+  .footer-legal { margin-top: 5px; }
+  .footer-legal a { color: var(--un-blue-dark); text-decoration: none; }
+  .footer-legal a:hover, .footer-legal a:focus-visible { text-decoration: underline; }
 
   .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -140,21 +145,26 @@
     <button id="send" type="submit">Ask</button>
   </div>
 </form>
-<div class="footer-note">The analyst only cites the Atlas's own sources and refuses to guess. Answers are decision support, not policy positions.
+<footer class="footer-note">The analyst only cites the Atlas's own sources and refuses to guess. Answers are decision support, not policy positions.
   <span id="qlog-ui" hidden> · Questions are remembered <em>only in this browser</em> (never uploaded) so coverage gaps can be reviewed:
     <a href="#" id="qlog-download" title="Download every question asked in this browser as a CSV (opens in Excel) — timestamp, question, and whether the analyst answered, asked to clarify, or missed">download log (<span id="qlog-count">0</span>)</a> ·
     <a href="#" id="qlog-clear" title="Erase the local question log">clear</a>
   </span>
-</div>
+  <div class="footer-legal">© 2026 · United Nations · Audience Intelligence Atlas ·
+    <a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-/issues/new" target="_blank" rel="noopener">Report an error</a></div>
+</footer>
 
 <script type="module">
 import { initEngine, answerQuestion } from "./ask-engine.js";
 
 /* =========================================================================
-   OPTIONAL UPGRADE — the page is fully functional without this.
-   If worker/analyst-worker.js is ever deployed on Cloudflare (free),
-   paste its URL here and answers get AI-written prose on top of the same
-   verified data. If the worker is down, the page falls back automatically.
+   EXPERIMENTAL, OFF BY DEFAULT — the page is fully functional without it.
+   worker/analyst-worker.js is an unfinished Cloudflare prose-polish layer.
+   It is switched off in its own code (WORKER_ENABLED = false) and refuses
+   every request, so leaving this URL empty is the supported configuration.
+   Do not paste a URL here without reading worker/DEPLOY_GUIDE.md first: the
+   Worker rewrites answers with a language model, and only the browser engine
+   below is covered by the eval suites that guarantee the Atlas's citations.
    ========================================================================= */
 const WORKER_URL = "";
 
@@ -179,7 +189,7 @@ initEngine().then(() => { engineReady = true; })
 banner.hidden = false;
 banner.className = "banner live";
 banner.innerHTML = "<b>Live.</b> The analyst runs entirely in your browser on the Atlas's published data — free-text questions, no account, nothing sent anywhere." +
-  (WORKER_URL ? " AI-written prose is enabled via the Atlas's free backend." : "");
+  (WORKER_URL ? " An experimental AI prose layer is configured; every figure still comes from the same verified data." : "");
 
 const sugg = document.getElementById("suggestions");
 for (const s of STARTERS) {
@@ -355,12 +365,21 @@ function qlogRefresh() {
   const n = qlogRead().length;
   if (ui) { ui.hidden = n === 0; const c = document.getElementById("qlog-count"); if (c) c.textContent = n; }
 }
+/* Excel and LibreOffice treat a cell that begins with = + - @ (or a tab or
+   carriage return) as a formula to run, even when the cell is quoted. A
+   question typed as =HYPERLINK("http://…") would therefore execute when the log is
+   opened for review. A leading apostrophe forces the cell to be plain text and
+   is not displayed by the spreadsheet, so the question still reads normally. */
+const csvCell = (v) => {
+  const s = String(v);
+  return '"' + (/^[=+\-@\t\r]/.test(s) ? "'" + s : s).replace(/"/g, '""') + '"';
+};
 document.getElementById("qlog-download").addEventListener("click", (e) => {
   e.preventDefault();
   const rows = [["timestamp", "question", "outcome"]]
     .concat(qlogRead().map(r => [r.t, r.q, r.outcome]));
   const csv = "﻿" + rows.map(r =>
-    r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(",")).join("\r\n");
+    r.map(csvCell).join(",")).join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
   a.download = "atlas-question-log-" + new Date().toISOString().slice(0, 10) + ".csv";
@@ -394,7 +413,13 @@ async function askWorker(question) {
     return true;
   } catch (e) {
     clearTimeout(timer);
-    return false;                       // fall back to the local engine
+    // Falling back to the browser engine is the correct, invisible outcome for
+    // a reader — but a maintainer debugging a configured Worker needs to know
+    // WHY it declined (it refuses outright while disabled, and rejects its own
+    // output when a figure is not in the evidence pack). Console only: the
+    // answer the reader gets is the same either way.
+    console.info("[atlas] worker declined, using the browser engine:", e && e.message);
+    return false;
   }
 }
 
@@ -417,7 +442,7 @@ async function ask(question) {
   } catch (e) {
     // never leave the user with silence — surface the problem in the chat
     console.error("Analyst error:", e);
-    addAnalyst("Something went wrong while answering (" + escapeHtml(e.message) + "). Please try rephrasing the question — and if this keeps happening, use \"Report an error\" on the Atlas page.", [], "", []);
+    addAnalyst("Something went wrong while answering (" + e.message + "). Please try rephrasing the question — and if this keeps happening, use \"Report an error\" at the bottom of this page.", [], "", []);
   } finally {
     removeThinking();
     send.disabled = false;

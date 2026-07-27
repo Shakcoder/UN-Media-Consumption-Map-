@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Screen every country with verified media-survey data to shortlist the best-fit markets for a UN campaign — with the weights, the reasoning, and every excluded country shown.">
+<link rel="icon" href="assets/un_emblem.png" type="image/png">
 <title>Market Finder — Audience Intelligence Atlas</title>
 <style>
   :root {
@@ -17,6 +19,10 @@
   * { box-sizing: border-box; }
   body { margin: 0; font: 14px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
          background: var(--bg); color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--un-blue); outline-offset: 2px; }
+  .skip-link { position: absolute; left: -9999px; top: 0; background: var(--un-blue-dark); color: #fff;
+    padding: 8px 14px; z-index: 3000; border-radius: 0 0 8px 0; font-size: 13px; }
+  .skip-link:focus { left: 0; }
   header.site { display: flex; align-items: center; gap: 12px; padding: 10px 20px;
     background: #fff; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; }
   header.site .brand { display: flex; align-items: center; gap: 12px; }
@@ -28,7 +34,7 @@
   header.site nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
   header.site nav a { color: var(--muted); text-decoration: none; font-size: 13.5px;
     padding: 6px 10px; border-radius: 8px; }
-  header.site nav a:hover { background: var(--accent-soft); color: var(--un-blue-dark); }
+  header.site nav a:hover, header.site nav a:focus-visible { background: var(--accent-soft); color: var(--un-blue-dark); }
   header.site nav a[aria-current="page"] { background: var(--accent-soft); color: var(--un-blue-dark); font-weight: 600; }
 
   main { max-width: 1060px; margin: 0 auto; padding: 22px 18px 60px; }
@@ -45,7 +51,7 @@
   form.finder .actions { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; }
   form.finder button { background: var(--un-blue-dark); border: 0; color: #fff; font: inherit;
     font-weight: 600; padding: 10px 22px; border-radius: 999px; cursor: pointer; }
-  form.finder button:hover { background: var(--un-blue); }
+  form.finder button:hover, form.finder button:focus-visible { background: var(--un-blue); }
   .hint { font-size: 12px; color: var(--muted-2); }
 
   #status { margin: 16px 2px; color: var(--muted); }
@@ -65,7 +71,7 @@
   .ok { color: var(--positive); font-size: 12px; }
   td .why { font-size: 12px; color: var(--muted); margin-top: 3px; }
   a.profile { font-size: 12px; color: var(--un-blue-dark); text-decoration: none; white-space: nowrap; }
-  a.profile:hover { text-decoration: underline; }
+  a.profile:hover, a.profile:focus-visible { text-decoration: underline; }
 
   details.excluded { margin-top: 14px; font-size: 13px; color: var(--muted); }
   details.excluded summary { cursor: pointer; font-weight: 600; color: var(--un-blue-dark); }
@@ -73,10 +79,13 @@
   @media (max-width: 700px) { details.excluded ul { columns: 1; } }
   footer.site { border-top: 1px solid var(--border); color: var(--muted-2); font-size: 12px;
     padding: 14px 20px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; }
+  footer.site a { color: var(--un-blue-dark); text-decoration: none; }
+  footer.site a:hover, footer.site a:focus-visible { text-decoration: underline; }
 </style>
 </head>
 <body>
 
+<a class="skip-link" href="#finder-form">Skip to the campaign form</a>
 <header class="site">
   <div class="brand">
     <img class="logo" src="assets/un_emblem.png" alt="United Nations emblem" width="40" height="33">
@@ -165,7 +174,10 @@
     </div>
   </form>
 
-  <div id="status">Loading the Atlas's data…</div>
+  <!-- Results arrive without a page change, so this line is the only thing a
+       screen reader can announce: it is a live region and every state of the
+       search (loading, ready, how many countries ranked) is written here. -->
+  <div id="status" role="status" aria-live="polite">Loading the Atlas's data…</div>
 
   <section class="results" id="results">
     <div class="method" id="method"></div>
@@ -180,13 +192,18 @@
 <footer class="site">
   <div>© 2026 · United Nations · Audience Intelligence Atlas</div>
   <div>Screening is decision support, not a final market selection — validate with local teams.</div>
+  <div><a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-/issues/new" target="_blank" rel="noopener">Report an error</a></div>
 </footer>
 
 <script type="module">
 import { initEngine, findMarkets } from "./ask-engine.js";
 
 const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+// Escapes quotes as well as angle brackets: several call sites interpolate
+// into HTML ATTRIBUTES (the datalist value=, the Profile link href= and
+// title=), where an unescaped double quote would end the attribute early.
+const esc = (s) => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 let TOPIC_INDEX = [];   // [label, qid]
 
 (async function boot() {
@@ -222,10 +239,18 @@ $("finder-form").addEventListener("submit", (e) => {
   });
 
   const langCol = !!language;
+  // The momentum criterion only scores above zero in a country whose own rising
+  // list holds this exact topic, and in most weeks only a handful of the tracked
+  // topics are rising anywhere. When none of the ranked countries qualifies, the
+  // weight was applied but scored zero everywhere: the order is identical to a
+  // search without a topic. Say that plainly — the momentum share printed in the
+  // weights above would otherwise read as if live trend data shaped the ranking.
+  const trendInert = !!res.weights.momentum && res.ranked.length > 0 && !res.ranked.some(r => r.risingHit);
   $("method").innerHTML =
     `<strong>How this ranking works:</strong> ${Object.entries(res.weights)
       .map(([k, w]) => `${k} ${w}%`).join(" · ")}. ${esc(res.methodNote)}` +
-    (topicLabel && !topic ? ` <span class="risk">Topic “${esc($("f-topic").value)}” is not in the tracked registry — no trend boost applied.</span>` : "");
+    (topicLabel && !topic ? ` <span class="risk">Topic “${esc($("f-topic").value)}” is not in the tracked registry — no trend boost applied.</span>` : "") +
+    (trendInert ? ` <span class="risk">No country in this search has rising attention for “${esc(topic[0])}” this week, so the momentum weight scored zero everywhere and did not change the order.</span>` : "");
 
   $("rank-head").innerHTML =
     `<th>#</th><th>Country</th><th>Score</th><th>Lead channel</th>` +

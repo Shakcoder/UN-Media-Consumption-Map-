@@ -1,5 +1,5 @@
 {
-  "_comment": "Human-curated country metadata. Quantitative indicators (population, GDP, internet %, etc.) are fetched automatically into countries.json. This file holds things that don't live in APIs: overviews, industries, media outlets, focus areas. Add new countries here to expand coverage; the refresh script will fill in their numbers on the next run.",
+  "_comment": "Human-curated country metadata. Quantitative indicators (population, GDP, internet %, etc.) are fetched automatically into countries.json. This file holds things that don't live in APIs: overviews, industries, media outlets, focus areas. Add new countries here to expand coverage; the refresh script will fill in their numbers on the next run. NOTHING refreshes or checks the fields in this file, and some of them go out of date with political events — a capital city moves, a transitional government is replaced by an elected one, a currency is redenominated. Re-read capital / government / currency against the CIA World Factbook country pages once a year, and whenever a country in the file has a change of government.",
   "USA": {
     "name": "United States of America",
     "capital": "Washington, D.C.",
@@ -2377,7 +2377,7 @@
   },
   "BDI": {
     "name": "Burundi",
-    "capital": "Bujumbura",
+    "capital": "Gitega (political capital), Bujumbura (economic capital)",
     "region": "Africa",
     "subregion": "Eastern Africa",
     "flag": "🇧🇮",
@@ -3850,7 +3850,7 @@
     "languages": [
       "French (official)"
     ],
-    "government": "Transitional government",
+    "government": "Presidential republic",
     "dominant_industries": [
       "Oil",
       "Manganese",

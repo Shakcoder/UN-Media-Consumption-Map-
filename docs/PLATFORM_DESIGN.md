@@ -1,7 +1,7 @@
 # UN Global Content Intelligence Platform — System Design
 
 **Version 1.0 — July 2026**
-**Status:** Design proposal. Builds on the existing Global Media Consumption Atlas (195 countries, verified 2025–26 data from World Bank, RSF, Freedom House, Reuters Institute DNR, Afrobarometer).
+**Status:** Design proposal. Builds on the Atlas as it stood in June 2026, then named the Global Media Consumption Atlas (195 countries, verified 2025–26 data from World Bank, RSF, Freedom House, Reuters Institute DNR, Afrobarometer).
 
 ---
 

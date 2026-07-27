@@ -1,28 +1,42 @@
 #!/usr/bin/env python3
 """
-refresh_data.py — automated data refresh for the Global Media Consumption Atlas.
+refresh_data.py — automated data refresh for the Audience Intelligence Atlas.
 
 Primary sources (all free, no API key):
-  - World Bank Open Data API (14 indicators, automated weekly)
-  - RSF Press Freedom Index (174 countries, manual annual)
+  - World Bank Open Data API (15 indicators, automated weekly)
+  - RSF Press Freedom Index (180 countries, downloaded by scripts/fetch_rsf.py)
   - Freedom House: Freedom on the Net (70 countries, manual annual)
-  - Freedom House: Freedom in the World (195 countries, manual annual)
+  - Freedom House: Freedom in the World (193 countries — Freedom House rates
+    neither Palestine nor the Holy See, manual annual)
   - Reuters Institute Digital News Report (46 of 48 markets, manual annual)
-  - Afrobarometer (35 of 39 surveyed African countries, manual per wave)
-  - Arab Barometer (Iraq only, real Wave VIII microdata — see 2026-07-22 note below)
+  - Afrobarometer (35 of 39 surveyed African countries, manual per wave —
+    the one survey here with no compute script yet; see AFRO_RADIO_2023)
+  - Arab Barometer (Wave VIII: Iraq, Kuwait, Palestine; Wave VII: Algeria —
+    real microdata, computed by scripts/compute_arabbarometer_w8.py / _w7.py)
+  - World Values Survey Wave 7 (28 countries, scripts/compute_wvs_news.py)
+  - Eurobarometer 102.2 (12 countries, scripts/compute_eurobarometer.py)
+  - Asian Barometer Wave 6 (Cambodia, scripts/compute_asianbarometer.py)
+  - Latinobarometro 2024 (17 countries, platform use — NOT news consumption,
+    scripts/compute_latinobarometro.py)
   - DataReportal (smartphone penetration, manual annual)
 
-Not yet integrated, pending free registration (see NEWS_CONSUMPTION's removal
-note, 2026-07-22): Asian Barometer, Latinobarometro, Eurobarometer, World
-Values Survey. Each would extend real news-consumption coverage once its
-microdata is downloaded and computed the way Iraq's was — do not re-add a
-country under one of these names without an actual downloaded file behind it.
+Every survey figure here comes from a microdata file the maintainer downloaded
+(the raw files stay off the repo; their licences forbid redistribution). That
+is the rule, not a formality: do not add a country under one of these source
+names without an actual downloaded file behind it (see NEWS_CONSUMPTION's
+removal note, 2026-07-22, for what happens otherwise).
+
+Still pending free registration: Arab Barometer Wave IX (fieldwork runs
+through May 2026, nothing released yet) and the rest of Asian Barometer
+Wave 6, which would extend real news-consumption coverage in Asia.
 """
 
 from __future__ import annotations
 
+import html
 import json
 import os
+import re
 import sys
 import time
 from datetime import datetime, timezone
@@ -311,6 +325,12 @@ def _freedom_status(score: int) -> str:
 # microdata (Q74A, weighted, values 3-4 = weekly or more). Radio is the
 # leading news channel in much of Africa — a channel the digital-first
 # sources miss entirely. 39 surveyed countries.
+# NO COMPUTE SCRIPT EXISTS for these figures (unlike every other survey in
+# this file, which has one in scripts/). They were computed once from the R9
+# merged microdata and pasted in. To update them for Round 10 — or to check
+# them — someone must first write scripts/compute_afrobarometer.py following
+# the pattern of scripts/compute_wvs_news.py, against the free merged-round
+# file from afrobarometer.org/data. Do not hand-type replacement numbers.
 AFRO_RADIO_2023: dict[str, float] = {
     "AGO": 60.1, "BEN": 72.2, "BFA": 70.8, "BWA": 67.7, "CIV": 56.8,
     "CMR": 53.7, "COG": 59.0, "CPV": 48.8, "ETH": 44.9, "GAB": 51.0,
@@ -429,8 +449,9 @@ DNR_NON_REPRESENTATIVE = {"IND", "KEN", "NGA", "ZAF", "MAR"}
 
 # Reuters Institute Digital News Report 2026 for markets they cover (46 of the
 # 48 surveyed — Hong Kong and Taiwan excluded as non-UN-member entities),
-# Afrobarometer for African markets, DataReportal 2024 for a few remaining
-# markets DNR does not survey, and Arab Barometer Wave VIII for Iraq.
+# Afrobarometer for African markets, and — for markets none of those reach —
+# Arab Barometer (IRQ/KWT/PSE from Wave VIII, DZA from Wave VII), World Values
+# Survey Wave 7, Eurobarometer 102.2 and Asian Barometer Wave 6.
 # Each entry: trust_pct, tv_pct, online_pct, social_pct, source label,
 # optionally radio_pct and note (see the IRQ entry for the pattern).
 NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
@@ -488,6 +509,8 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     # ---- Afrobarometer Round 9 (2023) — 35 countries, computed from microdata ----
     # Weighted "weekly or more" usage (Q74 values 3-4) for TV/internet/social.
     # No comparable media-trust question in R9; trust intentionally left unset.
+    # These figures, like AFRO_RADIO_2023 above, have no compute script in
+    # scripts/ yet — see the note on that table before updating either.
     "AGO": {"trust": None, "tv": 62.3, "online": 39.2, "social": 40.8, "src": "Afrobarometer Round 9 (2023)"},
     "BEN": {"trust": None, "tv": 33.2, "online": 27.0, "social": 34.6, "src": "Afrobarometer Round 9 (2023)"},
     "BFA": {"trust": None, "tv": 46.3, "online": 22.4, "social": 27.2, "src": "Afrobarometer Round 9 (2023)"},
@@ -537,13 +560,16 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     # question from the multi-select "used weekly" figures elsewhere in this
     # table, so it is not directly comparable across countries. No trust-in-media
     # question exists anywhere in Wave VIII's questionnaire, so "trust" is None.
-    "IRQ": {"trust": None, "tv": 27.2, "online": None, "social": 45.3, "radio": 1.3,
+    # Base = every respondent who named a source, including "Other" (Wave VIII
+    # numbers "Other" 90, Wave VII numbers it 7) — the two waves must divide by
+    # the same denominator or their percentages are not comparable.
+    "IRQ": {"trust": None, "tv": 26.8, "online": None, "social": 44.5, "radio": 1.2,
             "src": "Arab Barometer Wave VIII (2023-2024) microdata",
             "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
-    "KWT": {"trust": None, "tv": 18.2, "online": None, "social": 65.3, "radio": 1.0,
+    "KWT": {"trust": None, "tv": 17.7, "online": None, "social": 63.6, "radio": 1.0,
             "src": "Arab Barometer Wave VIII (2023-2024) microdata",
             "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
-    "PSE": {"trust": None, "tv": 16.5, "online": None, "social": 70.1, "radio": 4.1,
+    "PSE": {"trust": None, "tv": 16.4, "online": None, "social": 70.0, "radio": 4.1,
             "src": "Arab Barometer Wave VIII (2023-2024) microdata",
             "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
     # ---- Arab Barometer Wave VII (2021-2022) — gap countries only ----
@@ -1014,6 +1040,11 @@ def fetch_factbook_media(wanted_iso3: set[str]) -> dict[str, str]:
             data = fetch_json(FACTBOOK_RAW_BASE + path, max_retries=2, timeout=20)
             text = (((data.get("Communications") or {}).get("Broadcast media") or {})
                     .get("text") or "").strip()
+            # The mirror stores the Factbook's HTML source, so accented names
+            # arrive as "T&eacute;l&eacute;vision" and spaces as "&nbsp;".
+            # Decode once here: the analyst renders this text as plain text and
+            # would otherwise print the entity codes at the reader.
+            text = html.unescape(text).replace("\xa0", " ").strip()
             if text:
                 # Keep it brief-friendly: cap ~700 chars on a clause boundary.
                 if len(text) > 700:
@@ -1032,6 +1063,33 @@ def fetch_factbook_media(wanted_iso3: set[str]) -> dict[str, str]:
     return out
 
 
+# Which sources{} entry cites which fetched value. Most values are cited under
+# their own name; the ones below share a citation with a sibling figure (all of
+# RSF's numbers come from one RSF page, all of DNR's from one report). The map
+# exists so the confidence flag can be COMPUTED — the site tells readers that
+# "verified" means the record's figures were checked against their primary
+# sources, and a flag stamped on "we fetched something" would not mean that.
+VALUE_CITATION_KEY: dict[str, str] = {
+    "press_freedom_score": "press_freedom_rank",
+    "press_freedom_edition": "press_freedom_rank",
+    "press_freedom_indicators": "press_freedom_rank",
+    "press_freedom_rank_prev": "press_freedom_rank",
+    "internet_freedom_score": "internet_freedom",
+    "internet_freedom_status": "internet_freedom",
+    "political_freedom_score": "political_freedom",
+    "political_freedom_status": "political_freedom",
+    "political_rights_score": "political_freedom",
+    "civil_liberties_score": "political_freedom",
+    "electoral_democracy": "political_freedom",
+    "news_trust_pct": "news_consumption",
+    "news_tv_pct": "news_consumption",
+    "news_online_pct": "news_consumption",
+    "news_social_pct": "news_consumption",
+    "news_survey_note": "news_consumption",
+    "news_radio_pct": "news_radio",
+}
+
+
 def build_country(
     iso3: str,
     static_meta: dict[str, Any],
@@ -1039,37 +1097,61 @@ def build_country(
     wb_data: dict[str, dict[str, tuple[float, int]]],
     cldr_langs: dict[str, list[dict[str, Any]]] | None = None,
     factbook_media: dict[str, str] | None = None,
+    wb_fetch_ok: set[str] | None = None,
 ) -> dict[str, Any]:
     iso2 = ISO3_TO_ISO2.get(iso3, iso3)
     print(f"→ {iso3} ({static_meta.get('name', iso3)})")
 
     values: dict[str, Any] = {}
-    latest_year: int | None = None
+    carried_from_prev: set[str] = set()
     sources: dict[str, str] = {}
+    population_year: int | None = None
 
     # World Bank automated indicators
     for field, wb_code in WORLD_BANK_INDICATORS.items():
+        wb_link = f"https://data.worldbank.org/indicator/{wb_code}?locations={iso2}"
+        origin = WB_DATA_ORIGINS.get(field, "")
         pair = wb_data.get(field, {}).get(iso3)
         value, year = pair if pair else (None, None)
-        if value is None and prev:
+        # Last week's value is kept ONLY when the World Bank fetch itself
+        # failed — an API outage must not blank the map. When the fetch worked
+        # and simply has nothing for this country, the country has no reading
+        # inside the window we ask for (12 years; 30 for the sparse census
+        # indicators), so nothing is published. Carrying on regardless is how
+        # literacy rates observed in 1970-1994 stayed on the site, presented as
+        # today's figure with no year attached anywhere a reader could see.
+        if value is None and prev and field not in (wb_fetch_ok or ()):
             prev_value = _lookup_previous(prev, field)
             if prev_value is not None:
                 values[field] = prev_value
-                prev_src = (prev.get("sources") or {}).get(field)
-                if prev_src:
-                    sources[field] = prev_src
+                carried_from_prev.add(field)
+                # Keep the old citation (it names the observation year); if an
+                # earlier run lost it, rebuild the World Bank link the value
+                # came from. A figure on the site with no traceable source is
+                # the one thing this project must never publish — and once the
+                # citation is dropped it never comes back on its own.
+                sources[field] = (
+                    (prev.get("sources") or {}).get(field)
+                    or f"World Bank{origin} — {wb_link}")
                 continue
         if value is not None:
             if field in {"population", "area_km2", "gdp_per_capita_usd"}:
                 values[field] = int(round(value))
             else:
                 values[field] = round(value, 1)
-            if year and (latest_year is None or year > latest_year):
-                latest_year = year
-            origin = WB_DATA_ORIGINS.get(field, "")
+            if field == "population":
+                population_year = year
+            # Name the year the figure was OBSERVED, not the year we fetched
+            # it. Several countries' latest World Bank reading is years old
+            # (Sudan's internet series stops in 2017); without the year on the
+            # citation a reader cannot tell a current figure from a stale one.
             sources[field] = (
-                f"World Bank{origin} — https://data.worldbank.org/indicator/{wb_code}?locations={iso2}"
+                f"World Bank{origin}, {year} observation — {wb_link}" if year
+                else f"World Bank{origin} — {wb_link}"
             )
+            if field == "internet_pct" and year and datetime.now().year - year >= 5:
+                print(f"  · {iso3}: internet_pct is a {year} observation "
+                      f"({datetime.now().year - year} years old) — World Bank has nothing newer")
 
     # Smartphone % (DataReportal)
     if iso3 in SMARTPHONE_PCT_2024:
@@ -1086,9 +1168,11 @@ def build_country(
         # a legal-environment problem calls for different comms handling
         # than a safety-of-journalists problem.
         values["press_freedom_indicators"] = rsf.get("indicators")
-        prev = (rsf.get("prev") or {}).get("rank")
-        if prev:
-            values["press_freedom_rank_prev"] = prev
+        # NOT named `prev`: that is this function's previous-record argument,
+        # still read further down for carried-forward language and media notes.
+        prev_rank = (rsf.get("prev") or {}).get("rank")
+        if prev_rank:
+            values["press_freedom_rank_prev"] = prev_rank
         sources["press_freedom_rank"] = (
             f"RSF {RSF_EDITION} — https://rsf.org/en/country/{iso3.lower()}")
 
@@ -1122,11 +1206,25 @@ def build_country(
         values["news_tv_pct"] = nc["tv"]
         values["news_online_pct"] = nc["online"]
         values["news_social_pct"] = nc["social"]
-        sources["news_consumption"] = f"{nc['src']} — https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2026" if "Reuters" in nc["src"] else nc["src"]
-        if iso3 in DNR_NON_REPRESENTATIVE and "Reuters" in nc["src"]:
+        # The report page is per-edition, so the edition year comes out of the
+        # source label itself. The annual DNR update changes ~46 labels at once
+        # (see check_source_editions.py); reading the year from the label is
+        # what stops those labels from pointing at last year's report.
+        is_dnr = "Reuters" in nc["src"]
+        dnr_edition = re.search(r"DNR (20\d\d)", nc["src"]) if is_dnr else None
+        if is_dnr:
+            dnr_url = "https://reutersinstitute.politics.ox.ac.uk/digital-news-report"
+            # No year in the label = link the report's landing page rather than
+            # a year page that may not be the edition the figures came from.
+            sources["news_consumption"] = (
+                f"{nc['src']} — {dnr_url}/{dnr_edition.group(1)}" if dnr_edition
+                else f"{nc['src']} — {dnr_url}")
+        else:
+            sources["news_consumption"] = nc["src"]
+        if iso3 in DNR_NON_REPRESENTATIVE and is_dnr:
             values["news_survey_note"] = ("Survey sample is online and mainly English-speaking/urban — "
                                           "not nationally representative; figures skew younger and more connected "
-                                          "(per DNR 2026 methodology).")
+                                          f"(per {nc['src']} methodology).")
         elif nc.get("note"):
             values["news_survey_note"] = nc["note"]
 
@@ -1195,11 +1293,30 @@ def build_country(
             if prev_src:
                 sources["media_landscape"] = prev_src
 
+    # "verified" is a promise to the reader, not a formality: it says every
+    # figure in this record names the source it came from. Anything published
+    # without its citation makes the whole record "preliminary" — which the map
+    # shows as "must not be cited publicly" — and prints here so the gap gets
+    # fixed rather than shipped.
+    uncited = sorted(f for f, v in values.items()
+                     if v is not None and VALUE_CITATION_KEY.get(f, f) not in sources)
+    if uncited:
+        print(f"  ! {iso3}: no citation for {', '.join(uncited)} — marking record preliminary")
+
+    # The profile shows this beside the population figure, so it must be
+    # POPULATION's own observation year — not the newest year seen across the
+    # other indicators, and never a year computed from today's date. A
+    # carried-forward population keeps the year it was published with; when
+    # neither exists the field stays null and the profile shows nothing.
+    if population_year is None and "population" in carried_from_prev:
+        prev_pop_year = (prev or {}).get("population_year")
+        population_year = prev_pop_year if isinstance(prev_pop_year, int) else None
+
     # Assemble the country object
     country: dict[str, Any] = {
         **static_meta,
         "population": values.get("population"),
-        "population_year": latest_year or datetime.now().year - 2,
+        "population_year": population_year,
         "area_km2": values.get("area_km2"),
         "gdp_per_capita_usd": values.get("gdp_per_capita_usd"),
         "demographics": {
@@ -1264,7 +1381,7 @@ def build_country(
             "source": nc["src"] if nc else None,
         },
         "sources": sources,
-        "confidence": "verified" if values else "preliminary",
+        "confidence": "verified" if values and not uncited else "preliminary",
         "retrieved_on": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
     }
 
@@ -1304,6 +1421,15 @@ def main() -> int:
         wb_data[field] = fetch_indicator_all_countries(wb_code)
         print(f"  · {field} ({wb_code}): {len(wb_data[field])} countries returned")
 
+    # A healthy bulk response carries 170-260 economies; a failed one comes
+    # back empty. Anything thinner is treated as a failed fetch, so previous
+    # values are kept for that indicator rather than dropped worldwide.
+    wb_fetch_ok = {field for field, rows in wb_data.items() if len(rows) >= 100}
+    wb_failed = sorted(set(WORLD_BANK_INDICATORS) - wb_fetch_ok)
+    if wb_failed:
+        print(f"  ! World Bank fetch looks incomplete for: {', '.join(wb_failed)}"
+              f" — previous values kept for those indicators")
+
     print("Fetching Unicode CLDR language data (two requests)...")
     cldr_langs = fetch_cldr_languages()
     print(f"  · language shares for {len(cldr_langs)} territories")
@@ -1314,7 +1440,8 @@ def main() -> int:
 
     result: dict[str, Any] = {}
     for iso3, meta in sorted(static.items()):
-        result[iso3] = build_country(iso3, meta, previous.get(iso3), wb_data, cldr_langs, factbook_media)
+        result[iso3] = build_country(iso3, meta, previous.get(iso3), wb_data,
+                                     cldr_langs, factbook_media, wb_fetch_ok)
 
     world_pop_row = wb_data.get("population", {}).get("WLD")
     result["_meta"] = {
@@ -1338,6 +1465,7 @@ def main() -> int:
             "DataReportal 2024 (smartphone penetration estimates, 50 countries)",
             "Arab Barometer Wave VIII (Iraq, Kuwait, Palestine — real weighted microdata, computed by scripts/compute_arabbarometer_w8.py)",
             "Arab Barometer Wave VII, 2021-2022 (Algeria — real weighted microdata, computed by scripts/compute_arabbarometer_w7.py)",
+            "Asian Barometer Wave 6, 2024 (Cambodia — real weighted microdata, computed by scripts/compute_asianbarometer.py)",
             "World Values Survey Wave 7 v6.0 (28 countries — weighted microdata computed by scripts/compute_wvs_news.py; doi:10.14281/18241.24; constructs differ from DNR and are labeled per country)",
             "Latinobarometro 2024 (17 countries — measured social-platform use, weighted microdata computed by scripts/compute_latinobarometro.py; platform use is a separate construct from news consumption)",
             "Eurobarometer 102.2, Oct-Nov 2024 (12 countries — weekly media use, weighted microdata computed by scripts/compute_eurobarometer.py; GESIS ZA8905, doi:10.4232/1.14726)",

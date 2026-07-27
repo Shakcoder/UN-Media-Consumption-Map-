@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Live topic intelligence for UN communications: what the world is looking up, tracked daily across 22 language editions of Wikipedia and the GDELT news monitor.">
+<link rel="icon" href="assets/un_emblem.png" type="image/png">
 <title>Topic Explorer — Audience Intelligence Atlas</title>
 <style>
   :root {
@@ -88,6 +90,11 @@
   @media (max-width: 600px) { .movers { grid-template-columns: 1fr; } }
   .movers .topic-row { border: 1px solid var(--border-soft); }
   .empty { color: var(--muted-2); font-size: 13px; padding: 8px; }
+
+  footer.site { border-top: 1px solid var(--border); color: var(--muted-2); font-size: 12px;
+    padding: 14px 20px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; }
+  footer.site a { color: var(--un-blue-dark); text-decoration: none; }
+  footer.site a:hover, footer.site a:focus-visible { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -119,6 +126,12 @@
     <div class="empty">Loading…</div>
   </div>
 </div>
+
+<footer class="site">
+  <div>© 2026 · United Nations · Audience Intelligence Atlas</div>
+  <div>Attention trends are decision support, not a measure of media coverage or public opinion.</div>
+  <div><a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-/issues/new" target="_blank" rel="noopener">Report an error</a></div>
+</footer>
 
 <script>
 const LANG_NAMES = {en:"English", fr:"French", es:"Spanish", ar:"Arabic", pt:"Portuguese",
@@ -187,6 +200,13 @@ function renderList(filter) {
   body.innerHTML = html || `<div class="empty">No topics match.</div>`;
   const activate = (r) => {
     activeQid = r.dataset.qid; renderDetail(); renderList(document.getElementById("search").value);
+    // renderList rebuilds the whole list with innerHTML, so the row that held
+    // keyboard focus has just been thrown away and focus would drop back to the
+    // top of the page on every single selection. Hand it to the row that
+    // replaced it — same topic, same position. preventScroll leaves the phone
+    // scroll below in charge of what the user actually sees.
+    const restored = document.querySelector("#list-body .topic-row.active");
+    if (restored) restored.focus({ preventScroll: true });
     // on phones the detail pane sits below the list — bring it into view
     if (window.innerWidth <= 820) document.getElementById("detail").scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -222,7 +242,9 @@ function renderGlobalMovers() {
   const coverageNote = unscorable
     ? ` · ${unscorable} more tracked ${unscorable === 1 ? "topic has" : "topics have"} no current data and ${unscorable === 1 ? "is" : "are"} not scored today`
     : "";
-  return `<h1>Global topic movers</h1>
+  // tabindex="-1" on the heading: it is never in the tab order, but it can be
+  // given focus by script when the pane is replaced (see bindMoverClicks)
+  return `<h1 tabindex="-1">Global topic movers</h1>
     <div class="sub">${scored} topics measured in 22 languages · attention data through ${esc(asOf)}${coverageNote}</div>
     <h3 class="sect">Rising this week</h3><div class="movers">${risers.map(row).join("") || '<div class="empty">No topics rising sharply this week.</div>'}</div>
     <h3 class="sect">Falling this week</h3><div class="movers">${fallers.map(row).join("") || '<div class="empty">No topics falling sharply this week.</div>'}</div>
@@ -248,12 +270,12 @@ function renderDetail() {
   }
 
   let mediaRows = "";
-  for (const c of (t.top_covering_media_countries || []).slice(0, 8)) {
-    mediaRows += `<tr><td>${esc(c.iso3)}</td><td class="num">${c.coverage_share_pct}%</td></tr>`;
+  for (const c of (t.media_intensity_by_country || []).slice(0, 8)) {
+    mediaRows += `<tr><td>${esc(c.iso3)}</td><td class="num">${c.pct_of_country_news_volume}%</td></tr>`;
   }
 
   el.innerHTML = `
-    <h1>${esc(t.label_en)}</h1>
+    <h1 tabindex="-1">${esc(t.label_en)}</h1>
     <div class="sub">${esc(CAT_LABELS[t.category] || t.category)} · ${momentumBadge(t.momentum)}</div>
     <div class="kpis">
       <div class="kpi"><div class="v ${velCls}">${pct >= 0 ? "+" : ""}${pct}%</div><div class="l">global velocity (7d vs 30d)</div></div>
@@ -263,15 +285,26 @@ function renderDetail() {
     ${sparkline(t.global_series || [])}
     <h3 class="sect">Demand by language (what people look up)</h3>
     <table><tr><th>Language</th><th style="text-align:right">Views/day (7d avg)</th><th style="text-align:right">Velocity</th></tr>${langRows}</table>
-    ${mediaRows ? `<h3 class="sect">Media coverage by outlet country (what media publish — GDELT, 14d)</h3>
-    <table><tr><th>Country</th><th style="text-align:right">Share of coverage</th></tr>${mediaRows}</table>` : ""}
+    ${mediaRows ? `<h3 class="sect">Where this topic gets the most airtime (GDELT, 14d)</h3>
+    <table><tr><th>Outlet country</th><th style="text-align:right">% of that country's news output</th></tr>${mediaRows}</table>
+    <div class="note">This is coverage <em>intensity</em>, not a share of world coverage: it is how much of
+    each country's own monitored news output matches this topic, attributed to where the outlet is based.
+    A small media market covering a topic heavily therefore ranks above a large one publishing more
+    articles about it in absolute terms.</div>` : ""}
     <div class="note">Demand (Wikipedia lookups) and supply (news coverage) are deliberately separate
     signals — a gap between them can mean an under-served information need.
     Sources: Wikimedia Pageviews API (CC0), GDELT 2.0 DOC API. Attention data through ${esc(DATA.measured_as_of || DATA.generated)}.</div>`;
 }
 
 function bindMoverClicks(scope) {
-  const activate = (r) => { activeQid = r.dataset.qid; renderDetail(); renderList(document.getElementById("search").value); };
+  const activate = (r) => {
+    activeQid = r.dataset.qid; renderDetail(); renderList(document.getElementById("search").value);
+    // a mover row lives inside #detail, which renderDetail has just replaced, so
+    // there is no row left to give focus back to — the new heading is where the
+    // reader is now, and focusing it makes a screen reader read the topic out.
+    const heading = document.querySelector("#detail h1");
+    if (heading) heading.focus({ preventScroll: true });
+  };
   scope.querySelectorAll(".topic-row[data-qid]").forEach(r => {
     r.addEventListener("click", () => activate(r));
     r.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(r); } });

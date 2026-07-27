@@ -1,3 +1,16 @@
+> **⚠ Historical document (April 2026). Do not plan work from this file.**
+>
+> This is the *original* proposal, written before the project pivoted. It is kept because it records the reasoning behind decisions that still hold — GitHub Pages, no database, no framework, "no data" beats a bad estimate — and the pushback in §4 that shaped the scope. Everything about *what was built* and *when* is out of date.
+>
+> | For | Read instead |
+> |---|---|
+> | What the product actually is today | [`README.md`](README.md) |
+> | The design it was rebuilt against | [`docs/PLATFORM_DESIGN.md`](docs/PLATFORM_DESIGN.md) — the pivot plan |
+> | Where every number comes from | [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) |
+> | How the automation runs, in plain English | [`docs/AUTOMATION.md`](docs/AUTOMATION.md) |
+>
+> **What changed since April, in one paragraph.** The site grew three pages this plan never imagined: a browser-based analyst that answers plain-English questions and writes strategy briefs, a Topic Explorer tracking live attention across 167 topics, and a Market Finder that ranks which countries fit a campaign. The 16-week phase schedule below does not apply — the real deadline is the end of the internship in August 2026, which is why the recent work has been hardening and testing rather than new features. Two items below were never adopted and should not be revived without a decision: the **public Google Form survey** (Phase 3 — it needs ethics sign-off first, see [`docs/SURVEY_ETHICS.md`](docs/SURVEY_ETHICS.md)) and **Plausible/Umami analytics** (§2 — no analytics tool was ever added, and the pages carry no tracking code of any kind).
+
 # UN Media Consumption Map — Project Plan
 
 **Owner:** Shakti (UN intern) · **Handover target:** ~August 2026 · **Today:** 2026-04-22

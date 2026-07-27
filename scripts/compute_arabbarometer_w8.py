@@ -50,7 +50,8 @@ def main() -> int:
     df, meta = pyreadstat.read_sav(str(SAV), usecols=["COUNTRY", "WT", "Q421"])
 
     labels = meta.variable_value_labels.get("Q421", {})
-    if labels.get(5.0) != "Television" or labels.get(6.0) != "Social media":
+    if (labels.get(5.0) != "Television" or labels.get(6.0) != "Social media"
+            or labels.get(90.0) != "Other"):
         print("SCALE MISMATCH on Q421 — aborting rather than guessing.", file=sys.stderr)
         return 1
 
@@ -59,9 +60,13 @@ def main() -> int:
         iso3 = COUNTRY_TO_A3.get(float(code))
         if not iso3:
             continue
-        # base: all respondents with a substantive answer (drop DK/refused >= 90)
+        # Base: all respondents who named a source. Only 98 (don't know) and
+        # 99 (refused) come out — code 90 is "Other", a real answer, and it
+        # stays in the denominator. Wave VII numbers "Other" 7, so dropping 90
+        # here would quietly give the two waves different bases for figures the
+        # Atlas publishes side by side under the same construct note.
         sub = grp.dropna(subset=["Q421", "WT"])
-        sub = sub[sub["Q421"] < 90.0]
+        sub = sub[sub["Q421"] < 98.0]
         wt = sub["WT"].sum()
         if wt <= 0 or len(sub) < 500:
             continue

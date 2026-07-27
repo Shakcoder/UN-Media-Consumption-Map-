@@ -2,6 +2,33 @@
  * UN Media Atlas — "Ask the Analyst" backend (Cloudflare Worker)
  * ==============================================================
  *
+ * ⚠️ STATUS: EXPERIMENTAL — NOT SUPPORTED, AND SWITCHED OFF IN CODE.
+ * ------------------------------------------------------------------
+ * Do not enable this Worker. It is kept in the repository as a starting
+ * point for future work, not as a feature anyone should turn on today.
+ *
+ * WHY, in plain English: on 2026-07-21 the Ask page's browser engine
+ * (ask-engine.js) was rebuilt into a consulting engine. That engine now
+ * guarantees, in code, a set of honesty rules the Atlas promises its users:
+ *
+ *   • every answer carries an "Advisory" disclaimer;
+ *   • Not-Free countries carry a partner-vetting warning;
+ *   • digital reach is never claimed above a country's internet penetration;
+ *   • figures are tagged [measured] / [inferred] / [unknown];
+ *   • countries with no survey coverage are excluded BY NAME with a reason.
+ *
+ * This Worker was written before that rebuild and enforces none of them —
+ * it only *asks* a free AI model to behave, and a model can quietly leave
+ * any of it out. It also never loads the data layers added on 2026-07-22/23
+ * (platform use, ad market, English-language reach). Because ask.html tries
+ * the Worker FIRST when a URL is configured, switching it on would silently
+ * replace good answers with weaker ones — the opposite of an upgrade.
+ *
+ * TO BRING IT BACK: port the consulting engine's rules and data layers into
+ * ANALYST_RULES and countryRecord below, add eval coverage for the Worker
+ * path, then set WORKER_ENABLED to true. Until all three are done, leave it
+ * off — the Ask page is fully functional without it and always has been.
+ *
  * ZERO-COST DESIGN. This Worker answers plain-English questions about the
  * Atlas using Cloudflare's FREE Workers AI allowance (open models such as
  * Llama running on Cloudflare's servers — no API key, no credit card, no
@@ -14,19 +41,37 @@
  *   2. WRITE (free AI model): the model receives ONLY the question and the
  *      evidence pack, and writes the answer with [E#] citation tags. It is
  *      instructed to refuse rather than guess beyond the evidence.
+ *   3. CHECK (deterministic code, no AI): every percentage in the finished
+ *      answer must appear in the evidence pack, or the answer is thrown away.
  *
- * Because retrieval is deterministic and the model only summarizes what it
- * was handed, answers stay grounded in the verified data.
+ * Retrieval being deterministic keeps the model's raw material honest, but
+ * instructions alone cannot stop a model inventing a figure — hence step 3
+ * (ungroundedPercentages, below).
  *
- * OPTIONAL UPGRADE: if an ANTHROPIC_API_KEY secret is ever added (paid),
- * the Worker automatically switches to Claude with full multi-step tool
- * use — nothing else needs to change. Without the key it uses the free
- * Workers AI path. See worker/DEPLOY_GUIDE.md for the 15-minute setup.
+ * OPTIONAL UPGRADE (untested end-to-end): if an ANTHROPIC_API_KEY secret is
+ * ever added (paid), the Worker switches to Claude with full multi-step tool
+ * use. Without the key it uses the free Workers AI path. Both paths are
+ * gated by WORKER_ENABLED below. See worker/DEPLOY_GUIDE.md.
  */
 
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
+
+// Master switch. While this is false the Worker answers nothing and every
+// request gets a plain refusal, so a copy-pasted deployment cannot quietly
+// downgrade the Ask page (ask.html falls back to its own browser engine the
+// moment the Worker returns an error, which is the correct outcome here).
+// Only flip this to true after the parity work described in the file header
+// is finished and covered by the eval suites.
+const WORKER_ENABLED = false;
+const DISABLED_MESSAGE =
+  "The Atlas analyst Worker is switched off on purpose. It predates the " +
+  "2026-07-21 rebuild of the Ask page's built-in analyst and does not carry " +
+  "that analyst's required disclaimers, warnings and data. The Ask page " +
+  "answers every question on its own; nothing is missing. See " +
+  "worker/DEPLOY_GUIDE.md before changing this.";
+
 const SITE_ORIGIN = "https://shakcoder.github.io";           // allowed browser origin (CORS)
 const DATA_BASE = "https://shakcoder.github.io/UN-Media-Consumption-Map-/data";
 const DATA_CACHE_SECONDS = 1800;
@@ -44,7 +89,7 @@ const MAX_TOOL_ROUNDS = 6;
 // ---------------------------------------------------------------------------
 // Shared writing rules (both engines)
 // ---------------------------------------------------------------------------
-const ANALYST_RULES = `You are the analyst for the UN Global Media Consumption Atlas — an evidence-first assistant for UN communications officers. You advise on where and how to communicate: media landscapes, platform use and trust, press/internet freedom, connectivity, and live topic trends.
+const ANALYST_RULES = `You are the analyst for the UN Audience Intelligence Atlas — an evidence-first assistant for UN communications officers. You advise on where and how to communicate: media landscapes, platform use and trust, press/internet freedom, connectivity, and live topic trends.
 
 Absolute rules:
 1. Use ONLY the evidence provided. EVERY factual number or claim must carry its evidence tag, e.g. "online news use is 91% weekly [E1]". Never invent numbers, sources, or tags.
@@ -235,9 +280,14 @@ function countryRecord(iso, countries, trends, ev) {
     name: c.name, iso3: iso, region: `${c.region} / ${c.subregion}`,
     population: c.population,
     news_use_weekly_pct: {
-      tv: nc.tv_as_news_source_pct, online: nc.online_as_news_source_pct,
+      // Radio comes from a different survey than the rest of this block
+      // (Afrobarometer, not the DNR) and is missing for many countries — but
+      // where it exists it is often the biggest channel of all, so leaving it
+      // out would make the analyst recommend digital in radio-led markets.
+      tv: nc.tv_as_news_source_pct, radio: nc.radio_as_news_source_pct,
+      online: nc.online_as_news_source_pct,
       social_media: nc.social_as_news_source_pct, trust_in_news: nc.trust_in_news_pct,
-      survey: nc.source,
+      survey: nc.source, radio_survey: nc.radio_source,
     },
     connectivity: {
       internet_users_pct: conn.internet_pct == null ? null : Math.round(conn.internet_pct),
@@ -262,7 +312,9 @@ function countryRecord(iso, countries, trends, ev) {
     };
   }
   const id = ev.add(`${c.name} — country profile`,
-    `Atlas record. News use & trust: ${nc.source || "n/a"}. Freedom: RSF 2025 + Freedom House 2026 official files. Connectivity/demographics: World Bank (retrieved ${c.retrieved_on || "n/a"}).` +
+    `Atlas record. News use & trust: ${nc.source || "n/a"}.` +
+    (nc.radio_source ? ` Radio use: ${nc.radio_source}.` : "") +
+    ` Freedom: RSF 2025 + Freedom House 2026 official files. Connectivity/demographics: World Bank (retrieved ${c.retrieved_on || "n/a"}).` +
     (tr ? ` Trends: daily engine as of ${trends.generated} (Wikipedia reading patterns; language-weight country attribution — approximation).` : ""));
   return { id, rec };
 }
@@ -275,12 +327,61 @@ function topicRecord(qid, trends, ev) {
     global_velocity_7d_vs_30d: t.global_velocity,
     demand_by_language: t.demand_by_language,
     news_articles_last_7d: t.news_articles_7d,
-    media_coverage_by_country: (t.top_covering_media_countries || []).slice(0, 8),
+    // GDELT intensity — the share of each country's OWN news output matching
+    // the topic, not a slice of world coverage. Named so the model cannot
+    // read it as "who covers this most".
+    media_intensity_by_country: (t.media_intensity_by_country || []).slice(0, 8),
     as_of: trends.generated,
   };
   const id = ev.add(`Topic: ${t.label_en}`,
     `Daily trend engine as of ${trends.generated}. Demand = Wikipedia reading patterns (what people look up); coverage = GDELT news monitoring (what media publish).`);
   return { id, rec };
+}
+
+// ---------------------------------------------------------------------------
+// Groundedness check on the model's prose
+//
+// The prompt tells the model to use only the evidence pack, but an instruction
+// is not a guarantee: a small model can produce a confident, plausible-looking
+// percentage that appears nowhere in the data. The Atlas has been burned by
+// invented figures before, so every percentage the model writes must be
+// traceable to a number that is actually in the pack.
+//
+// This is deliberately strict. A percentage the model worked out itself (the
+// gap between two figures, two channels added together) will also be flagged,
+// because nothing in the finished sentence tells us whether a number was
+// derived or invented. Being wrongly strict costs one AI answer; being wrongly
+// permissive puts a made-up figure under a real-looking source list.
+//
+// What it cannot do: tell whether the right number was attached to the right
+// claim. It only proves the figure exists somewhere in the data the model was
+// handed — so it is a floor, not a substitute for the browser engine.
+// ---------------------------------------------------------------------------
+function ungroundedPercentages(text, pack) {
+  const known = new Set();
+  const collect = (value) => {
+    if (value == null) return;
+    if (typeof value === "number") {
+      known.add(String(value));
+      known.add(String(Math.round(value)));
+      known.add(value.toFixed(1));
+    } else if (typeof value === "string") {
+      for (const n of value.match(/\d+(?:\.\d+)?/g) || []) known.add(n);
+    } else if (Array.isArray(value)) {
+      value.forEach(collect);
+    } else if (typeof value === "object") {
+      Object.values(value).forEach(collect);
+    }
+  };
+  collect(pack);
+
+  const unmatched = new Set();
+  for (const hit of text.matchAll(/(\d+(?:\.\d+)?)\s*%/g)) {
+    const raw = hit[1], num = parseFloat(raw);
+    if (known.has(raw) || known.has(String(Math.round(num))) || known.has(num.toFixed(1))) continue;
+    unmatched.add(raw + "%");
+  }
+  return [...unmatched];
 }
 
 // ---------------------------------------------------------------------------
@@ -338,6 +439,18 @@ Write the analyst's answer now, following the rules exactly. Tag every figure wi
   const text = (out && (out.response || out.result || "")).trim();
   if (!text) throw new Error("Workers AI returned an empty response.");
 
+  // Refuse to hand back prose containing figures we cannot trace to the pack.
+  // Throwing here means ask.html falls back to its own browser engine, which
+  // answers the same question deterministically — so the visitor loses nothing
+  // but the smoother wording.
+  const invented = ungroundedPercentages(text, pack);
+  if (invented.length) {
+    throw new Error(
+      "Discarded the AI-written answer: " + invented.join(", ") +
+      " could not be traced to the Atlas data it was given."
+    );
+  }
+
   const citedIds = new Set([...text.matchAll(/\[E(\d+)\]/g)].map(m => "E" + m[1]));
   const evidence = ev.list().filter(e => citedIds.has(e.id));
   return { answer: text, evidence: evidence.length ? evidence : ev.list(), engine: "workers-ai" };
@@ -393,6 +506,7 @@ async function runTool(name, input, ev) {
       rows.push({
         iso3: iso, name: c.name, population: c.population,
         trust_pct: nc.trust_in_news_pct, tv_pct: nc.tv_as_news_source_pct,
+        radio_pct: nc.radio_as_news_source_pct,
         online_pct: nc.online_as_news_source_pct, social_pct: nc.social_as_news_source_pct,
         internet_pct: conn.internet_pct == null ? null : Math.round(conn.internet_pct),
         smartphone_pct: conn.smartphone_pct,
@@ -447,7 +561,10 @@ async function askAnalystClaude(question, apiKey) {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
       body: JSON.stringify({
-        model: ANTHROPIC_MODEL, max_tokens: 1600, temperature: 0.2,
+        // No `temperature` here: this model rejects non-default sampling
+        // settings outright (HTTP 400), so sending one would break every
+        // request. The free Workers AI call above still accepts it.
+        model: ANTHROPIC_MODEL, max_tokens: 1600,
         system: ANALYST_RULES + "\nYou have tools that read the Atlas database — use them for every lookup.",
         tools: TOOLS, messages,
       }),
@@ -489,7 +606,8 @@ function corsHeaders(origin) {
 }
 
 // Exported for local testing under Node (harmless in Cloudflare).
-export { detectEntities, countryRecord, topicRecord, makeEvidenceStore, loadData, runTool };
+export { detectEntities, countryRecord, topicRecord, makeEvidenceStore, loadData, runTool,
+         ungroundedPercentages };
 
 export default {
   async fetch(request, env) {
@@ -498,7 +616,16 @@ export default {
 
     if (request.method === "OPTIONS") return new Response(null, { headers });
     if (request.method !== "POST")
-      return new Response(JSON.stringify({ ok: true, usage: 'POST {"question": "..."}' }), { headers });
+      return new Response(JSON.stringify(
+        WORKER_ENABLED ? { ok: true, usage: 'POST {"question": "..."}' }
+                       : { ok: false, disabled: true, message: DISABLED_MESSAGE }
+      ), { headers });
+
+    // Refuse before doing any work. ask.html treats any error as "backend
+    // unavailable" and answers with its own engine instead, so a visitor
+    // never sees this text — but anyone testing the URL by hand will.
+    if (!WORKER_ENABLED)
+      return new Response(JSON.stringify({ error: DISABLED_MESSAGE }), { status: 503, headers });
 
     let body;
     try { body = await request.json(); } catch {

@@ -112,12 +112,18 @@ def parse_volume(data: dict) -> list[dict]:
 
 
 def parse_source_countries(data: dict) -> dict[str, float]:
-    """timelinesourcecountry -> {country_name: mean share of coverage}.
+    """timelinesourcecountry -> {country_name: mean Volume Intensity}.
+
+    Volume Intensity is the percentage of THAT country's own monitored news
+    output matching the query — not the country's share of world coverage of
+    the topic. A small media market that covers something obsessively scores
+    higher than a large one publishing far more articles about it, so the
+    figure must never be presented as "who covers this most".
 
     GDELT names its series "<Country> Volume Intensity" — strip the suffix so
-    downstream ISO3 mapping (compute_topic_intelligence.GDELT_NAME_TO_ISO3)
-    receives plain country names. Without this every lookup fails silently
-    and top_covering_media_countries comes out empty.
+    the downstream ISO3 lookup (compute_topic_intelligence.gdelt_iso3_lookup)
+    receives plain country names. Without this every lookup fails silently and
+    media_intensity_by_country comes out empty.
     """
     out: dict[str, float] = {}
     for series in data.get("timeline", []):

@@ -28,7 +28,7 @@ An interactive, source-cited public resource showing **where and how the world g
 - [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) — every source: license, cadence, conflict-resolution rules
 - [`docs/AUTOMATION.md`](docs/AUTOMATION.md) — how the automated pipelines work, for non-coders
 - [`docs/SUPERVISOR_SUMMARY.md`](docs/SUPERVISOR_SUMMARY.md) — one-page summary for supervisors
-- [`worker/DEPLOY_GUIDE.md`](worker/DEPLOY_GUIDE.md) — optional free AI-prose upgrade (Cloudflare)
+- [`worker/DEPLOY_GUIDE.md`](worker/DEPLOY_GUIDE.md) — **experimental, switched off**: an unfinished Cloudflare prose layer. The analyst does not need it and nothing on the site calls it.
 
 ## Repository layout
 ```
@@ -43,7 +43,7 @@ An interactive, source-cited public resource showing **where and how the world g
 ```
 
 ## Principles
-1. **Every number has a citation.** No exceptions — answers ship with a "View sources" list.
+1. **Every number has a citation.** No exceptions — every answer ends with a numbered Sources list, and every country profile has a Sources tab.
 2. **Gaps are shown honestly.** "No data" beats a bad estimate; the analyst refuses rather than guesses.
 3. **Radio and TV are first-class.** In much of the world they out-reach digital — recommendations respect that.
 4. **Boring tech, zero cost.** Plain HTML/CSS/JS + GitHub's free tier, maintainable after handover by non-coders.

@@ -6,6 +6,13 @@ name, capital, region, and ISO codes. Supplements with compiled media,
 language, currency, and cultural data for all UN member states + observers.
 
 Run once:  python3 scripts/build_static_countries.py
+
+⚠ THIS SCRIPT IS SPENT. It ran once in April 2026 and its output,
+data/static_countries.json, has been hand-corrected many times since —
+Gabon's government, Burundi's capital and other political facts have moved
+on. Re-running it would silently overwrite those corrections with April's
+snapshot. It is kept only as the record of how the file was first built.
+To change a country, edit data/static_countries.json directly.
 """
 import json
 from pathlib import Path

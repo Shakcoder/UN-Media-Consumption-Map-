@@ -8,8 +8,9 @@ fetches daily pageview counts from the Wikimedia Pageviews REST API
 data/trends/wiki_pageviews.json.
 
 First run backfills WINDOW_DAYS of history (~10-15 min for ~3,100 series).
-Subsequent daily runs fetch only the last MERGE_DAYS days per series and
-merge (a few minutes).
+Subsequent daily runs fetch the last MERGE_DAYS days per series — or back to
+the oldest day that series is still missing, so days lost to a throttled run
+are filled in on a later one — and merge (a few minutes).
 
 Wikipedia pageviews measure information DEMAND (what people look up),
 per language edition — country attribution happens later in
@@ -161,6 +162,35 @@ def main() -> None:
         idx = [i for i, v in enumerate(prev["values"]) if v is not None]
         return pstart + timedelta(days=idx[-1]) if idx else None
 
+    def fetch_start(qid: str, lang: str) -> date:
+        """
+        Oldest day to ask for when refreshing a series that already has data.
+
+        A fixed MERGE_DAYS window can only ever heal the last few days: a day
+        missed because Wikimedia was throttling falls out of that window
+        tomorrow, and then nothing asks for it again — the hole simply rides
+        the rolling window for four months. Since the Pageviews API returns
+        any date range in ONE request, starting at the oldest day this series
+        is missing costs no extra requests and makes an interrupted run
+        self-healing.
+
+        A day on which the article genuinely had no traffic is returned by the
+        API as nothing at all, so it is indistinguishable from a missed day;
+        such series just re-request their whole window each run, which is
+        still a single request.
+        """
+        prev = existing.get(qid, {}).get(lang)
+        if not prev:
+            return full_start
+        pstart = datetime.strptime(prev["start"], "%Y-%m-%d").date()
+        have = {pstart + timedelta(days=i)
+                for i, v in enumerate(prev["values"]) if v is not None}
+        for i in range(WINDOW_DAYS):
+            day = full_start + timedelta(days=i)
+            if day not in have:
+                return min(day, merge_start)
+        return merge_start
+
     # Build the work list, then fetch in parallel. Dormant series (see note
     # at top) are skipped on weekdays: their stored history is carried
     # forward untouched and they refresh on the Sunday full pass.
@@ -199,7 +229,7 @@ def main() -> None:
 
     def run_job(job: tuple[str, str, str, bool]) -> tuple[str, str, dict[str, int], bool]:
         qid, lang, title, incremental = job
-        start = merge_start if incremental else full_start
+        start = fetch_start(qid, lang) if incremental else full_start
         return qid, lang, fetch_series(lang, title, start, end), incremental
 
     def write_output(series: dict) -> None:

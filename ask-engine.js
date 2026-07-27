@@ -165,12 +165,21 @@ function buildNameIndex() {
     const short = full.replace(/,.*$/, "").trim();     // "Tanzania, United Rep." -> "tanzania"
     if (short.length >= 3) NAME_TO_ISO[short] = iso;
     if (short.includes("-")) NAME_TO_ISO[short.replace(/-/g, " ")] = iso;
-    // capital cities resolve to their country ("policy audiences in Brussels")
-    // — exact-match only (GENERATED) so they never pollute fuzzy matching
-    const cap = (c.capital || "").toLowerCase().replace(/[?!.,;:()"]/g, " ").replace(/\s+/g, " ").trim();
-    if (cap.length >= 4 && !(cap in NAME_TO_ISO) && !FUZZY_STOPWORDS.has(cap)) {
-      NAME_TO_ISO[cap] = iso;
-      GENERATED.add(cap);
+    // Capital cities resolve to their country ("policy audiences in Brussels")
+    // — exact-match only (GENERATED) so they never pollute fuzzy matching.
+    //
+    // Six countries record more than one seat of government, with the role in
+    // brackets ("Pretoria (executive), Cape Town (legislative), Bloemfontein
+    // (judicial)"). Indexing the whole string made every one of those cities
+    // unfindable, so each is split out and indexed on its own; the bracketed
+    // qualifier is dropped because nobody types it.
+    for (const part of String(c.capital || "").split(",")) {
+      const cap = part.replace(/\(.*?\)/g, " ")
+        .toLowerCase().replace(/[?!.,;:()"]/g, " ").replace(/\s+/g, " ").trim();
+      if (cap.length >= 4 && !(cap in NAME_TO_ISO) && !FUZZY_STOPWORDS.has(cap)) {
+        NAME_TO_ISO[cap] = iso;
+        GENERATED.add(cap);
+      }
     }
     // generated demonyms for single-word names: kenya->kenyan, chad->chadian…
     if (!short.includes(" ") && short.length >= 4) {
@@ -237,6 +246,24 @@ function bestFuzzy(phrase, keys, canon) {
 // ---------------------------------------------------------------------------
 // Vocabulary: regions, topics, attributes, platforms, audiences
 // ---------------------------------------------------------------------------
+// Continent membership is built from SUBREGIONS, never from the data's
+// `region` field. That field comes from the World Bank's country groupings,
+// where "Europe & Central Asia" is collapsed to "Europe" — so Armenia,
+// Azerbaijan, Georgia and the five Central Asian republics are filed under
+// region "Europe" even though their subregion says Western/Central Asia.
+// Trusting `region` put Uzbekistan at the top of "European countries by trust
+// in news" and left every Central Asian country out of "Asia". The subregion
+// values are correct, so they are what membership is defined from.
+const EUROPE_SUBREGIONS = ["Northern Europe", "Western Europe", "Southern Europe", "Eastern Europe", "Central Europe"];
+const ASIA_SUBREGIONS = ["Eastern Asia", "South-Eastern Asia", "Southern Asia", "Western Asia", "Central Asia"];
+// The Balkans and Scandinavia cut across UN subregions, so they get explicit
+// country lists like the Sahel and the Nordics do. "Southern Europe" was
+// standing in for the Balkans, which made Spain, Andorra, San Marino and Malta
+// the top "Balkan" markets while leaving Bulgaria and Romania out entirely.
+const BALKANS = ["ALB", "BIH", "BGR", "GRC", "HRV", "MKD", "MNE", "ROU", "SRB", "SVN"];
+const SCANDINAVIA = ["DNK", "NOR", "SWE"];
+const GCC = ["SAU", "ARE", "QAT", "KWT", "BHR", "OMN"];
+
 const REGION_MAP = {
   "east africa": { subregion: "Eastern Africa" }, "eastern africa": { subregion: "Eastern Africa" },
   "west africa": { subregion: "Western Africa" }, "western africa": { subregion: "Western Africa" },
@@ -247,24 +274,37 @@ const REGION_MAP = {
   "africa": { region: "Africa" },
   "western europe": { subregion: "Western Europe" }, "eastern europe": { subregion: "Eastern Europe" },
   "northern europe": { subregion: "Northern Europe" }, "southern europe": { subregion: "Southern Europe" },
-  "scandinavia": { subregion: "Northern Europe" }, "the balkans": { subregion: "Southern Europe" },
-  "balkans": { subregion: "Southern Europe" }, "europe": { region: "Europe" },
+  "central europe": { subregion: "Central Europe" },
+  "scandinavia": { isos: SCANDINAVIA }, "the balkans": { isos: BALKANS },
+  "balkans": { isos: BALKANS }, "balkan": { isos: BALKANS },
+  "europe": { subregions: EUROPE_SUBREGIONS },
   "south asia": { subregion: "Southern Asia" }, "southern asia": { subregion: "Southern Asia" },
   "southeast asia": { subregion: "South-Eastern Asia" }, "south-east asia": { subregion: "South-Eastern Asia" },
   "south east asia": { subregion: "South-Eastern Asia" },
   "east asia": { subregion: "Eastern Asia" }, "eastern asia": { subregion: "Eastern Asia" },
   "central asia": { subregion: "Central Asia" },
   "middle east": { subregion: "Western Asia" }, "western asia": { subregion: "Western Asia" },
-  "gulf": { subregion: "Western Asia" }, "mena": { subregions: ["Western Asia", "Northern Africa"] },
-  "asia": { region: "Asia" },
+  // "the Gulf" means the six GCC states in UN comms usage — the same list the
+  // "gulf states"/"gcc" keys below already carry. Left as the whole Western
+  // Asia subregion it returned Türkiye, Iraq, Syria and Azerbaijan as Gulf
+  // markets and buried the actual Gulf states.
+  "gulf": { isos: GCC }, "the gulf": { isos: GCC },
+  "mena": { subregions: ["Western Asia", "Northern Africa"] },
+  "asia": { subregions: ASIA_SUBREGIONS },
   "latin america": { subregions: ["South America", "Central America", "Caribbean"] },
   "south america": { subregion: "South America" }, "central america": { subregion: "Central America" },
   "caribbean": { subregion: "Caribbean" }, "north america": { subregion: "Northern America" },
   "oceania": { region: "Oceania" }, "pacific": { region: "Oceania" },
   "the americas": { region: "Americas" }, "americas": { region: "Americas" },
   // adjective forms ("African countries", "European audiences")
-  "african": { region: "Africa" }, "european": { region: "Europe" },
-  "asian": { region: "Asia" }, "east african": { subregion: "Eastern Africa" },
+  "african": { region: "Africa" }, "european": { subregions: EUROPE_SUBREGIONS },
+  "asian": { subregions: ASIA_SUBREGIONS },
+  // European subregions need adjective forms too, or "Eastern European
+  // countries" silently widens to the whole continent
+  "eastern european": { subregion: "Eastern Europe" }, "western european": { subregion: "Western Europe" },
+  "northern european": { subregion: "Northern Europe" }, "southern european": { subregion: "Southern Europe" },
+  "central european": { subregion: "Central Europe" },
+  "east african": { subregion: "Eastern Africa" },
   "west african": { subregion: "Western Africa" }, "north african": { subregion: "Northern Africa" },
   "southern african": { subregion: "Southern Africa" }, "central african": { subregion: "Middle Africa" },
   "middle eastern": { subregion: "Western Asia" }, "south asian": { subregion: "Southern Asia" },
@@ -278,14 +318,14 @@ const REGION_MAP = {
   "horn of africa": { isos: ["ETH", "ERI", "DJI", "SOM"] },
   "the horn of africa": { isos: ["ETH", "ERI", "DJI", "SOM"] },
   "maghreb": { isos: ["MAR", "DZA", "TUN", "LBY", "MRT"] },
-  "the gulf states": { isos: ["SAU", "ARE", "QAT", "KWT", "BHR", "OMN"] },
-  "gulf states": { isos: ["SAU", "ARE", "QAT", "KWT", "BHR", "OMN"] },
-  "gcc": { isos: ["SAU", "ARE", "QAT", "KWT", "BHR", "OMN"] },
+  "the gulf states": { isos: GCC },
+  "gulf states": { isos: GCC },
+  "gcc": { isos: GCC },
   "nordics": { isos: ["DNK", "NOR", "SWE", "FIN", "ISL"] },
   "the nordics": { isos: ["DNK", "NOR", "SWE", "FIN", "ISL"] },
   "nordic": { isos: ["DNK", "NOR", "SWE", "FIN", "ISL"] },
   "nordic countries": { isos: ["DNK", "NOR", "SWE", "FIN", "ISL"] },
-  "scandinavian": { isos: ["DNK", "NOR", "SWE"] },
+  "scandinavian": { isos: SCANDINAVIA },
   "mediterranean": { isos: ["ESP", "FRA", "ITA", "GRC", "TUR", "EGY", "MAR", "DZA", "TUN", "LBY", "ISR", "LBN", "CYP", "MLT", "HRV", "ALB", "MNE", "SVN"] },
   "brics": { isos: ["BRA", "RUS", "IND", "CHN", "ZAF"] },
   "g20": { isos: ["ARG", "AUS", "BRA", "CAN", "CHN", "FRA", "DEU", "IND", "IDN", "ITA", "JPN", "KOR", "MEX", "RUS", "SAU", "ZAF", "TUR", "GBR", "USA"] },
@@ -299,6 +339,11 @@ const REGION_MAP = {
 // lowercase phrase ("african" must never render as a region heading).
 const REGION_DISPLAY = {
   "african": "Africa", "european": "Europe", "asian": "Asia", "oceanian": "Oceania",
+  "eastern european": "Eastern Europe", "western european": "Western Europe",
+  "northern european": "Northern Europe", "southern european": "Southern Europe",
+  "central european": "Central Europe",
+  "balkans": "the Balkans", "the balkans": "the Balkans", "balkan": "the Balkans",
+  "gulf": "the Gulf states", "the gulf": "the Gulf states",
   "east african": "Eastern Africa", "west african": "Western Africa",
   "north african": "Northern Africa", "southern african": "Southern Africa",
   "central african": "Middle Africa", "middle eastern": "the Middle East",
@@ -378,8 +423,12 @@ const ATTRIBUTES = {
   internet:   { label: "Internet penetration", unit: "%", get: f => f.internet,
                 words: ["internet", "internet penetration", "internet access", "connectivity", "connected", "online access"],
                 source: "World Bank (ITU data)" },
+  // Every smartphone figure in the data is DataReportal's; GSMA supplies the
+  // separate Mobile Connectivity Index below, not this number. Naming GSMA
+  // here sent readers to a source that does not publish these figures.
   smartphone: { label: "Smartphone adoption", unit: "%", get: f => f.smartphone,
-                words: ["smartphone", "smartphones", "phone ownership"], source: "GSMA / World Bank" },
+                words: ["smartphone", "smartphones", "phone ownership"],
+                source: "DataReportal 2024 estimate — GSMA's Mobile Connectivity Index is the measured companion signal" },
   radio:      { label: "Radio as weekly news source", unit: "%", get: f => f.radio,
                 words: ["radio"], source: "Afrobarometer R9 / national surveys", surveyMix: true },
   tv:         { label: "TV as weekly news source", unit: "%", get: f => f.tv,
@@ -623,10 +672,17 @@ export function detectEntities(question) {
 
   // --- platforms ---
   for (const p of PLATFORMS) {
-    if (q.includes(" " + p + " ")) {
-      const canon = p === "twitter" ? "x" : p;
-      if (!found.platforms.includes(canon)) found.platforms.push(canon);
-    }
+    if (!q.includes(" " + p + " ")) continue;
+    // "line" is an ordinary English word long before it is a messaging app —
+    // "front line workers", "the poverty line", "help line" — and normalize()
+    // turns "front-line" into "front line". Treated as a platform it answered
+    // UN health-comms questions with LINE's footprint in Japan. It therefore
+    // counts only when the question names it as an app, or writes it in the
+    // all-caps styling the platform itself uses; a bare lowercase "line" is
+    // always the English word.
+    if (p === "line" && !/\bline (app|messenger|messaging)\b/.test(q) && !/\bLINE\b/.test(question)) continue;
+    const canon = p === "twitter" ? "x" : p;
+    if (!found.platforms.includes(canon)) found.platforms.push(canon);
   }
 
   // --- audiences ---
@@ -764,6 +820,9 @@ function facts(iso) {
     smartphone: conn.smartphone_pct, mci: conn.mobile_connectivity_index,
     medianAge: dem.median_age,
     rsf: inf.press_freedom_score, fh: inf.political_freedom_status,
+    // Edition label travels with the score so prose can never name a
+    // different year than the figure it is describing.
+    rsfEdition: inf.press_freedom_edition || null,
     fotn: inf.internet_freedom_score, electoral: inf.electoral_democracy,
     under15: dem.age_0_14_pct, urban: dem.urban_pct, literacy: dem.literacy_pct,
     finAccount: conn.financial_account_pct,
@@ -850,7 +909,7 @@ function riskLines(f) {
   if (f.internet != null && f.internet < 40)
     risks.push(`Internet penetration is only ${f.internet}% in ${f.name} — digital-only campaigns will miss most of the population.`);
   if (f.rsf != null && f.rsf < 40)
-    risks.push(`${f.name}'s press-freedom score is ${Math.round(f.rsf)}/100 (RSF 2025) — a restrictive media environment; plan messenger and content review carefully.`);
+    risks.push(`${f.name}'s press-freedom score is ${Math.round(f.rsf)}/100 (RSF ${f.rsfEdition || ""}) — a restrictive media environment; plan messenger and content review carefully.`);
   if (f.fh === "Not Free")
     risks.push(`Freedom House rates ${f.name} **Not Free** — state influence over media is likely.`);
   if (f.trust != null && f.trust < 30)
@@ -951,7 +1010,7 @@ function composeCountryBrief(f, ev, ents) {
   }
   if (f.trust != null) lines.push(`- Trust in news: ${f.trust}%`);
   lines.push(`- Connectivity: ${fmt(f.internet)} internet penetration${f.smartphone != null ? `, ${fmt(f.smartphone)} smartphone adoption` : ""}${f.mci != null ? `, GSMA mobile connectivity index ${f.mci}/100` : ""}`);
-  if (f.rsf != null) lines.push(`- Press freedom: ${Math.round(f.rsf)}/100 (RSF 2025); political status: ${f.fh || "n/a"}${f.electoral != null ? `; electoral democracy: ${f.electoral ? "yes" : "no"}` : ""}`);
+  if (f.rsf != null) lines.push(`- Press freedom: ${Math.round(f.rsf)}/100 (RSF ${f.rsfEdition || ""}); political status: ${f.fh || "n/a"}${f.electoral != null ? `; electoral democracy: ${f.electoral ? "yes" : "no"}` : ""}`);
   if (f.fotn != null) lines.push(`- Internet freedom: ${f.fotn}/100 (Freedom House FOTN)`);
   if (f.under15 != null || f.urban != null || f.medianAge != null)
     lines.push(`- Audience structure: ${f.medianAge != null ? `median age ${f.medianAge}, ` : ""}${f.under15 != null ? `${fmt(f.under15)} under 15, ` : ""}${f.urban != null ? `${fmt(f.urban)} urban` : ""}${f.literacy != null ? `, ${fmt(f.literacy)} literacy` : ""}`);
@@ -1147,9 +1206,14 @@ function composeTopicBrief(topic, ev, countriesFirst) {
     lines.push(`- Demand by language (daily lookups): ${langs.map(([l, v]) => `${l.toUpperCase()} ${Math.round(v.weekly_daily_avg_views).toLocaleString()}/day (${v.velocity > 0 ? "+" : ""}${Math.round(v.velocity * 100)}%)`).join("; ")}`);
   if (t.news_articles_7d != null)
     lines.push(`- News coverage: ${t.news_articles_7d.toLocaleString()} articles in the last 7 days (GDELT)`);
-  const cov = (t.top_covering_media_countries || []).slice(0, 6);
+  // GDELT's per-country figure is an INTENSITY, not a slice of world coverage:
+  // it is the share of that country's own monitored news output matching this
+  // topic. A small media market that covers a topic obsessively therefore
+  // outranks a large one publishing far more articles about it — so this reads
+  // "whose newsrooms give it the most airtime", never "who covers it most".
+  const cov = (t.media_intensity_by_country || []).slice(0, 6);
   if (cov.length)
-    lines.push(`- Media coverage concentrated in: ${cov.map(c => `${c.iso3} (${c.coverage_share_pct}%)`).join(", ")}`);
+    lines.push(`- Covered most intensively by media in: ${cov.map(c => `${c.iso3} (${c.pct_of_country_news_volume}% of that country's news output)`).join(", ")}`);
   const hot = [];
   if (TRENDS.countries) {
     for (const [iso, tr] of Object.entries(TRENDS.countries)) {
@@ -1342,9 +1406,27 @@ function prettyLang(l) {
   return (LANG_BASE_NAMES[l.code] || LANG_BASE_NAMES[base] || l.code) + scriptNote;
 }
 
-/** Languages sorted by population share (the "produce in" order). */
+/** Languages sorted by population share. */
 function langsByShare(f) {
   return [...f.languagesDetail].sort((a, b) => (b.pct || 0) - (a.pct || 0));
+}
+
+/**
+ * The language to produce in FIRST.
+ *
+ * Not simply the biggest share: CLDR shares measure speaker capability and
+ * overlap, so a widely-taught second language can out-rank the country's own
+ * official one. Ethiopia is the clearest case — English scores 43% capability
+ * against Amharic's 33%, but Amharic is what Ethiopian media publish in.
+ * Prefer an official language with real reach; fall back to the largest share
+ * only when no official language clears the bar. Every part of the brief must
+ * use this same choice, or the summary and the detail contradict each other.
+ * Returns null when the country has no language data.
+ */
+function primaryProductionLanguage(f) {
+  const by = langsByShare(f);
+  if (!by.length) return null;
+  return by.find(l => l.official && l.pct >= 25) || by[0];
 }
 
 // ---------------------------------------------------------------------------
@@ -1403,7 +1485,10 @@ const OBJECTIVES = {
   },
   trust: {
     label: "countering misinformation / rebuilding credibility",
-    re: /\b(misinformation|disinformation|fake news|rumou?rs?|counter\w*|myth\w*|debunk\w*|credibility|fact ?check\w*)\b/,
+    // "counter" and its verb forms only — "counter\w*" also matched
+    // "counterparts", which made "who are our counterparts in Kenya?" open a
+    // brief announcing a counter-misinformation decision the user never raised.
+    re: /\b(misinformation|disinformation|fake news|rumou?rs?|counter(ing|ed|s)?|myth\w*|debunk\w*|credibility|fact ?check\w*)\b/,
     priority: ["radio", "TV", "online news", "social media"],
     rationale: "Correction only works through channels the audience already trusts; amplifying a correction on a low-trust channel can entrench the belief it targets.",
   },
@@ -1514,18 +1599,42 @@ export function findMarkets(opts = {}) {
   };
 }
 
+// The languages the screen can weigh. Adding a line here is all it takes to
+// teach it a new one — the question-matching below reads this table directly.
 const LANG_NAMES_FINDER = { en: "English", fr: "French", es: "Spanish", ar: "Arabic", pt: "Portuguese", ru: "Russian", zh: "Chinese", sw: "Swahili", hi: "Hindi" };
+// The "-phone" words that name a language without saying its name.
+const LANG_CUES_FINDER = { en: "anglophone", fr: "francophone", es: "hispanophone", pt: "lusophone" };
+// Audiences the Atlas can screen on are youth and rural (population structure
+// gives a real per-country figure). These three have no per-country data at
+// all, so a screen that mentions them must say it could not weigh them.
+const UNSCREENABLE_AUDIENCES = { women: "gender", older: "audience age", displaced: "displacement status" };
+
+/** "3 with no radio survey data; 12 with no media survey data" — reasons, counted. */
+function exclusionReasons(excluded) {
+  const byReason = {};
+  excluded.forEach(x => { byReason[x.reason] = (byReason[x.reason] || 0) + 1; });
+  return Object.entries(byReason).map(([r, n]) => `${n} with ${r}`).join("; ");
+}
+/** Names the excluded countries when the list is short enough to stay readable. */
+const exclusionNames = (excluded) => excluded.length <= 10 ? ` (${excluded.map(x => x.name).join(", ")})` : "";
 
 function composeMarketFinder(ents, ev, qNorm) {
   const objective = inferObjective(qNorm, ents);
   const audience = (ents.audiences || []).includes("youth") ? "youth"
     : (ents.audiences || []).includes("rural") ? "rural" : null;
   // language ask ("english-speaking", "francophone")
-  const language = /\benglish\b|anglophone/.test(qNorm) ? "en"
-    : /\bfrench\b|francophone/.test(qNorm) ? "fr"
-    : /\bspanish\b|hispanophone/.test(qNorm) ? "es"
-    : /\barabic\b/.test(qNorm) ? "ar"
-    : /\bportuguese\b|lusophone/.test(qNorm) ? "pt" : null;
+  let language = null;
+  for (const [code, name] of Object.entries(LANG_NAMES_FINDER)) {
+    const cue = LANG_CUES_FINDER[code];
+    if (qNorm.includes(" " + name.toLowerCase() + " ") || (cue && qNorm.includes(" " + cue + " "))) { language = code; break; }
+  }
+  // Criteria the question asked for that this screen genuinely cannot weigh.
+  // Naming them is the point: a ranking that quietly dropped "women" or
+  // "older audiences" still looks like an answer to the whole question.
+  const unscreenable = [];
+  for (const a of (ents.audiences || [])) if (UNSCREENABLE_AUDIENCES[a]) unscreenable.push(UNSCREENABLE_AUDIENCES[a]);
+  const langAsk = language ? null : qNorm.match(/\b([a-z]{4,}) (?:language|speaking)\b/);
+  if (langAsk && !FUZZY_STOPWORDS.has(langAsk[1])) unscreenable.push(`${titleCase(langAsk[1])}-language reach`);
   const topic = ents.topics[0] || null;
   // explicit channel ask ("a RADIO health campaign") becomes a hard filter —
   // countries without that channel's survey data are excluded, not guessed
@@ -1544,7 +1653,14 @@ function composeMarketFinder(ents, ev, qNorm) {
     topicQid: topic ? topic.qid : null, isos, limit: 10,
   });
   if (!res.ranked.length) {
-    return `The Atlas cannot rank markets in ${scopeName} for this ask — none of the countries in scope have the required media-survey data. ${res.excluded.length} countries were checked; all lack a news-channel survey. This is a data gap, not a judgement on those markets.`;
+    // Say WHICH data is missing. "All lack a news-channel survey" was false
+    // whenever a channel filter did the excluding: Sweden, Denmark and Norway
+    // carry full Reuters surveys and were dropped only for missing a radio
+    // figure, so a radio screen told an officer those markets had no survey
+    // data at all.
+    const why = res.excluded.length
+      ? ` ${res.excluded.length} countries were checked${exclusionNames(res.excluded)}: ${exclusionReasons(res.excluded)}.` : "";
+    return `The Atlas cannot rank markets in ${scopeName} for this ask — none of the countries in scope have the required media-survey data.${why} This is a data gap, not a judgement on those markets.`;
   }
 
   const L = [];
@@ -1563,7 +1679,15 @@ function composeMarketFinder(ents, ev, qNorm) {
     const why = [];
     why.push(`${r.lead.name} reaches ${fmt(r.lead.effective)} effectively [measured${r.constructNote ? ` — ${r.constructNote}` : ""}]`);
     if (language && r.langPct != null) why.push(`${LANG_NAMES_FINDER[language]} reaches ~${Math.round(r.langPct)}% (CLDR speaker capability) [measured]`);
-    if (audience === "youth" && r.under15 != null) why.push(`${fmt(r.under15)} of the population is under 15 — youth-heavy structure [measured, structural inference for youth fit]`);
+    if (audience === "youth" && r.under15 != null) {
+      // The label has to follow the number. Calling Denmark (15.6% under 15,
+      // among the oldest populations on earth) "youth-heavy" contradicted the
+      // audience score the same run had just given it.
+      const shape = r.under15 >= 30 ? "a youth-heavy population structure"
+        : r.under15 >= 20 ? "a moderate youth share"
+        : "an older population, so reach rather than youth fit is what put this market on the list";
+      why.push(`${fmt(r.under15)} of the population is under 15 — ${shape} [measured, structural inference for youth fit]`);
+    }
     if (audience === "rural" && r.urban != null) why.push(`${fmt(100 - r.urban)} rural population [measured]`);
     if (r.risingHit) why.push(`attention to ${topic.label} is currently rising in this market (+${Math.round(r.risingHit.velocity * 100)}% vs baseline) [measured, ~120-day window]`);
     if (r.flags.length) why.push(`caution: ${r.flags.join("; ")} [measured]`);
@@ -1572,10 +1696,11 @@ function composeMarketFinder(ents, ev, qNorm) {
   });
   L.push("");
   if (res.excluded.length) {
-    const byReason = {};
-    res.excluded.forEach(x => { byReason[x.reason] = (byReason[x.reason] || 0) + 1; });
-    const exNames = res.excluded.length <= 10 ? ` (${res.excluded.map(x => x.name).join(", ")})` : "";
-    L.push(`**Not rankable (${res.excluded.length} countries)${exNames}:** ${Object.entries(byReason).map(([r, n]) => `${n} with ${r}`).join("; ")}. They are excluded for missing data — not ranked low; the map's grey tier shows them.`);
+    L.push(`**Not rankable (${res.excluded.length} countries)${exclusionNames(res.excluded)}:** ${exclusionReasons(res.excluded)}. They are excluded for missing data — not ranked low; the map's grey tier shows them.`);
+    L.push("");
+  }
+  if (unscreenable.length) {
+    L.push(`**This screen could not weigh ${unscreenable.join(" or ")}.** The Atlas holds no per-country data on ${unscreenable.length > 1 ? "those" : "that"} — the ranking above does NOT reflect ${unscreenable.length > 1 ? "them" : "it"}, so treat it as a shortlist on the criteria named in the weights, not an answer to the whole ask.`);
     L.push("");
   }
   L.push(`**Confidence: Medium.** ${res.methodNote}`);
@@ -1762,9 +1887,9 @@ function buildOpportunities(f, channels, objective, ev) {
   if (f.languagesDetail.length) {
     const by = langsByShare(f);
     // CLDR shares are speaker-CAPABILITY and overlap (a person counts in
-    // several) — they never sum to 100 and a high second-language share does
-    // not make it a production language. Prefer official/majority status.
-    const primary = by.find(l => l.official && l.pct >= 25) || by[0];
+    // several), so they never sum to 100 — see primaryProductionLanguage()
+    // for why the biggest share is not automatically the one to produce in.
+    const primary = primaryProductionLanguage(f);
     const secondL = by.find(l => l !== primary && l.pct >= 25 && (l.official || l.pct >= 40));
     const why = [`${prettyLang(primary)} is spoken by ${Math.round(primary.pct)}% of the population${primary.official ? " and is official" : ""} [measured, Unicode CLDR]`];
     if (secondL) why.push(`${prettyLang(secondL)} adds reach at ${Math.round(secondL.pct)}%${secondL.official ? " (also official)" : ""} — CLDR shares overlap, so these are speaker-capability figures, not additive audience slices [measured, inferred implication]`);
@@ -1809,7 +1934,8 @@ function composeConsultingBrief(f, ev, ents, qNorm) {
   L.push(`### Executive summary`);
   const es = [];
   if (lead) es.push(`**Lead on ${lead.name}** (${fmt(lead.measured)} weekly reach${lead.capped ? `; ~${fmt(lead.effective)} nationally once internet access is accounted for` : ""}).`);
-  if (f.languagesDetail.length) es.push(`**Produce in ${prettyLang(langsByShare(f)[0])} first** — ${Math.round(langsByShare(f)[0].pct)}% of the population.`);
+  const esLang = primaryProductionLanguage(f);
+  if (esLang) es.push(`**Produce in ${prettyLang(esLang)} first** — ${Math.round(esLang.pct)}% of the population${esLang.official ? ", and official" : ""}.`);
   const headlineRisk = f.fh === "Not Free" ? `**Treat the media environment as constrained** — Freedom House rates ${f.name} Not Free; vet every partner outlet for independence.`
     : (f.internet != null && f.internet < 40) ? `**Do not run this digital-only** — ${fmt(f.internet)} internet penetration means a digital-only plan structurally misses most of the country.`
     : (f.trust != null && f.trust < 40) ? `**Credibility is the binding constraint**, not reach — trust in news is ${f.trust}%.`
@@ -1823,8 +1949,10 @@ function composeConsultingBrief(f, ev, ents, qNorm) {
   // ---- KEY INSIGHTS ----
   L.push(`### Key insights`);
   const ins = [];
+  // only a digital channel is ever capped, so the sentence always names the
+  // lead channel itself — spelling out which one keeps it a whole sentence
   if (lead && lead.capped)
-    ins.push(`The obvious digital-first read is wrong here. ${lead.name === "online news" || lead.name === "social media" ? "" : "Online news "}figures describe the ${fmt(f.internet)} of the population that is online — not the country. [measured]`);
+    ins.push(`The obvious digital-first read is wrong here. ${lead.name.charAt(0).toUpperCase() + lead.name.slice(1)} figures describe the ${fmt(f.internet)} of the population that is online — not the country. [measured]`);
   const radio = channels.find(c => c.name === "radio"), online = channels.find(c => c.name === "online news");
   if (radio && online && radio.effective > online.effective)
     ins.push(`Radio out-reaches online news in national terms (${fmt(radio.measured)} vs an effective ${fmt(online.effective)}) — a broadcast-led plan is the higher-reach choice, not the conservative one. [measured]`);
@@ -1988,7 +2116,7 @@ function composeRegionConsultingBrief(fs, ev, ents, qNorm, regionName) {
   L.push(`**2. Lead broadcast where connectivity is low, digital where it is high** — confidence: ${conf}`);
   L.push(`   - Why: effective national reach, not survey headline reach, is what determines who actually sees the content. [inferred]`);
   L.push(`**3. Produce per-country language versions** — confidence: High`);
-  L.push(`   - Why: ${fs.filter(f => f.languagesDetail.length).slice(0, 3).map(f => `${f.name} (${prettyLang(langsByShare(f)[0])})`).join(", ")} — the region has no shared majority language. [measured, Unicode CLDR]`);
+  L.push(`   - Why: ${fs.filter(f => f.languagesDetail.length).slice(0, 3).map(f => `${f.name} (${prettyLang(primaryProductionLanguage(f))})`).join(", ")} — the region has no shared majority language. [measured, Unicode CLDR]`);
   L.push("");
 
   L.push(`### Risks`);
@@ -2053,7 +2181,7 @@ function composeRegionComparison(regionKeys, ev, ents) {
     return vals.length ? { mean: vals.reduce((a, b) => a + b, 0) / vals.length, n: vals.length } : null;
   };
   ev.add(`Group comparison: ${groups.map(g => g.name).join(" vs ")}`,
-    `Unweighted country averages over each group's members with data. Underlying sources per indicator: Reuters DNR 2026 / regional barometers (news use, trust), World Bank (connectivity), RSF 2025 (press freedom), Freedom House (internet freedom).`,
+    `Unweighted country averages over each group's members with data. Underlying sources per indicator: Reuters DNR 2026 / regional barometers (news use, trust), World Bank (connectivity), RSF (press freedom), Freedom House (internet freedom).`,
     []);
   const lines = [];
   lines.push(`**${groups.map(g => g.name).join(" vs ")}** — group averages (countries with data in brackets):\n`);
@@ -2269,7 +2397,17 @@ export function answerQuestion(question) {
   // strategy language anchored to a place → the who/what/where/when/how memo
   // A "decision-shaped" question: the user is deciding what to DO, not asking
   // what a number is. These all route to the consulting brief.
-  const decisionVerb = /\b(strateg\w+|campaign|distribut\w+|roll ?out|launch\w*|opportunit\w+|memo|brief\b|content plan|media plan|outreach|disseminat\w+|amplif\w+|promote|publish|advertis\w+|market\w*|communicat\w+|messag\w+|engag\w+|target\w*|reach\w*|counter\w*|combat\w*|raise awareness)\b/.test(qNorm);
+  const decisionVerb = /\b(strateg\w+|campaign|distribut\w+|roll ?out|launch\w*|opportunit\w+|memo|brief\b|content plan|media plan|outreach|disseminat\w+|amplif\w+|promote|publish|advertis\w+|marketing|communicat\w+|messag\w+|engag\w+|counter(ing|ed|s)?|combat\w*|raise awareness)\b/.test(qNorm);
+  // These three are decision-shaped only sometimes. "Reach", "target" and
+  // "market" are verbs in "how do we reach rural women in Mali", but ordinary
+  // nouns in "what is the radio reach in Kenya?" — and on their own they were
+  // turning the platform's most common vocabulary into five-page memos.
+  const decisionNoun = /\b(reach\w*|target\w*|market\w*)\b/.test(qNorm);
+  // A question asking what a number IS, asking for a ranking, or explicitly
+  // asking for a comparison is not a decision question, however many domain
+  // nouns it happens to carry.
+  const factualAsk = ents.intents.includes("lookup") || ents.intents.includes("rank")
+    || (/\b(compare|compared|versus|vs|difference between)\b/.test(qNorm) && ents.countries.length >= 2);
   const decisionFrame = /\b(how (do|should|would|can) (we|i|they|dgc|the un)|where should|what.{0,15}best (way|platform|channel|approach|mix)|what should (we|i|dgc)|help (us|me) (reach|plan|decide)|recommend\w*|advise|advice on|plan for)\b/.test(qNorm);
   // Market-discovery ("WHICH countries/markets for this campaign?") outranks
   // both the strategy briefs (which answer HOW for a place already chosen)
@@ -2282,7 +2420,7 @@ export function answerQuestion(question) {
     ents.discovery = true;
     ents.intents = ents.intents.filter(i => i !== "rank" && i !== "lookup");
   }
-  const strategyIntent = !discovery && (decisionVerb || decisionFrame)
+  const strategyIntent = !discovery && (decisionVerb || decisionFrame || (decisionNoun && !factualAsk))
     && (ents.countries.length > 0 || ents.regionCountries.length > 0);
   if (strategyIntent) {
     ents.intents = ents.intents.filter(i => i !== "lookup");

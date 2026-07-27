@@ -17,8 +17,12 @@ METHOD NOTES (also embedded in the output for the AI analyst to cite):
 - Wikipedia pageviews are per LANGUAGE EDITION. Country attribution uses
   the documented heuristic weights below (speaker-population based).
   This is an approximation and is always labeled as such.
-- GDELT source-country shares attribute coverage to where the OUTLET is
-  based — a supply signal, kept separate from demand.
+- GDELT's per-country figure is a coverage INTENSITY: the share of that
+  country's OWN monitored news output that matches the topic, attributed to
+  where the OUTLET is based. It is not a slice of world coverage — a small
+  media market that covers a topic obsessively outranks a large one that
+  publishes far more articles about it. Supply signal, kept separate from
+  demand.
 - A topic is "rising" when velocity > +0.30 with adequate volume;
   "falling" below −0.25. Thresholds are deliberately conservative.
 """
@@ -33,6 +37,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REGISTRY_PATH = REPO_ROOT / "data" / "topics.json"
+COUNTRIES_PATH = REPO_ROOT / "data" / "countries.json"
 WIKI_PATH = REPO_ROOT / "data" / "trends" / "wiki_pageviews.json"
 GDELT_PATH = REPO_ROOT / "data" / "trends" / "gdelt_coverage.json"
 OUTPUT_PATH = REPO_ROOT / "data" / "trends" / "topic_intelligence.json"
@@ -46,6 +51,20 @@ INCLUDE_FLOOR = 25
 RISING_FLOOR = 150
 RISING_THRESHOLD = 0.30
 FALLING_THRESHOLD = -0.25
+
+# A country profile is expressed as shares of that country's own attributed
+# attention. With one or two qualifying topics that arithmetic says nothing:
+# a single small-language series scraping INCLUDE_FLOOR becomes "this country
+# cares about one thing, 100%". Below this many topics we report no profile
+# rather than a share of one.
+MIN_PROFILE_TOPICS = 3
+
+# A point on the composite "global attention" line is only a global figure
+# when the language editions that reported that day carry most of the topic's
+# usual traffic. Below this share the day is left empty: editions differ in
+# how far back their stored history reaches, and plotting a partial sum draws
+# a hole in the data as a collapse in attention.
+SERIES_COVERAGE_FLOOR = 0.5
 
 # ---------------------------------------------------------------------------
 # HEURISTIC language-edition → country weights (speaker-population based).
@@ -90,30 +109,57 @@ LANG_COUNTRY_WEIGHTS: dict[str, dict[str, float]] = {
     "ko": {"KOR": 1.0},
 }
 
-# GDELT names countries in plain English; map the frequent ones to ISO3.
-GDELT_NAME_TO_ISO3 = {
-    "United States": "USA", "United Kingdom": "GBR", "India": "IND",
-    "Nigeria": "NGA", "Canada": "CAN", "Australia": "AUS", "Germany": "DEU",
-    "France": "FRA", "Spain": "ESP", "Italy": "ITA", "Brazil": "BRA",
-    "Mexico": "MEX", "Argentina": "ARG", "China": "CHN", "Japan": "JPN",
-    "South Korea": "KOR", "Indonesia": "IDN", "Malaysia": "MYS",
-    "Philippines": "PHL", "Thailand": "THA", "Vietnam": "VNM",
-    "Pakistan": "PAK", "Bangladesh": "BGD", "Russia": "RUS",
-    "Ukraine": "UKR", "Turkey": "TUR", "Egypt": "EGY", "Saudi Arabia": "SAU",
-    "United Arab Emirates": "ARE", "Israel": "ISR", "Iran": "IRN",
-    "South Africa": "ZAF", "Kenya": "KEN", "Ghana": "GHA", "Ethiopia": "ETH",
-    "Tanzania": "TZA", "Uganda": "UGA", "Zimbabwe": "ZWE", "Zambia": "ZMB",
-    "New Zealand": "NZL", "Ireland": "IRL", "Netherlands": "NLD",
-    "Belgium": "BEL", "Sweden": "SWE", "Norway": "NOR", "Denmark": "DNK",
-    "Finland": "FIN", "Poland": "POL", "Austria": "AUT",
-    "Switzerland": "CHE", "Portugal": "PRT", "Greece": "GRC",
-    "Czech Republic": "CZE", "Czechia": "CZE", "Romania": "ROU",
-    "Hungary": "HUN", "Colombia": "COL", "Peru": "PER", "Chile": "CHL",
-    "Venezuela": "VEN", "Ecuador": "ECU", "Singapore": "SGP",
-    "Sri Lanka": "LKA", "Nepal": "NPL", "Morocco": "MAR", "Algeria": "DZA",
-    "Tunisia": "TUN", "Jordan": "JOR", "Lebanon": "LBN", "Iraq": "IRQ",
-    "Qatar": "QAT", "Kuwait": "KWT",
+# GDELT names countries in plain English, and ~150 of those names are spelled
+# exactly as data/countries.json spells them — so the lookup is built from the
+# atlas's own country list at run time and only GDELT's own spellings are
+# listed here. Keeping the whole list by hand does not work: GDELT returns
+# ~168 country names, a partial table drops the rest with no visible symptom,
+# and the countries that fall off are disproportionately small and
+# global-south markets — exactly the ones this platform exists to show.
+GDELT_NAME_ALIASES = {
+    "Bosnia-Herzegovina": "BIH",
+    "Brunei": "BRN",
+    "Cape Verde": "CPV",
+    "Congo": "COG",             # GDELT lists the DRC separately, by full name
+    "Czech Republic": "CZE",
+    "East Timor": "TLS",
+    "Gambia": "GMB",
+    "Ivory Coast": "CIV",
+    "Kyrgyzstan": "KGZ",
+    "Laos": "LAO",
+    "Macedonia": "MKD",
+    "North Korea": "PRK",
+    "Somalia": "SOM",
+    "Syria": "SYR",
+    "Taiwan": "TWN",
+    "Turkey": "TUR",
+    "United States": "USA",
+    # Territories the atlas does not profile as countries. They still have
+    # their own newsrooms, so they belong in a list of whose media cover a
+    # topic rather than being silently discarded.
+    "Guam": "GUM",
+    "Hong Kong": "HKG",
+    "Mayotte": "MYT",
 }
+
+# Names left unmapped on purpose, so the "unmapped source country" warning
+# below stays a real alarm: Kosovo has no ISO 3166-1 code for the rest of the
+# atlas to resolve, and "Volume Intensity" is GDELT's own label for coverage
+# it could not attribute to any country.
+GDELT_NAMES_UNMAPPABLE = {"Kosovo", "Volume Intensity"}
+
+
+def gdelt_iso3_lookup() -> dict[str, str]:
+    """GDELT country name → ISO3, resolved against the atlas's country list."""
+    lookup = dict(GDELT_NAME_ALIASES)
+    try:
+        countries = json.loads(COUNTRIES_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return lookup
+    for iso3, rec in countries.items():
+        if isinstance(rec, dict) and rec.get("name"):
+            lookup.setdefault(rec["name"], iso3)
+    return lookup
 
 
 def _mean(vals: list) -> float | None:
@@ -177,6 +223,43 @@ def series_stats(series: dict, as_of: date) -> dict | None:
     }
 
 
+def news_articles_7d(entry: dict, run_day: date) -> tuple[int | None, dict | None]:
+    """
+    Articles published in the 7 COMPLETE days before run_day — or nothing.
+
+    Two ways this count can lie about its own window, both refused here:
+
+    - GDELT rate-limits hard, and when a topic's fetch fails
+      fetch_trends_gdelt.py keeps the previous snapshot and marks it
+      volume_stale. Those timelines run weeks behind while the file header
+      says it was updated today, so counting them publishes a fortnight-old
+      week as "the last 7 days".
+    - The newest point is the morning the fetch ran — a few hours of news,
+      not a day. Counting it shortens every week by about a seventh, and
+      makes topics fetched on different days incomparable.
+
+    Anything short of seven complete days returns None. topics.html and the
+    analyst both hide a null figure, which is the honest outcome: fewer
+    topics carry a coverage count, and the ones that do mean what they say.
+    """
+    if entry.get("volume_stale"):
+        return None, None
+    end = run_day - timedelta(days=1)
+    start = end - timedelta(days=6)
+    by_day: dict[date, int] = {}
+    for p in entry.get("volume_daily") or []:
+        try:
+            d = date.fromisoformat(str(p.get("date", "")))
+        except ValueError:
+            continue
+        if start <= d <= end:
+            by_day[d] = p.get("articles", 0)
+    if len(by_day) < 7:
+        return None, None
+    return (sum(by_day.values()),
+            {"start": start.isoformat(), "end": end.isoformat()})
+
+
 def main() -> None:
     registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
     topics = {t["qid"]: t for t in registry["topics"]}
@@ -210,6 +293,14 @@ def main() -> None:
     topic_out: dict[str, dict] = {}
     country_scores: dict[str, dict[str, float]] = {}   # iso3 -> {qid: score}
     country_rising: dict[str, list] = {}               # iso3 -> rising topics
+    gdelt_iso3 = gdelt_iso3_lookup()
+    unmapped_media: dict[str, int] = {}                # GDELT name -> topics seen in
+    run_day = date.today()
+
+    # How long a history the demand file keeps; the composite attention line
+    # below covers exactly this window so the Topic Explorer's "last N days"
+    # heading stays true if the window is ever changed.
+    window_days = int(wiki.get("window_days") or 120)
 
     # The measurement anchor: the day the demand file says its window ends.
     # Every velocity below is computed against THIS date, so a series that
@@ -259,30 +350,47 @@ def main() -> None:
 
         # GDELT supply context
         g = gdelt.get(qid, {})
-        vol = g.get("volume_daily", [])
-        news_7d = sum(p["articles"] for p in vol[-7:]) if vol else None
+        news_7d, news_window = news_articles_7d(g, run_day)
         src = g.get("source_countries", {})
         # tolerate both clean names and legacy "<Country> Volume Intensity"
         # series names from GDELT snapshots fetched before the suffix fix
         src = {re.sub(r"\s+Volume Intensity$", "", k).strip(): v for k, v in src.items()}
         top_media = sorted(
-            ((GDELT_NAME_TO_ISO3.get(k), v) for k, v in src.items()
-             if GDELT_NAME_TO_ISO3.get(k)),
+            ((gdelt_iso3[k], v) for k, v in src.items() if k in gdelt_iso3),
             key=lambda kv: -kv[1])[:10]
+        for k in src:
+            if k not in gdelt_iso3 and k not in GDELT_NAMES_UNMAPPABLE:
+                unmapped_media[k] = unmapped_media.get(k, 0) + 1
 
         # Compact global daily series (sum across tracked languages) so the
         # Topic Explorer can draw trend lines without the full raw dataset.
         # Summed BY CALENDAR DATE, not by array index: series can start on
         # different days, so index-summing silently added Monday's views to
         # another edition's Thursday.
+        #
+        # A day is only plotted when the editions that reported it carry at
+        # least SERIES_COVERAGE_FLOOR of the topic's usual traffic. Editions
+        # hold different amounts of history: when a large edition's stored
+        # window reaches back only three weeks, summing the earlier months
+        # without it shows four months of attention at a fraction of its real
+        # level, then a cliff upwards. Days below the floor are emitted as
+        # null, which the sparkline draws as a break in the line, not a fall.
+        typical = {l: (_mean(list(_date_map(s).values())) or 0.0)
+                   for l, s in langs.items()}
+        total_typical = sum(typical.values())
         by_date: dict[date, int] = {}
-        for s in langs.values():
+        reported_typical: dict[date, float] = {}
+        for l, s in langs.items():
             for d, v in _date_map(s).items():
                 by_date[d] = by_date.get(d, 0) + v
-        series_start = min(by_date) if by_date else as_of
-        n_days = (max(by_date) - series_start).days + 1 if by_date else 0
-        global_series = [by_date.get(series_start + timedelta(days=i), 0)
-                         for i in range(n_days)]
+                reported_typical[d] = reported_typical.get(d, 0.0) + typical[l]
+        series_start = as_of - timedelta(days=window_days - 1)
+        window = [series_start + timedelta(days=i) for i in range(window_days)]
+        floor = SERIES_COVERAGE_FLOOR * total_typical
+        global_series = [
+            by_date[d] if d in by_date and reported_typical[d] >= floor else None
+            for d in window
+        ]
 
         topic_out[qid] = {
             "label_en": meta["label_en"],
@@ -296,8 +404,17 @@ def main() -> None:
                                     key=lambda kv: -kv[1]["mean_7d"])[:8]
             },
             "news_articles_7d": news_7d,
-            "top_covering_media_countries": [
-                {"iso3": c, "coverage_share_pct": v} for c, v in top_media],
+            # the exact days that count covers, so nothing downstream has to
+            # assume "7 days" ends today
+            "news_articles_7d_window": news_window,
+            # NOT a share of the world's coverage of this topic: each value is
+            # the percentage of THAT country's own monitored news output that
+            # matches the topic (GDELT calls it Volume Intensity). The field
+            # name spells this out because read as a global share it puts
+            # small, intensely-covering markets where the biggest news
+            # producers should be — Ghana above France on a 5G question.
+            "media_intensity_by_country": [
+                {"iso3": c, "pct_of_country_news_volume": v} for c, v in top_media],
             "series_start": series_start.isoformat(),
             "global_series": global_series,
             # the newest day of real demand data behind this topic's figures
@@ -321,8 +438,14 @@ def main() -> None:
     # Used for "distinctive interests": share ÷ global share, TF-IDF-style —
     # a perennially popular topic (share high EVERYWHERE) scores ~1 and drops
     # out, while a topic a country cares about unusually much scores >>1.
+    # Countries with fewer than MIN_PROFILE_TOPICS qualifying topics are held
+    # out of the baseline as well as out of the output: a profile that is one
+    # topic at 100% would drag that topic's global average up and make every
+    # other country look less interested in it than it is.
     share_by_country: dict[str, dict[str, float]] = {}
     for iso3, scores in country_scores.items():
+        if len(scores) < MIN_PROFILE_TOPICS:
+            continue
         total = sum(scores.values()) or 1.0
         share_by_country[iso3] = {q: s / total for q, s in scores.items()}
     tmp: dict[str, list[float]] = {}
@@ -333,13 +456,8 @@ def main() -> None:
 
     # per-country: top interest topics + distinctive interests + rising list
     country_out: dict[str, dict] = {}
+    n_thin_profiles = 0
     for iso3, scores in country_scores.items():
-        shares = share_by_country[iso3]
-        top = sorted(scores.items(), key=lambda kv: -kv[1])[:15]
-        distinctive = sorted(
-            ((q, sh, sh / global_share[q]) for q, sh in shares.items()
-             if sh >= 0.01 and global_share.get(q, 0) > 0),
-            key=lambda x: -x[2])[:10]
         rising = sorted(
             country_rising.get(iso3, []),
             key=lambda r: -(r["velocity"] * r["weight"]))[:10]
@@ -349,6 +467,29 @@ def main() -> None:
             if r["qid"] not in seen:
                 seen.add(r["qid"])
                 rising_dedup.append(r)
+
+        if iso3 not in share_by_country:
+            # Too few measurable topics to divide attention between. Say so
+            # rather than reporting the one series that happened to clear the
+            # floor as the whole of what this audience cares about.
+            n_thin_profiles += 1
+            country_out[iso3] = {
+                "top_topics": [],
+                "distinctive_topics": [],
+                "rising_topics": rising_dedup,
+                "no_profile_reason": (
+                    f"only {len(scores)} topic(s) cleared the measurement floor for "
+                    "this country — too few to express attention as shares"
+                ),
+            }
+            continue
+
+        shares = share_by_country[iso3]
+        top = sorted(scores.items(), key=lambda kv: -kv[1])[:15]
+        distinctive = sorted(
+            ((q, sh, sh / global_share[q]) for q, sh in shares.items()
+             if sh >= 0.01 and global_share.get(q, 0) > 0),
+            key=lambda x: -x[2])[:10]
         country_out[iso3] = {
             "top_topics": [
                 {"qid": q, "label_en": topics[q]["label_en"],
@@ -376,17 +517,26 @@ def main() -> None:
                 "series_stale_excluded": n_series_stale,
                 "topics_scored": len(topic_out),
                 "topics_stale_excluded": len(stale_topics),
+                "topics_with_news_volume": sum(
+                    1 for t in topic_out.values() if t["news_articles_7d"] is not None),
+                "countries_without_profile": n_thin_profiles,
                 "note": (
                     "Velocity windows are anchored to measured_as_of by calendar date. "
                     "Series with no data in that 7-day window are excluded rather than "
                     "contributing older figures; a large series_stale_excluded count means "
-                    "the daily fetch has not been completing (see docs/AUTOMATION.md)."
+                    "the daily fetch has not been completing (see docs/AUTOMATION.md). "
+                    "News volume is reported only for topics whose GDELT timeline covers "
+                    "the seven complete days before the run, so topics_with_news_volume is "
+                    "normally well below topics_scored."
                 ),
             },
             "method_notes": {
                 "velocity": "(mean last 7d − mean prior 30d) / prior mean, per language series, volume-weighted globally; windows are calendar-dated against measured_as_of",
                 "country_attribution": "HEURISTIC: language-edition demand mapped to countries by speaker-population weights; approximation, not measurement",
                 "demand_vs_supply": "Wikipedia pageviews = demand (what people look up); GDELT = supply (what media publish); never merged",
+                "media_intensity_by_country": "pct_of_country_news_volume is GDELT 'Volume Intensity': the percentage of THAT COUNTRY'S OWN monitored news output matching the topic — NOT its share of world coverage. A small media market that covers the topic intensively outranks a large one publishing far more articles on it; read it as editorial focus, never as volume or concentration.",
+                "news_articles_7d": "GDELT article count over the 7 complete days before the run date (see news_articles_7d_window); null for topics whose timeline could not be refreshed, rather than reporting an older week as this one",
+                "global_series": "daily sum of tracked Wikipedia language editions across the demand window ending measured_as_of; a day is null when the editions reporting it carry less than half the topic's usual traffic, i.e. the data is missing rather than the attention",
                 "include_floor_daily_views": INCLUDE_FLOOR,
                 "rising_floor_daily_views": RISING_FLOOR,
                 "rising_threshold": RISING_THRESHOLD,
@@ -401,6 +551,16 @@ def main() -> None:
           f"({n_rising} rising globally), {len(country_out)} countries profiled.")
     print(f"  measured as of {as_of}: {n_series_fresh} current series, "
           f"{n_series_stale} stale series excluded, {len(stale_topics)} topics unscorable today.")
+    n_news = sum(1 for t in topic_out.values() if t["news_articles_7d"] is not None)
+    print(f"  news volume reported for {n_news}/{len(topic_out)} topics "
+          f"(the rest could not be refreshed from GDELT in time for a complete week); "
+          f"{n_thin_profiles} countries have too few measurable topics for a profile.")
+    if unmapped_media:
+        # Not fatal, but every unmapped name is a country missing from the
+        # "whose media cover this" lists. Add it to GDELT_NAME_ALIASES.
+        worst = sorted(unmapped_media.items(), key=lambda kv: -kv[1])[:10]
+        print("  WARNING: GDELT source countries with no ISO3 match (dropped from media "
+              "lists): " + ", ".join(f"{n} ({c} topics)" for n, c in worst))
     if n_series_stale > n_series_fresh:
         print("  WARNING: most series are stale — the daily Wikipedia fetch is not "
               "completing. Topic momentum is being computed from a minority of the "

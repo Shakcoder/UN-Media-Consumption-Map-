@@ -28,7 +28,7 @@ Everything you need to paste is already written out below. You do not need to in
 5. Still in Settings → **Presentation**:
    - Turn ON "Show progress bar".
    - Under "Confirmation message", paste:
-     > Thank you. Your response will appear in the community-sourced layer of the Global Media Consumption Atlas within a few weeks.
+     > Thank you. Your response will appear in the community-sourced layer of the Audience Intelligence Atlas within a few weeks.
 6. Click **Save**.
 
 ---

@@ -17,11 +17,17 @@ with a 3-month average and record the window.
 
 Output: data/platform_web_shares.json
 Cadence: monthly data; safe to re-run weekly with the main refresh.
+
+If a run comes back with far fewer countries than the published file has, it
+stops with an error instead of writing — see the check in main(). Statcounter
+failures are silent per country, so "wrote 3 countries" would otherwise look
+like a successful run and replace a good 195-country file.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from datetime import date, datetime, timezone
@@ -93,10 +99,22 @@ def fetch_country(iso2: str, frm: str, to: str) -> dict[str, float] | None:
     return None
 
 
+def previous_country_count() -> int:
+    """How many countries the published file currently has (0 if none)."""
+    if not OUTPUT_PATH.exists():
+        return 0
+    try:
+        prev = json.loads(OUTPUT_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return 0
+    return len(prev.get("countries") or {}) if isinstance(prev, dict) else 0
+
+
 def main() -> int:
     static = json.loads(STATIC_PATH.read_text(encoding="utf-8"))
     iso3s = sorted(k for k in static if not k.startswith("_"))
     frm, to = month_window(3)
+    had = previous_country_count()
 
     out: dict[str, object] = {}
     got = 0
@@ -116,6 +134,25 @@ def main() -> int:
             print(f"  · {i + 1}/{len(iso3s)} countries fetched, {got} with data")
         time.sleep(0.4)  # polite pacing
 
+    # Every failure above is per-country and silent (Statcounter changing its
+    # CSV header, an error page, throttling half-way through), so a run can
+    # "succeed" with far fewer countries than last week — and the workflow
+    # commits whatever it finds. Refuse to publish a shrunken file: exiting
+    # non-zero is what makes the workflow keep the previous one and print a
+    # warning. The 10% margin is normal week-to-week wobble in Statcounter's
+    # thin-coverage markets (observed: 195 one week, 193 the next).
+    floor = int(0.9 * had)
+    if got == 0 or got < floor:
+        print(
+            f"\nERROR: only {got} countries returned data"
+            + (f" (the published file has {had})." if had else ".")
+            + "\nRefusing to overwrite data/platform_web_shares.json — the previous file stays."
+            "\nUsually this means Statcounter changed its CSV format or rate-limited the run;"
+            "\ncheck the URL in fetch_country() in a browser before re-running.",
+            file=sys.stderr,
+        )
+        return 1
+
     result = {
         "_meta": {
             "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -134,7 +171,12 @@ def main() -> int:
         },
         "countries": out,
     }
-    OUTPUT_PATH.write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    # ATOMIC write (same policy as refresh_data.py): a direct write_text leaves
+    # the published file truncated if the process is killed mid-write, and the
+    # site reads this file live.
+    tmp = OUTPUT_PATH.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    os.replace(tmp, OUTPUT_PATH)
     print(f"\nWrote {OUTPUT_PATH} — {got} countries with web-referral share data.")
     return 0
 

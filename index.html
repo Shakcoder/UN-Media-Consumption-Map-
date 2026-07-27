@@ -49,6 +49,15 @@
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
+    /* One vertical column: header, optional error banner, stats strip, then
+       the map/sidebar row, which takes whatever height is left over. The
+       strip is taller in the country view than in the aggregate view and the
+       banner appears only on a data failure, so their heights must never be
+       assumed. The footer is fixed to the bottom of the window and is out of
+       this flow, hence the reserved padding below. */
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 37px;   /* = footer.site height */
   }
 
   header.site {
@@ -59,6 +68,7 @@
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     height: 60px;
+    flex-shrink: 0;
   }
   header.site .brand { display: flex; align-items: center; gap: 12px; }
   header.site .logo { width: 40px; height: auto; display: block; flex-shrink: 0; }
@@ -153,6 +163,7 @@
     background: #FFF1F0; color: #8B1A14;
     border-bottom: 1px solid #FECACA;
     font-size: 13px;
+    flex-shrink: 0;
   }
   .error-banner.show { display: block; }
 
@@ -163,6 +174,13 @@
     background: var(--border);
     border-bottom: 1px solid var(--border);
     position: relative;
+    flex-shrink: 0;
+  }
+  /* An open country profile shows five figures instead of three. Wide windows
+     keep them on one row; narrower ones let them wrap onto a second row,
+     which the flexible layout below absorbs. */
+  @media (min-width: 1100px) {
+    .stats-strip.country-view { grid-template-columns: repeat(5, 1fr); }
   }
   .stat { background: var(--surface); padding: 12px 18px; min-width: 0; }
   .stat .label {
@@ -183,7 +201,8 @@
   main.app {
     display: grid;
     grid-template-columns: 320px 1fr;
-    height: calc(100vh - 60px - 70px - 37px);
+    flex: 1;
+    min-height: 0;   /* lets the map and the country list scroll inside, instead of stretching the page */
   }
 
   aside.sidebar {
@@ -528,6 +547,10 @@
 
   @media (max-width: 780px) {
     html, body { overflow: auto; }
+    /* phones scroll the whole page instead of fitting everything on one
+       screen, and the footer joins the flow, so the desktop column layout
+       and its reserved footer space are switched off here */
+    body { display: block; height: auto; padding-bottom: 0; }
     main.app { grid-template-columns: 1fr; grid-template-rows: auto auto; height: auto; }
     .map-wrap { height: 58vh; }
     aside.sidebar { max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border); }
@@ -631,14 +654,21 @@
     <h2 id="detail-name"></h2>
     <div class="subline" id="detail-subline"></div>
   </div>
+  <!-- One panel (#detail-body) is re-filled for whichever tab is selected, so
+       every tab points at that same panel and the panel names the selected tab
+       back (aria-labelledby, kept in step by selectTab() in the script below).
+       Only the selected tab is in the Tab order; arrow keys move between them,
+       which is what a screen reader promises when it says "tab, 1 of 5". -->
   <div class="detail-tabs" role="tablist" aria-label="Country profile sections">
-    <button data-tab="overview" class="active" role="tab" aria-selected="true" data-i18n="tab_overview">Overview</button>
-    <button data-tab="economy" role="tab" aria-selected="false" data-i18n="tab_economy">Economy</button>
-    <button data-tab="media" role="tab" aria-selected="false" data-i18n="tab_media">Media</button>
-    <button data-tab="society" role="tab" aria-selected="false" data-i18n="tab_society">Society</button>
-    <button data-tab="sources" role="tab" aria-selected="false" data-i18n="tab_sources">Sources</button>
+    <button id="tab-overview" data-tab="overview" class="active" role="tab" aria-selected="true" aria-controls="detail-body" data-i18n="tab_overview">Overview</button>
+    <button id="tab-economy" data-tab="economy" role="tab" aria-selected="false" aria-controls="detail-body" tabindex="-1" data-i18n="tab_economy">Economy</button>
+    <button id="tab-media" data-tab="media" role="tab" aria-selected="false" aria-controls="detail-body" tabindex="-1" data-i18n="tab_media">Media</button>
+    <button id="tab-society" data-tab="society" role="tab" aria-selected="false" aria-controls="detail-body" tabindex="-1" data-i18n="tab_society">Society</button>
+    <button id="tab-sources" data-tab="sources" role="tab" aria-selected="false" aria-controls="detail-body" tabindex="-1" data-i18n="tab_sources">Sources</button>
   </div>
-  <div class="detail-body" id="detail-body"></div>
+  <!-- tabindex="0": the panel scrolls, so keyboard users must be able to reach
+       and scroll it without a mouse. -->
+  <div class="detail-body" id="detail-body" role="tabpanel" aria-labelledby="tab-overview" tabindex="0"></div>
 </aside>
 
 <div class="modal-backdrop" id="methodology-modal">
@@ -1098,7 +1128,7 @@ window.TRANSLATIONS = {
     stat_internet_access: "Internet access", stat_smartphone: "smartphone {n}%",
     stat_leading_social: "#1 social medium",
     pilot_countries_count: "Countries ({n})",
-    more_coming: "More countries coming",
+    more_coming: "Coverage",
     more_coming_desc: "All 195 countries (the 193 UN member states plus the two observer states) are profiled. Click any country on the map to open its profile.",
     tag_profile: "Profile",
     sub_people: "{r} · {n}M people",
@@ -1179,8 +1209,8 @@ window.TRANSLATIONS = {
     stat_internet_access: "Accès internet", stat_smartphone: "smartphone {n}%",
     stat_leading_social: "N°1 plateforme sociale",
     pilot_countries_count: "Pays ({n})",
-    more_coming: "Autres pays à venir",
-    more_coming_desc: "D'autres pays seront profilés à mesure que nous étendons la couverture à l'ensemble des 195 États membres de l'ONU. Cliquez sur un pays de la carte pour vérifier son statut.",
+    more_coming: "Couverture",
+    more_coming_desc: "Les 195 pays (les 193 États membres de l'ONU et les deux États observateurs) sont tous profilés. Cliquez sur un pays de la carte pour ouvrir son profil.",
     tag_profile: "Profil",
     sub_people: "{r} · {n}M habitants",
     tab_overview: "Aperçu", tab_economy: "Économie", tab_media: "Médias",
@@ -1211,7 +1241,7 @@ window.TRANSLATIONS = {
     confidence_banner_title: "Données préliminaires.",
     confidence_banner_body: "Ces chiffres sont provisoires et en cours de vérification auprès des sources primaires. Ne pas citer publiquement avant que l'onglet Sources n'affiche des horodatages vérifiés.",
     no_data_title: "Profil non disponible",
-    no_data_body: "Ce pays n'a pas encore été profilé. Nous étendons la couverture vers l'ensemble des 195 États membres de l'ONU. Chaque profil inclut des données démographiques, économiques, médiatiques et leurs sources.",
+    no_data_body: "Cette zone n'a pas de profil distinct (elle est présentée sous celui de son État souverain, ou il s'agit d'un territoire non souverain). Les 195 pays — les 193 États membres de l'ONU et les deux États observateurs — sont tous couverts.",
     no_data_subline: "Profil du pays non encore disponible",
     sources_intro: "Chaque point de données de cette page renvoie à une source primaire.",
     sources_confidence_note: "Le niveau de confiance indique si chaque valeur a été vérifiée de manière indépendante auprès de sa source primaire au cours des 12 derniers mois et si la source est de niveau 1 (institutionnel) ou niveau 2 (recherche évaluée par les pairs).",
@@ -1259,8 +1289,8 @@ window.TRANSLATIONS = {
     stat_internet_access: "Acceso a internet", stat_smartphone: "smartphone {n}%",
     stat_leading_social: "N.º 1 plataforma social",
     pilot_countries_count: "Países ({n})",
-    more_coming: "Próximamente más países",
-    more_coming_desc: "Se perfilarán más países a medida que ampliemos la cobertura hacia los 195 Estados miembros de la ONU. Haga clic en cualquier país del mapa para ver su estado.",
+    more_coming: "Cobertura",
+    more_coming_desc: "Los 195 países (los 193 Estados miembros de la ONU más los dos Estados observadores) están perfilados. Haga clic en cualquier país del mapa para abrir su perfil.",
     tag_profile: "Perfil",
     sub_people: "{r} · {n}M habitantes",
     tab_overview: "Resumen", tab_economy: "Economía", tab_media: "Medios",
@@ -1291,7 +1321,7 @@ window.TRANSLATIONS = {
     confidence_banner_title: "Datos preliminares.",
     confidence_banner_body: "Estas cifras son provisionales y están siendo verificadas con las fuentes primarias. No citar públicamente hasta que la pestaña Fuentes muestre fechas de verificación.",
     no_data_title: "Aún sin perfil",
-    no_data_body: "Este país aún no se ha perfilado. Estamos ampliando la cobertura hacia los 195 Estados miembros de la ONU. Cada perfil incluye datos demográficos, económicos, de alcance mediático y sus fuentes citadas.",
+    no_data_body: "Esta zona no tiene un perfil propio (se muestra dentro del de su Estado soberano, o es un territorio no soberano). Los 195 países — los 193 Estados miembros de la ONU más los dos Estados observadores — están cubiertos.",
     no_data_subline: "Perfil del país aún no disponible",
     sources_intro: "Cada dato de esta página remite a una fuente primaria.",
     sources_confidence_note: "El nivel de confianza refleja si cada valor ha sido verificado de forma independiente con su fuente primaria en los últimos 12 meses y si la fuente es de nivel 1 (institucional) o nivel 2 (investigación revisada por pares).",
@@ -1339,8 +1369,8 @@ window.TRANSLATIONS = {
     stat_internet_access: "الوصول للإنترنت", stat_smartphone: "هاتف ذكي {n}٪",
     stat_leading_social: "أبرز منصة اجتماعية",
     pilot_countries_count: "الدول ({n})",
-    more_coming: "دول إضافية قادمة",
-    more_coming_desc: "سيتم توصيف المزيد من الدول مع توسيعنا التغطية نحو جميع الدول الـ 195 الأعضاء في الأمم المتحدة. انقر على أي دولة على الخريطة لمعرفة حالتها.",
+    more_coming: "التغطية",
+    more_coming_desc: "جميع الدول الـ 195 (الدول الأعضاء الـ 193 في الأمم المتحدة إضافة إلى الدولتين المراقبتين) لديها ملفات. انقر على أي دولة على الخريطة لفتح ملفها.",
     tag_profile: "ملف",
     sub_people: "{r} · {n} مليون نسمة",
     tab_overview: "نظرة عامة", tab_economy: "الاقتصاد", tab_media: "الإعلام",
@@ -1371,7 +1401,7 @@ window.TRANSLATIONS = {
     confidence_banner_title: "بيانات أولية.",
     confidence_banner_body: "هذه الأرقام أولية قيد التحقق من المصادر الأساسية. يرجى عدم الاستشهاد بها علنًا حتى تظهر طوابع زمنية موثّقة في علامة المصادر.",
     no_data_title: "لا يوجد ملف بعد",
-    no_data_body: "سيتم توصيف هذه الدولة في المرحلة ٢، عند توسيع التغطية من الدول التجريبية العشر إلى جميع الدول الأعضاء الـ ١٩٥ في الأمم المتحدة. سيتضمن كل ملف بيانات ديموغرافية واقتصادية وإعلامية ومصادرها.",
+    no_data_body: "لا يوجد لهذه المنطقة ملف مستقل (تُعرض ضمن ملف الدولة ذات السيادة التابعة لها، أو أنها إقليم غير ذي سيادة). التغطية تشمل جميع الدول الـ 195 — الدول الأعضاء الـ 193 في الأمم المتحدة إضافة إلى الدولتين المراقبتين.",
     no_data_subline: "ملف الدولة غير متاح بعد",
     sources_intro: "كل نقطة بيانات على هذه الصفحة ترتبط في النهاية بأحد هذه المصادر الأولية.",
     sources_confidence_note: "يعكس مستوى الثقة ما إذا تم التحقق من كل قيمة بشكل مستقل مع مصدرها الأولي خلال الاثني عشر شهرًا الماضية، وما إذا كان المصدر من المستوى الأول (مؤسسي) أو المستوى الثاني (بحث خاضع لمراجعة الأقران).",
@@ -1419,8 +1449,8 @@ window.TRANSLATIONS = {
     stat_internet_access: "互联网接入", stat_smartphone: "智能手机 {n}%",
     stat_leading_social: "首要社交平台",
     pilot_countries_count: "国家 ({n})",
-    more_coming: "更多国家即将加入",
-    more_coming_desc: "随着我们将覆盖范围扩大至所有 195 个联合国成员国，更多国家将被收录。点击地图上的任意国家以查看其状态。",
+    more_coming: "覆盖范围",
+    more_coming_desc: "全部 195 个国家（193 个联合国会员国及 2 个观察员国）均已建立资料。点击地图上的任意国家即可打开其资料。",
     tag_profile: "资料",
     sub_people: "{r} · {n} 百万人口",
     tab_overview: "概览", tab_economy: "经济", tab_media: "媒体",
@@ -1451,7 +1481,7 @@ window.TRANSLATIONS = {
     confidence_banner_title: "初步数据。",
     confidence_banner_body: "这些数值为待核实的临时数据，正在对照主要来源进行验证。在「来源」选项卡显示已验证时间戳之前，请勿公开引用。",
     no_data_title: "尚无资料",
-    no_data_body: "此国家将在第二阶段收录，届时我们将从 10 个试点国家扩展至全部 195 个联合国会员国。每个资料将包含人口、经济、媒体触达数据及其来源。",
+    no_data_body: "此区域没有单独的资料（其数据显示在所属主权国家的资料中，或该区域并非主权国家）。全部 195 个国家——193 个联合国会员国及 2 个观察员国——均已覆盖。",
     no_data_subline: "国家资料尚未提供",
     sources_intro: "本页面上的每一项数据最终都可追溯到以下主要来源之一。",
     sources_confidence_note: "可信度反映每一数值是否在过去 12 个月内对照其主要来源独立核实，以及该来源属于第一层（机构）还是第二层（同行评议研究）。",
@@ -1464,9 +1494,9 @@ window.TRANSLATIONS = {
     modal_data_status_label: "数据状态", modal_data_status_value: "已核实",
     modal_data_status_delta: "主要来源，逐项标注", modal_sources_heading: "已整合的数据来源", modal_sources_note: "参考工具（链接，未纳入）：UNESCO World Trends、Pew Research、Edison Research、OECD、Meta 广告库、Google 广告透明中心。完整登记：",
     modal_refresh_cadence: "更新频率",
-    modal_refresh_body: "自动化指标通过公开 API（世界银行、国际电联）每日更新。人工更新指标每年在重要报告（路透研究所 DNR、无国界记者、自由之家）发布新版时更新一次。",
+    modal_refresh_body: "主题趋势每日更新（Wikimedia + GDELT）。国家指标每周通过世界银行 API 更新。年度旗舰报告（路透研究所 DNR、无国界记者、自由之家、GSMA、Afrobarometer）每年整合一次——每月运行的监测程序会在新版发布时自动提出提醒。",
     modal_confidence_flags: "可信度标记",
-    modal_confidence_body: "每个单元格均带有可信度标记（高 / 中 / 低 / 估算 / 初步）。标记为初步的单元格尚未对照主要来源独立核实，不得公开引用。",
+    modal_confidence_body: "每条国家记录均带有可信度标记：已核实（已对照其主要来源核对）或初步（尚未核实——不得公开引用）。每个数字都会在「来源」选项卡中注明其来源。",
     footer_copyright: "© 2026 · 联合国 · Audience Intelligence Atlas · 数据最近核查",
     footer_methodology: "方法论", footer_github: "GitHub", footer_report: "报告错误"
   },
@@ -1499,8 +1529,8 @@ window.TRANSLATIONS = {
     stat_internet_access: "Доступ к интернету", stat_smartphone: "смартфон {n}%",
     stat_leading_social: "№1 соцсеть",
     pilot_countries_count: "Страны ({n})",
-    more_coming: "Скоро больше стран",
-    more_coming_desc: "По мере расширения охвата до всех 195 государств — членов ООН будут профилированы дополнительные страны. Нажмите на любую страну на карте, чтобы узнать её статус.",
+    more_coming: "Охват",
+    more_coming_desc: "Профилированы все 195 стран (193 государства — члена ООН и два государства-наблюдателя). Нажмите на любую страну на карте, чтобы открыть её профиль.",
     tag_profile: "Профиль",
     sub_people: "{r} · {n} млн жителей",
     tab_overview: "Обзор", tab_economy: "Экономика", tab_media: "СМИ",
@@ -1531,7 +1561,7 @@ window.TRANSLATIONS = {
     confidence_banner_title: "Предварительные данные.",
     confidence_banner_body: "Эти цифры являются предварительными и проверяются по первичным источникам. Не цитировать публично, пока во вкладке «Источники» не появятся подтверждённые отметки времени.",
     no_data_title: "Профиль ещё не готов",
-    no_data_body: "Эта страна будет профилирована в фазе 2, когда мы расширим охват с 10 пилотных стран до всех 195 государств-членов ООН. Каждый профиль будет включать демографические, экономические и медийные данные с указанием источников.",
+    no_data_body: "У этой территории нет отдельного профиля (она показана в профиле своего суверенного государства либо не является суверенным государством). Охвачены все 195 стран — 193 государства — члена ООН и два государства-наблюдателя.",
     no_data_subline: "Профиль страны пока недоступен",
     sources_intro: "Каждая величина на странице этой страны в конечном счёте восходит к одному из этих первичных источников.",
     sources_confidence_note: "Уровень достоверности отражает, была ли каждая величина независимо проверена по первичному источнику за последние 12 месяцев, и относится ли источник к уровню 1 (институциональный) или уровню 2 (рецензируемые исследования).",
@@ -1544,9 +1574,9 @@ window.TRANSLATIONS = {
     modal_data_status_label: "Статус данных", modal_data_status_value: "Проверено",
     modal_data_status_delta: "первичные источники, цитируются по полям", modal_sources_heading: "Интегрированные источники данных", modal_sources_note: "Справочные инструменты (по ссылкам, не загружаются): UNESCO World Trends, Pew Research, Edison Research, ОЭСР, Meta Ad Library, Google Ads Transparency. Полный реестр:",
     modal_refresh_cadence: "Частота обновления",
-    modal_refresh_body: "Автоматические показатели обновляются ежедневно через публичные API (Всемирный банк, МСЭ). Ручные показатели обновляются раз в год при выходе флагманских отчётов (Reuters Institute DNR, RSF, Freedom House).",
+    modal_refresh_body: "Тематические тренды обновляются ежедневно (Wikimedia + GDELT). Страновые показатели обновляются еженедельно через API Всемирного банка. Ежегодные ключевые доклады (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobarometer) интегрируются раз в год — ежемесячная служба наблюдения автоматически создаёт напоминание при выходе нового издания.",
     modal_confidence_flags: "Флаги достоверности",
-    modal_confidence_body: "Каждая ячейка имеет флаг достоверности (высокая / средняя / низкая / оценочная / предварительная). Ячейки с флагом «предварительная» ещё не прошли независимую верификацию по первичному источнику и не должны цитироваться публично.",
+    modal_confidence_body: "Каждая страновая запись имеет флаг достоверности: «проверено» (сверено с первичными источниками) или «предварительно» (ещё не проверено — публично цитировать нельзя). Источник каждого показателя всегда указан во вкладке «Источники».",
     footer_copyright: "© 2026 · Организация Объединённых Наций · Audience Intelligence Atlas · Данные проверены",
     footer_methodology: "Методология", footer_github: "GitHub", footer_report: "Сообщить об ошибке"
   }
@@ -1652,8 +1682,15 @@ document.addEventListener("click", () => {
 });
 
 /* ---------- Map ---------- */
+/* Pinned to one exact commit of the boundaries repo, never to "@master".
+   That repo is regenerated automatically and has already renamed its
+   properties once (ISO_A3/ADMIN became ISO3166-1-Alpha-3/name, which is what
+   resolveIso below reads). A pinned commit can never change under the site;
+   to move to a newer one, replace the 40-character code below with the newer
+   commit's code from https://github.com/datasets/geo-countries/commits/main
+   and check the map still colours in. */
 const COUNTRY_BOUNDARIES_URL =
-  "https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson";
+  "https://cdn.jsdelivr.net/gh/datasets/geo-countries@b0b7794e15e7ec4374bf183dd73cce5b92e1c0ae/data/countries.geojson";
 /* light_nolabels: same clean CARTO cartography but WITHOUT baked-in place
    labels (which appear in each country's local script — e.g. China in
    Chinese). We render our own English country labels instead. */
@@ -1744,13 +1781,16 @@ let currentActiveIso = null;
 let boundariesGeojson = null;
 
 function featureTooltip(feature) {
-  const name = feature.properties.name;
+  // Leaflet puts tooltip text into the page as markup, and the country name
+  // comes from the boundary file, so it is escaped like every other upstream
+  // string on this page.
+  const name = esc(feature.properties.name);
   const iso = resolveIso(feature);
   const kind = featureKind(feature);
   if (kind === "territory") {
     const sov = TERRITORY_OF[iso];
     const sovName = ((window.COUNTRY_DATA || {})[sov] || {}).name || sov;
-    return `${name} — ${t("map_territory_note", { c: sovName })}`;
+    return `${name} — ${t("map_territory_note", { c: esc(sovName) })}`;
   }
   if (kind === "none") return `${name} — ${t("map_not_covered")}`;
   return name;
@@ -1776,6 +1816,15 @@ function refreshMapAnnotations() {
 if (map) fetch(COUNTRY_BOUNDARIES_URL)
   .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
   .then(geojson => {
+    /* If the boundary file ever arrives in a shape this page does not
+       understand, the countries would quietly fall through to "no data" and
+       the map would draw a world of beige with no explanation. Nearly every
+       shape in this file carries an ISO code (238 of 258 today), so anything
+       under half means the format changed — treat that as a failed load so
+       the banner appears instead of a silently wrong map. */
+    const features = (geojson && geojson.features) || [];
+    if (!features.length || features.filter(f => resolveIso(f)).length < features.length / 2)
+      throw new Error("boundary file carries too few recognisable ISO country codes");
     countryLayer = L.geoJSON(geojson, {
       style: styleCountry,
       onEachFeature: (feature, layer) => {
@@ -1806,7 +1855,8 @@ if (map) fetch(COUNTRY_BOUNDARIES_URL)
     console.error("Boundary load failed:", err);
     const banner = document.getElementById("error-banner");
     banner.classList.add("show");
-    banner.textContent = "⚠ Could not load the world map boundaries from the CDN. Check your connection and refresh the page.";
+    banner.textContent = "⚠ Could not load the world map boundaries (network problem, or the boundary file "
+      + "changed format). The country list, search, and country profiles below still work.";
   });
 
 /* ---------- English country labels ----------
@@ -1853,7 +1903,7 @@ function buildCountryLabels(geojson) {
     const tier = pt.area >= 150 ? "giant" : pt.area >= 25 ? "major" : "minor";
     const icon = L.divIcon({
       className: "",
-      html: `<span class="country-label ${tier === "minor" ? "minor" : ""}">${name}</span>`,
+      html: `<span class="country-label ${tier === "minor" ? "minor" : ""}">${esc(name)}</span>`,
       iconSize: [0, 0],
     });
     const m = L.marker([pt.lat, pt.lng], { icon, interactive: false, keyboard: false });
@@ -1879,6 +1929,7 @@ if (map) map.on("zoomend", updateLabelVisibility);
 const statsStrip = document.getElementById("stats-strip");
 
 function renderAggregateStats() {
+  statsStrip.classList.remove("country-view");   // three cells, see .stats-strip
   const allEntries = Object.values(window.COUNTRY_DATA).filter(e => e && e.name);
   const entries = activeFilter === "all"
     ? allEntries
@@ -1933,13 +1984,14 @@ function topIndustries(entries, n) {
 function renderCountryStats(iso) {
   const d = window.COUNTRY_DATA[iso];
   if (!d) return renderAggregateStats();
+  statsStrip.classList.add("country-view");      // five cells, see .stats-strip
   const c = d.connectivity || {};
   const topPlatform = ((d.media || {}).top_social || "").split(",")[0].trim();
   statsStrip.innerHTML = `
     <div class="stat highlight">
       <div class="label">${t("stat_country")}</div>
       <div class="value">${esc(d.flag || "")} ${esc(d.name)}</div>
-      <div class="delta">${[d.capital, d.subregion].filter(Boolean).join(" · ")}</div>
+      <div class="delta">${esc([d.capital, d.subregion].filter(Boolean).join(" · "))}</div>
     </div>
     <div class="stat">
       <div class="label">${t("stat_population")}</div>
@@ -1958,7 +2010,7 @@ function renderCountryStats(iso) {
     </div>
     <div class="stat">
       <div class="label">${t("stat_leading_platform")}</div>
-      <div class="value">${topPlatform || "—"}</div>
+      <div class="value">${esc(topPlatform) || "—"}</div>
       <div class="delta">${t("stat_leading_social")}</div>
     </div>`;
 }
@@ -1969,11 +2021,36 @@ const searchEl = document.getElementById("search");
 let activeFilter = "all";
 let searchTerm = "";
 
+/* Both the typed text and the country name are stripped of accents before
+   they are compared, so a plain keyboard finds "Türkiye" by typing "turkiye",
+   and an accented "Côte" still finds the dataset's unaccented "Cote d'Ivoire".
+   Curly apostrophes (pasted from Word or a PDF) are folded to plain ones for
+   the same reason. */
+const foldName = (s) => String(s == null ? "" : s).toLowerCase()
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // drop the accent marks NFD split off
+  .replace(/[‘’ʼ´`]/g, "'");
+
+/* Countries whose everyday English name is not part of the official name the
+   dataset uses — without these, searching the familiar name finds nothing.
+   Same idea (and same spellings) as COUNTRY_ALIASES in ask-engine.js; adding a
+   line here is safe. Values must be lower-case and accent-free. */
+const SEARCH_ALIASES = {
+  USA: ["usa"], GBR: ["uk", "britain", "england"],
+  TUR: ["turkey"], CIV: ["ivory coast"], CZE: ["czech republic"],
+  MMR: ["burma"], SWZ: ["swaziland"], NLD: ["holland"],
+  CPV: ["cape verde"], TLS: ["east timor", "timor leste"],
+  COD: ["drc", "dr congo"], PRK: ["north korea"], LAO: ["laos"],
+  KGZ: ["kyrgyzstan"], SVK: ["slovakia"], VAT: ["vatican"],
+  PSE: ["palestine"],
+};
+
 function renderList() {
   const entries = Object.entries(window.COUNTRY_DATA);
   const shown = entries
     .filter(([iso, d]) => activeFilter === "all" || d.region === activeFilter)
-    .filter(([iso, d]) => !searchTerm || d.name.toLowerCase().includes(searchTerm));
+    .filter(([iso, d]) => !searchTerm
+      || foldName(d.name).includes(searchTerm)
+      || (SEARCH_ALIASES[iso] || []).some(alias => alias.includes(searchTerm)));
   shown.sort((a, b) => a[1].name.localeCompare(b[1].name));
   let html = `<div class="section-heading" id="country-list-heading">${t("pilot_countries_count", { n: shown.length })}</div>`;
   html += shown.map(([iso, d]) => {
@@ -1981,12 +2058,12 @@ function renderList() {
       ? t("sub_people", { r: "", n: (d.population / 1e6).toFixed(1) }).replace(/·\s*·/g, "·").trim().replace(/^·\s*/, "")
       : "";
     return `
-    <div class="country-card" data-iso="${iso}" role="button" tabindex="0"
+    <div class="country-card" data-iso="${esc(iso)}" role="button" tabindex="0"
          aria-label="${esc(d.name)} — ${t("tag_profile")}">
-      <div class="flag" aria-hidden="true">${d.flag || "🌐"}</div>
+      <div class="flag" aria-hidden="true">${esc(d.flag) || "🌐"}</div>
       <div class="meta">
         <div class="name">${esc(d.name)}</div>
-        <div class="sub">${[d.subregion, popTxt].filter(Boolean).join(" · ")}</div>
+        <div class="sub">${esc([d.subregion, popTxt].filter(Boolean).join(" · "))}</div>
       </div>
       <div class="tag" aria-hidden="true">${t("tag_profile")}</div>
     </div>`;
@@ -2001,7 +2078,7 @@ function renderList() {
     });
   });
 }
-searchEl.addEventListener("input", e => { searchTerm = e.target.value.trim().toLowerCase(); renderList(); });
+searchEl.addEventListener("input", e => { searchTerm = foldName(e.target.value.trim()); renderList(); });
 document.querySelectorAll(".chip").forEach(chip => {
   chip.addEventListener("click", () => {
     document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
@@ -2021,17 +2098,45 @@ const panelSubline = document.getElementById("detail-subline");
 let currentTab = "overview";
 
 document.getElementById("close-detail").addEventListener("click", closeDetail);
-document.querySelectorAll(".detail-tabs button").forEach(btn => {
+
+/* Every route into a tab (click, arrow key, opening a country) goes through
+   here, so the highlight, the announced selection, the Tab order and the
+   panel's label can never drift apart. */
+const tabButtons = Array.from(document.querySelectorAll(".detail-tabs button"));
+function selectTab(tab, moveFocus) {
+  currentTab = tab;
+  tabButtons.forEach(b => {
+    const on = b.dataset.tab === tab;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
+    b.tabIndex = on ? 0 : -1;
+    if (on) {
+      panelBody.setAttribute("aria-labelledby", b.id);
+      if (moveFocus) b.focus();
+    }
+  });
+}
+tabButtons.forEach(btn => {
   btn.addEventListener("click", () => {
-    currentTab = btn.dataset.tab;
-    document.querySelectorAll(".detail-tabs button").forEach(b => {
-      b.classList.remove("active");
-      b.setAttribute("aria-selected", "false");
-    });
-    btn.classList.add("active");
-    btn.setAttribute("aria-selected", "true");
+    selectTab(btn.dataset.tab);
     if (currentActiveIso) renderDetail(currentActiveIso);
   });
+});
+/* Arrow keys (plus Home/End) move along the tab row — the standard behaviour
+   for a tablist. The panel stays LTR in every language, so ArrowRight is
+   always "next" here. */
+document.querySelector(".detail-tabs").addEventListener("keydown", (e) => {
+  const from = tabButtons.indexOf(document.activeElement);
+  if (from === -1) return;
+  let to = null;
+  if (e.key === "ArrowRight") to = (from + 1) % tabButtons.length;
+  else if (e.key === "ArrowLeft") to = (from - 1 + tabButtons.length) % tabButtons.length;
+  else if (e.key === "Home") to = 0;
+  else if (e.key === "End") to = tabButtons.length - 1;
+  if (to === null) return;
+  e.preventDefault();
+  selectTab(tabButtons[to].dataset.tab, true);
+  if (currentActiveIso) renderDetail(currentActiveIso);
 });
 
 /* ESC closes (in priority order): language menu, methodology modal, country panel */
@@ -2046,8 +2151,7 @@ document.addEventListener("keydown", (e) => {
 
 function openDetail(iso) {
   currentActiveIso = iso;
-  currentTab = "overview";
-  document.querySelectorAll(".detail-tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === "overview"));
+  selectTab("overview");
   document.querySelectorAll(".country-card").forEach(c => c.classList.toggle("active", c.dataset.iso === iso));
   if (countryLayer) {
     countryLayer.eachLayer(layer => {
@@ -2156,7 +2260,7 @@ function tabOverview(d) {
     : (d.languages || []).length ? `<h3>${t("section_languages")}</h3>
     <div class="pills">${d.languages.map(l => `<div class="pill">${esc(l)}</div>`).join("")}</div>` : ""}
     ${(d.focus_areas || []).length ? `<h3>${t("section_focus_areas")}</h3>
-    <div class="pills">${d.focus_areas.map(f => `<div class="pill neutral">${f}</div>`).join("")}</div>` : ""}`;
+    <div class="pills">${d.focus_areas.map(f => `<div class="pill neutral">${esc(f)}</div>`).join("")}</div>` : ""}`;
 }
 
 function tabEconomy(d) {
@@ -2169,9 +2273,9 @@ function tabEconomy(d) {
       <div class="kv"><div class="label">${t("label_ref_year")}</div><div class="value">${d.population_year || "—"}</div></div>
     </div>
     ${(d.dominant_industries || []).length ? `<h3>${t("section_dominant_industries")}</h3>
-    <div class="pills">${d.dominant_industries.map(i => `<div class="pill">${i}</div>`).join("")}</div>` : ""}
+    <div class="pills">${d.dominant_industries.map(i => `<div class="pill">${esc(i)}</div>`).join("")}</div>` : ""}
     ${(d.focus_areas || []).length ? `<h3>${t("section_strategic_focus")}</h3>
-    <div class="pills">${d.focus_areas.map(f => `<div class="pill neutral">${f}</div>`).join("")}</div>` : ""}`;
+    <div class="pills">${d.focus_areas.map(f => `<div class="pill neutral">${esc(f)}</div>`).join("")}</div>` : ""}`;
 }
 
 function tabMedia(d) {
@@ -2190,16 +2294,16 @@ function tabMedia(d) {
                  nc.social_as_news_source_pct, nc.radio_as_news_source_pct].some(v => v != null);
   if (ncAny) {
     const ncSrc = nc.source || "Survey data";
-    html += `<h3>News consumption <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">${ncSrc}</span></h3>`;
+    html += `<h3>News consumption <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">${esc(ncSrc)}</span></h3>`;
     html += ncRow(t("label_trust_news"), nc.trust_in_news_pct);
     html += ncRow(t("label_use_tv"), nc.tv_as_news_source_pct);
     if (nc.radio_as_news_source_pct != null) {
-      html += ncRow(t("label_use_radio") + ` <span style="font-size:10px;color:var(--muted-2);">${nc.radio_source || ""}</span>`, nc.radio_as_news_source_pct);
+      html += ncRow(t("label_use_radio") + ` <span style="font-size:10px;color:var(--muted-2);">${esc(nc.radio_source || "")}</span>`, nc.radio_as_news_source_pct);
     }
     html += ncRow(t("label_use_online"), nc.online_as_news_source_pct);
     html += ncRow(t("label_use_social"), nc.social_as_news_source_pct);
     if (nc.survey_note) {
-      html += `<div style="font-size:10px;color:var(--warn);margin-top:4px;">⚠ ${nc.survey_note}</div>`;
+      html += `<div style="font-size:10px;color:var(--warn);margin-top:4px;">⚠ ${esc(nc.survey_note)}</div>`;
     }
   }
 
@@ -2221,7 +2325,7 @@ function tabMedia(d) {
   }
 
   const outletRow = (label, v) => !v ? "" :
-    `<div class="data-row"><span class="label">${label}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${v}</span></div>`;
+    `<div class="data-row"><span class="label">${label}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${esc(v)}</span></div>`;
   const outletsHtml = outletRow(t("label_tv"), m.top_tv) + outletRow(t("label_radio"), m.top_radio) +
     outletRow(t("label_online_news"), m.top_online_news) + outletRow(t("label_social_platforms"), m.top_social);
   if (outletsHtml) html += `<h3>${t("section_leading_outlets")}</h3>` + outletsHtml;
@@ -2252,7 +2356,7 @@ function tabMedia(d) {
   // curated top_social list and Statcounter's web-referral shares.
   const pu = d.platform_use;
   if (pu) {
-    html += `<h3>Measured platform use <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">${pu.source || "survey"} · % of adults using</span></h3>`;
+    html += `<h3>Measured platform use <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">${esc(pu.source || "survey")} · % of adults using</span></h3>`;
     const order = [["WhatsApp","whatsapp"],["Facebook","facebook"],["Instagram","instagram"],["TikTok","tiktok"],["YouTube","youtube"],["X (Twitter)","x"]];
     for (const [label, key] of order) {
       const v = pu[key];
@@ -2271,9 +2375,9 @@ function tabMedia(d) {
   const pws = (window.PLATFORM_WEB_SHARES && window.PLATFORM_WEB_SHARES.countries || {})[currentActiveIso];
   if (pws && pws.shares) {
     const meta = window.PLATFORM_WEB_SHARES._meta || {};
-    html += `<h3>Social web-traffic share <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Statcounter · ${meta.window || "3-month average"}</span></h3>`;
+    html += `<h3>Social web-traffic share <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Statcounter · ${esc(meta.window || "3-month average")}</span></h3>`;
     for (const [name, share] of Object.entries(pws.shares).slice(0, 5)) {
-      html += `<div class="data-row"><span class="label">${name}</span><span class="value">${share}%</span></div>`;
+      html += `<div class="data-row"><span class="label">${esc(name)}</span><span class="value">${share}%</span></div>`;
       html += `<div class="bar"><div class="bar-fill" style="width:${Math.min(share, 100)}%"></div></div>`;
     }
     html += `<div style="font-size:10px;color:var(--muted-2);margin-top:4px;">Referral share of web traffic only — app-first platforms (WhatsApp, TikTok, Telegram) are mostly invisible to this measure. Not a usage ranking.</div>`;
@@ -2296,14 +2400,14 @@ function tabMedia(d) {
     const score = inf.internet_freedom_score;
     const status = inf.internet_freedom_status || "";
     const color = score >= 70 ? "var(--positive)" : score >= 40 ? "var(--warn)" : "var(--danger)";
-    html += `<div class="data-row"><span class="label">Internet freedom <span style="font-size:10px;color:var(--muted-2);">Freedom on the Net</span></span><span class="value" style="color:${color}">${score}/100 · ${status}</span></div>`;
+    html += `<div class="data-row"><span class="label">Internet freedom <span style="font-size:10px;color:var(--muted-2);">Freedom on the Net</span></span><span class="value" style="color:${color}">${score}/100 · ${esc(status)}</span></div>`;
     html += `<div class="bar"><div class="bar-fill" style="width:${score}%; background:${color}"></div></div>`;
   }
   if (inf.political_freedom_score != null) {
     const pf = inf.political_freedom_score;
     const pfStatus = inf.political_freedom_status || "";
     const pfColor = pf >= 70 ? "var(--positive)" : pf >= 40 ? "var(--warn)" : "var(--danger)";
-    html += `<div class="data-row"><span class="label">Political freedom <span style="font-size:10px;color:var(--muted-2);">Freedom in the World</span></span><span class="value" style="color:${pfColor}">${pf}/100 · ${pfStatus}</span></div>`;
+    html += `<div class="data-row"><span class="label">Political freedom <span style="font-size:10px;color:var(--muted-2);">Freedom in the World</span></span><span class="value" style="color:${pfColor}">${pf}/100 · ${esc(pfStatus)}</span></div>`;
     html += `<div class="bar"><div class="bar-fill" style="width:${pf}%; background:${pfColor}"></div></div>`;
     if (inf.political_rights_score != null && inf.civil_liberties_score != null) {
       html += `<div class="data-row"><span class="label">${t("label_pr_cl")}</span><span class="value">${inf.political_rights_score}/40 · ${inf.civil_liberties_score}/60</span></div>`;
@@ -2323,7 +2427,7 @@ function tabMedia(d) {
     if (rising.length) {
       rising.forEach(r => {
         const pct = Math.round(r.velocity * 100);
-        html += `<div class="data-row"><span class="label">${r.label_en}</span>` +
+        html += `<div class="data-row"><span class="label">${esc(r.label_en)}</span>` +
                 `<span class="value" style="color:var(--positive)">▲ +${pct}% <span style="font-size:10px;color:var(--muted-2);">this week</span></span></div>`;
       });
     } else {
@@ -2333,7 +2437,7 @@ function tabMedia(d) {
     if (dis.length) {
       html += `<h3>${t("section_distinctive")}</h3>`;
       dis.forEach(x => {
-        html += `<div class="data-row"><span class="label">${x.label_en}</span>` +
+        html += `<div class="data-row"><span class="label">${esc(x.label_en)}</span>` +
                 `<span class="value">${x.vs_global_avg}× <span style="font-size:10px;color:var(--muted-2);">global avg</span></span></div>`;
       });
     }
@@ -2345,14 +2449,14 @@ function tabMedia(d) {
       const ageDays = Math.floor((Date.now() - new Date(gen + "T00:00:00Z").getTime()) / 86400000);
       if (ageDays > 3) staleNote = `<span style="color:var(--warn);"> ⚠ Last updated ${ageDays} days ago — the daily engine may need attention.</span>`;
     }
-    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:6px;">Source: Wikipedia reading patterns (Wikimedia Pageviews API), updated ${gen}.${staleNote} Country attribution via language-population weights — an approximation, not a measurement.</div>`;
+    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:6px;">Source: Wikipedia reading patterns (Wikimedia Pageviews API), updated ${esc(gen)}.${staleNote} Country attribution via language-population weights — an approximation, not a measurement.</div>`;
   } else {
     html += `<div style="font-size:11px;color:var(--muted-2);">${t("trending_unavailable")}</div>`;
   }
 
   if ((d.topics_of_interest || []).length) {
     html += `<h3>${t("section_topics")}</h3>`;
-    html += `<div class="pills">${d.topics_of_interest.map(topic => `<div class="pill">${topic}</div>`).join("")}</div>`;
+    html += `<div class="pills">${d.topics_of_interest.map(topic => `<div class="pill">${esc(topic)}</div>`).join("")}</div>`;
   }
   return html;
 }
