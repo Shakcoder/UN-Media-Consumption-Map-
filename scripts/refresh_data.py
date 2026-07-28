@@ -1044,7 +1044,15 @@ def fetch_factbook_media(wanted_iso3: set[str]) -> dict[str, str]:
             # arrive as "T&eacute;l&eacute;vision" and spaces as "&nbsp;".
             # Decode once here: the analyst renders this text as plain text and
             # would otherwise print the entity codes at the reader.
-            text = html.unescape(text).replace("\xa0", " ").strip()
+            # Normalise whitespace and typography so the notes read uniformly
+            # with the rest of the Atlas: decode HTML entities, turn no-break
+            # spaces and any run of whitespace into single spaces, and fold the
+            # Factbook's curly quotes to straight ones (the analyst renders this
+            # as plain text, so smart quotes only look inconsistent).
+            text = html.unescape(text).replace("\xa0", " ")
+            text = re.sub(r"\s+", " ", text).strip()
+            text = (text.replace("\u2019", "'").replace("\u2018", "'")
+                        .replace("\u201c", '"').replace("\u201d", '"'))
             if text:
                 # Keep it brief-friendly: cap ~700 chars on a clause boundary.
                 if len(text) > 700:

@@ -566,6 +566,47 @@ def main() -> int:
         INFOS.append(f"literacy figures still carrying no citation ({len(uncited_literacy)}): "
                      f"{' '.join(sorted(uncited_literacy))} — known gap, see LITERACY_CITATION_GAP")
 
+    # --- text-hygiene sweep (WARN only) -------------------------------------
+    # Upstream text (chiefly the CIA Factbook media notes) occasionally arrives
+    # with double spaces, curly quotes or stray HTML entities. The ingest now
+    # normalises them, but a source can change shape; this makes any recurrence
+    # visible without ever blocking a refresh over cosmetics.
+    import unicodedata as _ud
+    hygiene = 0
+
+    def _scan(o, path):
+        nonlocal hygiene
+        if isinstance(o, dict):
+            for k, v in o.items():
+                _scan(v, f"{path}.{k}")
+        elif isinstance(o, list):
+            for i, v in enumerate(o):
+                _scan(v, f"{path}[{i}]")
+        elif isinstance(o, str):
+            problems = []
+            if "  " in o:
+                problems.append("double space")
+            if "\u00a0" in o:
+                problems.append("non-breaking space")
+            # N'Ko (ߒߞߏ) is a real script whose romanised name genuinely
+            # carries this apostrophe — a straight quote would misspell it.
+            if any(c in o for c in "\u2018\u2019\u201c\u201d") and o != "N\u2019Ko":
+                problems.append("curly quote")
+            if re.search(r"&[a-z]+;|&#\d+;", o):
+                problems.append("HTML entity")
+            if "\ufffd" in o:
+                problems.append("replacement char (mojibake)")
+            if o != o.strip():
+                problems.append("edge whitespace")
+            if problems and hygiene < 12:
+                WARNS.append(f"text hygiene at {path[1:]}: {', '.join(problems)} — {o[:60]!r}")
+            if problems:
+                hygiene += 1
+
+    _scan(d, "")
+    if hygiene:
+        INFOS.append(f"text-hygiene notes: {hygiene} field(s) with cosmetic issues (warnings above; not errors)")
+
     print(f"=== validate_atlas: {len(ERRORS)} error(s), {len(WARNS)} warning(s) ===\n")
     for e in ERRORS:
         print("ERROR:", e)
