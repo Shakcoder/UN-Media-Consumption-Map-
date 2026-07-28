@@ -202,7 +202,7 @@
       <datalist id="topic-list"></datalist>
     </div>
     <div class="actions">
-      <button type="submit">Find markets</button>
+      <button type="submit" id="find-btn" disabled>Find markets</button>
       <span class="hint">Every weight is disclosed with the results. Countries without the needed
       survey data are listed as excluded — never silently ranked low.</span>
     </div>
@@ -263,6 +263,7 @@ let TOPIC_INDEX = [];   // [label, qid]
         $("topic-list").innerHTML = TOPIC_INDEX.map(([l]) => `<option value="${esc(l)}">`).join("");
       }
     } catch (e) { /* topic boost simply unavailable */ }
+    $("find-btn").disabled = false;
     if (restoreFormFromUrl()) {
       $("status").textContent = "Running the shared screening…";
       $("finder-form").requestSubmit();
@@ -320,6 +321,20 @@ function restoreFormFromUrl() {
 
 $("finder-form").addEventListener("submit", (e) => {
   e.preventDefault();
+  try {
+    runScreening();
+  } catch (err) {
+    // Never fail silently: the page's only action must always say something.
+    // Before this, an error here left the button clicked, the status line
+    // unchanged and nothing rendered — indistinguishable from a dead page.
+    console.error("Market Finder failed:", err);
+    $("results").style.display = "none";
+    $("status").textContent = "Something went wrong running that screening (" + err.message +
+      "). Try a different combination, or reload the page — and if it keeps happening, use “Report an error” at the bottom.";
+  }
+});
+
+function runScreening() {
   reflectFormInUrl();
   const topicLabel = $("f-topic").value.trim().toLowerCase();
   const topic = topicLabel ? TOPIC_INDEX.find(([l]) => l.toLowerCase() === topicLabel) : null;
@@ -405,7 +420,7 @@ $("finder-form").addEventListener("submit", (e) => {
   $("status").textContent = res.top.length
     ? `Top ${res.top.length} of ${res.ranked.length} rankable countries — scores are comparative within this search only.`
     : "No countries in this scope have the required survey data for that combination — try removing the channel or language filter.";
-});
+}
 
 /* ---------- Toolbar: copy link, CSV export, print ---------- */
 $("copy-screen").addEventListener("click", async () => {

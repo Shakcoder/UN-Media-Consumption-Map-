@@ -2533,17 +2533,22 @@ function tabSources(d) {
         // URL; render any other trailing detail as the text it is. Splitting
         // on the FIRST separator also keeps citations that contain more than
         // one dash intact.
-        const raw = String(url == null ? "" : url);
-        const i = raw.indexOf(" — ");
-        const org = i === -1 ? raw : raw.slice(0, i);
-        const detail = i === -1 ? "" : raw.slice(i + 3).trim();
-        const isUrl = /^https?:\/\//i.test(detail);
-        return `<div><strong>${esc(capitalize(field))}:</strong> ${esc(org)}<br>${
-          detail
-            ? (isUrl
-                ? `<a href="${esc(detail)}" target="_blank" rel="noopener noreferrer">${esc(detail)}</a>`
-                : `<span style="color:var(--muted);">${esc(detail)}</span>`)
-            : ""}</div>`;
+        // A citation is "Organisation — detail", where the detail is USUALLY a
+        // URL but not always, and sometimes BOTH: Freedom House's reads
+        // "Freedom House: … — official data files … — https://…". Take the URL
+        // wherever it appears and keep the rest as prose, so a citation can
+        // never end up with its link rendered as dead grey text.
+        const raw = String(url == null ? "" : url).trim();
+        const urlMatch = raw.match(/https?:\/\/\S+/i);
+        const link = urlMatch ? urlMatch[0] : "";
+        const rest = (link ? raw.replace(link, "") : raw).replace(/\s*—\s*$/, "").trim();
+        const i = rest.indexOf(" — ");
+        const org = i === -1 ? rest : rest.slice(0, i);
+        const detail = i === -1 ? "" : rest.slice(i + 3).trim();
+        return `<div><strong>${esc(capitalize(field))}:</strong> ${esc(org)}` +
+          (detail ? `<br><span style="color:var(--muted);">${esc(detail)}</span>` : "") +
+          (link ? `<br><a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${esc(link)}</a>` : "") +
+          `</div>`;
       }).join("")}
     </div>
     <h3>${t("section_confidence_level")}</h3>

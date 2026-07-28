@@ -297,7 +297,7 @@ function sourcesBlock(evidence) {
 const escapeHtml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const escapeAttr = (s) => escapeHtml(s).replace(/"/g, "&quot;");
 
-function addAnalyst(answer, evidence, note, followups) {
+function addAnalyst(answer, evidence, note, followups, forQuestion) {
   const el = document.createElement("div");
   el.className = "msg analyst";
   let html = `<div class="body">${mdLite(answer)}</div>`;
@@ -319,18 +319,32 @@ function addAnalyst(answer, evidence, note, followups) {
   }
   const tools = document.createElement("div");
   tools.className = "answer-tools";
+  if (!forQuestion) tools.hidden = true;   // status notices have nothing to share
   const copy = document.createElement("button");
   copy.type = "button"; copy.className = "tool"; copy.textContent = "Copy link";
   copy.title = "Copy a link that re-asks this question — the recipient's browser computes the same answer from the same published data";
+  // The link is built from THIS answer's own question, captured when the
+  // answer was created. Reading the address bar instead would hand out a link
+  // to whatever was asked most recently — so copying from an earlier answer in
+  // a conversation would silently share a different question.
+  const linkFor = (() => {
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set("q", forQuestion || "");
+      return u.origin + u.pathname + "?" + u.searchParams.toString();
+    } catch (e) { return window.location.href; }
+  })();
+  let resetLabel;
   copy.addEventListener("click", async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(linkFor);
       copy.textContent = "Link copied ✓";
     } catch (e) {
-      // clipboard can be blocked (permissions, http) — show the URL instead
+      // clipboard can be blocked (permissions, insecure origin) — say so
       copy.textContent = "Copy from the address bar";
     }
-    setTimeout(() => { copy.textContent = "Copy link"; }, 2500);
+    clearTimeout(resetLabel);            // a second click must not be reset early
+    resetLabel = setTimeout(() => { copy.textContent = "Copy link"; }, 2500);
   });
   const prt = document.createElement("button");
   prt.type = "button"; prt.className = "tool"; prt.textContent = "Print / save PDF";
@@ -405,7 +419,7 @@ async function askLocal(question) {
   logQuestion(question, r.clarify ? "clarify"
     : /couldn't match that to the Atlas/.test(r.answer || "") ? "no-match" : "answered");
   if (r.clarify) { addClarify(r.clarify); return; }
-  addAnalyst(r.answer, r.evidence, "", r.followups);
+  addAnalyst(r.answer, r.evidence, "", r.followups, question);
 }
 
 /* ---------- Local question log (improvement loop, 2026-07-23) ----------
@@ -474,7 +488,7 @@ async function askWorker(question) {
     if (data.error) throw new Error(data.error);
     const note = data.engine === "workers-ai" ? "Written by the Atlas's free AI engine strictly from the cited Atlas data."
       : data.engine === "claude" ? "Written by Claude strictly from the cited Atlas data." : "";
-    addAnalyst(data.answer, data.evidence || [], note, []);
+    addAnalyst(data.answer, data.evidence || [], note, [], question);
     logQuestion(question, "answered-worker");
     return true;
   } catch (e) {
@@ -543,12 +557,21 @@ async function runSharedQuestion() {
   let q;
   try { q = new URLSearchParams(window.location.search).get("q"); } catch (e) { return; }
   if (!q) return;
-  q = q.trim().slice(0, 400);          // sanity bound; longer is no question
+  q = q.trim();
   if (!q) return;
-  // wait for the engine rather than racing it — shared links open cold
+  // Shared links open cold, so wait for the engine rather than racing it.
   for (let i = 0; i < 100 && !engineReady && !engineError; i++)
     await new Promise(r => setTimeout(r, 100));
-  if (engineReady) { input.value = q; form.requestSubmit(); }
+  input.value = q;
+  if (engineReady) { form.requestSubmit(); return; }
+  // Someone followed a link and the data would not load. Doing nothing leaves
+  // them staring at an empty page with no idea a question was even asked —
+  // put the question in the box and say what happened, so they can retry.
+  addUser(q);
+  addAnalyst(engineError
+    ? "I couldn't load the Atlas's data files (" + engineError.message + "), so this shared question hasn't been answered. It's in the box below — press Ask to try again."
+    : "The Atlas's data is still loading (slow connection), so this shared question hasn't been answered yet. It's in the box below — press Ask to try again.",
+    [], "", []);
 }
 runSharedQuestion();
 </script>
