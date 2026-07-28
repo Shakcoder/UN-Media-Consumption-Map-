@@ -31,6 +31,7 @@ These five files ARE the site. Every page loads them straight from the repo — 
 | `data/topics.json` | `scripts/build_topic_registry.py` (manual, rare) | only when the topic list changes | AI Analyst, Market Finder (the topic list) |
 | `data/platform_web_shares.json` | weekly refresh, via `scripts/fetch_statcounter.py` | Mondays | Map — the "social web-traffic share" block on a country's Media tab |
 | `data/ad_market.json` | **you**, by hand | once a year, each December/January | AI Analyst — ad-market context inside strategy briefs |
+| `data/boundaries/countries.geojson` | `scripts/build_boundaries.py` (manual, rare) | only if the boundary snapshot pin is deliberately moved | Map — the country outlines themselves |
 
 The "AI Analyst" and "Market Finder" pages need **no backend at all** — `ask-engine.js` runs in the visitor's browser and reads the published JSON files above.
 
