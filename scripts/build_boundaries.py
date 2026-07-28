@@ -31,6 +31,26 @@ Output: data/boundaries/countries.geojson (compact JSON, ~5% of source size)
 Source: github.com/datasets/geo-countries, pinned to the same immutable
 commit the map previously loaded from the CDN (Natural Earth derived, ODC-PDDL).
 Re-run only if the pin is deliberately moved to a newer snapshot.
+
+UN presentation policy
+----------------------
+Natural Earth draws de-facto control; a United Nations-branded map must not.
+Where the two diverge and the geometry permits, this script corrects the
+presentation to the UN position and VERIFIES the correction with point tests
+before writing:
+
+  * Crimea — the source places the peninsula in the Russian Federation's
+    geometry. Per General Assembly resolution 68/262 and UN cartographic
+    practice, it is reassigned to Ukraine (it is a discrete polygon part, so
+    the move is exact — no boundary is redrawn).
+
+Divergences the geometry does NOT permit correcting (no boundary exists in
+the source to separate along, and inventing one is out of the question):
+Western Sahara is drawn inside Morocco, and Jammu & Kashmir along de-facto
+lines rather than the UN's dashed undetermined boundaries. The map carries
+the standard UN disclaimer — the boundaries shown do not imply official
+endorsement or acceptance by the United Nations — precisely because a
+generalized web map cannot reproduce official UN cartography in full.
 """
 
 from __future__ import annotations
@@ -196,6 +216,48 @@ def main() -> int:
             geom = {"type": "MultiPolygon", "coordinates": polys}
         pts_out += sum(len(r) for p in ([polys[0]] if len(polys) == 1 else polys) for r in (p if isinstance(p[0][0], list) else [p]))
         feats_out.append({"type": "Feature", "properties": f["properties"], "geometry": geom})
+
+    # --- UN presentation fix: Crimea (see header) --------------------------
+    def _feat(name):
+        return next(f for f in feats_out if f["properties"]["name"] == name)
+
+    def _contains(feat, lon, lat):
+        def inside(ring):
+            n = len(ring); j = n - 1; c = False
+            for i in range(n):
+                xi, yi = ring[i][0], ring[i][1]
+                xj, yj = ring[j][0], ring[j][1]
+                if ((yi > lat) != (yj > lat)) and (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi):
+                    c = not c
+                j = i
+            return c
+        g = feat["geometry"]
+        polys = [g["coordinates"]] if g["type"] == "Polygon" else g["coordinates"]
+        return any(inside(p[0]) for p in polys)
+
+    rus, ukr = _feat("Russia"), _feat("Ukraine")
+    rus_polys = rus["geometry"]["coordinates"]
+    SIMFEROPOL = (34.10, 44.95)
+    crimea_idx = [i for i, poly in enumerate(rus_polys)
+                  if _contains({"geometry": {"type": "Polygon", "coordinates": poly}}, *SIMFEROPOL)]
+    if len(crimea_idx) == 1:
+        crimea = rus_polys.pop(crimea_idx[0])
+        if ukr["geometry"]["type"] == "Polygon":
+            ukr["geometry"] = {"type": "MultiPolygon", "coordinates": [ukr["geometry"]["coordinates"]]}
+        ukr["geometry"]["coordinates"].append(crimea)
+        print("[boundaries] UN presentation: Crimea polygon reassigned to Ukraine (GA res 68/262)")
+    else:
+        print(f"  !! Crimea fix failed: found {len(crimea_idx)} candidate parts — source layout changed; refusing to write", file=sys.stderr)
+        return 1
+    # verify the surgery on the finished features, not on assumptions
+    for lon, lat, want, label in [(34.10, 44.95, "Ukraine", "Simferopol"),
+                                  (33.52, 44.60, "Ukraine", "Sevastopol"),
+                                  (37.62, 55.75, "Russia", "Moscow"),
+                                  (30.52, 50.45, "Ukraine", "Kyiv")]:
+        got = "Ukraine" if _contains(ukr, lon, lat) else ("Russia" if _contains(rus, lon, lat) else "neither")
+        if got != want:
+            print(f"  !! post-fix check failed: {label} resolves to {got}, expected {want}", file=sys.stderr)
+            return 1
 
     out_isos = {f["properties"].get("ISO3166-1-Alpha-3") for f in feats_out}
     if len(feats_out) != len(feats_in) or out_isos != src_isos:
