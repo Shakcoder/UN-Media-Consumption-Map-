@@ -1,6 +1,6 @@
 # Supervisor demo script — Audience Intelligence Atlas
 
-*A 7-minute walkthrough. Every question below is copy-paste ready and was re-run against the live engine on 2026-07-27. Read the **Say** lines in your own words — they're the point you're making, not a script to recite.*
+*A 7-minute walkthrough. Every question below is copy-paste ready and was re-run, step by step, against the live deployed site on 2026-07-28 — including every quoted number. Read the **Say** lines in your own words — they're the point you're making, not a script to recite.*
 
 **Before you start:** open the site in a private/incognito window (avoids cached versions), have this page open on your phone or a second screen, and know that the analyst runs entirely in the browser — there's nothing to log into and nothing that can fail to connect.
 
@@ -121,7 +121,7 @@ Which countries have state-controlled media environments?
 
 **It costs zero.** Free public data, free hosting, free automation, and the analyst runs in the visitor's browser. There's no subscription that can lapse and no server to maintain.
 
-**It's been tested.** We ran it against 100 realistic questions written by the team — the acceptance test in the design document. It passes 82, and critically, zero of the failures give a wrong answer. The remaining gaps are all cases where it's more cautious than it needs to be. Two further suites guard it — 18 strategy briefs checked for structure, and 73 checks on the market screener, including one that fails if a restricted-press market ever loses its partner-vetting warning. All three are re-run before any change to the analyst ships."
+**It's been tested.** We ran it against 100 realistic questions written by the team — the acceptance test in the design document. It passes 82, and critically, zero of the failures give a wrong answer. The remaining gaps are all cases where it's more cautious than it needs to be. Two further suites guard it — 18 strategy briefs checked for structure, and 73 checks on the market screener, including one that fails if a restricted-press market ever loses its partner-vetting warning. And since late July these checks run **automatically on every single change** — a commit that breaks any of them gets a red ✗ on GitHub and files an alert, so a broken analyst can't reach this site quietly."
 
 ---
 
@@ -132,6 +132,9 @@ Which countries have state-controlled media environments?
 
 **"Why do some countries have no media data at all?"**
 > Because no free survey measures them. 126 of the 195 countries have a real news-consumption survey behind them; the other 69 have none, and we show that rather than filling the gap with an estimate. A set of estimates *was* removed from this project in July for exactly that reason, and the pipeline now blocks any number whose source isn't on an approved list.
+
+**"Didn't the Topic Explorer show more topics before?"** *(or: "why did a number go down?")*
+> Yes — and that's a fix, not a loss. In July we found the daily attention feed had been quietly serving stale data for some topics while displaying them as current. The page now measures freshness by date, scores only topics with genuinely current data, and says on screen how many it set aside that day. Some headline numbers went down because the old ones were wrong; every number that remains is one we can stand behind. That's the trade this whole project makes, everywhere: smaller and true beats bigger and unverifiable.
 
 **"Can it replace agency research?"**
 > No, and it says so in every brief. It's the first 80% — the landscape evidence you'd otherwise spend two weeks assembling — so that human expertise goes into judgment, not data-gathering.
