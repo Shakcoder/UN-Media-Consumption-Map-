@@ -13,8 +13,8 @@ An interactive, source-cited public resource showing **where and how the world g
 |---|---|
 | **Map** (`index.html`) | "What does Country X's media landscape look like?" — platforms, trust, connectivity, press freedom, demographics, with a citation on every number |
 | **Topic Explorer** (`topics.html`) | "What is the world paying attention to this week?" — daily attention trends for 167 topics across 22 languages |
-| **Market Finder** (`finder.html`) | "We have a campaign — **which countries** should get it?" — a disclosed, deterministic screen over every country with verified media data; countries without the required survey are listed as excluded, never silently ranked low |
-| **AI Analyst** (`ask.html`) | Any question in plain English — comparisons, rankings, campaign guidance, live trends. Understands typos and follow-ups, asks clarifying questions, cites all sources per answer |
+| **Market Finder** (`finder.html`) | "We have a campaign — **which countries** should get it?" — a disclosed, deterministic screen over every country with verified media data; countries without the required survey are listed as excluded, never silently ranked low. Screenings are shareable by link, exportable to CSV (exclusions included), and printable |
+| **AI Analyst** (`ask.html`) | Any question in plain English — comparisons, rankings, campaign guidance, live trends. Understands typos and follow-ups, asks clarifying questions, cites all sources per answer. Every answer has a shareable link and prints as a cited one-pager |
 
 ## How it stays current, at $0
 

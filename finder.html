@@ -80,6 +80,33 @@
   .sources ol { margin: 0; padding-left: 20px; }
   .sources li { margin-bottom: 4px; line-height: 1.5; }
   .sources a { color: var(--un-blue-dark); }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .toolbar .tool { border: 1px solid var(--border); background: var(--card); color: var(--muted);
+    font: inherit; font-size: 12px; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+  .toolbar .tool:hover { color: var(--un-blue-dark); border-color: var(--un-blue); }
+  .checker { margin-top: 16px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; }
+  .checker label { display: block; font-size: 12px; font-weight: 600; color: var(--muted);
+    margin-bottom: 6px; }
+  .checker input { width: 100%; max-width: 420px; padding: 8px 10px; font: inherit;
+    border: 1px solid var(--border); border-radius: 8px; }
+  #check-answer { margin-top: 8px; font-size: 13px; line-height: 1.55; }
+  #check-answer .why-row { color: var(--ink); }
+  #check-answer .risk { color: var(--warn); }
+
+  @media print {
+    header.site, form.finder, footer.site, .toolbar, .checker, #status, .lead { display: none !important; }
+    body { background: #fff; }
+    .results { display: block !important; }
+    details.excluded { display: block; }
+    details.excluded[open] summary { font-weight: 700; }
+    .method::before {
+      content: "Audience Intelligence Atlas — United Nations · market screening";
+      display: block; font-size: 10px; color: #555; border-bottom: 1px solid #ccc;
+      padding-bottom: 6px; margin-bottom: 8px; }
+    a.profile { display: none; }
+    .sources a::after { content: " (" attr(href) ")"; font-size: 9px; color: #555; }
+  }
   details.excluded { margin-top: 14px; font-size: 13px; color: var(--muted); }
   details.excluded summary { cursor: pointer; font-weight: 600; color: var(--un-blue-dark); }
   details.excluded ul { columns: 3; margin: 8px 0 0; padding-left: 18px; }
@@ -187,12 +214,23 @@
   <div id="status" role="status" aria-live="polite">Loading the Atlas's data…</div>
 
   <section class="results" id="results">
+    <div class="toolbar" id="toolbar">
+      <button type="button" class="tool" id="copy-screen" title="Copy a link that re-runs this exact screening — the recipient's browser computes it from the same published data">Copy link to this screening</button>
+      <button type="button" class="tool" id="export-csv" title="Download the full result — every ranked country with its score components, and every excluded country with its reason">Download CSV</button>
+      <button type="button" class="tool" id="print-screen" title="Prints the ranking with its method line and sources">Print / save PDF</button>
+    </div>
     <div class="method" id="method"></div>
     <table class="rank" id="rank-table">
       <thead><tr id="rank-head"></tr></thead>
       <tbody id="rank-body"></tbody>
     </table>
     <details class="excluded" id="excluded"></details>
+    <div class="checker" id="checker">
+      <label for="check-country">Why is a country ranked where it is — or not ranked at all?</label>
+      <input id="check-country" type="text" list="check-list" placeholder="Type a country from this screening…" autocomplete="off">
+      <datalist id="check-list"></datalist>
+      <div id="check-answer" role="status" aria-live="polite"></div>
+    </div>
     <div class="sources" id="sources"></div>
   </section>
 </main>
@@ -225,14 +263,51 @@ let TOPIC_INDEX = [];   // [label, qid]
         $("topic-list").innerHTML = TOPIC_INDEX.map(([l]) => `<option value="${esc(l)}">`).join("");
       }
     } catch (e) { /* topic boost simply unavailable */ }
-    $("status").textContent = "Ready — describe the campaign above and press “Find markets”.";
+    if (restoreFormFromUrl()) {
+      $("status").textContent = "Running the shared screening…";
+      $("finder-form").requestSubmit();
+    } else {
+      $("status").textContent = "Ready — describe the campaign above and press “Find markets”.";
+    }
   } catch (e) {
     $("status").textContent = "The Atlas's data could not be loaded (" + e.message + "). If you opened this page from a file, use the published site.";
   }
 })();
 
+let LAST_RES = null;   // the full last screening (ranked + excluded) — feeds
+                       // the CSV export and the country-checker below
+
+/* ---------- Shareable screens ----------
+ * The form's whole state lives in the URL (?goal=&aud=&lang=&region=&ch=&topic=),
+ * written on every run and auto-run when a link opens with parameters — a
+ * screening someone shares in an email re-computes itself for the recipient. */
+const URL_FIELDS = [["goal","f-objective"],["aud","f-audience"],["lang","f-language"],
+                    ["region","f-region"],["ch","f-channel"],["topic","f-topic"]];
+function reflectFormInUrl() {
+  try {
+    const u = new URL(window.location.href);
+    for (const [key, id] of URL_FIELDS) {
+      const v = $(id).value;
+      if (v) u.searchParams.set(key, v); else u.searchParams.delete(key);
+    }
+    history.replaceState(null, "", u.pathname + (u.searchParams.toString() ? "?" + u.searchParams.toString() : ""));
+  } catch (e) { /* cosmetic only */ }
+}
+function restoreFormFromUrl() {
+  let any = false;
+  try {
+    const p = new URLSearchParams(window.location.search);
+    for (const [key, id] of URL_FIELDS) {
+      const v = p.get(key);
+      if (v != null && v !== "") { $(id).value = v.slice(0, 80); any = true; }
+    }
+  } catch (e) { return false; }
+  return any;
+}
+
 $("finder-form").addEventListener("submit", (e) => {
   e.preventDefault();
+  reflectFormInUrl();
   const topicLabel = $("f-topic").value.trim().toLowerCase();
   const topic = topicLabel ? TOPIC_INDEX.find(([l]) => l.toLowerCase() === topicLabel) : null;
   const language = $("f-language").value || null;
@@ -246,6 +321,10 @@ $("finder-form").addEventListener("submit", (e) => {
     limit: 15,
   });
 
+  LAST_RES = { res, language, langLabel: ($("f-language").selectedOptions[0] || {}).textContent || "" };
+  $("check-list").innerHTML = [...res.ranked, ...res.excluded]
+    .map(r => `<option value="${esc(r.name)}">`).join("");
+  $("check-country").value = ""; $("check-answer").innerHTML = "";
   const langCol = !!language;
   // The momentum criterion only scores above zero in a country whose own rising
   // list holds this exact topic, and in most weeks only a handful of the tracked
@@ -314,6 +393,96 @@ $("finder-form").addEventListener("submit", (e) => {
     ? `Top ${res.top.length} of ${res.ranked.length} rankable countries — scores are comparative within this search only.`
     : "No countries in this scope have the required survey data for that combination — try removing the channel or language filter.";
 });
+
+/* ---------- Toolbar: copy link, CSV export, print ---------- */
+$("copy-screen").addEventListener("click", async () => {
+  const b = $("copy-screen");
+  try { await navigator.clipboard.writeText(window.location.href); b.textContent = "Link copied ✓"; }
+  catch (e) { b.textContent = "Copy from the address bar"; }
+  setTimeout(() => { b.textContent = "Copy link to this screening"; }, 2500);
+});
+
+/* A cell that starts with = + - @ would execute as a formula in Excel —
+   same guard as the analyst's question log. */
+const csvCell = (v) => {
+  let t = String(v == null ? "" : v);
+  if (/^[=+\-@]/.test(t)) t = "'" + t;
+  return '"' + t.replace(/"/g, '""') + '"';
+};
+
+$("export-csv").addEventListener("click", () => {
+  if (!LAST_RES) return;
+  const { res, language, langLabel } = LAST_RES;
+  const rows = [];
+  rows.push(["Audience Intelligence Atlas — market screening (decision support, not a final market selection)"]);
+  rows.push(["Weights", Object.entries(res.weights).map(([k, w]) => `${k} ${w}%`).join(" · ")]);
+  rows.push(["Method", res.methodNote]);
+  rows.push([]);
+  const head = ["rank", "country", "iso3", "score", "lead channel", "effective reach %", "reach capped at internet?"];
+  if (language) head.push(`${langLabel} speakers %`);
+  head.push("est. people reachable", "risk notes", "survey", "survey construct note");
+  rows.push(head);
+  res.ranked.forEach((r, i) => {
+    const row = [i + 1, r.name, r.iso, r.score, r.lead.name, r.lead.effective, r.lead.capped ? "yes" : "no"];
+    if (language) row.push(r.langPct != null ? Math.round(r.langPct) : "no data");
+    row.push(r.reachPeople != null ? r.reachPeople : "n/a",
+             r.flags.join("; ") || "none", r.survey || "", r.constructNote || "");
+    rows.push(row);
+  });
+  // The exclusions travel WITH the ranking — a spreadsheet missing them
+  // would silently look like a ranking of every country.
+  rows.push([]);
+  rows.push(["Excluded — missing the required survey data (not ranked low)"]);
+  rows.push(["country", "iso3", "reason"]);
+  res.excluded.forEach(x => rows.push([x.name, x.iso, x.reason]));
+  const csv = rows.map(r => r.map(csvCell).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
+  a.download = "atlas-market-screening.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+$("print-screen").addEventListener("click", () => {
+  $("excluded").open = true;           // the exclusions are part of the result
+  window.print();
+});
+
+/* ---------- "Why is country X (not) here?" ---------- */
+function renderCheck() {
+  if (!LAST_RES) return;
+  const q = $("check-country").value.trim().toLowerCase();
+  const out = $("check-answer");
+  if (!q) { out.innerHTML = ""; return; }
+  const { res, language, langLabel } = LAST_RES;
+  const ri = res.ranked.findIndex(r => r.name.toLowerCase() === q || r.iso.toLowerCase() === q);
+  if (ri >= 0) {
+    const r = res.ranked[ri];
+    const parts = [];
+    parts.push(`<strong>${esc(r.name)}</strong> is ranked <strong>#${ri + 1}</strong> of ${res.ranked.length} with score ${r.score}.`);
+    const c = r.components || {};
+    const bits = [];
+    if (c.reach != null) bits.push(`${r.lead.name} reaches ${r.lead.effective}%${r.lead.capped ? " (capped at internet access)" : ""}`);
+    if (language && c.language != null) bits.push(`${esc(langLabel)} ${r.langPct != null ? Math.round(r.langPct) + "%" : "no data — scored 0, not excluded"}`);
+    if (c.audience != null) bits.push(`audience-structure score ${Math.round(c.audience)}/100`);
+    if (c.momentum != null) bits.push(r.risingHit ? "topic currently rising here" : "no current rise in this topic here (momentum scored 0)");
+    if (c.openness != null) bits.push(`press-freedom openness ${Math.round(c.openness)}/100`);
+    parts.push(`<span class="why-row">Inputs: ${bits.join(" · ")}.</span>`);
+    if (r.flags.length) parts.push(`<span class="risk">⚠ ${esc(r.flags.join("; "))}</span>`);
+    parts.push(`<span class="hint">Survey: ${esc(r.survey || "n/a")}${r.constructNote ? " · " + esc(r.constructNote) : ""}</span>`);
+    out.innerHTML = parts.join("<br>");
+    return;
+  }
+  const ex = res.excluded.find(x => x.name.toLowerCase() === q || x.iso.toLowerCase() === q);
+  if (ex) {
+    out.innerHTML = `<strong>${esc(ex.name)}</strong> is <strong>not ranked</strong>: ${esc(ex.reason)}. ` +
+      `A country with no data is not a country that scored badly — it is excluded by name so the gap stays visible.`;
+    return;
+  }
+  out.innerHTML = `<span class="hint">Not part of this screening — it may be outside the selected region. Try the exact name from the lists above.</span>`;
+}
+$("check-country").addEventListener("input", renderCheck);
+$("check-country").addEventListener("change", renderCheck);
 
 function fmtPeople(v) {
   return v >= 1e9 ? (v / 1e9).toFixed(2) + "B" : v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : Math.round(v / 1000) + "k";

@@ -92,6 +92,27 @@
     border-radius: 999px; padding: 0 22px; font-size: 14px; cursor: pointer; font-family: inherit; }
   .askbar button:hover, .askbar button:focus-visible { background: var(--un-blue-ink); }
   .askbar button:disabled { background: var(--muted-2); cursor: default; }
+  .answer-tools { display: flex; gap: 8px; margin-top: 8px; }
+  .answer-tools .tool { border: 1px solid var(--border); background: #fff; color: var(--muted);
+    font: inherit; font-size: 11.5px; padding: 3px 10px; border-radius: 999px; cursor: pointer; }
+  .answer-tools .tool:hover { color: var(--un-blue-dark); border-color: var(--un-blue); }
+
+  /* Print: one clean, cited page. Only the chosen answer (.print-target)
+     is printed — chrome, input, chips and other messages are dropped. */
+  @media print {
+    header.site, form#askform, #suggestions, #mode-banner, .footer-note,
+    .answer-tools, .suggest, .msg.user, .thinking { display: none !important; }
+    body { background: #fff; }
+    #chat .msg.analyst { display: none; }
+    #chat .msg.analyst.print-target { display: block; border: none; box-shadow: none;
+      max-width: 100%; padding: 0; }
+    #chat .msg.analyst.print-target::before {
+      content: "Audience Intelligence Atlas — United Nations · generated answer, sources below";
+      display: block; font-size: 10px; color: #555; border-bottom: 1px solid #ccc;
+      padding-bottom: 6px; margin-bottom: 12px; }
+    a { color: #000; text-decoration: none; }
+    .footnotes a::after { content: " (" attr(href) ")"; font-size: 9px; color: #555; }
+  }
   .footer-note { text-align: center; font-size: 11px; color: var(--muted-2); padding: 0 16px 14px; }
   /* the answer shown when something goes wrong tells the reader to use
      "Report an error" — the link has to exist on this page for that to work */
@@ -289,6 +310,32 @@ function addAnalyst(answer, evidence, note, followups) {
     }
     el.appendChild(wrap);
   }
+  const tools = document.createElement("div");
+  tools.className = "answer-tools";
+  const copy = document.createElement("button");
+  copy.type = "button"; copy.className = "tool"; copy.textContent = "Copy link";
+  copy.title = "Copy a link that re-asks this question — the recipient's browser computes the same answer from the same published data";
+  copy.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      copy.textContent = "Link copied ✓";
+    } catch (e) {
+      // clipboard can be blocked (permissions, http) — show the URL instead
+      copy.textContent = "Copy from the address bar";
+    }
+    setTimeout(() => { copy.textContent = "Copy link"; }, 2500);
+  });
+  const prt = document.createElement("button");
+  prt.type = "button"; prt.className = "tool"; prt.textContent = "Print / save PDF";
+  prt.title = "Prints this answer with its sources as a clean one-pager";
+  prt.addEventListener("click", () => {
+    // print only THIS answer: mark it, print, unmark
+    document.querySelectorAll(".msg.print-target").forEach(m => m.classList.remove("print-target"));
+    el.classList.add("print-target");
+    window.print();
+  });
+  tools.append(copy, prt);
+  el.appendChild(tools);
   chat.appendChild(el);
   el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -428,6 +475,7 @@ let busy = false;   // suggestion chips call form.requestSubmit() directly and
 async function ask(question) {
   if (busy) return;
   busy = true;
+  reflectQuestionInUrl(question);
   addUser(question);
   input.value = ""; send.disabled = true;
   addThinking();
@@ -456,6 +504,34 @@ form.addEventListener("submit", (e) => {
   const q = input.value.trim();
   if (q) ask(q);
 });
+
+/* ---------- Shareable answers ----------
+ * The address bar always holds a link to the current question: asking
+ * anything writes ?q= into the URL (replaceState — no history spam), and
+ * opening a link with ?q= asks it automatically once the engine is ready.
+ * Nothing is sent anywhere — the link just tells the recipient's browser
+ * which question to compute for itself, on the same published data.
+ */
+function reflectQuestionInUrl(q) {
+  try {
+    const u = new URL(window.location.href);
+    u.searchParams.set("q", q);
+    history.replaceState(null, "", u.pathname + "?" + u.searchParams.toString());
+  } catch (e) { /* URL updates are a convenience, never load-bearing */ }
+}
+
+async function runSharedQuestion() {
+  let q;
+  try { q = new URLSearchParams(window.location.search).get("q"); } catch (e) { return; }
+  if (!q) return;
+  q = q.trim().slice(0, 400);          // sanity bound; longer is no question
+  if (!q) return;
+  // wait for the engine rather than racing it — shared links open cold
+  for (let i = 0; i < 100 && !engineReady && !engineError; i++)
+    await new Promise(r => setTimeout(r, 100));
+  if (engineReady) { input.value = q; form.requestSubmit(); }
+}
+runSharedQuestion();
 </script>
 </body>
 </html>

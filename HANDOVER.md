@@ -20,6 +20,14 @@ pages, no server, no database, no login, total running cost **$0**:
 | **Market Finder** (`finder.html`) | "We have a campaign — which countries should get it?" |
 | **AI Analyst** (`ask.html`) | Free-text questions, evidence-backed answers. Deterministic — it computes answers from the Atlas's own data in the visitor's browser and cannot invent figures |
 
+**Sharing what the Atlas produces.** Analyst answers and Market Finder screenings
+both live in the URL: asking a question writes it into the address bar, and opening
+such a link re-runs it on the recipient's machine (nothing is uploaded — the link
+just says which question to compute). Both pages have a "Copy link" button, both
+print as clean cited one-pagers, and Market Finder exports a CSV that carries the
+excluded countries and their reasons alongside the ranking — so a spreadsheet can
+never be mistaken for a ranking of every country.
+
 Hosting is GitHub Pages (publishes automatically on every commit). Automation
 is GitHub Actions. Data lives in `data/` as JSON files a human can open.
 
