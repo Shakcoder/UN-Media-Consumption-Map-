@@ -83,6 +83,19 @@ It answers: **"The Atlas holds no campaign archive."** — then explains what it
 - **The Notes column** — Uganda ranks around #9 on radio reach and carries **⚠ Not Free — vet partner outlets individually**.
 > *"When a high-reach market has a restricted press environment, it doesn't drop the country and it doesn't stay quiet — it ranks it and warns you to vet partners individually. That's a judgement call we want a human making, with the flag in front of them."*
 
+**Then hand the room the microphone.** Under the table there's a box: *"Why is a country ranked where it is — or not ranked at all?"*
+
+**Say:** "Name a country — any one."
+
+**Do:** Type whatever they say. Two things can happen, and both make the point:
+
+- **It's in the ranking** → you get its position and the inputs behind it, e.g. *"Uganda is ranked #9 of 42 with score 72.1. Inputs: radio reaches 78.8% · press-freedom openness 42/100 · ⚠ Not Free — vet partner outlets individually."*
+- **It's not** → you get the named reason: *"Chad is not ranked: no media survey data. A country with no data is not a country that scored badly."*
+
+> *"You pick the country, and it shows its working either way. That's the difference between a scoring tool and a black box."*
+
+*(If they name somewhere outside the region you screened — France, say — it tells you that too. Just re-run with Region set to Worldwide.)*
+
 *(The same screening is available in plain English from the analyst — "Which countries should we prioritize for a radio vaccination campaign?" returns the ranked table plus a **"Not rankable (111 countries)"** line that breaks the excluded countries down by reason. Use whichever fits the room; don't demo both.)*
 
 ---
@@ -110,6 +123,14 @@ whats trending in nigerai
 Which countries have state-controlled media environments?
 ```
 > *"It understands what you mean, not just keywords — that's a press-freedom ranking, worst first."*
+
+---
+
+## 4b. Taking it away (20 seconds)
+
+**Do:** With any answer or screening on screen, click **Copy link**, then **Print / save PDF**.
+
+**Say:** "Anything you see here travels. The link re-runs the question on your own machine — nothing is stored or sent anywhere — so you can paste it into an email or a chat and the recipient gets the same answer computed from the same published data. Or print it: you get a one-page brief with its sources on it. And a screening downloads as a spreadsheet that carries the excluded countries and their reasons in the same file, so it can never be mistaken for a ranking of every country."
 
 ---
 
