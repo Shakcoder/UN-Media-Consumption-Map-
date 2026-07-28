@@ -92,6 +92,16 @@
     border-radius: 999px; padding: 0 22px; font-size: 14px; cursor: pointer; font-family: inherit; }
   .askbar button:hover, .askbar button:focus-visible { background: var(--un-blue-ink); }
   .askbar button:disabled { background: var(--muted-2); cursor: default; }
+  .reasoning { margin-top: 10px; border-top: 1px solid var(--border-soft); padding-top: 8px; }
+  .reasoning summary { cursor: pointer; font-size: 11.5px; color: var(--muted-2);
+    list-style: none; display: inline-flex; align-items: center; gap: 5px; }
+  .reasoning summary::-webkit-details-marker { display: none; }
+  .reasoning summary::before { content: "▸"; font-size: 9px; }
+  .reasoning[open] summary::before { content: "▾"; }
+  .reasoning summary:hover { color: var(--un-blue-dark); }
+  .reasoning ol { margin: 8px 0 0; padding-left: 20px; font-size: 12px; color: var(--muted);
+    line-height: 1.6; }
+  .reasoning li { margin-bottom: 4px; }
   .answer-tools { display: flex; gap: 8px; margin-top: 8px; }
   /* An author `display` declaration beats the browser's own [hidden] rule, so
      hiding the toolbar on status notices needs saying here too — otherwise the
@@ -112,6 +122,9 @@
   @media print {
     header.site, form#askform, #suggestions, #mode-banner, .footer-note,
     .answer-tools, .suggest, .msg.user, .thinking { display: none !important; }
+    /* a printed brief should carry the reasoning, whether or not it was expanded */
+    .reasoning[open] > *:not(summary), .reasoning > *:not(summary) { display: block !important; }
+    .reasoning summary { font-weight: 600; }
     body { background: #fff; }
     #chat .msg.analyst { border: none; box-shadow: none; max-width: 100%; padding: 0;
       break-inside: avoid; margin-bottom: 18px; }
@@ -163,7 +176,7 @@
 <main class="chat" id="chat" aria-live="polite">
   <div class="msg analyst">
     <div class="body">
-      <p>Hello — I answer questions about <b>where and how to communicate</b>, using only the Atlas's verified data: platform usage and trust per country (Reuters Institute DNR 2026, Afrobarometer), press and political freedom (RSF 2025, official Freedom House 2026 files), connectivity (World Bank), and live topic trends updated daily.</p>
+      <p>Hello — I answer questions about <b>where and how to communicate</b>, using only the Atlas's verified data: platform usage and trust per country (Reuters Institute DNR 2026, Afrobarometer), press and political freedom (RSF 2026, official Freedom House 2026 files), connectivity (World Bank), and live topic trends updated daily.</p>
       <p>Ask in your own words — I understand typos, comparisons, rankings, and follow-ups. When the data can't support an answer, I say so. Try one of these:</p>
     </div>
     <div class="suggest" id="suggestions" role="group" aria-label="Example questions"></div>
@@ -301,10 +314,21 @@ function sourcesBlock(evidence) {
 const escapeHtml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const escapeAttr = (s) => escapeHtml(s).replace(/"/g, "&quot;");
 
-function addAnalyst(answer, evidence, note, followups, forQuestion) {
+/* The engine reports the decisions it actually made — which words it
+   recognised, which route it took, what it drew on. Collapsed by default: it
+   is there for the reader who wonders "why did it answer THAT", and for
+   anyone who needs to show the tool is not a black box. */
+function reasoningBlock(reasoning) {
+  if (!reasoning || !reasoning.length) return "";
+  const items = reasoning.map(r => `<li>${mdLite(r)}</li>`).join("");
+  return `<details class="reasoning"><summary>How I got this</summary><ol>${items}</ol></details>`;
+}
+
+function addAnalyst(answer, evidence, note, followups, forQuestion, reasoning) {
   const el = document.createElement("div");
   el.className = "msg analyst";
   let html = `<div class="body">${mdLite(answer)}</div>`;
+  html += reasoningBlock(reasoning);
   html += sourcesBlock(evidence);
   if (note) html += `<div class="note">${note}</div>`;
   el.innerHTML = html;
@@ -423,7 +447,7 @@ async function askLocal(question) {
   logQuestion(question, r.clarify ? "clarify"
     : /couldn't match that to the Atlas/.test(r.answer || "") ? "no-match" : "answered");
   if (r.clarify) { addClarify(r.clarify); return; }
-  addAnalyst(r.answer, r.evidence, "", r.followups, question);
+  addAnalyst(r.answer, r.evidence, "", r.followups, question, r.reasoning);
 }
 
 /* ---------- Local question log (improvement loop, 2026-07-23) ----------

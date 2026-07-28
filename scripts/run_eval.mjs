@@ -11,6 +11,10 @@
  *                                               with structural checks: all six
  *                                               memo sections + disclaimers
  *                                               present, no null leakage)
+ *         node scripts/run_eval.mjs selfknowledge
+ *                                               (conversational questions: the
+ *                                               dead-end rate, and that every
+ *                                               answer can explain itself)
  *         node scripts/run_eval.mjs market     (Market Finder invariants: the
  *                                               findMarkets() honesty contract —
  *                                               named exclusions, disclosed
@@ -226,6 +230,52 @@ if (process.argv[2] === "strategy") {
   console.log(`Strategy suite: ${STRATEGY_PROMPTS.length - fails}/${STRATEGY_PROMPTS.length} structurally sound (sections + disclaimers + no null leakage)`);
   console.log("Results: eval/strategy_results.json");
   process.exit(fails ? 1 : 0);
+}
+
+if (process.argv[2] === "selfknowledge") {
+  // Added 2026-07-28. Measures the thing users actually complain about: how
+  // often a realistic, conversational question dead-ends on "I couldn't match
+  // that". These are deliberately NOT the golden-100's well-formed questions —
+  // they are how people really type, including questions about the tool
+  // itself. An honest "the Atlas has no X" answer counts as a pass; a generic
+  // refusal does not.
+  const CONVERSATIONAL = [
+    "why is radio still so important", "what should I know before a campaign in the Sahel",
+    "is TikTok worth it", "how do I reach people who don't trust the news",
+    "which of our target countries are riskiest for journalists",
+    "explain the difference between the surveys you use",
+    "how confident are you in the Nigeria numbers", "what data do you have on India",
+    "summarise the biggest opportunities globally", "where is press freedom getting worse",
+    "we have a small budget, where does it go furthest",
+    "what languages should we produce in for West Africa",
+    "who should we partner with in Egypt", "is social media replacing TV",
+    "what changed since last month", "help", "what can you do", "how does the atlas work",
+    "tell me something interesting", "compare africa and europe", "rank countries by internet",
+    "youth in latin america", "misinformation risk in the balkans",
+    "cheapest countries to advertise in", "when should we launch",
+    "how accurate is this", "where does your data come from", "what can't you tell me",
+  ];
+  const out = [];
+  let dead = 0, noReasoning = 0;
+  for (const q of CONVERSATIONAL) {
+    engine.resetConversation();
+    const r = engine.answerQuestion(q);
+    const a = r.answer || "";
+    const isDead = /couldn't match that to the Atlas/i.test(a);
+    if (isDead) dead++;
+    // every answered question must also be able to explain itself
+    if (!r.clarify && !isDead && !(r.reasoning && r.reasoning.length)) noReasoning++;
+    out.push({ question: q, outcome: r.clarify ? "clarify" : isDead ? "DEAD END" : "answered",
+               reasoning_steps: (r.reasoning || []).length, first_line: a.split("\n")[0].slice(0, 120) });
+  }
+  await mkdir(join(ROOT, "eval"), { recursive: true });
+  await writeFile(join(ROOT, "eval", "selfknowledge_results.json"),
+    JSON.stringify({ run_note: "Conversational questions — dead-end rate and reasoning-trace coverage.",
+                     counts: { asked: CONVERSATIONAL.length, dead_ends: dead, missing_reasoning: noReasoning },
+                     results: out }, null, 1));
+  console.log(`Conversational suite: ${CONVERSATIONAL.length - dead}/${CONVERSATIONAL.length} routed (${dead} dead ends), ${noReasoning} answers without a reasoning trace`);
+  console.log("Results: eval/selfknowledge_results.json");
+  process.exit(dead > 0 || noReasoning > 0 ? 1 : 0);
 }
 
 if (process.argv[2] === "market") {

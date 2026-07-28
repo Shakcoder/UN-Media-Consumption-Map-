@@ -62,9 +62,10 @@ python3 scripts/validate_atlas.py
 node scripts/run_eval.mjs
 node scripts/run_eval.mjs strategy
 node scripts/run_eval.mjs market
+node scripts/run_eval.mjs selfknowledge
 ```
 
-Expected: `0 error(s)`, `0 CRASHED`, `18/18`, `73/73`. The Code gates workflow
+Expected: `0 error(s)`, `0 CRASHED`, `18/18`, `73/73`, `28/28 routed (0 dead ends)`. The Code gates workflow
 runs the same four automatically on every push — so even if you forget, a
 broken change shows a red X on the commit instead of silently breaking the
 site. What the suites check: [eval/README.md](eval/README.md).

@@ -513,6 +513,10 @@ const GAPS = [
     re: /\b(our (last|previous|past|next)\b.{0,30}\bcampaigns?|past campaigns|similar campaigns|previous campaigns|campaigns? (x|achiev\w+|underperform\w+|results?|reach\w*)|best campaigns|benchmarks?|engagement (rates?|benchmarks?|numbers?)|a b test\w*|ab test\w*|trust lift|partnerships? (drove|drive|driving)|did (it|they) work)\b/,
     standalone: true,
     note: "**The Atlas holds no campaign archive.** It is a media-landscape evidence base — it cannot see any organisation's past campaigns, engagement numbers, or performance benchmarks (that data was never collected, and no free source provides it). What it *can* do is describe the current landscape wherever the next campaign will run: platform reach, trust, connectivity, languages, press-freedom risk." },
+  { key: "media-cost",
+    re: /\b(cheap(est|er)?|costs?\b|cost per|cpm|cpc|pric(e|es|ing)|budget.{0,30}(goes|go|stretch\w*|furthest|further)|where does it go (furthest|further)|value for money|affordab\w+|media buy\w*|ad rates?|how much .{0,20}(cost|spend|budget))\b/,
+    standalone: true,
+    note: "**The Atlas holds no media prices.** Nobody publishes per-country ad rates, CPMs or production costs for free — so it cannot tell you what a campaign costs anywhere, or rank markets by price. What it *does* hold that bears on value: the number of people each channel actually reaches in a market (reach × population), which is the denominator of any cost-per-person calculation, and industry ad-spend forecasts for a handful of large markets as a directional signal of where commercial money is going. Ask \"which countries should we prioritise for a radio campaign?\" and the screening reports estimated people reachable per market — pair that with quotes from your media buyer." },
   { key: "format-performance",
     re: /\b(podcasts?|infographics?|short form|long form|live video|live stream\w*|video (or|vs|versus) text|text (or|vs|versus) video|audio content|content formats?|what formats?|which formats?|formats? (perform\w*|work\w*|suit\w*)|format (data|performance)|by format|creator led)\b/,
     standalone: true,
@@ -2346,6 +2350,260 @@ function maybeClarify(question, ents) {
 function noFollowContext() { return !LAST.isos.length && !LAST.regions.length; }
 
 // ---------------------------------------------------------------------------
+// SELF-KNOWLEDGE — the Atlas answering questions about itself.
+//
+// A quarter of the conversational questions people actually type are about the
+// tool rather than the world: "what can you do", "how does this work", "how do
+// your surveys differ", "how confident are you". Every one of those used to
+// dead-end on "I couldn't match that", even though the answer sits in the
+// engine's own tables. These routes read the live data — never a hardcoded
+// count — so they cannot drift out of step with what is actually loaded.
+// ---------------------------------------------------------------------------
+
+/** Live coverage figures, counted from the loaded data at answer time. */
+function atlasCoverage() {
+  const isos = Object.keys(COUNTRIES || {});
+  let news = 0, radio = 0, platform = 0, rsf = 0;
+  const surveys = {};
+  for (const iso of isos) {
+    const c = COUNTRIES[iso] || {};
+    const nc = c.news_consumption || {};
+    if (nc.source) {
+      news++;
+      const fam = String(nc.source).replace(/,?\s*(weighted )?microdata.*$/i, "").replace(/\s*\(n=[\d,]+\).*$/, "").trim();
+      surveys[fam] = (surveys[fam] || 0) + 1;
+    }
+    if (nc.radio_as_news_source_pct != null) radio++;
+    if (c.platform_use) platform++;
+    if ((c.information_freedom || {}).press_freedom_score != null) rsf++;
+  }
+  return { total: isos.length, news, radio, platform, rsf, surveys };
+}
+
+/** "What can you do?" — capabilities, grounded in what is actually loaded. */
+function composeCapabilities(ev) {
+  const cov = atlasCoverage();
+  const L = [];
+  L.push(`**What I can answer, and what I hold.**`);
+  L.push("");
+  L.push(`I'm the Atlas's analyst. I don't search the web and I don't write from memory — every answer is computed from the Atlas's published data files, in your browser, and every figure carries the source it came from.`);
+  L.push("");
+  L.push(`**Things I'm good at**`);
+  L.push(`- **A country's media landscape** — "media habits in Indonesia", "tell me about Chad"`);
+  L.push(`- **A recommendation** — "distribution strategy for vaccination content in Nigeria" gives a full brief: the decision, ranked opportunities, tradeoffs, risks, confidence`);
+  L.push(`- **Which countries to choose** — "which countries should we prioritise for a radio campaign?"`);
+  L.push(`- **Comparisons and rankings** — "compare news trust in France and Germany", "top 5 African countries by radio reliance"`);
+  L.push(`- **What's being paid attention to** — "what's trending in Kenya this week?"`);
+  L.push(`- **Questions about me** — how the surveys differ, how confident I am, what I can't do`);
+  L.push("");
+  L.push(`**What I hold right now** (counted from the loaded data, not a claim):`);
+  L.push(`- ${cov.total} countries profiled; **${cov.news} with a real news-consumption survey** behind them`);
+  L.push(`- ${cov.rsf} with a press-freedom score; ${cov.radio} with measured radio reach; ${cov.platform} with measured platform use`);
+  L.push(`- ${REGISTRY.length} topics tracked daily${TRENDS && TRENDS.coverage ? `, of which ${TRENDS.coverage.topics_scored} are currently measurable` : ""}`);
+  L.push("");
+  L.push(`**What I will never do:** invent a number, or fill a gap with an estimate. Where the data stops, I say so and tell you what would answer it instead. That's the point of me.`);
+  ev.add("Atlas coverage", `Counted live from data/countries.json (${cov.total} records) and the topic registry at the moment of asking.`, []);
+  return L.join("\n");
+}
+
+/** "How do your surveys differ?" — the construct problem, in plain English. */
+function composeMethodology(ev) {
+  const cov = atlasCoverage();
+  const L = [];
+  L.push(`**How the Atlas knows what it knows.**`);
+  L.push("");
+  L.push(`Media-use figures come from national surveys — but *different* surveys ask different questions, and that matters more than it sounds:`);
+  L.push("");
+  const fams = Object.entries(cov.surveys).sort((a, b) => b[1] - a[1]);
+  for (const [fam, n] of fams) {
+    let construct = "";
+    if (/Reuters/i.test(fam)) construct = "asks which sources you used **in the past week**. Its samples are online panels — in India, Kenya, Nigeria, South Africa and Morocco that skews urban, younger and more connected, and those countries carry a visible caveat.";
+    else if (/Afrobarometer/i.test(fam)) construct = "face-to-face, nationally representative, asks **how often** you get news from each source. The reason radio leads across much of Africa in this Atlas is that this survey actually measures it.";
+    else if (/Arab Barometer/i.test(fam)) construct = "asks for your **single most important** news source. Shares are therefore structurally lower than a 'used this week' figure and must not be compared with one directly.";
+    else if (/Asian Barometer/i.test(fam)) construct = "also asks for the **single most important** channel, and its answer option combines internet and social media — so social media cannot be separated for those countries.";
+    else if (/World Values/i.test(fam)) construct = "asks about **daily or weekly** use, a wider window than 'past week'.";
+    else if (/Eurobarometer/i.test(fam)) construct = "asks about **general media use**, not news specifically.";
+    L.push(`- **${fam}** — ${n} ${n === 1 ? "country" : "countries"}. ${construct}`);
+  }
+  L.push("");
+  L.push(`**Why I keep saying "not directly comparable":** a country measured at 66% by one survey and 45% by another may have identical media habits — the questions differ. I name the survey on every figure so you can see when you are comparing like with like. Comparing across survey families is the single easiest way to draw a wrong conclusion from this data.`);
+  L.push("");
+  L.push(`**The one adjustment I make:** online and social reach are capped at a country's internet penetration. A survey can honestly report 94% online news use in a country where 41% are online — because it surveyed the people who are already online. Treating that as national reach is the most expensive mistake this tool exists to prevent.`);
+  L.push("");
+  L.push(`Everything else — connectivity, demographics, literacy — comes from the World Bank; press freedom from RSF; political and internet freedom from Freedom House; language shares from Unicode CLDR; live attention from Wikipedia reading patterns and the GDELT news monitor.`);
+  ev.add("Survey constructs", `Construct notes are carried per country in data/countries.json (news_consumption.survey_note) and applied on every figure the analyst reports.`, []);
+  return L.join("\n");
+}
+
+/** "How confident are you?" / "how accurate is this?" */
+function composeTrustworthiness(ev) {
+  const cov = atlasCoverage();
+  const L = [];
+  L.push(`**How much to trust what I tell you.**`);
+  L.push("");
+  L.push(`- **The figures are not mine.** I aggregate and cite; I don't generate. Every number traces to the World Bank, RSF, Freedom House, the Reuters Institute, or a named barometer survey.`);
+  L.push(`- **Coverage is honest, not flattering.** ${cov.news} of ${cov.total} countries have a real news survey. The other ${cov.total - cov.news} show as "profile only" and are excluded from rankings **by name, with the reason** — never quietly ranked last.`);
+  L.push(`- **Every brief states its own confidence** and lists what it cannot tell you at any confidence: past campaign performance, whether video beats text, age and gender breakdowns, cost per channel. No free source measures those.`);
+  L.push(`- **I decline rather than guess.** About ten classes of question have no free data source; I name what's missing and offer the nearest real evidence instead.`);
+  L.push(`- **What could still be wrong:** survey vintages differ (some figures are years old — the Sources tab shows each observation year), country attribution of topic trends is a documented approximation, and industry ad-spend figures are directional forecasts, labelled as such.`);
+  L.push("");
+  L.push(`If a number ever looks wrong, the Sources tab on that country's profile names the file, the organisation and the year it came from.`);
+  ev.add("Confidence and limits", `Per-answer confidence is computed from survey type, sample representativeness and data completeness; gap classes are enumerated in the engine's GAPS table.`, []);
+  return L.join("\n");
+}
+
+/**
+ * THE REASONING TRACE — what the engine actually did, in plain English.
+ *
+ * This is not a narrative written to look like thinking: every line is read
+ * back from the decisions the engine really made — which words it recognised,
+ * which route it took, which sources the answer drew on. That makes it useful
+ * three ways: a reader learns why they got this answer, someone whose question
+ * was misread can see exactly where it went wrong, and a supervisor can see
+ * the tool is not a black box. It costs nothing to produce because the work
+ * has already happened by the time it is called.
+ */
+function reasoningTrace(question, ents, kind, ev) {
+  const steps = [];
+
+  // 1. What was recognised in the question.
+  const seen = [];
+  if (ents.countries && ents.countries.length)
+    seen.push(`${ents.countries.length === 1 ? "country" : "countries"}: ${ents.countries.map(i => (COUNTRIES[i] || {}).name || i).join(", ")}`);
+  if (ents.regions && ents.regions.length)
+    seen.push(`region: ${ents.regions.map(regionDisplay).join(", ")}`);
+  if (ents.topics && ents.topics.length)
+    seen.push(`topic: ${ents.topics.map(t => t.label).join(", ")}`);
+  if (ents.attributes && ents.attributes.length)
+    seen.push(`measure: ${ents.attributes.map(a => (ATTRIBUTES[a] || {}).label || a).join(", ")}`);
+  if (ents.platforms && ents.platforms.length)
+    seen.push(`platform: ${ents.platforms.map(p => PLATFORM_NAMES[p] || p).join(", ")}`);
+  if (ents.audiences && ents.audiences.length)
+    seen.push(`audience: ${ents.audiences.join(", ")}`);
+  steps.push(seen.length
+    ? `**Read your question as** — ${seen.join(" · ")}.`
+    : `**Read your question as** — a general question about the Atlas itself, with no country, topic or measure named.`);
+
+  // 2. Which route was taken, and why that one.
+  const routes = {
+    strategy: "you are deciding what to *do*, not asking what a number is — so I built a full brief: decision, ranked opportunities, tradeoffs, risks, confidence",
+    finder: "you asked *which* countries, not about one — so I screened every country with the required survey data and disclosed the weights",
+    rank: "you asked for an ordering, so I ranked the countries that have this measure and said how many lack it",
+    compare: "you named several places, so I put them side by side on the measures they share",
+    country: "you asked about one place, so I pulled its landscape and the figures behind it",
+    region: "you named a region, so I aggregated the countries in it that have data",
+    topic: "you asked about a topic, so I used the live attention data rather than the survey data",
+    platform: "you named a platform, so I looked at where it appears in countries' leading-platform lists",
+    meta: "you asked where the numbers come from or how current they are, so I reported the Atlas's own inventory and the survey behind the figures rather than looking anything up in the world",
+    greeting: "you said hello rather than asking anything, so there was nothing to look up",
+    self: "you asked about the Atlas itself rather than about the world, so I answered from what is actually loaded — the counts below are read from the data at the moment you asked, not written in advance",
+    gap: "the measure you asked for is one no free source publishes, so instead of guessing I named what is missing and what the Atlas holds nearest to it",
+    help: "nothing in it mapped to a country, topic or measure, so I answered about what I can do instead",
+  };
+  if (routes[kind]) steps.push(`**Chose the ${kind} route** — ${routes[kind]}.`);
+
+  // 3. What the answer actually rests on — the evidence titles, not a claim.
+  const titles = (ev.list() || []).map(x => x.title).filter(Boolean);
+  if (titles.length)
+    steps.push(`**Drew on** — ${titles.slice(0, 4).join("; ")}${titles.length > 4 ? `; and ${titles.length - 4} more` : ""}. Each is listed with its source under the answer.`);
+
+  // 4. The honesty step: name what was deliberately left out.
+  const omitted = [];
+  if (ents.countries && ents.countries.length > 6 && kind === "compare")
+    omitted.push("countries beyond the first six, to keep the table readable");
+  if (kind === "rank" || kind === "finder")
+    omitted.push("countries with no data for this measure — excluded by name, never ranked low");
+  if (omitted.length) steps.push(`**Left out** — ${omitted.join("; ")}.`);
+
+  return steps;
+}
+
+/**
+ * "What's notable right now?" — an open-ended ask, answered with findings the
+ * Atlas can actually stand behind rather than a refusal. Every line is
+ * computed live from the loaded data; nothing here is written in advance.
+ */
+function composeGlobalInsight(ev) {
+  const L = [];
+  L.push(`**What stands out in the Atlas right now.**`);
+  L.push("");
+
+  // 1. The capped-reach gap: the finding that changes campaign decisions most.
+  const capped = [];
+  for (const iso of Object.keys(COUNTRIES)) {
+    const f = facts(iso);
+    if (!f || f.online == null || f.internet == null || f.pop == null) continue;
+    const gap = f.online - f.internet;
+    if (gap >= 25 && f.pop >= 2e7) capped.push({ f, gap });
+  }
+  capped.sort((a, b) => b.gap - a.gap);
+  if (capped.length) {
+    const top = capped.slice(0, 4);
+    L.push(`**Digital reach is overstated in ${capped.length} large markets.** A survey can report high online-news use in a country where far fewer people are online at all — it surveyed the connected. The widest gaps:`);
+    for (const { f, gap } of top)
+      L.push(`- **${f.name}** — ${fmt(f.online)} online news use, but only ${fmt(f.internet)} internet penetration (${Math.round(gap)} points of apparent reach that isn't national)`);
+    L.push(`A digital-only plan in any of these misses most of the population. Ask for a strategy brief on one and the channel table shows the corrected figures.`);
+    ev.add("Capped digital reach", `Computed from news_consumption.online_as_news_source_pct vs connectivity.internet_pct across all ${Object.keys(COUNTRIES).length} country records.`, capped.length ? countryLinks(capped[0].f.iso) : []);
+    L.push("");
+  }
+
+  // 2. Where radio still leads — the recurring surprise for digital-first teams.
+  const radioLed = [];
+  for (const iso of Object.keys(COUNTRIES)) {
+    const f = facts(iso);
+    if (!f || f.radio == null) continue;
+    const rivals = [f.tv, f.online, f.social].filter(v => v != null);
+    if (rivals.length && f.radio >= Math.max(...rivals)) radioLed.push(f);
+  }
+  if (radioLed.length) {
+    radioLed.sort((a, b) => (b.pop || 0) - (a.pop || 0));
+    L.push(`**Radio still out-reaches every other channel in ${radioLed.length} countries**, including ${radioLed.slice(0, 3).map(f => `${f.name} (${fmt(f.radio)})`).join(", ")}. Radio is the only channel that works without electricity, data or literacy — which is why the Atlas never recommends digital-only in these markets.`);
+    ev.add("Radio-led markets", `Counted where measured radio reach meets or exceeds TV, online and social in the same survey. Source per country: Afrobarometer Round 9 and the barometer surveys named on each profile.`, []);
+    L.push("");
+  }
+
+  // 3. Live attention — only what is genuinely current.
+  if (TRENDS && TRENDS.topics) {
+    const rising = Object.entries(TRENDS.topics)
+      .filter(([, t]) => t.momentum === "rising")
+      .sort((a, b) => b[1].global_velocity - a[1].global_velocity).slice(0, 4);
+    if (rising.length) {
+      L.push(`**Rising attention worldwide** (7 days to ${TRENDS.measured_as_of || TRENDS.generated}): ${rising.map(([, t]) => `${t.label_en} (+${Math.round(t.global_velocity * 100)}%)`).join(", ")}.`);
+      addTrendEvidence("Global", ev);
+      L.push("");
+    }
+  }
+
+  // 4. The honest coverage line — the limitation stated without being asked.
+  const cov = atlasCoverage();
+  L.push(`**And what the Atlas cannot see:** ${cov.total - cov.news} of ${cov.total} countries have no free national media survey at all. They are shown as profile-only and excluded from every ranking by name — not ranked low.`);
+  L.push("");
+  L.push(`*These are patterns in the data, not recommendations. Ask about a specific country or campaign and I'll give you the reasoning for that decision.*`);
+  return L.join("\n");
+}
+
+/**
+ * Route a question about the Atlas itself. Returns null when the question is
+ * about the world rather than the tool.
+ */
+function composeSelfKnowledge(qNorm, ev) {
+  const capability = /\b(what can (you|the atlas|this) do|what do you do|how can you help|what are you|who are you|what questions can i ask|how do i use|what should i ask|help me|^ *help *$|capabilities)\b/.test(qNorm);
+  // No trailing \b on this one: it would fail on the plural — "difference
+  // between the surveys" is the commonest phrasing of the question.
+  const methodology = /\b(how (does|do) (the atlas|this|you) work|how do you know|what (data|sources) do you (have|use)|where does (your|the) data come from|explain .{0,24}(survey|method|source)|difference .{0,24}(survey|source)|how are .{0,20}(figures|numbers) (measured|collected)|methodology)/.test(qNorm);
+  const trust = /\b(how (accurate|reliable|confident|trustworthy)|how confident are you|can i trust|how sure are you|margin of error|how good is (the|this) data|what (can.?t|cannot|don.?t) you (tell|do|know|answer)|what are your (limits|limitations|gaps)|what don.?t you (have|know|cover))\b/.test(qNorm);
+  // Open-ended asks with no country, topic or measure attached — "anything
+  // interesting?", "summarise the opportunities". Answerable from live data,
+  // and far more useful than asking the reader to rephrase.
+  const insight = /\b(tell me something|anything (interesting|notable|surprising)|what.{0,12}(interesting|notable|surprising|stands? out)|summar\w+ .{0,24}(opportunit|finding|globally|worldwide|overall)|biggest opportunit\w+|key (findings?|takeaways?|insights?)|overview of the data|what should i know)\b/.test(qNorm);
+  if (trust) return composeTrustworthiness(ev);
+  if (methodology) return composeMethodology(ev);
+  if (capability) return composeCapabilities(ev);
+  if (insight) return composeGlobalInsight(ev);
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Main entry
 // ---------------------------------------------------------------------------
 export function answerQuestion(question) {
@@ -2490,6 +2748,7 @@ export function answerQuestion(question) {
         ? "You're welcome! Anything else you'd like to look into?"
         : "Hello! I'm the Atlas analyst. Ask me where and how to communicate anywhere in the world — every answer comes from the Atlas's verified, cited data.",
       evidence: [], followups: buildFollowups(ents, "help"), clarify: null, entities: ents,
+      reasoning: reasoningTrace(question, ents, "greeting", ev),
     };
   }
 
@@ -2505,8 +2764,9 @@ export function answerQuestion(question) {
       const attr = ATTRIBUTES[key];
       if (attr) metaAns = `**How "${attr.label}" is measured:** ${attr.source}${attr.surveyMix ? " — different surveys underlie different countries (DNR online panels vs face-to-face barometers), so compare direction, not decimals; each country names its survey" : ""}.\n\n` + metaAns;
     }
-    const out = { answer: metaAns, evidence: ev.list(), followups: buildFollowups(ents, "help"), clarify: null, entities: ents };
-    return out;
+    return { answer: metaAns, evidence: ev.list(), followups: buildFollowups(ents, "help"),
+             clarify: null, entities: ents,
+             reasoning: reasoningTrace(question, ents, "meta", ev) };
   }
 
   // Known-gap questions with nothing else to anchor on: answer honestly
@@ -2521,6 +2781,7 @@ export function answerQuestion(question) {
       answer: noteParts.join("\n\n"), evidence: [],
       followups: ["Full media profile of Nigeria", "Top 5 countries by radio reliance in Africa", "What's trending worldwide right now?"],
       clarify: null, entities: ents,
+      reasoning: reasoningTrace(question, ents, "gap", ev),
     };
   }
 
@@ -2641,6 +2902,22 @@ export function answerQuestion(question) {
     }
   }
 
+  // Questions about the Atlas itself, answered from its own loaded data. These
+  // carry no country or topic, so without this they fell through every route
+  // and hit the generic refusal — the tool unable to describe itself.
+  if (!parts.length) {
+    const self = composeSelfKnowledge(qNorm, ev);
+    if (self) {
+      return {
+        answer: self, evidence: ev.list(),
+        followups: ["What's trending worldwide right now?", "Media habits in Indonesia",
+                    "Which countries should we prioritise for a radio campaign?"],
+        clarify: null, entities: ents,
+        reasoning: reasoningTrace(question, ents, "self", ev),
+      };
+    }
+  }
+
   // Known-gap notes ride on top of whatever composed — honesty first, data second
   if (gaps.length && parts.length) {
     parts.unshift(gaps.map(g => g.note).join("\n\n"));
@@ -2651,12 +2928,14 @@ export function answerQuestion(question) {
     return {
       answer: gaps.map(g => g.note).join("\n\n") + "\n\nName a country or region and I'll pull the strongest landscape evidence the Atlas *does* hold for it.",
       evidence: [], followups: buildFollowups(ents, "help"), clarify: null, entities: ents,
+      reasoning: reasoningTrace(question, ents, "gap", ev),
     };
   }
   if (!parts.length) {
     return {
       answer: `I couldn't match that to the Atlas's data — but I likely *can* help if we rephrase. I know **${META ? META.country_count : 195} countries** and **${REGISTRY.length} topics**, and I can compare, rank, and track trends across them.\n\nTry naming a **country** ("media habits in Indonesia"), a **region** ("East Africa"), a **topic** ("climate change"), or a **measure** ("trust in news", "radio reach").`,
       evidence: [], followups: buildFollowups(ents, "help"), clarify: null, entities: ents,
+      reasoning: reasoningTrace(question, ents, "help", ev),
     };
   }
 
@@ -2681,5 +2960,6 @@ export function answerQuestion(question) {
     followups: buildFollowups(ents, kind || "help"),
     clarify: null,
     entities: ents,
+    reasoning: reasoningTrace(question, ents, kind, ev),
   };
 }
