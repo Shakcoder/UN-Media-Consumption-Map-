@@ -418,3 +418,8 @@ if (crashed > 0) {
   console.log("\nCRASHES:");
   for (const r of results.filter(x => x.outcome === "CRASH")) console.log(`  #${r.num}: ${r.question}\n    ${r.error}`);
 }
+// A generic refusal means a golden question the engine used to answer now
+// falls through to "I couldn't match that" — a regression, not a judgement
+// call, so it fails the gate alongside crashes. Honest gap answers and
+// clarifying questions are fine (they are counted separately above).
+process.exit(crashed > 0 || refused > 0 ? 1 : 0);

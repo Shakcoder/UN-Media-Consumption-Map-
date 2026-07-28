@@ -1,0 +1,93 @@
+name: Code gates (validator + eval suites)
+
+# The last safety net for the post-handover era. The weekly refresh already
+# refuses to PUBLISH data that fails validation — but nothing checked CODE
+# changes. Anyone editing ask-engine.js or a pipeline script through the
+# GitHub web editor pushes straight to the live site, and without this
+# workflow the first person to notice a broken analyst would be a visitor.
+#
+# Every push and pull request now runs the same four gates used throughout
+# development, on the exact files in the repo (no network needed — the eval
+# harness serves data/ from disk):
+#
+#   1. validate_atlas.py        — data integrity + the fabrication guard
+#   2. run_eval.mjs             — the 100-question acceptance test
+#                                 (fails on any crash or generic refusal)
+#   3. run_eval.mjs strategy    — 18 consulting briefs, structural checks
+#   4. run_eval.mjs market      — 73 Market Finder invariants
+#
+# A red X on a commit means: do not trust the live site until it is fixed —
+# open the failed run to see exactly which gate broke and on which question.
+#
+# The data bots' own pushes cannot trigger this workflow (GitHub suppresses
+# workflow runs for pushes made with the built-in token, to prevent loops),
+# so a daily scheduled run at 12:00 UTC — after the morning trend refresh —
+# re-checks the latest committed data. A bot refresh that would break the
+# analyst is therefore caught within hours, not on the next human push.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * *"   # daily backstop, after the 05:30 UTC trend engine
+
+permissions:
+  contents: read
+  issues: write      # failure-alert step opens an issue
+
+concurrency:
+  group: code-gates-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Gate 1 — data validator (fabrication guard)
+        run: python scripts/validate_atlas.py
+
+      - name: Gate 2 — golden-100 acceptance test
+        run: node scripts/run_eval.mjs
+
+      - name: Gate 3 — strategy-brief structural checks
+        run: node scripts/run_eval.mjs strategy
+
+      - name: Gate 4 — Market Finder invariants
+        run: node scripts/run_eval.mjs market
+
+      - name: Open an issue if the gates failed on main
+        # PRs show their own red X to the author; an issue is only needed for
+        # direct pushes to the live branch, where nobody may be watching.
+        if: failure() && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Code gates failed on main ($(date -u +%Y-%m-%d))"
+          existing=$(gh issue list --state open --search "in:title \"Code gates failed on main\"" --json number --jq 'length')
+          if [ "$existing" = "0" ]; then
+            body="A push to main failed the code gates (validator or an eval suite), so the live site may be serving a broken analyst or invalid data. Open the Actions tab, click the failed 'Code gates' run, and see which gate went red — each one prints exactly what failed. Fix forward or revert the commit shown on the run. Close this once a later run is green."
+            # --label is best-effort — never let a missing label swallow the alert.
+            gh issue create --title "$title" --body "$body" --label "automation" \
+              || gh issue create --title "$title" --body "$body"
+          else
+            echo "An open failure issue already exists — not duplicating."
+          fi

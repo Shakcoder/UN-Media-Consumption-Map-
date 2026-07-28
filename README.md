@@ -24,6 +24,7 @@ An interactive, source-cited public resource showing **where and how the world g
 - **Hosting** — GitHub Pages. **Automation** — GitHub Actions. **AI analyst** — in-browser, no server. Total running cost: **$0**.
 
 ## Documents
+- [`HANDOVER.md`](HANDOVER.md) — **start here if you are taking over maintenance**: what runs by itself, the four gates, the annual calendar
 - [`docs/PLATFORM_DESIGN.md`](docs/PLATFORM_DESIGN.md) — full platform design (the pivot plan)
 - [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) — every source: license, cadence, conflict-resolution rules
 - [`docs/AUTOMATION.md`](docs/AUTOMATION.md) — how the automated pipelines work, for non-coders
