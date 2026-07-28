@@ -30,6 +30,7 @@ METHOD NOTES (also embedded in the output for the AI analyst to cite):
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from datetime import date, timedelta
@@ -504,7 +505,11 @@ def main() -> None:
         }
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT_PATH.write_text(
+    # ATOMIC write, same policy as the fetchers and refresh_data.py: the site
+    # and the workflow's own staleness gate both read this file, and a kill
+    # mid-write would leave them parsing a truncated one.
+    tmp_path = OUTPUT_PATH.with_suffix(".json.tmp")
+    tmp_path.write_text(
         json.dumps({
             "generated": date.today().isoformat(),
             # What the numbers below actually measure, and how much of the
@@ -546,6 +551,7 @@ def main() -> None:
         }, indent=1, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
+    os.replace(tmp_path, OUTPUT_PATH)
     n_rising = sum(1 for t in topic_out.values() if t["momentum"] == "rising")
     print(f"Wrote {OUTPUT_PATH} — {len(topic_out)} topics scored "
           f"({n_rising} rising globally), {len(country_out)} countries profiled.")

@@ -327,6 +327,17 @@ def main() -> int:
             print(f"[watchdog] CANNOT CHECK: {src['name']} — {reason}")
             continue
         newest = newest_edition_on_page(body, src["pattern"])
+        # A page that LOADS but carries no edition number is the common failure
+        # here — a site reorganises and the year moves to another page. The
+        # fallback used to be tried only when the fetch itself failed, so that
+        # case went straight to "cannot check" without ever looking at the
+        # alternative URL the source entry provides for exactly this purpose.
+        if newest is None and src.get("fallback_url"):
+            alt_status, alt_body = fetch_with_retries(src["fallback_url"])
+            if alt_status == 200 and alt_body:
+                alt_newest = newest_edition_on_page(alt_body, src["pattern"])
+                if alt_newest is not None:
+                    newest = alt_newest
         if newest is None:
             reason = ("the page loaded, but no edition number could be read from it — "
                       "either the site has been redesigned, or it now writes its text "
