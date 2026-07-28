@@ -1,37 +1,60 @@
 {
-  "_meta": {
-    "updated": "2026-07-22",
-    "update_cadence": "Annual hand-update each December/January when WPP Media and Dentsu publish their end-of-year forecasts. The source watchdog (scripts/check_source_editions.py) opens a GitHub Issue reminder with step-by-step instructions.",
-    "method_note": "Industry estimates, not measured surveys. WPP Media and Dentsu measure different market baskets, so their global totals differ deliberately — the Atlas keeps both as a cross-check and treats every figure here as a directional signal of where commercial media money flows, never as a precise count.",
-    "how_to_update": "1) Download the free year-end summaries: WPP Media 'This Year, Next Year' (wppmedia.com) and Dentsu 'Global Ad Spend Forecasts' (dentsu.com). 2) Replace the figures below with the new edition's numbers, keeping the same field names. 3) Update the edition labels in _meta.sources and the 'updated' date. 4) Commit — no other file needs changing; the analyst reads this file directly.",
-    "sources": {
-      "wpp_tyny": "WPP Media (formerly GroupM), 'This Year, Next Year' global end-of-year forecast, December 2025 edition — https://www.wppmedia.com/",
-      "dentsu": "Dentsu Global Ad Spend Forecasts, December 2025 edition — https://www.dentsu.com/"
-    }
-  },
-  "global": {
-    "ad_revenue_2025_usd_bn": 1140,
-    "growth_2025_pct": 8.8,
-    "growth_2026_forecast_pct": 7.1,
-    "revenue_source": "wpp_tyny",
-    "digital_share_2026_pct": 68.7,
-    "digital_share_source": "dentsu"
-  },
-  "regions": {
-    "APAC": {
-      "ad_spend_2026_usd_bn": 376.4,
-      "growth_2026_pct": 5.4,
-      "source": "dentsu",
-      "note": "fastest-growing advertising region"
-    }
-  },
-  "markets": {
-    "USA": { "ad_spend_2026_usd_bn": 460.5, "source": "dentsu" },
-    "CHN": { "growth_2026_pct": 6.1, "source": "dentsu", "note": "growth led by short-form video and lifestyle platforms" },
-    "IND": { "growth_2026_pct": 8.6, "source": "dentsu", "note": "growth driven by retail media and major sporting events" },
-    "BRA": { "growth_2026_pct": 9.1, "source": "dentsu" },
-    "GBR": { "growth_2026_pct": 5.7, "source": "dentsu" },
-    "JPN": { "growth_2026_pct": 2.9, "source": "dentsu" },
-    "AUS": { "growth_2026_pct": 4.1, "source": "dentsu" }
+ "_meta": {
+  "updated": "2026-07-22",
+  "update_cadence": "Annual hand-update each December/January when WPP Media and Dentsu publish their end-of-year forecasts. The source watchdog (scripts/check_source_editions.py) opens a GitHub Issue reminder with step-by-step instructions.",
+  "method_note": "Industry estimates, not measured surveys. WPP Media and Dentsu measure different market baskets, so their global totals differ deliberately, so the Atlas keeps both as a cross-check and treats every figure here as a directional signal of where commercial media money flows, never as a precise count.",
+  "how_to_update": "1) Download the free year-end summaries: WPP Media 'This Year, Next Year' (wppmedia.com) and Dentsu 'Global Ad Spend Forecasts' (dentsu.com). 2) Replace the figures below with the new edition's numbers, keeping the same field names. 3) Update the edition labels in _meta.sources and the 'updated' date. 4) Commit; no other file needs changing; the analyst reads this file directly.",
+  "sources": {
+   "wpp_tyny": "WPP Media (formerly GroupM), 'This Year, Next Year' global end-of-year forecast, December 2025 edition | https://www.wppmedia.com/",
+   "dentsu": "Dentsu Global Ad Spend Forecasts, December 2025 edition | https://www.dentsu.com/"
   }
+ },
+ "global": {
+  "ad_revenue_2025_usd_bn": 1140,
+  "growth_2025_pct": 8.8,
+  "growth_2026_forecast_pct": 7.1,
+  "revenue_source": "wpp_tyny",
+  "digital_share_2026_pct": 68.7,
+  "digital_share_source": "dentsu"
+ },
+ "regions": {
+  "APAC": {
+   "ad_spend_2026_usd_bn": 376.4,
+   "growth_2026_pct": 5.4,
+   "source": "dentsu",
+   "note": "fastest-growing advertising region"
+  }
+ },
+ "markets": {
+  "USA": {
+   "ad_spend_2026_usd_bn": 460.5,
+   "source": "dentsu"
+  },
+  "CHN": {
+   "growth_2026_pct": 6.1,
+   "source": "dentsu",
+   "note": "growth led by short-form video and lifestyle platforms"
+  },
+  "IND": {
+   "growth_2026_pct": 8.6,
+   "source": "dentsu",
+   "note": "growth driven by retail media and major sporting events"
+  },
+  "BRA": {
+   "growth_2026_pct": 9.1,
+   "source": "dentsu"
+  },
+  "GBR": {
+   "growth_2026_pct": 5.7,
+   "source": "dentsu"
+  },
+  "JPN": {
+   "growth_2026_pct": 2.9,
+   "source": "dentsu"
+  },
+  "AUS": {
+   "growth_2026_pct": 4.1,
+   "source": "dentsu"
+  }
+ }
 }

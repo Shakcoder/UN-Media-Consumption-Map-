@@ -2526,25 +2526,19 @@ function tabSources(d) {
     <p style="color: var(--muted); font-size: 13px;">${t("sources_intro")}</p>
     <div class="sources-list">
       ${Object.entries(d.sources || {}).map(([field, url]) => {
-        // A citation is "Organisation — detail", where the detail is USUALLY a
-        // URL but not always: Freedom House's reads "official data files
-        // provided by Freedom House (July 2026)", which the old parser turned
-        // into a clickable link to a non-existent page. Only linkify an actual
-        // URL; render any other trailing detail as the text it is. Splitting
-        // on the FIRST separator also keeps citations that contain more than
-        // one dash intact.
-        // A citation is "Organisation — detail", where the detail is USUALLY a
-        // URL but not always, and sometimes BOTH: Freedom House's reads
-        // "Freedom House: … — official data files … — https://…". Take the URL
-        // wherever it appears and keep the rest as prose, so a citation can
-        // never end up with its link rendered as dead grey text.
+        // A citation is "Organisation | detail | URL" — the pipe separates the
+        // parts, and any part may be absent. Freedom House's carries all three;
+        // World Bank's is "Org | URL"; the outlet-list note is "Org" alone.
+        // The URL is found wherever it sits, so a link is never rendered as
+        // dead text; the remaining pipe-separated parts become the org line
+        // and (optional) grey detail line.
         const raw = String(url == null ? "" : url).trim();
         const urlMatch = raw.match(/https?:\/\/\S+/i);
         const link = urlMatch ? urlMatch[0] : "";
-        const rest = (link ? raw.replace(link, "") : raw).replace(/\s*—\s*$/, "").trim();
-        const i = rest.indexOf(" — ");
-        const org = i === -1 ? rest : rest.slice(0, i);
-        const detail = i === -1 ? "" : rest.slice(i + 3).trim();
+        const parts = (link ? raw.replace(link, "") : raw)
+          .split("|").map(x => x.trim()).filter(Boolean);
+        const org = parts[0] || "";
+        const detail = parts.slice(1).join(" \u00b7 ");
         return `<div><strong>${esc(capitalize(field))}:</strong> ${esc(org)}` +
           (detail ? `<br><span style="color:var(--muted);">${esc(detail)}</span>` : "") +
           (link ? `<br><a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${esc(link)}</a>` : "") +

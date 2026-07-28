@@ -163,7 +163,7 @@ def main() -> int:
                 "A real measured monthly signal, but web-referral based: app-first "
                 "platforms (WhatsApp, TikTok, Telegram) barely refer web traffic and "
                 "are mostly invisible here. Never read the top platform in this table "
-                "as 'the country's leading platform' — the curated leading-platform "
+                "as 'the country's leading platform'; the curated leading-platform "
                 "field measures actual usage. Platforms under 0.5% share are dropped; "
                 "small markets have thin tracker coverage."
             ),

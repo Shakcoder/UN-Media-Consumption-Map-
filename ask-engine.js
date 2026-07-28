@@ -787,7 +787,12 @@ function parseSource(s) {
   if (!s) return null;
   const m = String(s).match(/(https?:\/\/\S+)/);
   const url = m ? m[1].replace(/[).,]+$/, "") : null;
-  const label = String(s).replace(/\s*[—–-]?\s*https?:\/\/\S+/, "").trim();
+  // Citation format is "Org | detail | URL". A LINK LABEL wants only the
+  // organisation (the first segment); the detail parts are for the profile's
+  // Sources tab, not a compact footnote, and would drag the pipe into the
+  // label. Strip the URL, then take the part before the first pipe.
+  const label = String(s).replace(/\s*https?:\/\/\S+/, "")
+    .split("|")[0].replace(/\s*[—–]\s*$/, "").trim();
   return { label: label || url || String(s), url };
 }
 
@@ -1144,18 +1149,27 @@ function composeRegionBrief(fs, ev, ents, regionName) {
   const broadcast = fs.filter(f => tierOf(f) === "broadcast");
 
   lines.push(`**${regionName.charAt(0).toUpperCase() + regionName.slice(1)}: split the strategy by connectivity — the gap between countries is decisive.**\n`);
-  if (digital.length)
-    lines.push(`- **Digital-first:** ${digital.map(f => `${f.name} (online news ${fmt(f.online)}, internet ${f.internet}%${f.radio != null ? `, radio ${fmt(f.radio)}` : ""})`).join("; ")}.`);
-  if (mixed.length)
-    lines.push(`- **Mixed digital + broadcast:** ${mixed.map(f => `${f.name} (internet ${f.internet}%, TV ${fmt(f.tv)}${f.radio != null ? `, radio ${fmt(f.radio)}` : ""})`).join("; ")}.`);
-  if (broadcast.length)
-    lines.push(`- **Broadcast/community-first:** ${broadcast.map(f => `${f.name} (internet only ${f.internet}%${f.radio != null ? `, radio ${fmt(f.radio)}` : ""}, TV ${fmt(f.tv)})`).join("; ")}. Digital-only campaigns would structurally miss most people here.`);
+  const tierList = (label, arr, render, tail = "") => {
+    if (!arr.length) return;
+    lines.push(`**${label}:**`);
+    for (const f of arr) lines.push(`- ${render(f)}`);
+    if (tail) lines.push(tail);
+  };
+  tierList("Digital-first", digital,
+    f => `${f.name} (online news ${fmt(f.online)}, internet ${f.internet}%${f.radio != null ? `, radio ${fmt(f.radio)}` : ""})`);
+  tierList("Mixed digital + broadcast", mixed,
+    f => `${f.name} (internet ${f.internet}%, TV ${fmt(f.tv)}${f.radio != null ? `, radio ${fmt(f.radio)}` : ""})`);
+  tierList("Broadcast/community-first", broadcast,
+    f => `${f.name} (internet only ${f.internet}%${f.radio != null ? `, radio ${fmt(f.radio)}` : ""}, TV ${fmt(f.tv)})`,
+    "*Digital-only campaigns would structurally miss most people here.*");
 
   // when radio is the subject, answer the radio-vs-online question head-on
   if (ents.attributes.includes("radio")) {
     const radioWins = fs.filter(f => f.radio != null && f.online != null && f.radio > f.online);
-    if (radioWins.length)
-      lines.push(`\n**Radio out-reaches online news in:** ${radioWins.map(f => `${f.name} (radio ${fmt(f.radio)} vs online ${fmt(f.online)})`).join("; ")}.`);
+    if (radioWins.length) {
+      lines.push(`\n**Radio out-reaches online news in:**`);
+      for (const f of radioWins) lines.push(`- ${f.name} (radio ${fmt(f.radio)} vs online ${fmt(f.online)})`);
+    }
   }
 
   for (const topic of ents.topics.slice(0, 3)) {
@@ -1212,7 +1226,9 @@ function composeTopicBrief(topic, ev, countriesFirst) {
   }
   const langs = Object.entries(t.demand_by_language || {}).slice(0, 6);
   if (langs.length)
-    lines.push(`- Demand by language (daily lookups): ${langs.map(([l, v]) => `${l.toUpperCase()} ${Math.round(v.weekly_daily_avg_views).toLocaleString()}/day (${v.velocity > 0 ? "+" : ""}${Math.round(v.velocity * 100)}%)`).join("; ")}`);
+    lines.push(`**Demand by language** (daily lookups):`);
+    for (const [l, v] of langs)
+      lines.push(`- ${l.toUpperCase()} ${Math.round(v.weekly_daily_avg_views).toLocaleString()}/day (${v.velocity > 0 ? "+" : ""}${Math.round(v.velocity * 100)}%)`);
   if (t.news_articles_7d != null)
     lines.push(`- News coverage: ${t.news_articles_7d.toLocaleString()} articles in the last 7 days (GDELT)`);
   // GDELT's per-country figure is an INTENSITY, not a slice of world coverage:

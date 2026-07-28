@@ -535,7 +535,7 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     "NAM": {"trust": None, "tv": 50.2, "online": 49.1, "social": 49.6, "src": "Afrobarometer Round 9 (2023)"},
     "NER": {"trust": None, "tv": 17.3, "online": 17.4, "social": 23.6, "src": "Afrobarometer Round 9 (2023)"},
     "SDN": {"trust": None, "tv": 58.6, "online": 45.5, "social": 45.4, "src": "Afrobarometer Round 9 (2023)",
-            "note": "Online-news use (45.5%, 2023 face-to-face survey) exceeds the internet-access figure because Sudan's World Bank/ITU internet series last reported in 2017 — a stale denominator, not a survey error. Treat the access figure as a lower bound."},
+            "note": "Online-news use (45.5%, 2023 face-to-face survey) exceeds the internet-access figure because Sudan's World Bank/ITU internet series last reported in 2017: a stale denominator, not a survey error. Treat the access figure as a lower bound."},
     "SEN": {"trust": None, "tv": 71.9, "online": 46.0, "social": 55.1, "src": "Afrobarometer Round 9 (2023)"},
     "SLE": {"trust": None, "tv": 14.9, "online": 27.2, "social": 33.4, "src": "Afrobarometer Round 9 (2023)"},
     "STP": {"trust": None, "tv": 75.9, "online": 57.1, "social": 55.9, "src": "Afrobarometer Round 9 (2023)"},
@@ -565,13 +565,13 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     # the same denominator or their percentages are not comparable.
     "IRQ": {"trust": None, "tv": 26.8, "online": None, "social": 44.5, "radio": 1.2,
             "src": "Arab Barometer Wave VIII (2023-2024) microdata",
-            "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
+            "note": "Q421: single primary news source (not multi-select weekly use, so not directly comparable to other countries' figures); no trust-in-media question in this wave"},
     "KWT": {"trust": None, "tv": 17.7, "online": None, "social": 63.6, "radio": 1.0,
             "src": "Arab Barometer Wave VIII (2023-2024) microdata",
-            "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
+            "note": "Q421: single primary news source (not multi-select weekly use, so not directly comparable to other countries' figures); no trust-in-media question in this wave"},
     "PSE": {"trust": None, "tv": 16.4, "online": None, "social": 70.0, "radio": 4.1,
             "src": "Arab Barometer Wave VIII (2023-2024) microdata",
-            "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
+            "note": "Q421: single primary news source (not multi-select weekly use, so not directly comparable to other countries' figures); no trust-in-media question in this wave"},
     # ---- Arab Barometer Wave VII (2021-2022) — gap countries only ----
     # Computed by scripts/compute_arabbarometer_w7.py. Algeria is W7's one
     # true gap-fill: Libya already has WVS Wave 7 (2022) data with a richer
@@ -579,7 +579,7 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     # primary-source construct and caveats as Wave VIII.
     "DZA": {"trust": None, "tv": 47.1, "online": None, "social": 33.3, "radio": 5.1,
             "src": "Arab Barometer Wave VII (2021-2022) microdata",
-            "note": "Q421: single primary news source (not multi-select weekly use — not directly comparable to other countries' figures); no trust-in-media question in this wave"},
+            "note": "Q421: single primary news source (not multi-select weekly use, so not directly comparable to other countries' figures); no trust-in-media question in this wave"},
     # ---- Asian Barometer Wave 6, weighted microdata ----
     # Computed by scripts/compute_asianbarometer.py from the registered
     # download (asianbarometer.org). Same single-choice "most important
@@ -589,7 +589,7 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     # its figures incomparable with its own history.
     "KHM": {"trust": None, "tv": 13.2, "online": 63.3, "social": None, "radio": 5.5,
             "src": "Asian Barometer Wave 6 (2024) microdata, weighted (n=1,030)",
-            "note": "q53: single most-important news channel (not multi-select weekly use — not directly comparable to other countries' figures); the answer option combines internet and social media, so social media is not separable; no trust-in-media question in this wave"},
+            "note": "q53: single most-important news channel (not multi-select weekly use, so not directly comparable to other countries' figures); the answer option combines internet and social media, so social media is not separable; no trust-in-media question in this wave"},
     # ---- World Values Survey Wave 7 (2017-2022), weighted microdata ----
     # Computed by scripts/compute_wvs_news.py from the registered download
     # (raw .sav NOT in this repo — WVSA prohibits redistribution). Only
@@ -692,40 +692,40 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     # v1.0.0, doi:10.4232/1.14726.
     "ALB": {"trust": None, "tv": 94.5, "online": 71.0, "social": 77.5, "radio": 14.4,
             "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,009)",
-            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+            "note": "EB constructs: weekly use of each medium, meaning general media use rather than news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     "BIH": {"trust": None, "tv": 97.5, "online": 69.8, "social": 75.0, "radio": 52.7,
             "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,000)",
-            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+            "note": "EB constructs: weekly use of each medium, meaning general media use rather than news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     "EST": {"trust": None, "tv": 88.0, "online": 79.2, "social": 75.6, "radio": 74.6,
             "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,001)",
-            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+            "note": "EB constructs: weekly use of each medium, meaning general media use rather than news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     "GEO": {"trust": None, "tv": 82.8, "online": 71.0, "social": 78.4, "radio": 11.8,
             "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,007)",
-            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+            "note": "EB constructs: weekly use of each medium, meaning general media use rather than news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     "LTU": {"trust": None, "tv": 90.2, "online": 79.1, "social": 76.0, "radio": 63.3,
             "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,018)",
-            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+            "note": "EB constructs: weekly use of each medium, meaning general media use rather than news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     "LUX": {"trust": None, "tv": 86.7, "online": 84.7, "social": 72.9, "radio": 71.2,
             "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=512)",
-            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+            "note": "EB constructs: weekly use of each medium, meaning general media use rather than news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     "LVA": {"trust": None, "tv": 81.5, "online": 79.0, "social": 77.3, "radio": 64.3,
             "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,005)",
-            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+            "note": "EB constructs: weekly use of each medium, meaning general media use rather than news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     "MDA": {"trust": None, "tv": 74.4, "online": 69.9, "social": 76.8, "radio": 29.0,
             "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,014)",
-            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+            "note": "EB constructs: weekly use of each medium, meaning general media use rather than news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     "MKD": {"trust": None, "tv": 96.2, "online": 65.3, "social": 80.1, "radio": 39.1,
             "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,014)",
-            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+            "note": "EB constructs: weekly use of each medium, meaning general media use rather than news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     "MLT": {"trust": None, "tv": 92.7, "online": 78.0, "social": 80.2, "radio": 62.3,
             "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=500)",
-            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+            "note": "EB constructs: weekly use of each medium, meaning general media use rather than news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     "MNE": {"trust": None, "tv": 94.8, "online": 72.7, "social": 75.0, "radio": 60.3,
             "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=519)",
-            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+            "note": "EB constructs: weekly use of each medium, meaning general media use rather than news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     "SVN": {"trust": None, "tv": 86.0, "online": 75.8, "social": 68.0, "radio": 79.9,
             "src": "Eurobarometer 102.2 (Oct-Nov 2024), weighted microdata (n=1,004)",
-            "note": "EB constructs: weekly use of each medium — general media use, not news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
+            "note": "EB constructs: weekly use of each medium, meaning general media use rather than news-specific (except online = news on internet); trust is only asked per medium, so no single trust figure"},
     # 2026-07-22: EGY, SAU, YEM, DZA, PAK, BGD, MMR, NPL, VEN, CHN, RUS, VNM,
     # IRN, AFG, UKR were REMOVED here. They carried source labels like "Arab
     # Barometer IX + DataReportal 2024" and "WVS Wave 7 + DataReportal 2024"
@@ -1140,7 +1140,7 @@ def build_country(
                 # citation is dropped it never comes back on its own.
                 sources[field] = (
                     (prev.get("sources") or {}).get(field)
-                    or f"World Bank{origin} — {wb_link}")
+                    or f"World Bank{origin} | {wb_link}")
                 continue
         if value is not None:
             if field in {"population", "area_km2", "gdp_per_capita_usd"}:
@@ -1154,17 +1154,17 @@ def build_country(
             # (Sudan's internet series stops in 2017); without the year on the
             # citation a reader cannot tell a current figure from a stale one.
             sources[field] = (
-                f"World Bank{origin}, {year} observation — {wb_link}" if year
-                else f"World Bank{origin} — {wb_link}"
+                f"World Bank{origin}, {year} observation | {wb_link}" if year
+                else f"World Bank{origin} | {wb_link}"
             )
             if field == "internet_pct" and year and datetime.now().year - year >= 5:
                 print(f"  · {iso3}: internet_pct is a {year} observation "
-                      f"({datetime.now().year - year} years old) — World Bank has nothing newer")
+                      f"({datetime.now().year - year} years old); World Bank has nothing newer")
 
     # Smartphone % (DataReportal)
     if iso3 in SMARTPHONE_PCT_2024:
         values["smartphone_pct"] = SMARTPHONE_PCT_2024[iso3]
-        sources["smartphone_pct"] = "DataReportal 2024 — https://datareportal.com/"
+        sources["smartphone_pct"] = "DataReportal 2024 | https://datareportal.com/"
 
     # Press freedom (RSF) — from the fetched index file, never hand-typed
     rsf = RSF_INDEX["countries"].get(iso3)
@@ -1182,14 +1182,14 @@ def build_country(
         if prev_rank:
             values["press_freedom_rank_prev"] = prev_rank
         sources["press_freedom_rank"] = (
-            f"RSF {RSF_EDITION} — https://rsf.org/en/country/{iso3.lower()}")
+            f"RSF {RSF_EDITION} | https://rsf.org/en/country/{iso3.lower()}")
 
     # Internet freedom (Freedom House FOTN)
     fotn_score = FREEDOM_HOUSE_FOTN_2025.get(iso3)
     if fotn_score is not None:
         values["internet_freedom_score"] = fotn_score
         values["internet_freedom_status"] = _freedom_status(fotn_score)
-        sources["internet_freedom"] = "Freedom House: Freedom on the Net 2025 — https://freedomhouse.org/country/scores?type=fotn"
+        sources["internet_freedom"] = "Freedom House: Freedom on the Net 2025 | https://freedomhouse.org/country/scores?type=fotn"
 
     # Political freedom (Freedom House FITW — all countries)
     fitw_score = FREEDOM_HOUSE_FITW_2025.get(iso3)
@@ -1202,10 +1202,10 @@ def build_country(
             values["political_rights_score"] = pr        # 0-40
             values["civil_liberties_score"] = cl         # 0-60
             values["electoral_democracy"] = electoral
-            sources["political_freedom"] = "Freedom House: Freedom in the World 2026 — official data files provided by Freedom House (July 2026) — https://freedomhouse.org/report/freedom-world"
+            sources["political_freedom"] = "Freedom House: Freedom in the World 2026 | official data files provided by Freedom House (July 2026) | https://freedomhouse.org/report/freedom-world"
         else:
             values["political_freedom_status"] = _freedom_status(fitw_score)
-            sources["political_freedom"] = "Freedom House: Freedom in the World 2026 report (2025 data) — https://freedomhouse.org/report/freedom-world"
+            sources["political_freedom"] = "Freedom House: Freedom in the World 2026 report (2025 data) | https://freedomhouse.org/report/freedom-world"
 
     # News consumption (Reuters DNR / regional barometers / WVS)
     nc = NEWS_CONSUMPTION.get(iso3)
@@ -1225,12 +1225,12 @@ def build_country(
             # No year in the label = link the report's landing page rather than
             # a year page that may not be the edition the figures came from.
             sources["news_consumption"] = (
-                f"{nc['src']} — {dnr_url}/{dnr_edition.group(1)}" if dnr_edition
-                else f"{nc['src']} — {dnr_url}")
+                f"{nc['src']} | {dnr_url}/{dnr_edition.group(1)}" if dnr_edition
+                else f"{nc['src']} | {dnr_url}")
         else:
             sources["news_consumption"] = nc["src"]
         if iso3 in DNR_NON_REPRESENTATIVE and is_dnr:
-            values["news_survey_note"] = ("Survey sample is online and mainly English-speaking/urban — "
+            values["news_survey_note"] = ("Survey sample is online and mainly English-speaking/urban, "
                                           "not nationally representative; figures skew younger and more connected "
                                           f"(per {nc['src']} methodology).")
         elif nc.get("note"):
@@ -1243,7 +1243,7 @@ def build_country(
     if radio is not None:
         values["news_radio_pct"] = radio
         radio_source_label = "Afrobarometer Round 9 (2023)"
-        sources["news_radio"] = "Afrobarometer Round 9 (2023), computed from weighted microdata — https://www.afrobarometer.org/data/"
+        sources["news_radio"] = "Afrobarometer Round 9 (2023), computed from weighted microdata | https://www.afrobarometer.org/data/"
     elif nc and nc.get("radio") is not None:
         values["news_radio_pct"] = nc["radio"]
         radio_source_label = nc["src"]
@@ -1253,19 +1253,19 @@ def build_country(
     ma = WPP_MEDIAN_AGE_2025.get(iso3)
     if ma is not None:
         values["median_age"] = ma
-        sources["median_age"] = "UN DESA, World Population Prospects 2024 (2025 estimate) — https://population.un.org/wpp/"
+        sources["median_age"] = "UN DESA, World Population Prospects 2024 (2025 estimate) | https://population.un.org/wpp/"
 
     # Mobile Connectivity Index (GSMA)
     mci = GSMA_MCI_2024.get(iso3)
     if mci is not None:
         values["mobile_connectivity_index"] = mci
-        sources["mobile_connectivity_index"] = "GSMA Mobile Connectivity Index 2024 — https://www.mobileconnectivityindex.com/"
+        sources["mobile_connectivity_index"] = "GSMA Mobile Connectivity Index 2024 | https://www.mobileconnectivityindex.com/"
 
     # Language shares (Unicode CLDR territory-language data) — which languages
     # actually reach this country's population, with official status.
     languages_detail = (cldr_langs or {}).get(iso2)
     if languages_detail:
-        sources["languages_detail"] = ("Unicode CLDR territory-language data (Unicode License V3) — "
+        sources["languages_detail"] = ("Unicode CLDR territory-language data (Unicode License V3) | "
                                        "https://github.com/unicode-org/cldr-json")
     elif prev and prev.get("languages_detail"):
         languages_detail = prev["languages_detail"]          # keep last good copy
@@ -1277,7 +1277,7 @@ def build_country(
     platform_use = PLATFORM_USE_2024.get(iso3)
     if platform_use:
         sources["platform_use"] = (
-            "Latinobarometro 2024, weighted microdata (S14M battery; % of adults actively using each service) — "
+            "Latinobarometro 2024, weighted microdata (S14M battery; % of adults actively using each service) | "
             "https://www.latinobarometro.org/"
         )
 
@@ -1291,7 +1291,7 @@ def build_country(
     media_meta = static_meta.get("media") or {}
     if any(media_meta.get(k) for k in ("top_tv", "top_radio", "top_online_news", "top_social")):
         sources["leading_outlets"] = (
-            "Atlas editorial compilation — cross-referenced with national media directories "
+            "Atlas editorial compilation, cross-referenced with national media directories "
             "and the CIA World Factbook's Broadcast media entries; not a survey ranking, "
             "and not audience-share data"
         )
@@ -1300,7 +1300,7 @@ def build_country(
     if landscape_note:
         sources["media_landscape"] = (
             "CIA World Factbook, Broadcast media (public domain; auto-ingested weekly "
-            "via the factbook.json mirror) — https://www.cia.gov/the-world-factbook/"
+            "via the factbook.json mirror) | https://www.cia.gov/the-world-factbook/"
         )
     elif isinstance(prev, dict):
         # Defensive: `prev` comes from the previous countries.json, which a
@@ -1378,7 +1378,7 @@ def build_country(
         "information_freedom": {
             "press_freedom_rank": values.get("press_freedom_rank"),
             "press_freedom_score": values.get("press_freedom_score"),
-            "press_freedom_source": f"RSF {RSF_EDITION} — https://rsf.org/en/index",
+            "press_freedom_source": f"RSF {RSF_EDITION} | https://rsf.org/en/index",
             "press_freedom_edition": RSF_EDITION,
             "press_freedom_indicators": values.get("press_freedom_indicators"),
             "press_freedom_rank_prev": values.get("press_freedom_rank_prev"),
@@ -1390,7 +1390,7 @@ def build_country(
             "political_rights_score": values.get("political_rights_score"),
             "civil_liberties_score": values.get("civil_liberties_score"),
             "electoral_democracy": values.get("electoral_democracy"),
-            "political_freedom_source": "Freedom House: Freedom in the World 2026 — official FH data files (July 2026)",
+            "political_freedom_source": "Freedom House: Freedom in the World 2026, official FH data files (July 2026)",
         },
         "news_consumption": {
             "trust_in_news_pct": values.get("news_trust_pct"),
@@ -1475,25 +1475,25 @@ def main() -> int:
         "world_population": world_pop_row[0] if world_pop_row else None,
         "schema_version": 2,
         "data_sources": [
-            "World Bank Open Data API (15 indicators incl. Global Findex financial-account ownership, automated weekly; ICT indicators originally compiled by ITU, education/literacy by UNESCO Institute for Statistics — CC BY 4.0)",
-            "Unicode CLDR territory-language data (per-country language shares & official status, automated weekly — Unicode License V3)",
+            "World Bank Open Data API (15 indicators incl. Global Findex financial-account ownership, automated weekly; ICT indicators originally compiled by ITU, education/literacy by UNESCO Institute for Statistics; CC BY 4.0)",
+            "Unicode CLDR territory-language data (per-country language shares & official status, automated weekly; Unicode License V3)",
             "UN DESA World Population Prospects 2024 (median age, 195 countries)",
             "GSMA Mobile Connectivity Index 2024 (172 countries)",
             "RSF Press Freedom Index 2025 (174 countries)",
             "Freedom House: Freedom on the Net 2025 (70 countries)",
-            "Freedom House: Freedom in the World 2026 — official FH data files incl. PR/CL scores & electoral democracy (193 countries)",
+            "Freedom House: Freedom in the World 2026, official FH data files incl. PR/CL scores & electoral democracy (193 countries)",
             "Reuters Institute Digital News Report 2026 (46 markets; non-representative samples flagged for IND/KEN/NGA/ZAF/MAR)",
             "Afrobarometer Round 9 microdata (news sources incl. radio, 35-39 African countries, weighted)",
             "DataReportal 2024 (smartphone penetration estimates, 50 countries)",
-            "Arab Barometer Wave VIII (Iraq, Kuwait, Palestine — real weighted microdata, computed by scripts/compute_arabbarometer_w8.py)",
-            "Arab Barometer Wave VII, 2021-2022 (Algeria — real weighted microdata, computed by scripts/compute_arabbarometer_w7.py)",
-            "Asian Barometer Wave 6, 2024 (Cambodia — real weighted microdata, computed by scripts/compute_asianbarometer.py)",
-            "World Values Survey Wave 7 v6.0 (28 countries — weighted microdata computed by scripts/compute_wvs_news.py; doi:10.14281/18241.24; constructs differ from DNR and are labeled per country)",
-            "Latinobarometro 2024 (17 countries — measured social-platform use, weighted microdata computed by scripts/compute_latinobarometro.py; platform use is a separate construct from news consumption)",
-            "Eurobarometer 102.2, Oct-Nov 2024 (12 countries — weekly media use, weighted microdata computed by scripts/compute_eurobarometer.py; GESIS ZA8905, doi:10.4232/1.14726)",
+            "Arab Barometer Wave VIII (Iraq, Kuwait, Palestine; real weighted microdata, computed by scripts/compute_arabbarometer_w8.py)",
+            "Arab Barometer Wave VII, 2021-2022 (Algeria; real weighted microdata, computed by scripts/compute_arabbarometer_w7.py)",
+            "Asian Barometer Wave 6, 2024 (Cambodia; real weighted microdata, computed by scripts/compute_asianbarometer.py)",
+            "World Values Survey Wave 7 v6.0 (28 countries; weighted microdata computed by scripts/compute_wvs_news.py; doi:10.14281/18241.24; constructs differ from DNR and are labeled per country)",
+            "Latinobarometro 2024 (17 countries; measured social-platform use, weighted microdata computed by scripts/compute_latinobarometro.py; platform use is a separate construct from news consumption)",
+            "Eurobarometer 102.2, Oct-Nov 2024 (12 countries; weekly media use, weighted microdata computed by scripts/compute_eurobarometer.py; GESIS ZA8905, doi:10.4232/1.14726)",
             "Trend engine: Wikimedia Pageviews API (CC0) + GDELT 2.0 (daily, 167 topics, 22 languages)",
             "CIA World Factbook, Broadcast media entries (public domain, auto-ingested weekly via the factbook.json mirror)",
-            "Statcounter GlobalStats (social web-traffic referral shares, 195 countries, automated weekly, 3-month average — web-referral measure only; app-first platforms like WhatsApp/TikTok are not visible to it)",
+            "Statcounter GlobalStats (social web-traffic referral shares, 195 countries, automated weekly, 3-month average; web-referral measure only; app-first platforms like WhatsApp/TikTok are not visible to it)",
             "WPP Media 'This Year, Next Year' Dec 2025 + Dentsu Global Ad Spend Forecasts Dec 2025 (regional ad-market signals, annual hand-update in data/ad_market.json)",
             "Curated country profiles cross-referenced with national sources",
             "Reference tools (linked, not ingested): UNESCO World Trends in Freedom of Expression, Pew Research Center, Edison Research, OECD Data, Meta Ad Library, Google Ads Transparency Center",
