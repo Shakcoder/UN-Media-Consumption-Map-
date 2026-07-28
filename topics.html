@@ -180,8 +180,12 @@ function sparkline(series) {
 }
 
 function momentumBadge(m) {
-  const sym = m === "rising" ? "▲ rising" : m === "falling" ? "▼ falling" : "— steady";
-  return `<span class="badge ${m}">${sym}</span>`;
+  // Only the three momentum values the pipeline emits may reach the class
+  // attribute — anything else (a future label, a malformed file) would be
+  // injected into markup unescaped, and would not match a style anyway.
+  const known = m === "rising" || m === "falling" ? m : "steady";
+  const sym = known === "rising" ? "▲ rising" : known === "falling" ? "▼ falling" : "— steady";
+  return `<span class="badge ${known}">${sym}</span>`;
 }
 
 function renderList(filter) {

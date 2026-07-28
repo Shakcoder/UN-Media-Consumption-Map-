@@ -2663,6 +2663,10 @@ function openDeepLinkedCountry() {
         + "built-in sample (10 countries, older figures) instead of all 195. Check your connection and "
         + "refresh — if it persists, the data file may not have published.";
     }
+    // A shared ?country= link must still open whatever profile the fallback
+    // holds; leaving this inside the try meant such a link did nothing at all
+    // on the very connections most likely to have failed the fetch.
+    openDeepLinkedCountry();
   }
 })();
 

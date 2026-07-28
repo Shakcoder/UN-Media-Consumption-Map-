@@ -77,12 +77,22 @@ SOURCES = [
         "check_url": "https://en.wikipedia.org/wiki/World_Press_Freedom_Index",
         "fallback_url": "https://rsf.org/en/index",
         "pattern": r"(20\d\d) World Press Freedom Index|World Press Freedom Index[^0-9]{0,20}(20\d\d)",
+        # These lines are pasted verbatim into the GitHub Issue and are the
+        # only guidance the maintainer gets, so they must describe the tool
+        # that exists today: since 2026-07 the index is fetched, not typed.
         "instructions": (
-            "1. Open https://rsf.org/en/index and confirm the new edition is out.\n"
-            "2. Download the new CSV (RSF publishes one per edition).\n"
-            "3. In scripts/refresh_data.py, update the RSF score table and the year in its source labels.\n"
-            "4. Bump the 'rsf' year in scripts/check_source_editions.py (INTEGRATED map).\n"
-            "5. Upload the changed files via GitHub → Add file → Upload files (one batch)."
+            "1. Open a terminal in the project folder and run:\n"
+            "       python3 scripts/fetch_rsf.py\n"
+            "   (add --year 2027 etc. if it does not pick the new edition up automatically).\n"
+            "   This downloads RSF's own published table into\n"
+            "   data/sources/rsf/rsf_index.json. If the download fails it changes nothing\n"
+            "   and exits with an error — it can never half-update the index.\n"
+            "2. Run the four checks:  python3 scripts/validate_atlas.py\n"
+            "   then  node scripts/run_eval.mjs  (and 'strategy' and 'market').\n"
+            "3. Bump the 'rsf' year in scripts/check_source_editions.py (INTEGRATED map)\n"
+            "   so this reminder stops.\n"
+            "4. Commit and push the changed files. The weekly refresh picks the new\n"
+            "   index up automatically — no score table is edited by hand any more."
         ),
     },
     {
