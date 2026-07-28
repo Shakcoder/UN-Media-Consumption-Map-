@@ -270,7 +270,12 @@ const REGION_MAP = {
   "north africa": { subregion: "Northern Africa" }, "northern africa": { subregion: "Northern Africa" },
   "southern africa": { subregion: "Southern Africa" },
   "central africa": { subregion: "Middle Africa" }, "middle africa": { subregion: "Middle Africa" },
+  // Both spellings are listed because normalize() replaces hyphens with
+  // spaces before lookup: the hyphenated key alone could never match, and
+  // the question silently fell through to "africa" — quietly folding North
+  // Africa into a Sub-Saharan answer.
   "sub-saharan africa": { subregions: ["Eastern Africa", "Western Africa", "Southern Africa", "Middle Africa"] },
+  "sub saharan africa": { subregions: ["Eastern Africa", "Western Africa", "Southern Africa", "Middle Africa"] },
   "africa": { region: "Africa" },
   "western europe": { subregion: "Western Europe" }, "eastern europe": { subregion: "Eastern Europe" },
   "northern europe": { subregion: "Northern Europe" }, "southern europe": { subregion: "Southern Europe" },
@@ -1232,10 +1237,17 @@ function composeRanking(ents, ev) {
   const attr = ATTRIBUTES[attrKey];
   if (!attr) return null;
 
-  // candidate pool: region filter or the whole Atlas
+  // Candidate pool: the countries the reader named, else a region filter,
+  // else the whole Atlas. Naming countries explicitly used to be ignored
+  // here — "top 5 by radio in Kenya, Nigeria and Ghana" ranked all 195 and
+  // answered a question nobody asked. Explicit names are the strongest
+  // signal of scope there is, so they win over a region if both appear.
   let pool = Object.keys(COUNTRIES);
   let scope = "all 195 countries";
-  if (ents.regions.length) {
+  if (ents.countries.length >= 2) {
+    pool = [...ents.countries];
+    scope = pool.map(iso => (COUNTRIES[iso] || {}).name || iso).join(", ");
+  } else if (ents.regions.length) {
     const spec = REGION_MAP[ents.regions[0]];
     pool = pool.filter(iso => inRegionSpec(spec, iso, COUNTRIES[iso]));
     scope = regionDisplay(ents.regions[0]);
@@ -2589,7 +2601,13 @@ export function answerQuestion(question) {
   }
   // Comparison
   else if (!parts.length && ents.wantsCompare && isoList.length >= 2) {
-    parts.push(composeComparison(isoList.slice(0, 6).map(facts).filter(Boolean), ev, ents));
+    // Six columns is the widest table that stays readable, but a reader who
+    // named eight countries must be told which two are missing rather than
+    // left to notice on their own.
+    const shown = isoList.slice(0, 6), dropped = isoList.slice(6);
+    parts.push(composeComparison(shown.map(facts).filter(Boolean), ev, ents));
+    if (dropped.length)
+      parts.push(`*Comparing the first ${shown.length} countries named — ${dropped.map(i => (COUNTRIES[i] || {}).name || i).join(", ")} ${dropped.length === 1 ? "is" : "are"} not shown, because a wider table stops being readable. Ask again naming ${dropped.length === 1 ? "it" : "them"} to compare those.*`);
     for (const t of ents.topics) parts.push(composeTopicBrief(t, ev));
     kind = "compare";
   }

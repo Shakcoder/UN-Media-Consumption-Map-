@@ -99,14 +99,21 @@
 
   /* Print: one clean, cited page. Only the chosen answer (.print-target)
      is printed — chrome, input, chips and other messages are dropped. */
+  /* Print: page chrome and controls are dropped, answers keep their sources.
+     The per-answer "Print" button narrows the output to ONE answer by putting
+     .printing-one on <body>; without it — someone pressing Ctrl/Cmd+P, which
+     is the natural instinct — the whole conversation prints. Scoping the
+     hide-others rule under .printing-one is what stops a plain Ctrl+P from
+     producing a blank page. */
   @media print {
     header.site, form#askform, #suggestions, #mode-banner, .footer-note,
     .answer-tools, .suggest, .msg.user, .thinking { display: none !important; }
     body { background: #fff; }
-    #chat .msg.analyst { display: none; }
-    #chat .msg.analyst.print-target { display: block; border: none; box-shadow: none;
-      max-width: 100%; padding: 0; }
-    #chat .msg.analyst.print-target::before {
+    #chat .msg.analyst { border: none; box-shadow: none; max-width: 100%; padding: 0;
+      break-inside: avoid; margin-bottom: 18px; }
+    body.printing-one #chat .msg.analyst { display: none; }
+    body.printing-one #chat .msg.analyst.print-target { display: block; }
+    #chat .msg.analyst::before {
       content: "Audience Intelligence Atlas — United Nations · generated answer, sources below";
       display: block; font-size: 10px; color: #555; border-bottom: 1px solid #ccc;
       padding-bottom: 6px; margin-bottom: 12px; }
@@ -329,10 +336,22 @@ function addAnalyst(answer, evidence, note, followups) {
   prt.type = "button"; prt.className = "tool"; prt.textContent = "Print / save PDF";
   prt.title = "Prints this answer with its sources as a clean one-pager";
   prt.addEventListener("click", () => {
-    // print only THIS answer: mark it, print, unmark
+    // Narrow the printout to THIS answer, then put the page back exactly as it
+    // was — leaving the marker behind would silently narrow a later Ctrl+P to
+    // an answer the reader had scrolled past.
     document.querySelectorAll(".msg.print-target").forEach(m => m.classList.remove("print-target"));
     el.classList.add("print-target");
+    document.body.classList.add("printing-one");
+    const restore = () => {
+      document.body.classList.remove("printing-one");
+      el.classList.remove("print-target");
+      window.removeEventListener("afterprint", restore);
+    };
+    window.addEventListener("afterprint", restore);
     window.print();
+    // Safari never fires afterprint; clean up on the next tick as well, which
+    // is harmless where afterprint does fire (the listener is removed once).
+    setTimeout(restore, 1000);
   });
   tools.append(copy, prt);
   el.appendChild(tools);

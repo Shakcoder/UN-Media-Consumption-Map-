@@ -299,7 +299,20 @@ function restoreFormFromUrl() {
     const p = new URLSearchParams(window.location.search);
     for (const [key, id] of URL_FIELDS) {
       const v = p.get(key);
-      if (v != null && v !== "") { $(id).value = v.slice(0, 80); any = true; }
+      if (v == null || v === "") continue;
+      const el = $(id);
+      if (el.tagName === "SELECT") {
+        // A value no option carries (an edited or truncated link) would leave
+        // the dropdown showing BLANK while the screen silently ran with the
+        // engine's default — results the reader cannot account for. Ignore it
+        // and keep the visible default instead, so the form always describes
+        // the screening it actually ran.
+        if (![...el.options].some(o => o.value === v)) continue;
+        el.value = v;
+      } else {
+        el.value = v.slice(0, 80);
+      }
+      any = true;
     }
   } catch (e) { return false; }
   return any;
@@ -411,7 +424,7 @@ const csvCell = (v) => {
 };
 
 $("export-csv").addEventListener("click", () => {
-  if (!LAST_RES) return;
+  if (!LAST_RES) return;               // toolbar is inside #results, but never trust that alone
   const { res, language, langLabel } = LAST_RES;
   const rows = [];
   rows.push(["Audience Intelligence Atlas — market screening (decision support, not a final market selection)"]);
@@ -437,16 +450,28 @@ $("export-csv").addEventListener("click", () => {
   res.excluded.forEach(x => rows.push([x.name, x.iso, x.reason]));
   const csv = rows.map(r => r.map(csvCell).join(",")).join("\r\n");
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
+  const url = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
+  a.href = url;
   a.download = "atlas-market-screening.csv";
   a.click();
-  URL.revokeObjectURL(a.href);
+  // Revoking in the same tick can cancel the download before the browser has
+  // read the blob; give it a moment, then release the memory.
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
 });
 
-$("print-screen").addEventListener("click", () => {
-  $("excluded").open = true;           // the exclusions are part of the result
-  window.print();
+/* The exclusions are part of the result, not an appendix: a printout that
+   hid them would read as a ranking of every country. A <details> prints only
+   what is open, so it is opened for ANY print — the toolbar button and a
+   plain Ctrl/Cmd+P alike — and restored afterwards so the screen is unchanged. */
+let exclusionsWereOpen = false;
+window.addEventListener("beforeprint", () => {
+  const d = $("excluded");
+  exclusionsWereOpen = d.open;
+  d.open = true;
 });
+window.addEventListener("afterprint", () => { $("excluded").open = exclusionsWereOpen; });
+
+$("print-screen").addEventListener("click", () => { window.print(); });
 
 /* ---------- "Why is country X (not) here?" ---------- */
 function renderCheck() {
