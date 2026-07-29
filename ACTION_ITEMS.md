@@ -8,7 +8,7 @@ judgement call. Last updated: 2026-07-28.*
 
 ## Do before you leave (highest value first)
 
-### 1. Two country facts need a human decision — 5 minutes
+### 1. Two country facts need a human decision — 5 minutes *(deferred by choice, 2026-07-29 — fine to do any time before handover)*
 `data/static_countries.json` still describes **Chad** and **Syria** as
 "Transitional government". Nothing refreshes that file automatically. Check
 both against the [CIA World Factbook](https://www.cia.gov/the-world-factbook/)
@@ -16,14 +16,39 @@ and edit the two `"government"` lines. (Gabon and Burundi were already
 corrected in July.)
 
 ### 2. Send the approvals email — this week, because the latency outlasts you
-Two integrations are finished in every respect except UN-side access:
-- **GA4 / Salesforce analytics** — needs read access from whoever administers them.
+Two integrations are ready on the Atlas side and blocked only on UN-side
+access — not on code:
+- **GA4 / Salesforce analytics** — needs read access from whoever administers
+  those accounts (or their name, so the request lands with the right person).
 - **The audience survey** (Google Form) — needs your supervisor's written
   sign-off on [docs/SURVEY_ETHICS.md](docs/SURVEY_ETHICS.md) before it can go
   live, per [docs/SURVEY_SETUP.md](docs/SURVEY_SETUP.md).
 
-Send the ask even if it cannot land before 17 August: an approved-and-waiting
-request is something your successor can act on, an unsent one is not.
+Send the ask even if approval cannot land before you leave: an
+approved-and-waiting request is something your successor can act on the day
+they start; an unsent one is a dead end.
+
+**Copy-paste draft** (adjust names):
+
+> Subject: Two approvals for the Audience Intelligence Atlas (no cost, no urgency to build)
+>
+> Hi [supervisor],
+>
+> Two parts of the Atlas are built and waiting only on access/approval:
+>
+> 1. **Analytics**: could you point me to (or loop in) whoever administers our
+>    GA4 and Salesforce accounts? The Atlas needs read-only access to show how
+>    our content performs alongside the media-landscape data. Nothing is
+>    installed on their side; it is a permissions grant.
+> 2. **Audience survey**: the survey described in the project's SURVEY_SETUP
+>    document is ready, and per our own ethics checklist it needs your written
+>    OK before going live. The one-page checklist is attached
+>    (docs/SURVEY_ETHICS.md) — a reply saying "approved" is sufficient.
+>
+> Neither has any cost. If approvals arrive after my internship ends, whoever
+> maintains the Atlas next can switch both on — the handover guide covers it.
+>
+> Thanks!
 
 ### 3. Decide on the AI upgrade (see the section below)
 Free, but it needs an account in your name that can be transferred to the UN,
@@ -100,6 +125,11 @@ political events and nothing checks them.
 ---
 
 ## Done — no longer needs you
+
+- ~~Em-dash cleanup~~ — resolved 2026-07-29: the database is at zero em-dashes,
+  enforced at the generators. The analyst's sentence punctuation was left
+  untouched by explicit decision (rewriting ~500 sentences risked fragment
+  bugs for no functional gain).
 
 - ~~RSF 2026~~ — integrated; now a one-command refresh.
 - ~~Gabon / Burundi country facts~~ — corrected July 2026.
