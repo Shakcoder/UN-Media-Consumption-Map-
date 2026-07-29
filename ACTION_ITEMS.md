@@ -2,55 +2,59 @@
 
 *A running list of everything waiting on a human — kept current as work lands.
 Nothing here is blocked on code; each item needs an account, an approval, or a
-judgement call. Last updated: 2026-07-28.*
+judgement call. Last updated: 2026-07-29.*
+
+**Context as of 2026-07-29:** the team green-lit using the UN's own Google
+Analytics 360 data in the Atlas, and the goal is a product DGC can genuinely
+use by **September** (in-person until Aug 20, remote to Sept 30). The two new
+items below exist because of that.
 
 ---
 
-## Do before you leave (highest value first)
+## Do first (highest value first)
 
-### 1. Two country facts need a human decision — 5 minutes *(deferred by choice, 2026-07-29 — fine to do any time before handover)*
+### 1. The Google Analytics walkthrough — in the next few days
+The team will walk you through the UN's GA360 data. Before you go, read
+[docs/GA360_WALKTHROUGH.md](docs/GA360_WALKTHROUGH.md) — it is a one-page
+sheet of exactly what to ask and the three things to walk out with (a sample
+CSV, the administrator's name, and a yes/no on viewer access). The entire
+integration design depends on what comes back from that meeting.
+
+### 2. Send the access + privacy email — this week, because the latency outlasts the build
+Two asks, both slow, both needing only a name from your supervisor:
+
+**Copy-paste draft** (adjust names):
+
+> Subject: Two quick asks for the Audience Intelligence Atlas
+>
+> Hi [supervisor],
+>
+> 1. **Analytics access**: the team is walking me through our Google
+>    Analytics 360 data shortly, so the Atlas can show how UN content
+>    performs alongside its media-landscape data. Could you point me to (or
+>    loop in) whoever administers our Google Analytics and Salesforce
+>    accounts? View-only access is all it needs; nothing is installed on
+>    their side.
+> 2. **Privacy/security sign-off**: before the Atlas is used as a real DGC
+>    product, I want to confirm what review it needs on the UN side — data
+>    protection, hosting, or a simple OK. Who would be the right person to
+>    ask? The technical security review is already underway on my side; I'm
+>    starting the organizational one early because it tends to be the slower
+>    track.
+>
+> Neither has any cost. Thanks!
+
+*(The audience-survey approval that used to be bundled into this email is
+deferred by choice, 2026-07-29 — see "Deferred" below.)*
+
+### 3. Two country facts need a human decision — 5 minutes *(deferred by choice, 2026-07-29 — fine to do any time before handover)*
 `data/static_countries.json` still describes **Chad** and **Syria** as
 "Transitional government". Nothing refreshes that file automatically. Check
 both against the [CIA World Factbook](https://www.cia.gov/the-world-factbook/)
 and edit the two `"government"` lines. (Gabon and Burundi were already
 corrected in July.)
 
-### 2. Send the approvals email — this week, because the latency outlasts you
-Two integrations are ready on the Atlas side and blocked only on UN-side
-access — not on code:
-- **GA4 / Salesforce analytics** — needs read access from whoever administers
-  those accounts (or their name, so the request lands with the right person).
-- **The audience survey** (Google Form) — needs your supervisor's written
-  sign-off on [docs/SURVEY_ETHICS.md](docs/SURVEY_ETHICS.md) before it can go
-  live, per [docs/SURVEY_SETUP.md](docs/SURVEY_SETUP.md).
-
-Send the ask even if approval cannot land before you leave: an
-approved-and-waiting request is something your successor can act on the day
-they start; an unsent one is a dead end.
-
-**Copy-paste draft** (adjust names):
-
-> Subject: Two approvals for the Audience Intelligence Atlas (no cost, no urgency to build)
->
-> Hi [supervisor],
->
-> Two parts of the Atlas are built and waiting only on access/approval:
->
-> 1. **Analytics**: could you point me to (or loop in) whoever administers our
->    GA4 and Salesforce accounts? The Atlas needs read-only access to show how
->    our content performs alongside the media-landscape data. Nothing is
->    installed on their side; it is a permissions grant.
-> 2. **Audience survey**: the survey described in the project's SURVEY_SETUP
->    document is ready, and per our own ethics checklist it needs your written
->    OK before going live. The one-page checklist is attached
->    (docs/SURVEY_ETHICS.md) — a reply saying "approved" is sufficient.
->
-> Neither has any cost. If approvals arrive after my internship ends, whoever
-> maintains the Atlas next can switch both on — the handover guide covers it.
->
-> Thanks!
-
-### 3. Decide on the AI upgrade (see the section below)
+### 4. Decide on the AI upgrade (see the section below)
 Free, but it needs an account in your name that can be transferred to the UN,
 and one judgement call about risk.
 
@@ -106,6 +110,17 @@ nothing should be.
 Also worth an annual skim: the hand-written parts of
 `data/static_countries.json` (capitals, governments, currencies) drift with
 political events and nothing checks them.
+
+---
+
+## Deferred by choice
+
+- **The audience survey** (Google Form + supervisor sign-off on
+  [docs/SURVEY_ETHICS.md](docs/SURVEY_ETHICS.md)) — explicitly parked
+  2026-07-29 to keep the focus on analytics integration. When it comes back:
+  the withdrawal-request email address in SURVEY_ETHICS.md is still
+  `[to be added]`, and the sign-off checklist at the bottom of that file is
+  the launch gate.
 
 ---
 

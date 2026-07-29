@@ -330,7 +330,10 @@ function addAnalyst(answer, evidence, note, followups, forQuestion, reasoning) {
   let html = `<div class="body">${mdLite(answer)}</div>`;
   html += reasoningBlock(reasoning);
   html += sourcesBlock(evidence);
-  if (note) html += `<div class="note">${note}</div>`;
+  // Escape-then-format like the body above: every caller today passes "" or a
+  // hardcoded literal, but this sink must stay safe if a data-derived note is
+  // ever passed (defense-in-depth, security review 2026-07-29).
+  if (note) html += `<div class="note">${mdLite(note)}</div>`;
   el.innerHTML = html;
   if (followups && followups.length) {
     const wrap = document.createElement("div");
