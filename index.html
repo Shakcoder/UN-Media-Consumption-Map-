@@ -640,7 +640,7 @@
     <div class="map-legend">
       <div class="legend-title" data-i18n="legend_title">Data status</div>
       <div class="row"><div class="swatch" style="background:#009EDB"></div><span data-i18n="legend_profiled">Media data verified (survey-backed)</span></div>
-      <div class="row"><div class="swatch" style="background:#BBC7D1"></div><span data-i18n="legend_limited">Profile only — no media survey yet</span></div>
+      <div class="row"><div class="swatch" style="background:#F2A9A9"></div><span data-i18n="legend_limited">Profile only — no media survey yet</span></div>
       <div class="row"><div class="swatch" style="background:#8FCBEA"></div><span data-i18n="legend_territory">Territory (see sovereign state)</span></div>
       <div class="row"><div class="swatch" style="background:#E4D9BE"></div><span data-i18n="legend_not_profiled">Non-sovereign area (no data)</span></div>
     </div>
@@ -1784,7 +1784,7 @@ function styleCountry(feature) {
   if (kind === "covered")
     return { fillColor: "#009EDB", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.75 };
   if (kind === "profiled")
-    return { fillColor: "#BBC7D1", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.65 };
+    return { fillColor: "#F2A9A9", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.65 };
   if (kind === "territory")
     return { fillColor: "#8FCBEA", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.55 };
   return { fillColor: "#E4D9BE", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.7 };
@@ -1794,7 +1794,7 @@ function styleCountryHover(feature) {
   if (kind === "covered")
     return { fillColor: "#0072BC", weight: 1.5, color: "#003D6B", fillOpacity: 0.9 };
   if (kind === "profiled")
-    return { fillColor: "#93A3B1", weight: 1.5, color: "#4A5A68", fillOpacity: 0.85 };
+    return { fillColor: "#C81E1E", weight: 1.5, color: "#7A1212", fillOpacity: 0.85 };
   if (kind === "territory")
     return { fillColor: "#5FB3DF", weight: 1.5, color: "#003D6B", fillOpacity: 0.75 };
   return { fillColor: "#D3C49B", weight: 1.5, color: "#8A7A50", fillOpacity: 0.85 };
