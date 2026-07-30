@@ -47,14 +47,7 @@ Two asks, both slow, both needing only a name from your supervisor:
 *(The audience-survey approval that used to be bundled into this email is
 deferred by choice, 2026-07-29 — see "Deferred" below.)*
 
-### 3. Two country facts need a human decision — 5 minutes *(deferred by choice, 2026-07-29 — fine to do any time before handover)*
-`data/static_countries.json` still describes **Chad** and **Syria** as
-"Transitional government". Nothing refreshes that file automatically. Check
-both against the [CIA World Factbook](https://www.cia.gov/the-world-factbook/)
-and edit the two `"government"` lines. (Gabon and Burundi were already
-corrected in July.)
-
-### 4. Decide on the AI upgrade (see the section below)
+### 3. Decide on the AI upgrade (see the section below)
 Free, but it needs an account in your name that can be transferred to the UN,
 and one judgement call about risk.
 
@@ -148,4 +141,7 @@ political events and nothing checks them.
 
 - ~~RSF 2026~~ — integrated; now a one-command refresh.
 - ~~Gabon / Burundi country facts~~ — corrected July 2026.
+- ~~Chad / Syria country facts~~ — corrected 2026-07-30 (Chad: Presidential
+  republic; Syria: Transitional presidential republic — per the CIA World
+  Factbook).
 - ~~Crimea shown inside Russia~~ — corrected to UN position (GA res 68/262).
