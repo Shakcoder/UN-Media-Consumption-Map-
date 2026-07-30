@@ -14,11 +14,21 @@ items below exist because of that.
 ## Do first (highest value first)
 
 ### 1. The Google Analytics walkthrough — in the next few days
-The team will walk you through the UN's GA360 data. Before you go, read
-[docs/GA360_WALKTHROUGH.md](docs/GA360_WALKTHROUGH.md) — it is a one-page
-sheet of exactly what to ask and the three things to walk out with (a sample
-CSV, the administrator's name, and a yes/no on viewer access). The entire
-integration design depends on what comes back from that meeting.
+The team will walk you through the UN's GA360 data. Two documents go with it:
+
+- **[docs/GA360_WALKTHROUGH.md](docs/GA360_WALKTHROUGH.md)** — the one-page
+  in-meeting sheet: what to ask, and the three things to walk out with (a
+  sample CSV, the administrator's name, a yes/no on viewer access).
+- **[docs/GA_DATA_REQUEST.md](docs/GA_DATA_REQUEST.md)** — the full request:
+  a paste-ready email explaining why the data is needed, a tiered wish-list of
+  every dimension worth asking for, how it would be obtained and used, and
+  twelve known problems with the data (including why the "Language" field
+  measures device locale rather than language preference, and would push the
+  wrong recommendation if read naively).
+
+Send the email in Part 1 of GA_DATA_REQUEST.md to whoever administers the
+property — either after the walkthrough, or before it if a name is already
+known. The integration design depends on what comes back.
 
 ### 2. Send the access + privacy email — this week, because the latency outlasts the build
 Two asks, both slow, both needing only a name from your supervisor:
