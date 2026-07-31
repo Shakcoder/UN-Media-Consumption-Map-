@@ -31,17 +31,18 @@ const DATA_BASE = "data";
 // ---------------------------------------------------------------------------
 // Data loading
 // ---------------------------------------------------------------------------
-let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null, AD_MARKET = null;
+let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null, AD_MARKET = null, TV_STATIONS = null;
 let NAME_TO_ISO = {};   // every recognizable name/alias/demonym -> ISO3
 let GENERATED = new Set();  // machine-generated demonyms: exact-match only, never fuzzy targets
 
 export async function initEngine() {
   if (COUNTRIES) return true;
-  const [cRes, tRes, gRes, aRes] = await Promise.all([
+  const [cRes, tRes, gRes, aRes, tvRes] = await Promise.all([
     fetch(`${DATA_BASE}/countries.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/trends/topic_intelligence.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/topics.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/ad_market.json`, { cache: "no-cache" }).catch(() => null),
+    fetch(`${DATA_BASE}/tv_stations.json`, { cache: "no-cache" }).catch(() => null),
   ]);
   if (!cRes.ok) throw new Error("countries.json failed to load (" + cRes.status + ")");
   COUNTRIES = await cRes.json();
@@ -51,6 +52,9 @@ export async function initEngine() {
   // Ad-market signals (industry estimates, annual hand-update) — optional:
   // the analyst degrades gracefully when the file is absent.
   AD_MARKET = (aRes && aRes.ok) ? await aRes.json().catch(() => null) : null;
+  // Extended TV-station lists (Wikipedia lists gated through Wikidata,
+  // monthly refresh) — optional layer under the curated top_tv line.
+  TV_STATIONS = (tvRes && tvRes.ok) ? await tvRes.json().catch(() => null) : null;
   // full registry: all tracked topics, including ones currently below the
   // trend-measurement floor (they match questions and report honestly)
   if (gRes.ok) {
@@ -841,6 +845,9 @@ function facts(iso) {
     under15: dem.age_0_14_pct, urban: dem.urban_pct, literacy: dem.literacy_pct,
     finAccount: conn.financial_account_pct,
     outlets: c.media || {}, languages: c.languages || [],
+    // Extended station list (Wikipedia lists gated through Wikidata) — a
+    // breadth layer; the curated top_tv line stays the leading-stations claim
+    tvStations: (TV_STATIONS && TV_STATIONS[iso]) || null,
     languagesDetail: c.languages_detail || [],
     // CLDR speaker-capability share for English (overlaps with other languages
     // by design — invariant #6: language shares are capability, not additive)
@@ -1032,6 +1039,14 @@ function composeCountryBrief(f, ev, ents) {
     lines.push(`- Languages (share of population): ${langsByShare(f).slice(0, 5).map(l => `${prettyLang(l)} ${Math.round(l.pct)}%${l.official ? " (official)" : ""}`).join(", ")} *(Unicode CLDR)*`);
   const o = f.outlets;
   if (o.top_tv || o.top_radio) lines.push(`- Leading outlets — TV: ${o.top_tv || "n/a"}; radio: ${o.top_radio || "n/a"}; online: ${o.top_online_news || "n/a"}${o.top_social ? `; social platforms (in order): ${o.top_social}` : ""}`);
+  if (f.tvStations && (f.tvStations.stations || []).length) {
+    const names = f.tvStations.stations.map(s => s.name);
+    lines.push(`- More active TV stations (beyond the leading outlets): ${names.join(", ")} *(Wikipedia station lists verified via Wikidata; ordered by international Wikipedia presence, not audience share)*`);
+    const srcUrl = (String(f.tvStations.source || "").match(/https?:\/\/\S+/) || [null])[0];
+    ev.add(`${f.name} — extended TV stations`,
+      `Station names from Wikipedia's station-list pages; every entry gated through its Wikidata record (belongs to this country, carries no dissolution date, typed as a broadcaster). Ordering is international Wikipedia presence (sitelink count) — a presence proxy; no free source measures per-station audience share. ${f.tvStations.source || ""}`,
+      srcUrl ? [{ label: "Wikipedia station list", url: srcUrl }] : []);
+  }
 
   // if a specific platform was asked about, say where it stands in this market
   for (const p of ents.platforms || []) {

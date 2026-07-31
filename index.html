@@ -2354,6 +2354,29 @@ function tabMedia(d) {
     outletRow(t("label_online_news"), m.top_online_news) + outletRow(t("label_social_platforms"), m.top_social);
   if (outletsHtml) html += `<h3>${t("section_leading_outlets")}</h3>` + outletsHtml;
 
+  // Extended TV-station list (Wikipedia lists gated through Wikidata). Layered
+  // UNDER the curated line above: names already on the curated top_tv line are
+  // not repeated here. Presence-ranked, never presented as a viewership rank.
+  const tvx = (window.TV_STATIONS || {})[currentActiveIso];
+  if (tvx && tvx.stations && tvx.stations.length) {
+    const curated = new Set((m.top_tv || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean));
+    const isCurated = (name) => {
+      const n = name.toLowerCase();
+      for (const c of curated) if (n.includes(c) || c.includes(n)) return true;
+      return false;
+    };
+    const extra = tvx.stations.filter(s => !isCurated(s.name));
+    if (extra.length) {
+      const src = String(tvx.source || "");
+      const urlMatch = src.match(/https?:\/\/\S+/);
+      html += `<h3>More TV stations <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Wikipedia station lists, verified via Wikidata</span></h3>`;
+      html += `<p style="font-size:12px;color:var(--muted);line-height:1.6;margin:4px 0 4px;">${extra.map(s => esc(s.name)).join(" · ")}</p>`;
+      html += `<div style="font-size:10px;color:var(--muted-2);margin:0 0 10px;">Active stations from ` +
+        (urlMatch ? `<a href="${esc(urlMatch[0])}" target="_blank" rel="noopener">Wikipedia's station list ↗</a>` : "Wikipedia's station lists") +
+        `, each verified against its Wikidata record (in-country, not defunct). Ordered by international Wikipedia presence, not audience share.</div>`;
+    }
+  }
+
   // Media landscape narrative (CIA World Factbook, public domain, weekly)
   if (m.landscape_note) {
     html += `<h3>Media landscape <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">CIA World Factbook</span></h3>`;
@@ -2521,11 +2544,16 @@ function tabSociety(d) {
 }
 
 function tabSources(d) {
+  // The extended TV-station list lives in its own file (data/tv_stations.json),
+  // so its citation is appended here rather than read from d.sources.
+  const tvx = (window.TV_STATIONS || {})[currentActiveIso];
+  const sourceEntries = Object.entries(d.sources || {});
+  if (tvx && tvx.source) sourceEntries.push(["TV stations (extended list)", tvx.source]);
   return `
     <h3>${t("section_primary_sources")}</h3>
     <p style="color: var(--muted); font-size: 13px;">${t("sources_intro")}</p>
     <div class="sources-list">
-      ${Object.entries(d.sources || {}).map(([field, url]) => {
+      ${sourceEntries.map(([field, url]) => {
         // A citation is "Organisation | detail | URL" — the pipe separates the
         // parts, and any part may be absent. Freedom House's carries all three;
         // World Bank's is "Org | URL"; the outlet-list note is "Org" alone.
@@ -2696,6 +2724,24 @@ function openDeepLinkedCountry() {
                 Object.keys(window.PLATFORM_WEB_SHARES.countries || {}).length, "countries");
   } catch (err) {
     console.info("[atlas] platform web share data unavailable:", err.message);
+  }
+})();
+
+/* Extended TV-station lists (Wikipedia station lists gated through Wikidata,
+ * monthly) — optional layer under the curated "Leading outlets" line. Names
+ * are presence-ranked (how many language Wikipedias carry the station), which
+ * is NOT viewership; the curated top_tv line stays the leading-stations
+ * statement. */
+(async function loadTvStations() {
+  try {
+    const r = await fetch("data/tv_stations.json", { cache: "no-cache" });
+    if (!r.ok) throw new Error("no TV station data yet (HTTP " + r.status + ")");
+    window.TV_STATIONS = await r.json();
+    if (currentActiveIso) renderDetail(currentActiveIso);
+    console.log("[atlas] extended TV stations loaded:",
+                Object.keys(window.TV_STATIONS).filter(k => !k.startsWith("_")).length, "countries");
+  } catch (err) {
+    console.info("[atlas] extended TV station data unavailable:", err.message);
   }
 })();
 

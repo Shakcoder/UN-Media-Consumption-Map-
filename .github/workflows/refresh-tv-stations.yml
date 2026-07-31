@@ -1,0 +1,98 @@
+name: Refresh extended TV-station lists
+
+# Monthly rebuild of data/tv_stations.json — the extended per-country TV
+# station layer (Wikipedia station lists gated through Wikidata records;
+# see docs/DATA_SOURCES.md §1 and the docstring of the script itself).
+#
+# Monthly, not weekly: station landscapes change slowly, and the harvest makes
+# a few hundred polite requests to Wikipedia/Wikidata — no reason to spend
+# that more often. The 12th at 04:30 UTC keeps clear of the weekly Monday
+# refresh and the daily trend engine.
+#
+# Safety model (same as every other pipeline here):
+#   - the script REFUSES to write a result thinner than its floors, so a
+#     broken page format or API outage can never blank the published file;
+#   - a country whose fresh harvest comes back empty keeps its previous list
+#     (marked carried_from_previous) rather than losing coverage;
+#   - validate_atlas.py must pass before anything is committed;
+#   - a failed run opens ONE GitHub Issue rather than failing silently.
+
+on:
+  schedule:
+    - cron: "30 4 12 * *"   # 04:30 UTC on the 12th of every month
+  workflow_dispatch:         # manual "Run workflow" button
+  push:
+    paths:
+      - "scripts/fetch_tv_stations.py"
+      - ".github/workflows/refresh-tv-stations.yml"
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: refresh-tv-stations
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    # The harvest sleeps politely between a few hundred requests; a normal
+    # run takes ~15-25 min. Headroom costs nothing.
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Rebuild tv_stations.json (refuses thin results)
+        run: python scripts/fetch_tv_stations.py
+
+      - name: Validate (blocks publication on error)
+        run: python scripts/validate_atlas.py
+
+      - name: Commit updated data (if changed)
+        run: |
+          set -e
+          git config user.name "atlas-bot"
+          git config user.email "actions@github.com"
+          # ORDER MATTERS: commit first (rebase refuses a dirty tree), THEN
+          # pull --rebase to replay on top of any concurrent bot commit,
+          # then push.
+          git add data/tv_stations.json
+          echo "=== git diff --cached summary ==="
+          git diff --cached --stat
+          if git diff --cached --quiet; then
+            echo "No changes — station lists are already up to date."
+          else
+            git commit -m "chore(tv): monthly station-list refresh $(date -u +%Y-%m-%d)"
+            git pull --rebase origin main
+            git push
+            echo "=== Pushed. ==="
+          fi
+
+      - name: Open an issue if this run failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="TV-station refresh failed on $(date -u +%Y-%m-%d)"
+          existing=$(gh issue list --state open --search "in:title \"TV-station refresh failed\"" --json number --jq 'length')
+          if [ "$existing" = "0" ]; then
+            # --label is best-effort: a deleted label must never swallow the alert.
+            gh issue create --title "$title" \
+              --body "The monthly TV-station refresh failed. Open the Actions tab, click the failed run, and check which step went red. The site keeps serving the previous tv_stations.json meanwhile — the script never overwrites good data with a thin result. If the failure repeats next month, check whether the Wikipedia list pages or the Wikidata API changed shape (scripts/fetch_tv_stations.py's docstring explains the pipeline). Close this once a later run succeeds." \
+              --label "automation" \
+            || gh issue create --title "$title" \
+              --body "The monthly TV-station refresh failed. Open the Actions tab, click the failed run, and check which step went red. The site keeps serving the previous tv_stations.json meanwhile — the script never overwrites good data with a thin result. Close this once a later run succeeds."
+          else
+            echo "An open failure issue already exists — not duplicating."
+          fi

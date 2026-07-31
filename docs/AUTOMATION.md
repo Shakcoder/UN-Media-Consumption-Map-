@@ -10,19 +10,20 @@
 
 ---
 
-## The three workflows
+## The four workflows
 
 | Workflow | Schedule | What it refreshes | Output |
 |---|---|---|---|
 | [`trend-engine.yml`](../.github/workflows/trend-engine.yml) | Daily 05:30 UTC | Wikipedia pageviews (demand) + GDELT coverage (supply) → per-topic and per-country trend intelligence | `data/trends/wiki_pageviews.json`, `data/trends/gdelt_coverage.json`, `data/trends/topic_intelligence.json` |
 | [`refresh-data.yml`](../.github/workflows/refresh-data.yml) | Weekly, Mon 03:00 UTC + whenever `static_countries.json` or `refresh_data.py` changes | World Bank indicators (population, GDP, internet, literacy, Findex financial accounts, …) + Unicode CLDR language shares; then Statcounter social-platform web shares | `data/countries.json`, `data/platform_web_shares.json` |
+| [`refresh-tv-stations.yml`](../.github/workflows/refresh-tv-stations.yml) | Monthly, 12th at 04:30 UTC | Extended per-country TV-station lists: candidates harvested from Wikipedia's station-list pages, each gated through its Wikidata record (in-country, not defunct, typed as a broadcaster) | `data/tv_stations.json` |
 | [`source-watchdog.yml`](../.github/workflows/source-watchdog.yml) | Monthly, 3rd at 06:00 UTC | Nothing directly — it **watches** the eight annual sources (RSF, Freedom House ×2, Reuters DNR, GSMA, Afrobarometer, UN WPP, WPP Media + Dentsu ad forecasts) and opens a GitHub Issue (with non-coder instructions) when a new edition is out | Issues labeled `data-refresh` |
 
-All three also have a manual **Run workflow** button: GitHub → Actions tab → pick the workflow → Run workflow.
+All four also have a manual **Run workflow** button: GitHub → Actions tab → pick the workflow → Run workflow.
 
 ## What the website reads
 
-These five files ARE the site. Every page loads them straight from the repo — nothing else is fetched at runtime. The last column is what to check first when a page looks wrong.
+These files ARE the site. Every page loads them straight from the repo — nothing else is fetched at runtime. The last column is what to check first when a page looks wrong.
 
 | File | Written by | Cadence | Which pages read it |
 |---|---|---|---|
@@ -31,11 +32,12 @@ These five files ARE the site. Every page loads them straight from the repo — 
 | `data/topics.json` | `scripts/build_topic_registry.py` (manual, rare) | only when the topic list changes | AI Analyst, Market Finder (the topic list) |
 | `data/platform_web_shares.json` | weekly refresh, via `scripts/fetch_statcounter.py` | Mondays | Map — the "social web-traffic share" block on a country's Media tab |
 | `data/ad_market.json` | **you**, by hand | once a year, each December/January | AI Analyst — ad-market context inside strategy briefs |
+| `data/tv_stations.json` | monthly TV-station refresh | 12th of each month | Map — the "More TV stations" block on a country's Media tab; AI Analyst — extended station lists in country answers |
 | `data/boundaries/countries.geojson` | `scripts/build_boundaries.py` (manual, rare) | only if the boundary snapshot pin is deliberately moved | Map — the country outlines themselves |
 
 The "AI Analyst" and "Market Finder" pages need **no backend at all** — `ask-engine.js` runs in the visitor's browser and reads the published JSON files above.
 
-**Two of these degrade quietly on purpose.** If `platform_web_shares.json` or `ad_market.json` is missing or fails to load, the page simply leaves out that block instead of showing an error — the rest of the profile or brief is unaffected. That is why a Statcounter outage is not an emergency, and also why a *silently missing* file can go unnoticed: if the social-share block has vanished from the Media tab, that file is the thing to check.
+**Three of these degrade quietly on purpose.** If `platform_web_shares.json`, `ad_market.json` or `tv_stations.json` is missing or fails to load, the page simply leaves out that block instead of showing an error — the rest of the profile or brief is unaffected. That is why a Statcounter outage is not an emergency, and also why a *silently missing* file can go unnoticed: if the social-share block has vanished from the Media tab, that file is the thing to check.
 
 `data/static_countries.json` is **not** in the table because the site never loads it directly. It is the hand-curated input — country blurbs, leading outlets, top social platforms — that the weekly refresh merges into `countries.json`. Editing it triggers a refresh run within minutes.
 

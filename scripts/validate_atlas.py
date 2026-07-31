@@ -501,6 +501,38 @@ def main() -> int:
     else:
         WARNS.append("platform_web_shares.json missing")
 
+    # Extended TV-station lists (Wikipedia lists gated through Wikidata) — an
+    # optional layer, so absence is a warning; a malformed entry is an error.
+    tv_path = ROOT / "data" / "tv_stations.json"
+    if tv_path.exists():
+        tv = load_json(tv_path)
+        tv_countries = {k: v for k, v in tv.items() if not k.startswith("_")}
+        n_stations = 0
+        for iso, rec in sorted(tv_countries.items()):
+            if iso not in countries:
+                ERRORS.append(f"tv_stations {iso}: not a country the Atlas carries")
+                continue
+            stations = rec.get("stations") or []
+            if not stations:
+                ERRORS.append(f"tv_stations {iso}: entry with no stations — an empty "
+                              f"entry should simply be absent")
+            if not re.search(r"https?://", str(rec.get("source") or "")):
+                ERRORS.append(f"tv_stations {iso}: source line carries no URL — the "
+                              f"per-country citation must link the page it came from")
+            if "retrieved" not in str(rec.get("source") or ""):
+                ERRORS.append(f"tv_stations {iso}: source line names no retrieval date")
+            for s in stations:
+                n_stations += 1
+                if not (s.get("name") or "").strip():
+                    ERRORS.append(f"tv_stations {iso}: station with an empty name")
+                if "—" in str(s.get("name", "")) or "–" in str(s.get("name", "")):
+                    ERRORS.append(f"tv_stations {iso}: em/en dash in station name "
+                                  f"{s.get('name')!r} — the database carries none by rule")
+        INFOS.append(f"extended TV-station coverage: {len(tv_countries)}/{len(countries)} "
+                     f"countries, {n_stations} stations")
+    else:
+        WARNS.append("tv_stations.json missing — extended TV-station layer not built yet")
+
     am_path = ROOT / "data" / "ad_market.json"
     if am_path.exists():
         am = load_json(am_path)

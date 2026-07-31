@@ -40,13 +40,14 @@ again. When in doubt, showing "no data" is always correct. Estimates are not.
 
 ## What runs by itself
 
-Four workflows (GitHub → **Actions** tab), all with a manual "Run workflow"
+Five workflows (GitHub → **Actions** tab), all with a manual "Run workflow"
 button. Full detail: [docs/AUTOMATION.md](docs/AUTOMATION.md).
 
 | Workflow | When | What it does |
 |---|---|---|
 | Trend engine | daily 05:30 UTC | Refreshes topic attention (Wikipedia) + news coverage (GDELT) |
 | Refresh country data | Mondays 03:00 UTC | Pulls 15 World Bank indicators + language data, rebuilds `countries.json` — **will not publish if validation fails** |
+| TV-station refresh | 12th of each month | Rebuilds the extended TV-station lists (Wikipedia lists gated through Wikidata) — **refuses to publish a thin result** |
 | Source watchdog | 3rd of each month | Checks whether annual sources published a new edition; opens an Issue with instructions when one has |
 | Code gates | every push + daily 12:00 UTC | Runs the validator and all three eval suites; a red X means don't trust the live site until fixed |
 
