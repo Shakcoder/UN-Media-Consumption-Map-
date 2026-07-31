@@ -5,7 +5,66 @@ email that can be sent as-is. Parts 2–5 are the detail behind it: everything
 worth requesting, how it would be obtained, and the known problems with the
 data — including the language field, which does not measure what its name
 suggests. Companion to [GA360_WALKTHROUGH.md](GA360_WALKTHROUGH.md), which is
-the in-meeting checklist.*
+the in-meeting checklist, and to
+[GA_SUMMARY_EXPORTS.md](GA_SUMMARY_EXPORTS.md), the practical export steps
+under the approved scope.*
+
+---
+
+## Part 0 — APPROVED, WITH A SCOPE (2026-07-30/31)
+
+The Part 1 email was sent on 2026-07-30. The thread is the governing record;
+this is what it decided.
+
+**Approved by Fang Chen** (Chief, Partnerships Unit, News and Media Division,
+DGC) on 2026-07-30: *"your plan works fine with our goal!"*
+
+**With an explicit scope on the data, from the same message:** *"As for the
+google data, why don't we start with summaries, instead of the full access of
+data to see how it works?"*
+
+**So the operative rule for this project is: summaries only, for now.**
+
+| Allowed under the approved scope | Out of scope until the Chief widens it |
+|---|---|
+| Google Analytics' own **aggregate reports** (counts by country, device, channel, page, month) | Raw or event-level exports |
+| Exploration / Free-form tables built from those dimensions | BigQuery event export |
+| CSV downloads of the above | Anything user-level: client IDs, individual sessions, IP-derived precision beyond country/region |
+| Aggregates computed locally from those reports | A live API/connector pulling arbitrary data |
+
+**Why this is recorded here rather than left in an inbox.** Two people
+answered the question at different levels of authority, and the answers
+differ in scope. Gretchen Corcuera relayed (2026-07-30) that Ali had said it
+was "totally ok to connect our Google Analytics account to Claude", on the
+grounds that it is "open data" and that connecting is read-only. She then
+asked Fang to *"greenlight as you see fit"* — that is, she referred the
+decision upward rather than making it. Fang greenlit the plan and named a
+narrower starting scope. **The Chief's written instruction is the one this
+project follows.** If the broader reading is ever cited later, it should be
+re-confirmed with Fang in writing before anything changes.
+
+Two notes worth keeping straight, neither of which changes what we do:
+- "Open data" is doing a lot of work in the relayed summary. UN Google
+  Analytics data is *internal operational data* the UN happens to own, not
+  openly-licensed public data in the sense the Atlas's other sources are
+  (CC BY, CC0, public domain). This is exactly why the summaries-first scope
+  is the sensible starting point, and why nothing derived from it should be
+  published on the public site without a specific OK.
+- "Read-only" is true and beside the point. The concern was never that the
+  analytics account might be modified; it is what leaves UN systems during
+  processing. Summaries answer that concern directly.
+
+**Practical effect on the architecture:** raw exports stay on Shakti's
+machine and out of version control; aggregation happens locally; only the
+computed country-level summary is used in the Atlas or shared. This is the
+same pattern the project already applies to licensed survey microdata
+(Afrobarometer, WVS, Eurobarometer and the rest are processed locally by
+`scripts/compute_*.py` and only their aggregates are published), so the
+approved scope fits the existing design rather than fighting it.
+
+Committed next step, per Shakti's reply on 2026-07-31: experiment with what
+the summary reports can support, and report back to the team early the
+following week (w/c 2026-08-03).
 
 ---
 

@@ -13,46 +13,55 @@ items below exist because of that.
 
 ## Do first (highest value first)
 
-### 1. The Google Analytics walkthrough — in the next few days
-The team will walk you through the UN's GA360 data. Two documents go with it:
+### 1. Pull the Google Analytics summary reports ✅ approved, scoped
+**Status: approved by Fang Chen on 2026-07-30** — *"your plan works fine with
+our goal!"* — **with a scope**: *"why don't we start with summaries, instead
+of the full access of data to see how it works?"* You told the team you would
+experiment and report back **early w/c 2026-08-03**.
 
-- **[docs/GA360_WALKTHROUGH.md](docs/GA360_WALKTHROUGH.md)** — the one-page
-  in-meeting sheet: what to ask, and the three things to walk out with (a
-  sample CSV, the administrator's name, a yes/no on viewer access).
-- **[docs/GA_DATA_REQUEST.md](docs/GA_DATA_REQUEST.md)** — the full request:
-  a paste-ready email explaining why the data is needed, a tiered wish-list of
-  every dimension worth asking for, how it would be obtained and used, and
-  twelve known problems with the data (including why the "Language" field
-  measures device locale rather than language preference, and would push the
-  wrong recommendation if read naively).
+Summaries only, for now. Aggregate reports from the Analytics interface:
+yes. Raw/event-level exports, BigQuery, anything user-level: no, not until
+the Chief widens the scope in writing. Full record of the decision, including
+why it is narrower than the informal "totally ok to connect" relayed in the
+same thread, is in
+[docs/GA_DATA_REQUEST.md](docs/GA_DATA_REQUEST.md) Part 0.
 
-Send the email in Part 1 of GA_DATA_REQUEST.md to whoever administers the
-property — either after the walkthrough, or before it if a name is already
-known. The integration design depends on what comes back.
+**What to do:** follow
+[docs/GA_SUMMARY_EXPORTS.md](docs/GA_SUMMARY_EXPORTS.md) — step-by-step
+export instructions for six summary reports, written for someone who has
+never opened the Explore tool. Report 1 (users by country by month) is the
+one that matters most; country is the key that joins Analytics to all 195
+Atlas records. Report 4 is the interesting one: it captures which *language
+edition* of a page people actually opened, which is the real language signal,
+unlike the "Language" dimension that only reports device settings.
 
-### 2. Send the access + privacy email — this week, because the latency outlasts the build
-Two asks, both slow, both needing only a name from your supervisor:
+**Save the CSVs OUTSIDE this folder** (e.g. `~/Documents/UN Analytics
+Exports/`) — this repository is public. `.gitignore` now refuses
+`ga_*.csv` and similar as a second line of defence, but keeping them out of
+the folder is the real protection. Then say where the folder is and the
+aggregation gets built against the real column shapes.
 
-**Copy-paste draft** (adjust names):
+Other reference documents:
+- **[docs/GA360_WALKTHROUGH.md](docs/GA360_WALKTHROUGH.md)** — the in-meeting
+  checklist, if a walkthrough with the administrators still happens.
+- **[docs/GA_DATA_REQUEST.md](docs/GA_DATA_REQUEST.md)** — the full wish-list
+  and the twelve known problems with analytics data.
 
-> Subject: Two quick asks for the Audience Intelligence Atlas
+### 2. Ask who owns privacy/security sign-off — still unanswered
+The analytics question got answered; this one did not, and it is the slower
+of the two. Before the Atlas is used as a real DGC product, someone on the UN
+side has to say what review it needs — data protection, hosting, or a simple
+OK. Worth asking Fang directly, since she has now engaged with the project:
+
+> Hi Fang,
 >
-> Hi [supervisor],
+> One follow-up, and there is no urgency to it. Before the database is used
+> as a real product within DGC, I would like to confirm what review it needs
+> on the UN side: data protection, hosting, or simply your OK. Who would be
+> the right person to ask? I am starting the technical side myself; I am
+> raising the organisational side early because it tends to take longer.
 >
-> 1. **Analytics access**: the team is walking me through our Google
->    Analytics 360 data shortly, so the Atlas can show how UN content
->    performs alongside its media-landscape data. Could you point me to (or
->    loop in) whoever administers our Google Analytics and Salesforce
->    accounts? View-only access is all it needs; nothing is installed on
->    their side.
-> 2. **Privacy/security sign-off**: before the Atlas is used as a real DGC
->    product, I want to confirm what review it needs on the UN side — data
->    protection, hosting, or a simple OK. Who would be the right person to
->    ask? The technical security review is already underway on my side; I'm
->    starting the organizational one early because it tends to be the slower
->    track.
->
-> Neither has any cost. Thanks!
+> Thanks!
 
 *(The audience-survey approval that used to be bundled into this email is
 deferred by choice, 2026-07-29 — see "Deferred" below.)*

@@ -14,3 +14,23 @@ UN Database Source Analysis.pdf
 # Transient output of scripts/check_source_editions.py — regenerated on every
 # run (locally and in CI); the GitHub Issues it produces are the real record.
 watchdog_findings.json
+
+# ---------------------------------------------------------------------------
+# UN Google Analytics exports — NEVER commit these.
+#
+# This repository is PUBLIC. Analytics exports are internal UN operational
+# data, approved (Fang Chen, 2026-07-30) for use as *summaries* only, and
+# approved for use is not approved for publication. Raw exports belong
+# outside this folder entirely (see docs/GA_SUMMARY_EXPORTS.md); these
+# patterns are the second line of defence in case one lands here anyway.
+#
+# Only the COMPUTED country-level aggregate is ever published, exactly as the
+# licensed survey microdata is handled.
+# ---------------------------------------------------------------------------
+ga_*.csv
+ga_*.tsv
+ga_*.xlsx
+analytics_export*
+*_analytics_raw*
+data/ga_raw/
+data/analytics_raw/
