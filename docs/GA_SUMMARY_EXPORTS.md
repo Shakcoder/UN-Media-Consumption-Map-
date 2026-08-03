@@ -46,11 +46,17 @@ all 195 country records in the Atlas; without it nothing else can be used.
 
 | | |
 |---|---|
-| **Rows** | Country, Month (or "Year month") |
+| **Rows** | Country, **Year month** (not plain "Month") |
 | **Values** | Total users, Sessions, Views, Average engagement time per session |
 | **Save as** | `ga_country_month.csv` |
 
 If only one report ever gets pulled, make it this one.
+
+**Why "Year month" specifically:** the plain "Month" dimension exports as
+`01`–`12` with no year attached, so a 24-month range folds January 2025 and
+January 2026 into one row. Seasonality survives that; year-over-year growth
+does not. (The 2026-08-03 export used plain Month — fine for a first look,
+worth switching on the next pull.)
 
 ---
 
@@ -91,10 +97,23 @@ and systematically over-reports English (see GA_DATA_REQUEST.md Part 5.1).
 What we want is which *language version of the page* people actually opened,
 which lives in the page path — `/ar/`, `/fr/`, `/es/` or similar.
 
+**⚠ Two settings here are load-bearing — the 2026-08-03 export taught us
+this the hard way.** Without them, the CSV filled its entire 100,000-row
+budget on the alphabetically-first country ("(not set)") and its endless
+`?utm=` URL variants, and contained no real countries at all:
+
+1. Use **"Landing page"** — the plain one, *not* "Landing page + query
+   string". Query strings multiply every URL into hundreds of rows.
+2. Before exporting, **click the "Total users" column header so the table
+   sorts descending** (biggest first). The export keeps the on-screen order;
+   sorted this way, the 100k rows carry nearly all the traffic instead of
+   nearly none of it.
+
 | | |
 |---|---|
-| **Rows** | Country, Landing page (or "Page path + query string") |
+| **Rows** | Country, Landing page *(no query string)* |
 | **Values** | Total users, Views |
+| **Sort** | Total users, descending — click the column header |
 | **Save as** | `ga_country_pagepath.csv` |
 
 The paths get aggregated into language editions locally — no need to tidy
@@ -116,9 +135,12 @@ interesting finding for the team and costs one extra export.
 |---|---|
 | **Rows** | Country, Page title (or Content group, if the property has them) |
 | **Values** | Views, Total users, Average engagement time per session |
+| **Sort** | Views, descending — click the column header (same reason as Report 4) |
 | **Save as** | `ga_country_content.csv` |
 
-Row limit matters here — raise it as high as the tool allows.
+Row limit matters here — raise it as high as the tool allows, and the
+descending sort is what makes the capped export carry the traffic that
+matters rather than an alphabetical sliver.
 
 ---
 
