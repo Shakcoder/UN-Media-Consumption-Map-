@@ -1,0 +1,287 @@
+{
+  "_meta": {
+    "generated_at": "2026-08-04T11:50:53-04:00",
+    "retrieved_on": "2026-08-04",
+    "schema_version": 1,
+    "source": "Google Analytics 4 (UN GA360) — UN News properties, aggregate reports pulled via the GA Data API",
+    "properties": {
+      "en": "UN News — English (GA4 property 247887035)",
+      "all": "UN News — All languages (GA4 property 247862254)"
+    },
+    "scope": "Aggregated summaries only, per DGC approval of 2026-07-30. No raw, event-level, or user-level data. Everything in this file is a country/section-level aggregate equivalent to a GA Explore report export.",
+    "license": "Internal UN operational data published as aggregate summaries for the Atlas; not an open dataset — no public source URL exists.",
+    "window": { "start": "2026-07-07", "end": "2026-08-03", "days": 28 },
+    "previous_window": { "start": "2026-06-09", "end": "2026-07-06", "days": 28 },
+    "trend_windows": {
+      "current": { "start": "2026-07-21", "end": "2026-08-03", "days": 14 },
+      "previous": { "start": "2026-07-07", "end": "2026-07-20", "days": 14 }
+    },
+    "timezone": "America/New_York",
+    "sampling": "GA reported no sampling on any request in this pull (empty sampling metadata).",
+    "method_note": "GA measures arrivals on UN News web properties (visits by people who already found the site), NOT the reachable population of a country. Never compare GA figures directly with survey-based reach percentages; they are different constructs measured on different populations.",
+    "caveats": [
+      "English-property traffic fell ~32% versus the previous 28 days (1.05M to 714k active users) while average session duration rose 89s to 107s — the drop tracks the cooling of the June US-Iran war news cycle, so period-over-period deltas are news-cycle driven, not structural.",
+      "China on the English property shows 108,860 users but only 107,354 page views and an 8.4% engagement rate versus 19-47% for the other top-10 countries (most cluster at 30-46%; Netherlands and France run lower and carry their own flags) — a bot/VPN-like pattern. Treat China arrivals as unverified until investigated; do not present China as the #2 engaged English audience.",
+      "The all-languages property shows the same China pattern (578,246 users vs 536,227 page views) — the implied Chinese-edition audience is likewise unverified; caveat it wherever the all-languages country list is quoted.",
+      "54% of English-property sessions are 'Unassigned' channel (no source attribution — likely feeds, apps, and consent-blocked traffic). Channel shares are therefore quoted as share of ATTRIBUTED sessions where the distinction matters.",
+      "GA's browser-language dimension is device locale, not language preference; the real language signal is which language edition people visit. Browser-language rows are included only to show the locale-vs-edition gap.",
+      "Netherlands and Singapore rank above population expectations with low engagement (23% and 21%) — datacenter/VPN suspicion; treat as directional.",
+      "IP-derived geography is directional, not exact; VPN and proxy use shifts country rows.",
+      "One story ('Security Council debrief: race for critical minerals') shows 4,892 views from only 689 users (7.1 views/user) — anomalous, possibly embed or refresh traffic; excluded from trend conclusions.",
+      "90% of English-property users in the window are new visitors, typical for search-driven news traffic; the returning core is ~74k users."
+    ],
+    "country_rows_reported_by_ga": 238,
+    "countries_included_here": 30
+  },
+  "global_all_languages": {
+    "totals_28d": {
+      "active_users": 1901366,
+      "sessions": 2145886,
+      "page_views": 2517207,
+      "avg_session_duration_sec": 155.2
+    },
+    "top_countries": [
+      { "iso3": "CHN", "country": "China", "active_users": 578246, "page_views": 536227, "quality_flag": "bot/VPN-like pattern (page views < users) — see _meta.caveats" },
+      { "iso3": "USA", "country": "United States", "active_users": 317192, "page_views": 502089 },
+      { "iso3": "BRA", "country": "Brazil", "active_users": 79027, "page_views": 118714 },
+      { "iso3": "FRA", "country": "France", "active_users": 73025, "page_views": 96348 },
+      { "iso3": "IND", "country": "India", "active_users": 62419, "page_views": 90284 },
+      { "iso3": "GBR", "country": "United Kingdom", "active_users": 53205, "page_views": 69664 },
+      { "iso3": "RUS", "country": "Russia", "active_users": 47718, "page_views": 70804 },
+      { "iso3": "CAN", "country": "Canada", "active_users": 43634, "page_views": 60211 },
+      { "iso3": "ESP", "country": "Spain", "active_users": 34352, "page_views": 45283 },
+      { "iso3": "MEX", "country": "Mexico", "active_users": 33028, "page_views": 52336 },
+      { "iso3": "DEU", "country": "Germany", "active_users": 30767, "page_views": 44417 },
+      { "iso3": "NLD", "country": "Netherlands", "active_users": 24956, "page_views": 41820 },
+      { "iso3": "EGY", "country": "Egypt", "active_users": 24334, "page_views": 33925 },
+      { "iso3": "SGP", "country": "Singapore", "active_users": 24326, "page_views": 28397 },
+      { "iso3": "COL", "country": "Colombia", "active_users": 21006, "page_views": 31390 }
+    ]
+  },
+  "english": {
+    "totals": {
+      "current_28d": {
+        "active_users": 713859,
+        "sessions": 883520,
+        "page_views": 1060659,
+        "engaged_sessions": 291733,
+        "engagement_rate_pct": 33.0,
+        "avg_session_duration_sec": 107.1
+      },
+      "previous_28d": {
+        "active_users": 1047457,
+        "sessions": 1235734,
+        "page_views": 1409407,
+        "engaged_sessions": 357131,
+        "engagement_rate_pct": 28.9,
+        "avg_session_duration_sec": 89.4
+      },
+      "delta_pct": {
+        "active_users": -31.8,
+        "sessions": -28.5,
+        "page_views": -24.7,
+        "avg_session_duration_sec": 19.7
+      }
+    },
+    "daily": {
+      "columns": ["date", "active_users", "page_views"],
+      "rows": [
+        ["2026-07-07", 30160, 43834], ["2026-07-08", 41131, 54573], ["2026-07-09", 46627, 57914],
+        ["2026-07-10", 36163, 45426], ["2026-07-11", 25535, 32445], ["2026-07-12", 23559, 31836],
+        ["2026-07-13", 27522, 38746], ["2026-07-14", 30397, 42941], ["2026-07-15", 29644, 42374],
+        ["2026-07-16", 33017, 45385], ["2026-07-17", 30332, 43465], ["2026-07-18", 24279, 31763],
+        ["2026-07-19", 23354, 30776], ["2026-07-20", 24543, 37503], ["2026-07-21", 26851, 42027],
+        ["2026-07-22", 25981, 39955], ["2026-07-23", 25028, 37115], ["2026-07-24", 24423, 35862],
+        ["2026-07-25", 20336, 31592], ["2026-07-26", 22919, 33118], ["2026-07-27", 27836, 39474],
+        ["2026-07-28", 24864, 38100], ["2026-07-29", 24286, 36024], ["2026-07-30", 24325, 35152],
+        ["2026-07-31", 20024, 29242], ["2026-08-01", 17269, 24107], ["2026-08-02", 17277, 24552],
+        ["2026-08-03", 25138, 35358]
+      ]
+    },
+    "continents": [
+      { "continent": "Americas", "active_users": 289919, "engaged_sessions": 125515, "sessions": 364996, "engagement_rate_pct": 34.4 },
+      { "continent": "Asia", "active_users": 223394, "engaged_sessions": 72760, "sessions": 266574, "engagement_rate_pct": 27.3 },
+      { "continent": "Europe", "active_users": 151037, "engaged_sessions": 66621, "sessions": 187201, "engagement_rate_pct": 35.6 },
+      { "continent": "Africa", "active_users": 25883, "engaged_sessions": 15325, "sessions": 34135, "engagement_rate_pct": 44.9 },
+      { "continent": "Oceania", "active_users": 22678, "engaged_sessions": 14551, "sessions": 31179, "engagement_rate_pct": 46.7 }
+    ],
+    "devices": [
+      { "device": "desktop", "active_users": 475041, "sessions": 598548, "page_views": 709482, "avg_session_duration_sec": 111.5, "share_of_users_pct": 66.5 },
+      { "device": "mobile", "active_users": 230583, "sessions": 280317, "page_views": 339231, "avg_session_duration_sec": 95.0, "share_of_users_pct": 32.3 },
+      { "device": "tablet", "active_users": 7155, "sessions": 8926, "page_views": 11813, "avg_session_duration_sec": 134.9, "share_of_users_pct": 1.0 },
+      { "device": "smart tv", "active_users": 63, "sessions": 98, "page_views": 133, "avg_session_duration_sec": 118.8, "share_of_users_pct": 0.0 }
+    ],
+    "channels": {
+      "note": "share_of_attributed_pct excludes the Unassigned row (attribution gap, see _meta.caveats).",
+      "attributed_sessions": 402472,
+      "rows": [
+        { "channel": "Unassigned", "sessions": 481048, "active_users": 395007, "engaged_sessions": 83436, "share_of_all_pct": 54.4, "share_of_attributed_pct": null },
+        { "channel": "Organic Search", "sessions": 327828, "active_users": 274513, "engaged_sessions": 172936, "share_of_all_pct": 37.1, "share_of_attributed_pct": 81.5 },
+        { "channel": "Referral", "sessions": 25011, "active_users": 22224, "engaged_sessions": 12558, "share_of_all_pct": 2.8, "share_of_attributed_pct": 6.2 },
+        { "channel": "Organic Social", "sessions": 22758, "active_users": 20101, "engaged_sessions": 6181, "share_of_all_pct": 2.6, "share_of_attributed_pct": 5.7 },
+        { "channel": "Email", "sessions": 17417, "active_users": 13299, "engaged_sessions": 4710, "share_of_all_pct": 2.0, "share_of_attributed_pct": 4.3 },
+        { "channel": "Paid Search", "sessions": 13816, "active_users": 13209, "engaged_sessions": 9710, "share_of_all_pct": 1.6, "share_of_attributed_pct": 3.4 },
+        { "channel": "AI Assistant", "sessions": 6831, "active_users": 5305, "engaged_sessions": 3725, "share_of_all_pct": 0.8, "share_of_attributed_pct": 1.7 }
+      ]
+    },
+    "top_sources": {
+      "note": "sessionSource, top rows. '(not set)' is the unattributed block behind the Unassigned channel.",
+      "rows": [
+        { "source": "(not set)", "sessions": 461587 },
+        { "source": "google", "sessions": 292686 },
+        { "source": "bing", "sessions": 20637 },
+        { "source": "UN News - Newsletter", "sessions": 15690 },
+        { "source": "(direct)", "sessions": 15065 },
+        { "source": "news.google.com", "sessions": 11524 },
+        { "source": "facebook.com + m.facebook.com", "sessions": 11708 },
+        { "source": "duckduckgo", "sessions": 4858 },
+        { "source": "t.co (X/Twitter)", "sessions": 4046 },
+        { "source": "ecosia.org", "sessions": 3693 },
+        { "source": "gemini.google.com", "sessions": 2504 },
+        { "source": "chatgpt.com", "sessions": 1838 },
+        { "source": "reddit.com", "sessions": 1789 },
+        { "source": "linkedin.com", "sessions": 1707 },
+        { "source": "perplexity.ai", "sessions": 1384 }
+      ],
+      "ai_assistant_referrals_sessions": 6831
+    },
+    "browser_languages": {
+      "note": "Device locale, NOT language preference — see _meta.caveats. Shown only to expose the locale-vs-edition gap (e.g. 48.7k Chinese-locale devices read the English edition).",
+      "rows": [
+        { "language": "English", "active_users": 599342 },
+        { "language": "Chinese", "active_users": 48749 },
+        { "language": "Spanish", "active_users": 9315 },
+        { "language": "Russian", "active_users": 6945 },
+        { "language": "German", "active_users": 6748 },
+        { "language": "French", "active_users": 6113 },
+        { "language": "Portuguese", "active_users": 4699 },
+        { "language": "Japanese", "active_users": 4073 },
+        { "language": "Italian", "active_users": 3128 },
+        { "language": "Korean", "active_users": 2779 }
+      ]
+    },
+    "new_vs_returning": {
+      "new_users": 690629,
+      "returning_users": 73771,
+      "new_share_pct": 90.3
+    },
+    "top_pages": {
+      "columns": ["path", "title", "views", "users", "type"],
+      "current_14d": [
+        ["/en/content/un-newsletter-subscribe", "Newsletter - subscribe for free", 38535, 36438, "utility"],
+        ["/en/", "UN News homepage", 36990, 16216, "home"],
+        ["/en/story/2026/06/1167658", "AI's environmental costs threaten water, land and climate", 14683, 10787, "story"],
+        ["/en/story/2026/06/1167790", "Israel continues to commit genocide, atrocity crimes by deliberately targeting Palestinian children, UN independent commission finds", 12845, 9642, "story"],
+        ["/en/news/region/middle-east", "Middle East section", 9849, 7168, "section"],
+        ["/en/story/2026/01/1166800", "World enters era of 'global water bankruptcy'", 6792, 4965, "story"],
+        ["/en/news", "Latest News section", 5470, 2430, "section"],
+        ["/en/story/2026/07/1168025", "International Criminal Court Prosecutor Karim Khan dismissed", 4907, 4087, "story"],
+        ["/en/story/2026/07/1168024", "Security Council debrief: Race for critical minerals intensifies amidst warnings of conflict", 4892, 689, "story"],
+        ["/en/story/2026/07/1167983", "DR Congo: Ebola outbreak still expanding, WHO sees signs of stabilization", 4450, 3505, "story"],
+        ["/en/story/2026/07/1168013", "Wildfires surge across Europe as Spain and France battle major blazes", 4254, 3474, "story"],
+        ["/en/story/2026/07/1168059", "Strong El Nino ahead, UN weather agency warns", 3881, 3295, "story"],
+        ["/en/story/2026/07/1168020", "After war took her leg, this Ukrainian gymnast refused to give up", 3460, 3133, "story"],
+        ["/en/story/2026/07/1168043", "Mount Olympus and D-Day beaches among new World Heritage Sites", 3296, 3083, "story"],
+        ["/en/focus/ukraine", "Ukraine focus section", 3105, 2745, "section"],
+        ["/en/story/2026/01/1166857", "Violence roiling Nigeria extends beyond religious lines, amid a deepening humanitarian crisis", 3044, 2443, "story"],
+        ["/en/news/topic/peace-and-security", "Peace and Security section", 2969, 1896, "section"],
+        ["/en/story/2026/07/1167991", "Israeli attacks on Gaza intensify amid surge of West Bank settler violence", 2809, 2242, "story"],
+        ["/en/story/2026/07/1168004", "Stranded seafarers remain trapped as Hormuz shipping stalls", 2790, 2347, "story"],
+        ["/en/story/2024/08/1152766", "Heat claims more than 175,000 lives annually in Europe, latest data shows", 2723, 2139, "story"],
+        ["/en/story/2024/11/1157286", "ICC issues arrest warrants for Netanyahu, Gallant and Hamas commander", 2681, 2288, "story"],
+        ["/en/news/topic/climate-change", "Climate and Environment section", 2571, 1772, "section"],
+        ["/en/story/2026/07/1168042", "Climate alarm 'blaring from every direction'", 2245, 1786, "story"],
+        ["/en/story/2026/07/1167993", "'Business as usual is a business of death': UN adopts road safety pledge over US objection", 2163, 1683, "story"],
+        ["/en/story/2026/07/1168009", "Iran urged to stop protest-related executions", 2145, 1727, "story"],
+        ["/en/story/2026/07/1168062", "Middle East: Civilian death toll climbs in Gaza, Lebanon and West Bank as UN chief demands 'the fighting must stop'", 2031, 1611, "story"],
+        ["/en/story/2026/03/1167081", "Women's rights are regressing worldwide, warns UN gender equality chief", 2030, 1366, "story"],
+        ["/en/story/2026/07/1168056", "The climate pattern putting millions at risk: El Nino explained", 2016, 1674, "story"],
+        ["/en/story/2026/07/1168034", "Lebanon: Israeli strikes 'could amount to international crimes,' warns Turk", 2000, 1651, "story"],
+        ["/en/story/2025/09/1165835", "General Assembly endorses New York Declaration on two-State solution between Israel and Palestine", 1867, 1428, "story"],
+        ["/en/story/2026/07/1167972", "LIVE: Haiti endures violence and hunger, but hopes grow for a more secure future", 1844, 1429, "story"],
+        ["/en/story/2026/07/1168012", "In El Obeid, Sudanese women face drones by day, rape by night, to reach water", 1792, 1433, "story"],
+        ["/en/story/2026/07/1167992", "World News in Brief: Sexual violence in DR Congo, deaths in Ukraine and Russia, crime in Southeast Asia", 1790, 1451, "story"],
+        ["/en/story/2026/07/1168045", "UN warns West Bank settler violence hits 'all-time high' as calls grow to end occupation", 1783, 1419, "story"],
+        ["/en/story/2026/07/1168016", "Middle East: UN warns against wider escalation after Houthi attacks in the Red Sea", 1777, 1458, "story"],
+        ["/en/story/2025/03/1161636", "Fast fashion fuelling global waste crisis, UN chief warns", 1721, 1299, "story"],
+        ["/en/news/topic/human-rights", "Human Rights section", 1700, 1217, "section"],
+        ["/en/news/region/global", "Global section", 1693, 813, "section"],
+        ["/en/story/2026/07/1168047", "Hunger hampers Ebola response as cases top 3,200 in DR Congo", 1693, 1342, "story"],
+        ["/en/news/region/africa", "Africa section", 1660, 908, "section"]
+      ],
+      "previous_14d": [
+        ["/en/", "UN News homepage", 40488, 22139, "home"],
+        ["/en/content/un-newsletter-subscribe", "Newsletter - subscribe for free", 29561, 27783, "utility"],
+        ["/en/story/2026/06/1167658", "AI's environmental costs threaten water, land and climate", 13541, 9757, "story"],
+        ["/en/story/2026/06/1167790", "Israel continues to commit genocide, atrocity crimes by deliberately targeting Palestinian children, UN independent commission finds", 13513, 10146, "story"],
+        ["/en/story/2026/07/1167951", "More than 500 people feared dead in double Myanmar shipwreck tragedy", 11582, 10767, "story"],
+        ["/en/news/region/middle-east", "Middle East section", 10612, 7790, "section"],
+        ["/en/story/2026/07/1167933", "'This is a fire': DRC Ebola outbreak is fastest-growing ever, warns WHO", 7159, 5816, "story"],
+        ["/en/story/2026/01/1166800", "World enters era of 'global water bankruptcy'", 6137, 4684, "story"],
+        ["/en/news", "Latest News section", 5646, 2848, "section"],
+        ["/en/story/2026/07/1167931", "Haiti: Training the next generation to fight corruption", 5024, 4264, "story"],
+        ["/en/story/2026/07/1167883", "General Assembly LIVE: Debating US sanctions against Cuba", 4330, 2956, "story"],
+        ["/en/story/2026/07/1167882", "Ebola continues to spread in DRC as death toll passes 500, WHO warns", 4223, 3389, "story"],
+        ["/en/story/2026/07/1167959", "WHO warns DR Congo Ebola outbreak is outpacing response as Uganda reaches milestone", 4098, 3344, "story"],
+        ["/en/story/2026/07/1167873", "From AI to 'killer robots': UN chief issues urgent governance call", 3977, 3035, "story"],
+        ["/en/story/2026/07/1167887", "Peace hinges on people-centred policing, global summit hears", 3475, 2548, "story"],
+        ["/en/story/2024/08/1152766", "Heat claims more than 175,000 lives annually in Europe, latest data shows", 3366, 2622, "story"],
+        ["/en/story/2026/07/1167890", "Cancer cases could nearly double by 2050 without urgent action, WHO warns", 3116, 2619, "story"],
+        ["/en/story/2026/07/1167862", "Global push for AI governance amid warnings of 'catastrophic harm'", 3084, 2420, "story"],
+        ["/en/story/2026/03/1167081", "Women's rights are regressing worldwide, warns UN gender equality chief", 2946, 1980, "story"],
+        ["/en/story/2026/07/1167848", "AI explained: Why the world needs to act now", 2904, 1950, "story"],
+        ["/en/focus/ukraine", "Ukraine focus section", 2771, 2445, "section"],
+        ["/en/story/2026/01/1166857", "Violence roiling Nigeria extends beyond religious lines, amid a deepening humanitarian crisis", 2702, 2179, "story"],
+        ["/en/news/topic/peace-and-security", "Peace and Security section", 2626, 1563, "section"],
+        ["/en/news/topic/climate-change", "Climate and Environment section", 2582, 1620, "section"],
+        ["/en/story/2026/07/1167972", "LIVE: Haiti endures violence and hunger, but hopes grow for a more secure future", 2573, 2100, "story"],
+        ["/en/story/2026/07/1167932", "International Criminal Court 'a critical cog' in global justice efforts", 2454, 1974, "story"],
+        ["/en/story/2026/07/1167891", "New coalition puts children's rights at the centre of the AI age", 2421, 1653, "story"],
+        ["/en/story/2026/03/1167199", "UN resolution urges reparations for slavery's 'historical wrongs'", 2212, 1629, "story"],
+        ["/en/story/2026/02/1166980", "Epstein files: 'No one is too wealthy or too powerful to be above the law'; rights experts demand accountability", 2156, 1796, "story"],
+        ["/en/story/2026/07/1167923", "UN chief urges Iran and US to 'urgently resume negotiations' as Gulf strikes escalate", 2032, 1605, "story"],
+        ["/en/story/2026/07/1167973", "US-Iran war: UN chief calls for new diplomatic push following attacks on civilian areas", 1998, 1683, "story"],
+        ["/en/story/2026/07/1167911", "Peak heat in Europe just broke historic 1970s records", 1933, 1618, "story"],
+        ["/en/story/2026/07/1167879", "Venezuela quake: UN continues to scale up as damage estimate reaches $37 billion", 1898, 1483, "story"],
+        ["/en/story/2026/07/1167898", "US-Iran war: Renewed attacks in Strait of Hormuz prompt another global energy alert", 3682, 3172, "story"],
+        ["/en/story/2026/07/1167905", "US-Iran war leaves shipping at near-standstill in Hormuz again", 1801, 1506, "story"],
+        ["/en/news/topic/human-rights", "Human Rights section", 1717, 1217, "section"],
+        ["/en/story/2026/06/1167776", "AI is getting women wrong as gender bias persists, data reveals", 1717, 1189, "story"],
+        ["/en/story/2026/07/1167956", "Breaking the silence: Zimbabwean youth leader calls for urgent investment in mental health", 1714, 1545, "story"],
+        ["/en/story/2026/03/1167063", "Deadly bombing of Iran primary school 'a grave violation of humanitarian law': UNESCO", 1687, 1407, "story"]
+      ]
+    }
+  },
+  "countries": {
+    "USA": { "en": { "active_users": 240053, "page_views": 362580, "sessions": 299158, "engaged_sessions": 100795, "engagement_rate_pct": 33.7, "share_of_en_users_pct": 33.6 }, "all": { "active_users": 317192, "page_views": 502089 } },
+    "CHN": { "en": { "active_users": 108860, "page_views": 107354, "sessions": 112446, "engaged_sessions": 9406, "engagement_rate_pct": 8.4, "share_of_en_users_pct": 15.2, "quality_flag": "bot/VPN-like pattern — see _meta.caveats" }, "all": { "active_users": 578246, "page_views": 536227 } },
+    "GBR": { "en": { "active_users": 38828, "page_views": 54967, "sessions": 49856, "engaged_sessions": 21881, "engagement_rate_pct": 43.9, "share_of_en_users_pct": 5.4 }, "all": { "active_users": 53205, "page_views": 69664 } },
+    "CAN": { "en": { "active_users": 29388, "page_views": 43173, "sessions": 38571, "engaged_sessions": 15142, "engagement_rate_pct": 39.3, "share_of_en_users_pct": 4.1 }, "all": { "active_users": 43634, "page_views": 60211 } },
+    "IND": { "en": { "active_users": 27053, "page_views": 46815, "sessions": 35684, "engaged_sessions": 16343, "engagement_rate_pct": 45.8, "share_of_en_users_pct": 3.8 }, "all": { "active_users": 62419, "page_views": 90284 } },
+    "AUS": { "en": { "active_users": 18965, "page_views": 29385, "sessions": 26362, "engaged_sessions": 12253, "engagement_rate_pct": 46.5, "share_of_en_users_pct": 2.7 } },
+    "NLD": { "en": { "active_users": 17934, "page_views": 29640, "sessions": 19422, "engaged_sessions": 4497, "engagement_rate_pct": 23.2, "share_of_en_users_pct": 2.5, "quality_flag": "datacenter/VPN suspicion — see _meta.caveats" }, "all": { "active_users": 24956, "page_views": 41820 } },
+    "FRA": { "en": { "active_users": 16434, "page_views": 20585, "sessions": 18976, "engaged_sessions": 3666, "engagement_rate_pct": 19.3, "share_of_en_users_pct": 2.3 }, "all": { "active_users": 73025, "page_views": 96348 } },
+    "DEU": { "en": { "active_users": 15913, "page_views": 27472, "sessions": 20380, "engaged_sessions": 6188, "engagement_rate_pct": 30.4, "share_of_en_users_pct": 2.2 }, "all": { "active_users": 30767, "page_views": 44417 } },
+    "PHL": { "en": { "active_users": 11875, "page_views": 19121, "sessions": 15192, "engaged_sessions": 6639, "engagement_rate_pct": 43.7, "share_of_en_users_pct": 1.7 } },
+    "SGP": { "en": { "active_users": 10028, "page_views": 12773, "sessions": 11519, "engaged_sessions": 2401, "engagement_rate_pct": 20.8, "share_of_en_users_pct": 1.4, "quality_flag": "datacenter/VPN suspicion — see _meta.caveats" }, "all": { "active_users": 24326, "page_views": 28397 } },
+    "RUS": { "en": { "active_users": 8333, "page_views": 16290, "sessions": 9048, "engaged_sessions": 3063, "engagement_rate_pct": 33.9, "share_of_en_users_pct": 1.2 }, "all": { "active_users": 47718, "page_views": 70804 } },
+    "BGD": { "en": { "active_users": 7192, "page_views": 11121, "sessions": 8669, "engaged_sessions": 2815, "engagement_rate_pct": 32.5, "share_of_en_users_pct": 1.0 } },
+    "ESP": { "en": { "active_users": 7077, "page_views": 9882, "sessions": 8793, "engaged_sessions": 2164, "engagement_rate_pct": 24.6, "share_of_en_users_pct": 1.0 }, "all": { "active_users": 34352, "page_views": 45283 } },
+    "ITA": { "en": { "active_users": 6608, "page_views": 10363, "sessions": 8712, "engaged_sessions": 2982, "engagement_rate_pct": 34.2, "share_of_en_users_pct": 0.9 } },
+    "JPN": { "en": { "active_users": 6390, "page_views": 18647, "sessions": 11338, "engaged_sessions": 5586, "engagement_rate_pct": 49.3, "share_of_en_users_pct": 0.9 } },
+    "ZAF": { "en": { "active_users": 5452, "page_views": 8270, "sessions": 7000, "engaged_sessions": 3111, "engagement_rate_pct": 44.4, "share_of_en_users_pct": 0.8 } },
+    "IDN": { "en": { "active_users": 5366, "page_views": 9739, "sessions": 7717, "engaged_sessions": 3007, "engagement_rate_pct": 39.0, "share_of_en_users_pct": 0.8 } },
+    "BRA": { "en": { "active_users": 5270, "page_views": 9061, "sessions": 7057, "engaged_sessions": 2908, "engagement_rate_pct": 41.2, "share_of_en_users_pct": 0.7 }, "all": { "active_users": 79027, "page_views": 118714 } },
+    "PAK": { "en": { "active_users": 4548, "page_views": 8895, "sessions": 6184, "engaged_sessions": 2829, "engagement_rate_pct": 45.7, "share_of_en_users_pct": 0.6 } },
+    "MYS": { "en": { "active_users": 4538, "page_views": 6950, "sessions": 5951, "engaged_sessions": 2174, "engagement_rate_pct": 36.5, "share_of_en_users_pct": 0.6 } },
+    "IRL": { "en": { "active_users": 4376, "page_views": 5673, "sessions": 5243, "engaged_sessions": 2287, "engagement_rate_pct": 43.6, "share_of_en_users_pct": 0.6 } },
+    "CHE": { "en": { "active_users": 4285, "page_views": 8825, "sessions": 7082, "engaged_sessions": 2992, "engagement_rate_pct": 42.2, "share_of_en_users_pct": 0.6 } },
+    "VNM": { "en": { "active_users": 4088, "page_views": 5157, "sessions": 4653, "engaged_sessions": 978, "engagement_rate_pct": 21.0, "share_of_en_users_pct": 0.6 } },
+    "POL": { "en": { "active_users": 3974, "page_views": 5211, "sessions": 4640, "engaged_sessions": 1164, "engagement_rate_pct": 25.1, "share_of_en_users_pct": 0.6 } },
+    "EGY": { "en": { "active_users": 3759, "page_views": 7147, "sessions": 4880, "engaged_sessions": 1293, "engagement_rate_pct": 26.5, "share_of_en_users_pct": 0.5 }, "all": { "active_users": 24334, "page_views": 33925 } },
+    "SWE": { "en": { "active_users": 3694, "page_views": 5374, "sessions": 4744, "engaged_sessions": 1969, "engagement_rate_pct": 41.5, "share_of_en_users_pct": 0.5 } },
+    "KOR": { "en": { "active_users": 3398, "page_views": 8478, "sessions": 5448, "engaged_sessions": 2596, "engagement_rate_pct": 47.7, "share_of_en_users_pct": 0.5 } },
+    "ARE": { "en": { "active_users": 3244, "page_views": 4862, "sessions": 4053, "engaged_sessions": 1803, "engagement_rate_pct": 44.5, "share_of_en_users_pct": 0.5 } },
+    "MEX": { "en": { "active_users": 3083, "page_views": 4705, "sessions": 4087, "engaged_sessions": 1459, "engagement_rate_pct": 35.7, "share_of_en_users_pct": 0.4 }, "all": { "active_users": 33028, "page_views": 52336 } }
+  }
+}

@@ -21,6 +21,7 @@ An interactive, source-cited public resource showing **where and how the world g
 - **Daily** — the trend engine (GitHub Actions) refreshes Wikipedia-attention and GDELT news-coverage signals.
 - **Weekly** — the data refresh pulls 15 World Bank indicators and Unicode CLDR language data for every country.
 - **Monthly** — a source watchdog probes the annual flagship sources (RSF, Freedom House, Reuters DNR, GSMA, Afrobarometer, UN WPP) and **opens a GitHub Issue with step-by-step instructions** whenever a new edition is published.
+- **Per reporting cycle** — measured UN News readership (Google Analytics **aggregate summaries only** — internal UN data; raw exports never enter this public repo) powers the "UN News analytics" section on the Map, per-country readership blocks, and the AI Analyst's *top-5 trending topics report* and *dissemination strategy*.
 - **Hosting** — GitHub Pages. **Automation** — GitHub Actions. **AI analyst** — in-browser, no server. Total running cost: **$0**.
 
 ## Documents

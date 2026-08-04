@@ -41,6 +41,23 @@ Exports/`) — this repository is public. `.gitignore` now refuses
 the folder is the real protection. Then say where the folder is and the
 aggregation gets built against the real column shapes.
 
+**Update 2026-08-04 — first summary published.** An aggregate pull covering
+the six report shapes (API-assisted equivalents of the Explore exports; same
+aggregation level, nothing raw retained) is now live as
+`data/ga_summary.json`, feeding the Map's "UN News analytics" section, the
+per-country readership blocks, the Topic Explorer strip, and the analyst's
+trending-topics report and dissemination strategy. For the report-back Fang
+asked for, the four questions now have answers: **(1)** all six report shapes
+were available on the English and All-languages properties, no permission
+gaps; **(2)** demographics were deliberately *not* pulled — treat as a scope
+question for Fang; **(3)** history reaches back beyond June 2026 (the pull
+used Jun 9 – Aug 3; full depth not yet probed); **(4)** no sampling was
+reported on any request. One flag worth raising with her: the pull was made
+through the Analytics *API* at aggregate-report level — same summaries, less
+error-prone than hand-exporting CSVs — confirm she is comfortable calling
+that "summaries" too, and show her the published file so the scope stays
+visibly honoured.
+
 Other reference documents:
 - **[docs/GA360_WALKTHROUGH.md](docs/GA360_WALKTHROUGH.md)** — the in-meeting
   checklist, if a walkthrough with the administrators still happens.

@@ -34,10 +34,11 @@ These files ARE the site. Every page loads them straight from the repo — nothi
 | `data/ad_market.json` | **you**, by hand | once a year, each December/January | AI Analyst — ad-market context inside strategy briefs |
 | `data/tv_stations.json` | monthly TV-station refresh | 12th of each month | Map — the "More TV stations" block on a country's Media tab; AI Analyst — extended station lists in country answers |
 | `data/boundaries/countries.geojson` | `scripts/build_boundaries.py` (manual, rare) | only if the boundary snapshot pin is deliberately moved | Map — the country outlines themselves |
+| `data/ga_summary.json` | **you**, by hand — an aggregate pull per `docs/GA_SUMMARY_EXPORTS.md` (summaries only; raw exports never enter the repo) | per reporting cycle | Map — the "UN News analytics" modal and the "UN News readership" block on a country's Media tab; Topic Explorer — the "What UN News readers opened" strip; Market Finder — the proven-audience note in the country check; AI Analyst — the top-5 trending-topics report and the dissemination strategy |
 
 The "AI Analyst" and "Market Finder" pages need **no backend at all** — `ask-engine.js` runs in the visitor's browser and reads the published JSON files above.
 
-**Three of these degrade quietly on purpose.** If `platform_web_shares.json`, `ad_market.json` or `tv_stations.json` is missing or fails to load, the page simply leaves out that block instead of showing an error — the rest of the profile or brief is unaffected. That is why a Statcounter outage is not an emergency, and also why a *silently missing* file can go unnoticed: if the social-share block has vanished from the Media tab, that file is the thing to check.
+**Four of these degrade quietly on purpose.** If `platform_web_shares.json`, `ad_market.json`, `tv_stations.json` or `ga_summary.json` is missing or fails to load, the page simply leaves out that block instead of showing an error — the rest of the profile or brief is unaffected. That is why a Statcounter outage is not an emergency, and also why a *silently missing* file can go unnoticed: if the social-share block has vanished from the Media tab, that file is the thing to check.
 
 `data/static_countries.json` is **not** in the table because the site never loads it directly. It is the hand-curated input — country blurbs, leading outlets, top social platforms — that the weekly refresh merges into `countries.json`. Editing it triggers a refresh run within minutes.
 

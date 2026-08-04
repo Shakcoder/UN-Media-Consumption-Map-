@@ -579,6 +579,64 @@ def main() -> int:
                     ERRORS.append(f"ad_market {mkt}: cites source {rec.get('source')!r}, which is not "
                                   f"one of the sources named in _meta.sources")
 
+    # --- UN News analytics summary (data/ga_summary.json) -------------------
+    # Published under the 2026-07-30 approval: AGGREGATED SUMMARIES ONLY, in a
+    # public repository. The checks below are the guardrail for that scope —
+    # a raw-looking field (user/session/event level) is an ERROR, not a style
+    # issue — plus the usual protections against a mistyped aggregate.
+    ga_path = ROOT / "data" / "ga_summary.json"
+    if ga_path.exists():
+        ga = load_json(ga_path)
+        gmeta = ga.get("_meta") or {}
+        for field in ("generated_at", "retrieved_on", "source", "scope", "window", "method_note"):
+            if not gmeta.get(field):
+                ERRORS.append(f"ga_summary _meta: missing {field!r} — every published summary "
+                              f"must carry its provenance and scope")
+        if "summaries only" not in str(gmeta.get("scope") or "").lower():
+            ERRORS.append("ga_summary _meta.scope must state the summaries-only approval scope")
+        gwin = gmeta.get("window") or {}
+        if not (gwin.get("start") and gwin.get("end")):
+            ERRORS.append("ga_summary _meta.window needs start and end dates")
+        # Raw-export guard: these keys exist only in event/user-level GA data,
+        # which the approval explicitly keeps out of this public repository.
+        ga_forbidden = {"client_id", "clientid", "user_id", "userid", "user_pseudo_id",
+                        "ip_address", "event_timestamp", "session_id", "ga_session_id"}
+
+        def _scan_ga(o, path):
+            if isinstance(o, dict):
+                for k, v in o.items():
+                    if str(k).lower() in ga_forbidden:
+                        ERRORS.append(f"{path}.{k}: raw/event-level field in the published summary "
+                                      f"— outside the approved summaries-only scope")
+                    _scan_ga(v, f"{path}.{k}")
+            elif isinstance(o, list):
+                for i, v in enumerate(o[:200]):
+                    _scan_ga(v, f"{path}[{i}]")
+        _scan_ga(ga, "ga_summary")
+        for iso, rec in (ga.get("countries") or {}).items():
+            if iso not in countries:
+                ERRORS.append(f"ga_summary: unknown country key {iso}")
+            g_en = (rec or {}).get("en") or {}
+            au = g_en.get("active_users")
+            if au is not None and (not isinstance(au, int) or au < 0):
+                ERRORS.append(f"ga_summary {iso}: active_users {au!r} is not a non-negative integer")
+            for pct_field in ("engagement_rate_pct", "share_of_en_users_pct"):
+                pv = g_en.get(pct_field)
+                if pv is not None and not (0 <= pv <= 100):
+                    ERRORS.append(f"ga_summary {iso}: {pct_field} {pv!r} outside 0-100")
+        if not (((ga.get("english") or {}).get("totals") or {}).get("current_28d")):
+            WARNS.append("ga_summary english.totals.current_28d missing — the analyst's GA modes "
+                         "will degrade to partial answers")
+        ga_tp = ((ga.get("english") or {}).get("top_pages") or {})
+        for wname in ("current_14d", "previous_14d"):
+            if len(ga_tp.get(wname) or []) > 60:
+                ERRORS.append(f"ga_summary top_pages.{wname}: {len(ga_tp.get(wname))} rows — a "
+                              f"summary keeps a top-N list, not a page-level export")
+        INFOS.append(f"UN News analytics summary: window {gwin.get('start')}-{gwin.get('end')}, "
+                     f"{len(ga.get('countries') or {})} countries published")
+    else:
+        WARNS.append("ga_summary.json missing — UN News analytics layer not published yet")
+
     # --- missing-data inventory (honest absence, not errors) ---
     missing_news = sorted(iso for iso, c in countries.items()
                           if not (c.get("news_consumption") or {}).get("source"))

@@ -34,3 +34,10 @@ analytics_export*
 *_analytics_raw*
 data/ga_raw/
 data/analytics_raw/
+
+# JSON-shaped GA pulls (the API-assisted workflow produces JSON, not just CSV).
+# data/ga_summary.json — the published aggregate — matches none of these.
+ga_pull*
+ga_export*
+ga_raw*
+*_ga_raw*

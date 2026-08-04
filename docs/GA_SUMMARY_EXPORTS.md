@@ -205,3 +205,40 @@ report back to the team:
 Those four answers determine what the Atlas can honestly build on, and they
 are the substance of "seeing how it works" — which is exactly what Fang
 asked for.
+
+---
+
+## Addendum 2026-08-04 — first published summary: `data/ga_summary.json`
+
+The first real pull is done and published. What happened, for the record:
+
+- **Method:** aggregate reports were pulled through the GA Data API
+  (API-assisted equivalents of the six Explore reports above — identical
+  aggregation level: country/device/channel/page totals, nothing raw,
+  nothing event- or user-level, no BigQuery). No sampling was reported on
+  any request.
+- **Windows:** 28 days 2026-07-07 → 2026-08-03 (vs the prior 28 days), plus
+  14-day trend windows for the top-pages momentum comparison.
+- **Properties:** UN News — English (247887035) and UN News — All languages
+  (247862254), starting English-first per the current project scope.
+- **What was published:** `data/ga_summary.json` — a summaries-only file
+  (top-30 country aggregates, device/channel/source shares, top-40 page
+  titles per window, browser-locale counts, documented caveats).
+  `scripts/validate_atlas.py` now gates it: `_meta` provenance and the
+  summaries-only scope line are mandatory, raw/event-level field names are
+  hard errors, and top-pages lists are capped at a top-N.
+- **What reads it:** the Map ("UN News analytics" modal + per-country
+  "UN News readership"), the Topic Explorer ("What UN News readers opened"),
+  the Market Finder (proven-audience note, deliberately unscored), and the
+  AI Analyst ("Top 5 trending topics report", "Where should we focus
+  dissemination?"). Every surface carries the arrivals-not-reach caveat.
+- **Known data-quality flags** (recorded in `_meta.caveats`): China's
+  English-edition row is bot/VPN-like (8.4% engagement, views < users);
+  54% of sessions are unattributed ("Unassigned" channel); Netherlands and
+  Singapore look datacenter-inflated; one story excluded as anomalous
+  (7.1 views/user).
+- **To refresh:** re-run the same aggregate pull for a new window and
+  regenerate `data/ga_summary.json` in the same shape (the `_meta.window`
+  dates and `retrieved_on` must move with it), then run
+  `python3 scripts/validate_atlas.py` before committing. If the file is
+  absent the site degrades gracefully — every GA block simply disappears.
