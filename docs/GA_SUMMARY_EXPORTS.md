@@ -46,17 +46,20 @@ all 195 country records in the Atlas; without it nothing else can be used.
 
 | | |
 |---|---|
-| **Rows** | Country, **Year month** (not plain "Month") |
+| **Rows** | Country, **Year**, **Month** *(three separate dimensions)* |
 | **Values** | Total users, Sessions, Views, Average engagement time per session |
 | **Save as** | `ga_country_month.csv` |
 
 If only one report ever gets pulled, make it this one.
 
-**Why "Year month" specifically:** the plain "Month" dimension exports as
+**Why Year AND Month, both:** the plain "Month" dimension alone exports as
 `01`–`12` with no year attached, so a 24-month range folds January 2025 and
 January 2026 into one row. Seasonality survives that; year-over-year growth
-does not. (The 2026-08-03 export used plain Month — fine for a first look,
-worth switching on the next pull.)
+does not. There is a combined "Year month" dimension in GA4, but it doesn't
+reliably show up in the picker — rather than hunt for it, just add "Year" and
+"Month" as two ordinary dimensions alongside Country. Same result. (The
+2026-08-03 export used plain Month only — fine for a first look, worth
+redoing with Year added.)
 
 ---
 
