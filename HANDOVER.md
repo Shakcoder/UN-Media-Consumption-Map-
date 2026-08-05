@@ -51,6 +51,12 @@ button. Full detail: [docs/AUTOMATION.md](docs/AUTOMATION.md).
 | Source watchdog | 3rd of each month | Checks whether annual sources published a new edition; opens an Issue with instructions when one has |
 | Code gates | every push + daily 12:00 UTC | Runs the validator and all three eval suites; a red X means don't trust the live site until fixed |
 
+**None of this needs a paid service, an AI subscription, or a password.** The
+workflows are ordinary Python and JavaScript scripts running on GitHub's free
+machines, fetching public data. There is no API key to renew and no account to
+keep paying for. (Checked August 2026: no workflow or script references any AI
+service, and none uses a stored secret beyond GitHub's own built-in token.)
+
 **When something breaks, a GitHub Issue opens automatically** (and GitHub
 emails the repository owner). One failed day is normal noise. The
 [troubleshooting section of AUTOMATION.md](docs/AUTOMATION.md#troubleshooting)
@@ -84,6 +90,7 @@ instructions. Rough publication months:
 | October | Freedom House — Freedom on the Net | follow the Issue's steps |
 | December | WPP Media + Dentsu ad forecasts | hand-update `data/ad_market.json` |
 | When published | Afrobarometer Round 10, new barometer waves | see the matching `scripts/compute_*.py` docstring |
+| Every reporting cycle | **UN News analytics** (`data/ga_summary.json`) — the only *frequent* manual job | re-pull the aggregate reports and rebuild the file: [docs/GA_SUMMARY_EXPORTS.md](docs/GA_SUMMARY_EXPORTS.md). Wait until the window is 48 hours old, or the figures will still be settling. This becomes automatic **only** if the read-only Analytics login described below is set up |
 
 Also once a year: skim `data/static_countries.json` for stale political facts
 (capitals, forms of government) — nothing refreshes that file automatically.
@@ -98,10 +105,115 @@ still listed as "Transitional government".
   each programme (Afrobarometer, Arab Barometer, World Values Survey,
   Eurobarometer/GESIS, Latinobarómetro, Asian Barometer). Each script's header
   says exactly which file it needs and where to register.
-- **Never-finished integrations** blocked on UN-side access, not on code:
-  GA4/Salesforce analytics and the audience survey (Google Form) — see
-  [docs/SURVEY_SETUP.md](docs/SURVEY_SETUP.md), which requires supervisor
-  sign-off on [docs/SURVEY_ETHICS.md](docs/SURVEY_ETHICS.md) first.
+- **UN News analytics are integrated but refresh by hand.** Aggregate summaries
+  from the UN's Google Analytics ship in `data/ga_summary.json` and feed the
+  Map's "UN News analytics" panel, the per-country readership blocks, the Topic
+  Explorer strip and two AI Analyst reports. Publishing scope was approved by
+  Fang Chen (2026-07-30, widened verbally 2026-08-04). **Raw exports must never
+  enter this repository** — it is public; `.gitignore` and the validator both
+  block them. Refreshing needs someone with Analytics access.
+- **Still blocked on UN-side access:** Salesforce, and the audience survey
+  (Google Form) — see [docs/SURVEY_SETUP.md](docs/SURVEY_SETUP.md), which
+  requires supervisor sign-off on
+  [docs/SURVEY_ETHICS.md](docs/SURVEY_ETHICS.md) first.
+
+## Handing over: what to do before the current maintainer leaves
+
+*Written 2026-08-05, while the Atlas was still maintained by its original
+author (a UN intern, contract ending September 2026). Everything below is a
+one-time job, none of it costs money, and all of it takes under an hour.*
+
+### The reassuring part
+
+Once handed over, the Atlas keeps running on its own. **There is nothing to
+cancel, renew, or pay for.** Hosting is free, the automation is free, and no
+part of the live site calls a paid service.
+
+Two points that surprise people:
+
+- **The "AI Analyst" page is not powered by AI.** Despite the name, it is a
+  set of rules running inside the visitor's own browser, reading the published
+  data files. There is no AI service behind it and no subscription attached to
+  it. It will keep working exactly as it does today. (The optional AI
+  text-polishing layer in `worker/` was deliberately left switched **off**.)
+- **The daily and weekly data refreshes need no human at all.** Country
+  indicators, topic trends, TV-station lists and the safety checks all continue
+  without anyone touching them.
+
+What *stops* without a person: the UN News analytics refresh, the annual report
+updates, and reading the Issues the automation opens. Those are listed above.
+
+### Three things to do before the handover
+
+**1. Transfer the repository to a UN-owned account. (The most important one.)**
+
+The project currently lives under a personal GitHub account (`Shakcoder`). If
+that account is closed or abandoned, **the website and all of its automation
+disappear with it.** Move it to an account or organisation the UN controls:
+
+> GitHub → the repository → **Settings** → scroll to the bottom (**Danger
+> Zone**) → **Transfer ownership** → type the new owner's account name.
+
+**One honest consequence:** the public web address changes. A GitHub Pages
+site is named after its owner, so `shakcoder.github.io/...` becomes
+`newowner.github.io/...`, and GitHub does **not** forward the old address.
+Any link already shared in an email or slide deck would stop working.
+
+Two ways to handle that, both fine:
+
+- *Transfer anyway* (recommended) and re-share the new link. Safest long-term:
+  the UN genuinely owns the project.
+- *If a link has already been circulated widely*, add the successor as an
+  **admin** instead (Settings → Collaborators), which keeps the address
+  working. This is weaker — the personal account still ultimately owns it — so
+  treat it as a temporary step, not the destination.
+
+**2. Make sure a real person receives the failure alerts.**
+
+When a workflow fails, GitHub emails **the repository owner**. After the
+transfer that should be a UN address or a team, not a departing intern's
+personal inbox. Check under Settings → Notifications for the new owner, and
+tell the successor plainly: *if you get an email saying a workflow failed, open
+the Issue it created and follow the steps written inside it.*
+
+**3. Know about the 60-day sleep rule.**
+
+GitHub switches off scheduled jobs in a public project after **60 days with no
+activity at all**. In normal operation this never triggers, because the daily
+trend engine commits data every morning and that counts as activity. But if
+everything failed for two months and nobody looked, the jobs would go to sleep
+and need waking by hand:
+
+> GitHub → **Actions** tab → pick the workflow → **Enable workflow**.
+
+Worth knowing so a successor is not baffled by a site that quietly stopped
+updating.
+
+### If the analytics should refresh automatically too
+
+Right now the UN News numbers are a manual job. Making them automatic is
+technically small but needs three approvals no one on the technical side can
+grant:
+
+1. Written approval for a **standing connection** to Analytics (the current
+   approval covers pulling summaries, not a permanent link).
+2. A GA administrator to create a **read-only login** for the Atlas — it can
+   read the aggregate reports and change nothing.
+3. Whoever owns privacy and security sign-off to approve storing that login.
+
+Until all three exist, keep refreshing by hand — it takes minutes and the
+procedure is written down in
+[docs/GA_SUMMARY_EXPORTS.md](docs/GA_SUMMARY_EXPORTS.md).
+
+### What happens if nobody does any of this
+
+Being honest about the failure mode: the site keeps publishing and the
+automatic data keeps refreshing, possibly for years. What decays is everything
+needing a human — the annual reports go stale (each figure still names its
+year, so nothing becomes a *lie*, just older), the UN News numbers freeze at
+their last pull, and failure Issues pile up unread. The real cliff-edge is the
+account: if the personal GitHub account goes, so does the site. **That is the
+one item worth doing this week rather than in September.**
 
 ## What was deliberately NOT built
 

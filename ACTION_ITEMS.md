@@ -96,7 +96,30 @@ OK. Worth asking Fang directly, since she has now engaged with the project:
 *(The audience-survey approval that used to be bundled into this email is
 deferred by choice, 2026-07-29 — see "Deferred" below.)*
 
-### 3. Decide on the AI upgrade (see the section below)
+### 3. Transfer the repository to a UN-owned account — do this while still in person
+**Why it matters more than anything else on this list:** the Atlas lives under
+your personal GitHub account. The website, the automation, and every scheduled
+refresh depend on that account continuing to exist. If it is closed or
+abandoned after you leave, **all of it disappears** — not gradually, at once.
+
+Everything else on this page can be done late. This one cannot.
+
+**What to do:** GitHub → the repository → **Settings** → scroll to the bottom
+(**Danger Zone**) → **Transfer ownership** → type the new owner's account name.
+It takes about a minute and costs nothing.
+
+**The one consequence to plan for:** the public web address changes, because a
+GitHub Pages site is named after its owner — `shakcoder.github.io/...` becomes
+`newowner.github.io/...`, and the old address does **not** forward. If the link
+has already gone out widely, the weaker fallback is adding your successor as an
+**admin** (Settings → Collaborators), which keeps the address alive but leaves
+ownership personal — a stop-gap, not a destination.
+
+Full explanation, plus the two smaller continuity jobs (making sure a real
+person receives the failure emails, and the 60-day sleep rule), is in
+[HANDOVER.md](HANDOVER.md#handing-over-what-to-do-before-the-current-maintainer-leaves).
+
+### 4. Decide on the AI upgrade (see the section below)
 Free, but it needs an account in your name that can be transferred to the UN,
 and one judgement call about risk.
 
