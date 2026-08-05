@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "generated_at": "2026-08-04T11:50:53-04:00",
-    "retrieved_on": "2026-08-04",
+    "generated_at": "2026-08-05T12:15:00-04:00",
+    "retrieved_on": "2026-08-05",
     "schema_version": 1,
     "source": "Google Analytics 4 (UN GA360) — UN News properties, aggregate reports pulled via the GA Data API",
     "properties": {
@@ -36,7 +36,7 @@
     "sampling": "GA reported no sampling on any request in this pull (empty sampling metadata).",
     "method_note": "GA measures arrivals on UN News web properties (visits by people who already found the site), NOT the reachable population of a country. Never compare GA figures directly with survey-based reach percentages; they are different constructs measured on different populations.",
     "caveats": [
-      "English-property traffic fell ~32% versus the previous 28 days (1.05M to 714k active users) while average session duration rose 89s to 107s — the drop tracks the cooling of the June US-Iran war news cycle, so period-over-period deltas are news-cycle driven, not structural.",
+      "English-property traffic fell ~32% versus the previous 28 days (1.05M to 714k active users) while average session duration rose 89s to 108s — the drop tracks the cooling of the June US-Iran war news cycle, so period-over-period deltas are news-cycle driven, not structural.",
       "China on the English property shows 108,860 users but only 107,354 page views and an 8.4% engagement rate versus 19-47% for the other top-10 countries (most cluster at 30-46%; Netherlands and France run lower and carry their own flags) — a bot/VPN-like pattern. Treat China arrivals as unverified until investigated; do not present China as the #2 engaged English audience.",
       "The all-languages property shows the same China pattern (578,246 users vs 536,227 page views) — the implied Chinese-edition audience is likewise unverified; caveat it wherever the all-languages country list is quoted.",
       "54% of English-property sessions are 'Unassigned' channel (no source attribution — likely feeds, apps, and consent-blocked traffic). Channel shares are therefore quoted as share of ATTRIBUTED sessions where the distinction matters.",
@@ -45,13 +45,13 @@
       "IP-derived geography is directional, not exact; VPN and proxy use shifts country rows.",
       "One story ('Security Council debrief: race for critical minerals') shows 4,892 views from only 689 users (7.1 views/user) — anomalous, possibly embed or refresh traffic; excluded from trend conclusions.",
       "90% of English-property users in the window are new visitors, typical for search-driven news traffic; the returning core is ~74k users.",
-      "GA continues processing hits for up to ~48 hours after a day ends. This snapshot was retrieved 2026-08-04, the morning after the window closed, so a later check in the GA interface may show the final day's figures marginally higher (re-verified 2026-08-04: property totals identical; page-level rows drifted +0.02% to +0.3%; the All-languages rollup +0.2-0.9%). Quote figures as 'as retrieved 2026-08-04', or re-snapshot once the window is 48h old.",
+      "The canonical 28-day window's figures were re-pulled and FINALIZED on 2026-08-05, after Google's ~48-hour processing window closed — they are now stable and will match a same-window check at the source. (The initial 2026-08-04 snapshot was taken before settling finished; session counts moved ~0.9%.) Always finalize a window this way before quoting it externally.",
       "Demographics cover only the ~15-17% of users Google can classify (signed-in, consented; thresholding applied) — a non-representative subset, never the audience profile.",
       "Monthly history: sessions were not collected before August 2021 (nulls, not zeros); September 2020 is the property's first (partial) month; August 2026 is partial.",
       "The 90-day top-pages table includes a GA '(other)' cardinality bucket — its top rows are exact, the long tail is aggregated.",
       "Timing (hour/day-of-week) is reported in the property timezone, America/New_York."
     ],
-    "country_rows_reported_by_ga": 238,
+    "country_rows_reported_by_ga": 237,
     "countries_included_here": 30,
     "windows_available": [
       "28d",
@@ -167,11 +167,11 @@
     "totals": {
       "current_28d": {
         "active_users": 713859,
-        "sessions": 883520,
+        "sessions": 875515,
         "page_views": 1060659,
-        "engaged_sessions": 291733,
-        "engagement_rate_pct": 33.0,
-        "avg_session_duration_sec": 107.1
+        "engaged_sessions": 291764,
+        "avg_session_duration_sec": 107.8,
+        "engagement_rate_pct": 33.3
       },
       "previous_28d": {
         "active_users": 1047457,
@@ -183,9 +183,9 @@
       },
       "delta_pct": {
         "active_users": -31.8,
-        "sessions": -28.5,
+        "sessions": -29.2,
         "page_views": -24.7,
-        "avg_session_duration_sec": 19.7
+        "avg_session_duration_sec": 20.6
       }
     },
     "daily": {
@@ -341,62 +341,62 @@
       {
         "continent": "Americas",
         "active_users": 289919,
-        "engaged_sessions": 125515,
-        "sessions": 364996,
+        "engaged_sessions": 125189,
+        "sessions": 364079,
         "engagement_rate_pct": 34.4
       },
       {
         "continent": "Asia",
         "active_users": 223394,
-        "engaged_sessions": 72760,
-        "sessions": 266574,
-        "engagement_rate_pct": 27.3
+        "engaged_sessions": 71490,
+        "sessions": 265324,
+        "engagement_rate_pct": 26.9
       },
       {
         "continent": "Europe",
-        "active_users": 151037,
-        "engaged_sessions": 66621,
-        "sessions": 187201,
-        "engagement_rate_pct": 35.6
+        "active_users": 151048,
+        "engaged_sessions": 66450,
+        "sessions": 186303,
+        "engagement_rate_pct": 35.7
       },
       {
         "continent": "Africa",
-        "active_users": 25883,
-        "engaged_sessions": 15325,
-        "sessions": 34135,
-        "engagement_rate_pct": 44.9
+        "active_users": 25881,
+        "engaged_sessions": 15106,
+        "sessions": 33918,
+        "engagement_rate_pct": 44.5
       },
       {
         "continent": "Oceania",
         "active_users": 22678,
-        "engaged_sessions": 14551,
-        "sessions": 31179,
-        "engagement_rate_pct": 46.7
+        "engaged_sessions": 14634,
+        "sessions": 31054,
+        "engagement_rate_pct": 47.1
       }
     ],
     "devices": [
       {
         "device": "desktop",
         "active_users": 475041,
-        "sessions": 598548,
+        "sessions": 596415,
         "page_views": 709482,
-        "avg_session_duration_sec": 111.5,
+        "avg_session_duration_sec": 111.7,
         "share_of_users_pct": 66.5
       },
       {
         "device": "mobile",
         "active_users": 230583,
-        "sessions": 280317,
+        "sessions": 279028,
         "page_views": 339231,
-        "avg_session_duration_sec": 95.0,
+        "avg_session_duration_sec": 95.5,
         "share_of_users_pct": 32.3
       },
       {
         "device": "tablet",
         "active_users": 7155,
-        "sessions": 8926,
+        "sessions": 8857,
         "page_views": 11813,
-        "avg_session_duration_sec": 134.9,
+        "avg_session_duration_sec": 128.1,
         "share_of_users_pct": 1.0
       },
       {
@@ -410,61 +410,61 @@
     ],
     "channels": {
       "note": "share_of_attributed_pct excludes the Unassigned row and uses the sum of the attributed rows from this same channel report as its denominator. GA's undimensioned session total differs slightly from the channel-dimensioned sum (a documented GA reporting quirk), so shares are computed within one report, never across two.",
-      "attributed_sessions": 413661,
+      "attributed_sessions": 413976,
       "rows": [
         {
           "channel": "Unassigned",
-          "sessions": 481048,
-          "active_users": 395007,
-          "engaged_sessions": 83436,
-          "share_of_all_pct": 54.4,
+          "sessions": 476971,
+          "active_users": 395330,
+          "engaged_sessions": 82558,
+          "share_of_all_pct": 54.5,
           "share_of_attributed_pct": null
         },
         {
           "channel": "Organic Search",
-          "sessions": 327828,
-          "active_users": 274513,
-          "engaged_sessions": 172936,
-          "share_of_all_pct": 37.1,
+          "sessions": 328280,
+          "active_users": 274523,
+          "engaged_sessions": 172818,
+          "share_of_all_pct": 37.5,
           "share_of_attributed_pct": 79.3
         },
         {
           "channel": "Referral",
-          "sessions": 25011,
-          "active_users": 22224,
-          "engaged_sessions": 12558,
-          "share_of_all_pct": 2.8,
-          "share_of_attributed_pct": 6.0
+          "sessions": 25118,
+          "active_users": 22227,
+          "engaged_sessions": 12617,
+          "share_of_all_pct": 2.9,
+          "share_of_attributed_pct": 6.1
         },
         {
           "channel": "Organic Social",
-          "sessions": 22758,
-          "active_users": 20101,
-          "engaged_sessions": 6181,
+          "sessions": 22500,
+          "active_users": 20102,
+          "engaged_sessions": 6212,
           "share_of_all_pct": 2.6,
-          "share_of_attributed_pct": 5.5
+          "share_of_attributed_pct": 5.4
         },
         {
           "channel": "Email",
-          "sessions": 17417,
+          "sessions": 17408,
           "active_users": 13299,
-          "engaged_sessions": 4710,
+          "engaged_sessions": 4714,
           "share_of_all_pct": 2.0,
           "share_of_attributed_pct": 4.2
         },
         {
           "channel": "Paid Search",
           "sessions": 13816,
-          "active_users": 13209,
-          "engaged_sessions": 9710,
+          "active_users": 13219,
+          "engaged_sessions": 9711,
           "share_of_all_pct": 1.6,
           "share_of_attributed_pct": 3.3
         },
         {
           "channel": "AI Assistant",
-          "sessions": 6831,
-          "active_users": 5305,
-          "engaged_sessions": 3725,
+          "sessions": 6854,
+          "active_users": 5306,
+          "engaged_sessions": 3702,
           "share_of_all_pct": 0.8,
           "share_of_attributed_pct": 1.7
         }
@@ -475,51 +475,63 @@
       "rows": [
         {
           "source": "(not set)",
-          "sessions": 461587
+          "sessions": 474532
         },
         {
           "source": "google",
-          "sessions": 292686
+          "sessions": 291714
         },
         {
           "source": "bing",
-          "sessions": 20637
+          "sessions": 20670
         },
         {
           "source": "UN News - Newsletter",
-          "sessions": 15690
-        },
-        {
-          "source": "(direct)",
-          "sessions": 15065
+          "sessions": 15652
         },
         {
           "source": "news.google.com",
-          "sessions": 11524
+          "sessions": 11426
         },
         {
           "source": "facebook.com + m.facebook.com",
-          "sessions": 11708
+          "sessions": 11654
         },
         {
           "source": "duckduckgo",
-          "sessions": 4858
+          "sessions": 4905
+        },
+        {
+          "source": "citizenfreepress.com",
+          "sessions": 4878
+        },
+        {
+          "source": "pixabay.com",
+          "sessions": 4114
         },
         {
           "source": "t.co (X/Twitter)",
-          "sessions": 4046
+          "sessions": 4004
         },
         {
           "source": "ecosia.org",
-          "sessions": 3693
+          "sessions": 3706
+        },
+        {
+          "source": "yahoo",
+          "sessions": 2562
+        },
+        {
+          "source": "cn.bing.com",
+          "sessions": 2554
         },
         {
           "source": "gemini.google.com",
-          "sessions": 2504
+          "sessions": 2508
         },
         {
           "source": "chatgpt.com",
-          "sessions": 1838
+          "sessions": 1835
         },
         {
           "source": "reddit.com",
@@ -534,7 +546,7 @@
           "sessions": 1384
         }
       ],
-      "ai_assistant_referrals_sessions": 6831
+      "ai_assistant_referrals_sessions": 6854
     },
     "browser_languages": {
       "note": "Device locale, NOT language preference — see _meta.caveats. Shown only to expose the locale-vs-edition gap (e.g. 48.7k Chinese-locale devices read the English edition).",
@@ -573,7 +585,7 @@
         },
         {
           "language": "Italian",
-          "active_users": 3128
+          "active_users": 3127
         },
         {
           "language": "Korean",
@@ -582,9 +594,10 @@
       ]
     },
     "new_vs_returning": {
-      "new_users": 690629,
-      "returning_users": 73771,
-      "new_share_pct": 90.3
+      "new_users": 690658,
+      "returning_users": 74402,
+      "new_share_pct": 90.3,
+      "unattributed_sessions": 61839
     },
     "top_pages": {
       "columns": [
@@ -613,7 +626,7 @@
           "/en/story/2026/06/1167658",
           "AI's environmental costs threaten water, land and climate",
           14683,
-          10787,
+          10788,
           "story"
         ],
         [
@@ -711,7 +724,7 @@
           "/en/news/topic/peace-and-security",
           "Peace and Security section",
           2969,
-          1896,
+          1897,
           "section"
         ],
         [
@@ -774,7 +787,7 @@
           "/en/story/2026/07/1168062",
           "Middle East: Civilian death toll climbs in Gaza, Lebanon and West Bank as UN chief demands 'the fighting must stop'",
           2031,
-          1611,
+          1612,
           "story"
         ],
         [
@@ -830,7 +843,7 @@
           "/en/story/2026/07/1168045",
           "UN warns West Bank settler violence hits 'all-time high' as calls grow to end occupation",
           1783,
-          1419,
+          1420,
           "story"
         ],
         [
@@ -2631,9 +2644,9 @@
       "en": {
         "active_users": 240053,
         "page_views": 362580,
-        "sessions": 299158,
-        "engaged_sessions": 100795,
-        "engagement_rate_pct": 33.7,
+        "sessions": 298021,
+        "engaged_sessions": 100769,
+        "engagement_rate_pct": 33.8,
         "share_of_en_users_pct": 33.6
       },
       "all": {
@@ -2645,9 +2658,9 @@
       "en": {
         "active_users": 108860,
         "page_views": 107354,
-        "sessions": 112446,
-        "engaged_sessions": 9406,
-        "engagement_rate_pct": 8.4,
+        "sessions": 112691,
+        "engaged_sessions": 9390,
+        "engagement_rate_pct": 8.3,
         "share_of_en_users_pct": 15.2,
         "quality_flag": "bot/VPN-like pattern — see _meta.caveats"
       },
@@ -2660,9 +2673,9 @@
       "en": {
         "active_users": 38828,
         "page_views": 54967,
-        "sessions": 49856,
-        "engaged_sessions": 21881,
-        "engagement_rate_pct": 43.9,
+        "sessions": 50518,
+        "engaged_sessions": 22025,
+        "engagement_rate_pct": 43.6,
         "share_of_en_users_pct": 5.4
       },
       "all": {
@@ -2674,9 +2687,9 @@
       "en": {
         "active_users": 29388,
         "page_views": 43173,
-        "sessions": 38571,
-        "engaged_sessions": 15142,
-        "engagement_rate_pct": 39.3,
+        "sessions": 38562,
+        "engaged_sessions": 15126,
+        "engagement_rate_pct": 39.2,
         "share_of_en_users_pct": 4.1
       },
       "all": {
@@ -2688,9 +2701,9 @@
       "en": {
         "active_users": 27053,
         "page_views": 46815,
-        "sessions": 35684,
-        "engaged_sessions": 16343,
-        "engagement_rate_pct": 45.8,
+        "sessions": 35687,
+        "engaged_sessions": 16318,
+        "engagement_rate_pct": 45.7,
         "share_of_en_users_pct": 3.8
       },
       "all": {
@@ -2702,8 +2715,8 @@
       "en": {
         "active_users": 18965,
         "page_views": 29385,
-        "sessions": 26362,
-        "engaged_sessions": 12253,
+        "sessions": 26347,
+        "engaged_sessions": 12259,
         "engagement_rate_pct": 46.5,
         "share_of_en_users_pct": 2.7
       }
@@ -2712,9 +2725,9 @@
       "en": {
         "active_users": 17934,
         "page_views": 29640,
-        "sessions": 19422,
-        "engaged_sessions": 4497,
-        "engagement_rate_pct": 23.2,
+        "sessions": 19580,
+        "engaged_sessions": 4500,
+        "engagement_rate_pct": 23.0,
         "share_of_en_users_pct": 2.5,
         "quality_flag": "datacenter/VPN suspicion — see _meta.caveats"
       },
@@ -2727,9 +2740,9 @@
       "en": {
         "active_users": 16434,
         "page_views": 20585,
-        "sessions": 18976,
-        "engaged_sessions": 3666,
-        "engagement_rate_pct": 19.3,
+        "sessions": 19040,
+        "engaged_sessions": 3655,
+        "engagement_rate_pct": 19.2,
         "share_of_en_users_pct": 2.3
       },
       "all": {
@@ -2741,9 +2754,9 @@
       "en": {
         "active_users": 15913,
         "page_views": 27472,
-        "sessions": 20380,
-        "engaged_sessions": 6188,
-        "engagement_rate_pct": 30.4,
+        "sessions": 20569,
+        "engaged_sessions": 6184,
+        "engagement_rate_pct": 30.1,
         "share_of_en_users_pct": 2.2
       },
       "all": {
@@ -2755,9 +2768,9 @@
       "en": {
         "active_users": 11875,
         "page_views": 19121,
-        "sessions": 15192,
-        "engaged_sessions": 6639,
-        "engagement_rate_pct": 43.7,
+        "sessions": 15068,
+        "engaged_sessions": 6608,
+        "engagement_rate_pct": 43.9,
         "share_of_en_users_pct": 1.7
       }
     },
@@ -2765,9 +2778,9 @@
       "en": {
         "active_users": 10028,
         "page_views": 12773,
-        "sessions": 11519,
+        "sessions": 11439,
         "engaged_sessions": 2401,
-        "engagement_rate_pct": 20.8,
+        "engagement_rate_pct": 21.0,
         "share_of_en_users_pct": 1.4,
         "quality_flag": "datacenter/VPN suspicion — see _meta.caveats"
       },
@@ -2780,9 +2793,9 @@
       "en": {
         "active_users": 8333,
         "page_views": 16290,
-        "sessions": 9048,
-        "engaged_sessions": 3063,
-        "engagement_rate_pct": 33.9,
+        "sessions": 9107,
+        "engaged_sessions": 3053,
+        "engagement_rate_pct": 33.5,
         "share_of_en_users_pct": 1.2
       },
       "all": {
@@ -2794,9 +2807,9 @@
       "en": {
         "active_users": 7192,
         "page_views": 11121,
-        "sessions": 8669,
-        "engaged_sessions": 2815,
-        "engagement_rate_pct": 32.5,
+        "sessions": 8691,
+        "engaged_sessions": 2812,
+        "engagement_rate_pct": 32.4,
         "share_of_en_users_pct": 1.0
       }
     },
@@ -2804,8 +2817,8 @@
       "en": {
         "active_users": 7077,
         "page_views": 9882,
-        "sessions": 8793,
-        "engaged_sessions": 2164,
+        "sessions": 8792,
+        "engaged_sessions": 2167,
         "engagement_rate_pct": 24.6,
         "share_of_en_users_pct": 1.0
       },
@@ -2818,9 +2831,9 @@
       "en": {
         "active_users": 6608,
         "page_views": 10363,
-        "sessions": 8712,
-        "engaged_sessions": 2982,
-        "engagement_rate_pct": 34.2,
+        "sessions": 8664,
+        "engaged_sessions": 2957,
+        "engagement_rate_pct": 34.1,
         "share_of_en_users_pct": 0.9
       }
     },
@@ -2828,19 +2841,19 @@
       "en": {
         "active_users": 6390,
         "page_views": 18647,
-        "sessions": 11338,
-        "engaged_sessions": 5586,
-        "engagement_rate_pct": 49.3,
+        "sessions": 11229,
+        "engaged_sessions": 5565,
+        "engagement_rate_pct": 49.6,
         "share_of_en_users_pct": 0.9
       }
     },
     "ZAF": {
       "en": {
-        "active_users": 5452,
+        "active_users": 5451,
         "page_views": 8270,
-        "sessions": 7000,
-        "engaged_sessions": 3111,
-        "engagement_rate_pct": 44.4,
+        "sessions": 7011,
+        "engaged_sessions": 3096,
+        "engagement_rate_pct": 44.2,
         "share_of_en_users_pct": 0.8
       }
     },
@@ -2848,9 +2861,9 @@
       "en": {
         "active_users": 5366,
         "page_views": 9739,
-        "sessions": 7717,
+        "sessions": 7687,
         "engaged_sessions": 3007,
-        "engagement_rate_pct": 39.0,
+        "engagement_rate_pct": 39.1,
         "share_of_en_users_pct": 0.8
       }
     },
@@ -2858,9 +2871,9 @@
       "en": {
         "active_users": 5270,
         "page_views": 9061,
-        "sessions": 7057,
-        "engaged_sessions": 2908,
-        "engagement_rate_pct": 41.2,
+        "sessions": 7015,
+        "engaged_sessions": 2918,
+        "engagement_rate_pct": 41.6,
         "share_of_en_users_pct": 0.7
       },
       "all": {
@@ -2872,9 +2885,9 @@
       "en": {
         "active_users": 4548,
         "page_views": 8895,
-        "sessions": 6184,
-        "engaged_sessions": 2829,
-        "engagement_rate_pct": 45.7,
+        "sessions": 6203,
+        "engaged_sessions": 2831,
+        "engagement_rate_pct": 45.6,
         "share_of_en_users_pct": 0.6
       }
     },
@@ -2882,8 +2895,8 @@
       "en": {
         "active_users": 4538,
         "page_views": 6950,
-        "sessions": 5951,
-        "engaged_sessions": 2174,
+        "sessions": 5961,
+        "engaged_sessions": 2177,
         "engagement_rate_pct": 36.5,
         "share_of_en_users_pct": 0.6
       }
@@ -2892,19 +2905,19 @@
       "en": {
         "active_users": 4376,
         "page_views": 5673,
-        "sessions": 5243,
-        "engaged_sessions": 2287,
-        "engagement_rate_pct": 43.6,
+        "sessions": 5269,
+        "engaged_sessions": 2291,
+        "engagement_rate_pct": 43.5,
         "share_of_en_users_pct": 0.6
       }
     },
     "CHE": {
       "en": {
-        "active_users": 4285,
+        "active_users": 4286,
         "page_views": 8825,
-        "sessions": 7082,
-        "engaged_sessions": 2992,
-        "engagement_rate_pct": 42.2,
+        "sessions": 7038,
+        "engaged_sessions": 2986,
+        "engagement_rate_pct": 42.4,
         "share_of_en_users_pct": 0.6
       }
     },
@@ -2912,9 +2925,9 @@
       "en": {
         "active_users": 4088,
         "page_views": 5157,
-        "sessions": 4653,
-        "engaged_sessions": 978,
-        "engagement_rate_pct": 21.0,
+        "sessions": 4646,
+        "engaged_sessions": 981,
+        "engagement_rate_pct": 21.1,
         "share_of_en_users_pct": 0.6
       }
     },
@@ -2922,9 +2935,9 @@
       "en": {
         "active_users": 3974,
         "page_views": 5211,
-        "sessions": 4640,
-        "engaged_sessions": 1164,
-        "engagement_rate_pct": 25.1,
+        "sessions": 4649,
+        "engaged_sessions": 1163,
+        "engagement_rate_pct": 25.0,
         "share_of_en_users_pct": 0.6
       }
     },
@@ -2932,9 +2945,9 @@
       "en": {
         "active_users": 3759,
         "page_views": 7147,
-        "sessions": 4880,
+        "sessions": 4903,
         "engaged_sessions": 1293,
-        "engagement_rate_pct": 26.5,
+        "engagement_rate_pct": 26.4,
         "share_of_en_users_pct": 0.5
       },
       "all": {
@@ -2946,9 +2959,9 @@
       "en": {
         "active_users": 3694,
         "page_views": 5374,
-        "sessions": 4744,
+        "sessions": 4765,
         "engaged_sessions": 1969,
-        "engagement_rate_pct": 41.5,
+        "engagement_rate_pct": 41.3,
         "share_of_en_users_pct": 0.5
       }
     },
@@ -2956,9 +2969,9 @@
       "en": {
         "active_users": 3398,
         "page_views": 8478,
-        "sessions": 5448,
-        "engaged_sessions": 2596,
-        "engagement_rate_pct": 47.7,
+        "sessions": 5466,
+        "engaged_sessions": 2599,
+        "engagement_rate_pct": 47.5,
         "share_of_en_users_pct": 0.5
       }
     },
@@ -2966,9 +2979,9 @@
       "en": {
         "active_users": 3244,
         "page_views": 4862,
-        "sessions": 4053,
-        "engaged_sessions": 1803,
-        "engagement_rate_pct": 44.5,
+        "sessions": 4076,
+        "engaged_sessions": 1804,
+        "engagement_rate_pct": 44.3,
         "share_of_en_users_pct": 0.5
       }
     },
@@ -2976,9 +2989,9 @@
       "en": {
         "active_users": 3083,
         "page_views": 4705,
-        "sessions": 4087,
+        "sessions": 4076,
         "engaged_sessions": 1459,
-        "engagement_rate_pct": 35.7,
+        "engagement_rate_pct": 35.8,
         "share_of_en_users_pct": 0.4
       },
       "all": {
