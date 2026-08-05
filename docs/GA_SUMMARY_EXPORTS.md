@@ -242,3 +242,32 @@ The first real pull is done and published. What happened, for the record:
   dates and `retrieved_on` must move with it), then run
   `python3 scripts/validate_atlas.py` before committing. If the file is
   absent the site degrades gracefully — every GA block simply disappears.
+
+---
+
+## Addendum 2 — 2026-08-04 (afternoon): broadened scope, windows, and the date-range control
+
+Fang gave a verbal go-ahead (relayed same day) to broaden beyond the initial
+summaries-only conservatism. Recorded here; **get one line in writing when
+convenient**. What changed in the published summary, all still aggregates:
+
+- **Per-window aggregates**: previous-28-days and last-90-days blocks
+  (`english.windows`) join the canonical 28-day window — each pulled for its
+  exact range, so the date-range control on the site never interpolates.
+- **Monthly history to September 2020** (`english.monthly`). The sessions
+  metric was only collected from August 2021 — nulls before that are an
+  instrumentation gap, not zero traffic. August 2026 is a partial month.
+- **Timing** (`english.timing`): hour and day-of-week aggregates, property
+  timezone (New York). Weekday-peaked, Thursday highest, 10:00–15:00 plateau.
+- **Landing pages** (`english.landing_pages`): where sessions start.
+- **Partial demographics** (`english.demographics`): age/gender aggregates
+  for the ~15–17% of users Google can classify (Google Signals, thresholded).
+  Never representative; every surface says so.
+- **English-only display** (decision 2026-08-04): all-language aggregates
+  stay in the file under `global_all_languages` (`_retained_for_later`) and
+  are rendered nowhere.
+- **Finding for the UN News web team**: the property defines custom content
+  dimensions (`topic`, `content_type`, `tags`, `region`, `news_date`…) but
+  they arrive EMPTY — if the site populated them, topic reporting could use
+  UN News's own taxonomy instead of keyword clustering.
+- **Full field-by-field source map**: `docs/DATA_FIELD_MAP.md`.

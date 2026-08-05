@@ -199,8 +199,9 @@
     <a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-/issues/new" target="_blank" rel="noopener">Report an error</a></div>
 </footer>
 
+<script src="assets/date-range.js"></script>
 <script type="module">
-import { initEngine, answerQuestion } from "./ask-engine.js";
+import { initEngine, answerQuestion, setGaWindow } from "./ask-engine.js";
 
 /* =========================================================================
    EXPERIMENTAL, OFF BY DEFAULT — the page is fully functional without it.
@@ -218,6 +219,28 @@ const form = document.getElementById("askform");
 const input = document.getElementById("q");
 const send = document.getElementById("send");
 const banner = document.getElementById("mode-banner");
+
+/* Shared date-range control (Task 6): scopes the UN News analytics evidence
+   in answers — the trending report and GA audience figures use the selected
+   pre-published window. Survey figures are annual editions and are never
+   re-scoped by a date control; answers keep saying which edition they cite. */
+(function mountAskRange() {
+  if (!window.AtlasDateRange || !banner || !banner.parentElement) return;
+  const slot = document.createElement("div");
+  slot.style.cssText = "max-width:860px;margin:0 auto;padding:0 16px;";
+  banner.parentElement.insertBefore(slot, banner.nextSibling);
+  window.AtlasDateRange(slot, {
+    ariaLabel: "UN News analytics window",
+    active: "28d",
+    options: [
+      { key: "28d", label: "GA: last 28 days" },
+      { key: "prev28d", label: "GA: previous 28 days" },
+      { key: "90d", label: "GA: last 90 days" },
+    ],
+    note: "scopes the trending-topics report; country and dissemination answers cite the canonical 28-day window — survey figures are annual and unaffected",
+    onChange: (k) => setGaWindow(k),
+  });
+})();
 
 const STARTERS = [
   "Top 5 trending topics report",

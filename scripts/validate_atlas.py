@@ -632,6 +632,29 @@ def main() -> int:
             if len(ga_tp.get(wname) or []) > 60:
                 ERRORS.append(f"ga_summary top_pages.{wname}: {len(ga_tp.get(wname))} rows — a "
                               f"summary keeps a top-N list, not a page-level export")
+        # v2 blocks (2026-08-04): per-window aggregates, monthly history,
+        # timing, landing pages, partial demographics — same summaries-only
+        # discipline: top-N caps and sane bounds, nothing page/user-level.
+        ga_en = ga.get("english") or {}
+        for wkey, wblk in (ga_en.get("windows") or {}).items():
+            if not isinstance(wblk, dict) or wblk.get("canonical"):
+                continue
+            if len(((wblk.get("top_pages") or {}).get("rows")) or []) > 60:
+                ERRORS.append(f"ga_summary windows.{wkey}: top_pages exceeds the top-N cap")
+            for crow in (wblk.get("countries") or []):
+                er = crow.get("engagement_rate_pct")
+                if er is not None and not (0 <= er <= 100):
+                    ERRORS.append(f"ga_summary windows.{wkey} {crow.get('iso3')}: "
+                                  f"engagement_rate_pct {er!r} outside 0-100")
+        if len(((ga_en.get("monthly") or {}).get("rows")) or []) > 120:
+            ERRORS.append("ga_summary monthly: more rows than months since 2020 — check the pull")
+        tmg = ga_en.get("timing") or {}
+        if tmg and (len(tmg.get("day_of_week") or []) != 7 or len(tmg.get("hour") or []) != 24):
+            ERRORS.append("ga_summary timing: expected exactly 7 day rows and 24 hour rows")
+        dgr = ga_en.get("demographics") or {}
+        if dgr and "classif" not in str(dgr.get("coverage_note") or "").lower():
+            ERRORS.append("ga_summary demographics: coverage_note must state the classifiable-"
+                          "subset limitation — partial demographics may never read as representative")
         INFOS.append(f"UN News analytics summary: window {gwin.get('start')}-{gwin.get('end')}, "
                      f"{len(ga.get('countries') or {})} countries published")
     else:

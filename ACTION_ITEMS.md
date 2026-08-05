@@ -2,7 +2,7 @@
 
 *A running list of everything waiting on a human — kept current as work lands.
 Nothing here is blocked on code; each item needs an account, an approval, or a
-judgement call. Last updated: 2026-07-29.*
+judgement call. Last updated: 2026-08-04.*
 
 **Context as of 2026-07-29:** the team green-lit using the UN's own Google
 Analytics 360 data in the Atlas, and the goal is a product DGC can genuinely
@@ -40,6 +40,19 @@ Exports/`) — this repository is public. `.gitignore` now refuses
 `ga_*.csv` and similar as a second line of defence, but keeping them out of
 the folder is the real protection. Then say where the folder is and the
 aggregation gets built against the real column shapes.
+
+**Update 2026-08-04 (later) — scope broadened verbally; get it in writing.**
+Fang gave a verbal go-ahead (relayed by Shakti the same day) to broaden beyond
+summaries-only conservatism. On that basis the published summary now also
+carries per-window aggregates (prev-28d, 90d), monthly history to Sept 2020,
+hour/day-of-week timing, landing pages, and **partial demographics**
+(age/gender for only the ~15-17% of users Google can classify — every surface
+carries that caveat). Still aggregates only; nothing raw or user-level is in
+the repo. **Action: get one written line from Fang confirming the broadened
+scope** — the 2026-07-30 precedent is that the written version governs. Also
+worth relaying to the UN News web team: the property's custom content
+dimensions (topic, content_type, tags…) are registered but arrive empty;
+populating them would let topic reporting use UN News's own taxonomy.
 
 **Update 2026-08-04 — first summary published.** An aggregate pull covering
 the six report shapes (API-assisted equivalents of the Explore exports; same

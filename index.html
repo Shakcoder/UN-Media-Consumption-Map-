@@ -9,6 +9,7 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="assets/date-range.js"></script>
 
 <style>
   :root {
@@ -2475,9 +2476,8 @@ function tabMedia(d) {
       html += `<div class="data-row"><span class="label">Engagement rate (engaged sessions)</span><span class="value">${g.engagement_rate_pct}%</span></div>`;
       html += `<div class="bar"><div class="bar-fill" style="width:${Math.min(g.engagement_rate_pct, 100)}%"></div></div>`;
     }
-    if (gaC.all && gaC.all.active_users != null) {
-      html += `<div class="data-row"><span class="label">All language editions — active users</span><span class="value">${gaC.all.active_users.toLocaleString()}</span></div>`;
-    }
+    // All-language figures deliberately not shown (English-only scope,
+    // decision 2026-08-04) — they remain in the data file for later.
     if (g.quality_flag) {
       html += `<div style="font-size:10px;color:var(--warn);margin-top:4px;">⚠ ${esc(g.quality_flag)}</div>`;
     }
@@ -2843,41 +2843,84 @@ function openDeepLinkedCountry() {
  * Optional: if the file is missing, the modal shows a graceful notice and
  * the country section simply doesn't render.
  */
+// The panel is window-aware: "28d" is the canonical window (full detail),
+// "prev28d"/"90d" come from english.windows, "monthly" is the history view.
+// English edition only by decision (2026-08-04) — all-language aggregates
+// stay in the data file (_retained_for_later) and are not rendered.
+let GA_MODAL_WINDOW = "28d";
+
+function gaModalWindowData(D, key) {
+  const en = D.english, m = D._meta || {};
+  if (key === "prev28d" || key === "90d") {
+    const w = (en.windows || {})[key];
+    if (w && !w.canonical) {
+      return {
+        label: w.label || key, start: w.start, end: w.end, delta: null,
+        totals: w.totals || {}, countries: (w.countries || []).map(c => ({
+          iso: c.iso3, displayName: c.country, active_users: c.active_users,
+          share_of_en_users_pct: c.share_of_en_users_pct,
+        })),
+        devices: w.devices || [], channels: (w.channels || {}), stories: ((w.top_pages || {}).rows || []),
+        storiesLabel: (w.label || key).toLowerCase(),
+      };
+    }
+  }
+  const cw = m.window || {};
+  return {
+    label: "Last 28 days", start: cw.start, end: cw.end,
+    delta: (en.totals || {}).delta_pct || null,
+    totals: (en.totals || {}).current_28d || {},
+    countries: Object.entries(D.countries || {})
+      .map(([iso, g]) => Object.assign({ iso }, (g || {}).en || {}))
+      .filter(r => r.active_users != null)
+      .sort((a, b) => b.active_users - a.active_users).slice(0, 10),
+    devices: en.devices || [], channels: en.channels || {},
+    stories: ((en.top_pages || {}).current_14d) || [], storiesLabel: "last 14 days",
+    canonical: true,
+  };
+}
+
 function renderGa() {
   const box = document.getElementById("ga-body");
   const D = window.GA_DATA;
   if (!box || !D || !D.english) return;
-  const m = D._meta || {}, w = m.window || {};
-  const en = D.english, all = D.global_all_languages || {};
-  const t28 = (en.totals || {}).current_28d || {};
-  const dl = (en.totals || {}).delta_pct || {};
+  const m = D._meta || {}, en = D.english;
+  const key = GA_MODAL_WINDOW;
   const fmtN = (v) => v == null ? "—" : v.toLocaleString();
+  let h = `<div id="ga-range-slot"></div>`;
+
+  if (key === "monthly") {
+    h += renderGaMonthly(en, m, fmtN);
+    finishGaRender(box, h, m);
+    return;
+  }
+
+  const wd = gaModalWindowData(D, key);
   const deltaTxt = (v) => v == null ? "" : (v >= 0 ? "+" : "") + v + "% vs prior 28 days";
-  let h = "";
-
+  const t = wd.totals, dl = wd.delta || {};
   h += `<div class="mini-stats">
-    <div class="stat"><div class="label">Active users — English</div><div class="value">${fmtN(t28.active_users)}</div><div class="delta">${esc(deltaTxt(dl.active_users))}</div></div>
-    <div class="stat"><div class="label">Page views — English</div><div class="value">${fmtN(t28.page_views)}</div><div class="delta">${esc(deltaTxt(dl.page_views))}</div></div>
-    <div class="stat"><div class="label">Engagement rate</div><div class="value">${t28.engagement_rate_pct != null ? t28.engagement_rate_pct + "%" : "—"}</div><div class="delta">avg session ${t28.avg_session_duration_sec != null ? Math.round(t28.avg_session_duration_sec) + "s" : "—"}</div></div>
-    <div class="stat"><div class="label">All languages</div><div class="value">${fmtN((all.totals_28d || {}).active_users)}</div><div class="delta">${m.country_rows_reported_by_ga != null ? esc(String(m.country_rows_reported_by_ga)) + " countries &amp; territories" : ""}</div></div>
+    <div class="stat"><div class="label">Active users — English</div><div class="value">${fmtN(t.active_users)}</div><div class="delta">${esc(deltaTxt(dl.active_users))}</div></div>
+    <div class="stat"><div class="label">Page views — English</div><div class="value">${fmtN(t.page_views)}</div><div class="delta">${esc(deltaTxt(dl.page_views))}</div></div>
+    <div class="stat"><div class="label">Engagement rate</div><div class="value">${t.engagement_rate_pct != null ? t.engagement_rate_pct + "%" : "—"}</div><div class="delta">avg session ${t.avg_session_duration_sec != null ? Math.round(t.avg_session_duration_sec) + "s" : "—"}</div></div>
+    <div class="stat"><div class="label">Sessions</div><div class="value">${fmtN(t.sessions)}</div><div class="delta">${m.country_rows_reported_by_ga != null ? esc(String(m.country_rows_reported_by_ga)) + " countries &amp; territories" : ""}</div></div>
   </div>`;
-  h += `<p style="font-size:11px;color:var(--muted-2);margin:2px 0 8px;">Window ${esc(w.start || "n/a")} to ${esc(w.end || "n/a")} · period-over-period changes are news-cycle sensitive — see "Read this before quoting" below.</p>`;
+  h += `<p style="font-size:11px;color:var(--muted-2);margin:2px 0 8px;">Window ${esc(wd.start || "n/a")} to ${esc(wd.end || "n/a")} · English edition only · period-over-period changes are news-cycle sensitive — see "Read this before quoting" below.</p>`;
 
-  const rows = Object.entries(D.countries || {})
-    .map(([iso, g]) => Object.assign({ iso, all: (g || {}).all || null }, (g || {}).en || {}))
-    .filter(r => r.active_users != null)
-    .sort((a, b) => b.active_users - a.active_users).slice(0, 10);
+  const rows = wd.countries;
   if (rows.length) {
     const max = rows[0].active_users;
     h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Top countries — English edition <span style="font-weight:400;font-size:10px;color:var(--muted-2);">active users · ⚠ = data-quality flag</span></h3>`;
     for (const r of rows) {
-      const name = (window.COUNTRY_DATA && window.COUNTRY_DATA[r.iso]) ? window.COUNTRY_DATA[r.iso].name : r.iso;
-      h += `<div class="data-row"><span class="label">${esc(name)}${r.quality_flag ? ` <span title="${esc(r.quality_flag)}" style="color:var(--warn);cursor:help;">⚠</span>` : ""}</span><span class="value">${fmtN(r.active_users)}${r.share_of_en_users_pct != null ? " · " + r.share_of_en_users_pct + "%" : ""}</span></div>`;
+      const name = r.displayName || ((window.COUNTRY_DATA && window.COUNTRY_DATA[r.iso]) ? window.COUNTRY_DATA[r.iso].name : r.iso);
+      // Flags live on the canonical country records; they apply to the same
+      // countries in every window (the pattern, not the period, is the issue).
+      const flag = r.quality_flag || (((D.countries || {})[r.iso] || {}).en || {}).quality_flag || null;
+      h += `<div class="data-row"><span class="label">${esc(name)}${flag ? ` <span title="${esc(flag)}" style="color:var(--warn);cursor:help;">⚠</span>` : ""}</span><span class="value">${fmtN(r.active_users)}${r.share_of_en_users_pct != null ? " · " + r.share_of_en_users_pct + "%" : ""}</span></div>`;
       h += `<div class="bar"><div class="bar-fill" style="width:${Math.max(2, Math.round(r.active_users / max * 100))}%"></div></div>`;
     }
   }
 
-  const dev = (en.devices || []).filter(d2 => d2.share_of_users_pct != null && d2.share_of_users_pct >= 1);
+  const dev = (wd.devices || []).filter(d2 => d2.share_of_users_pct != null && d2.share_of_users_pct >= 1);
   if (dev.length) {
     h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Devices <span style="font-weight:400;font-size:10px;color:var(--muted-2);">share of English-edition users</span></h3>`;
     for (const d2 of dev) {
@@ -2886,9 +2929,9 @@ function renderGa() {
     }
   }
 
-  const ch = ((en.channels || {}).rows || []).filter(r => r.share_of_attributed_pct != null);
+  const ch = ((wd.channels || {}).rows || []).filter(r => r.share_of_attributed_pct != null);
   if (ch.length) {
-    const unatt = ((en.channels || {}).rows || []).find(r => r.channel === "Unassigned");
+    const unatt = ((wd.channels || {}).rows || []).find(r => r.channel === "Unassigned");
     h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Arrival channels <span style="font-weight:400;font-size:10px;color:var(--muted-2);">share of attributed sessions</span></h3>`;
     for (const r of ch) {
       h += `<div class="data-row"><span class="label">${esc(r.channel)}</span><span class="value">${r.share_of_attributed_pct}%</span></div>`;
@@ -2900,28 +2943,113 @@ function renderGa() {
 
   // Same anomaly guard as the analyst: a story with >5 views/user is
   // embed/refresh-inflated and must not be presented as a most-read story.
-  const stories = (((en.top_pages || {}).current_14d) || [])
+  const stories = (wd.stories || [])
     .filter(r => r[4] === "story" && !(r[3] > 0 && r[2] / r[3] > 5)).slice(0, 6);
   if (stories.length) {
-    h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Most-read stories <span style="font-weight:400;font-size:10px;color:var(--muted-2);">English edition · last 14 days</span></h3>`;
+    h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Most-read stories <span style="font-weight:400;font-size:10px;color:var(--muted-2);">English edition · ${esc(wd.storiesLabel)}</span></h3>`;
     for (const s of stories) {
       const title = String(s[1] || "").length > 90 ? String(s[1]).slice(0, 90) + "…" : String(s[1] || "");
       h += `<div class="data-row"><span class="label" style="max-width:75%;">${esc(title)}</span><span class="value">${fmtN(s[2])}</span></div>`;
     }
   }
 
+  // Canonical-window-only sections: timing, landing pages, and the heavily
+  // caveated partial demographics were pulled for the 28-day window only.
+  if (wd.canonical) {
+    const tm = en.timing || {};
+    if ((tm.day_of_week || []).length === 7) {
+      const maxD = Math.max(...tm.day_of_week.map(x => x.active_users));
+      h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Reading rhythm <span style="font-weight:400;font-size:10px;color:var(--muted-2);">active users by day · New York time</span></h3>`;
+      for (const d3 of tm.day_of_week) {
+        h += `<div class="data-row"><span class="label">${esc(d3.day)}</span><span class="value">${fmtN(d3.active_users)}</span></div>`;
+        h += `<div class="bar"><div class="bar-fill" style="width:${Math.max(2, Math.round(d3.active_users / maxD * 100))}%"></div></div>`;
+      }
+      h += `<div style="font-size:10px;color:var(--muted-2);margin-top:2px;">${esc(tm.timezone_note || "")}</div>`;
+    }
+    const lp = ((en.landing_pages || {}).rows || []).filter(r => r[0] !== "(not set)").slice(0, 5);
+    if (lp.length) {
+      h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Top landing pages <span style="font-weight:400;font-size:10px;color:var(--muted-2);">where sessions start</span></h3>`;
+      for (const r of lp) {
+        h += `<div class="data-row"><span class="label" style="max-width:75%;">${esc(r[0])}</span><span class="value">${fmtN(r[1])} sessions</span></div>`;
+      }
+    }
+    const dg = en.demographics || null;
+    if (dg && (dg.age_brackets || []).length) {
+      h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Audience age <span style="font-weight:400;font-size:10px;color:var(--muted-2);">partial — see caveat below</span></h3>`;
+      const maxA = Math.max(...dg.age_brackets.map(x => x.active_users));
+      for (const a of dg.age_brackets) {
+        h += `<div class="data-row"><span class="label">${esc(a.bracket)}</span><span class="value">${a.share_of_known_pct}% of classifiable</span></div>`;
+        h += `<div class="bar"><div class="bar-fill" style="width:${Math.max(2, Math.round(a.active_users / maxA * 100))}%"></div></div>`;
+      }
+      h += `<div style="font-size:10px;color:var(--warn);margin-top:2px;">⚠ ${esc(dg.coverage_note || "")}</div>`;
+    }
+  } else {
+    h += `<div style="font-size:10px;color:var(--muted-2);margin-top:10px;">Reading rhythm, landing pages and audience-age sections are measured for the last-28-days window — switch to it to see them.</div>`;
+  }
+
+  finishGaRender(box, h, m, wd);
+}
+
+/** Monthly history view: last 12 full months with bars, plus the property's
+ * full range and the instrumentation caveats. */
+function renderGaMonthly(en, m, fmtN) {
+  const mo = en.monthly || {};
+  const rows = mo.rows || [];
+  if (!rows.length) return `<p style="color:var(--muted);">Monthly history not available in this summary.</p>`;
+  const first = rows[0][0], last = rows[rows.length - 1][0];
+  // last 12 complete months: drop the final row if it's the partial month
+  const complete = rows.slice(0, -1).slice(-12);
+  const maxU = Math.max(...complete.map(r => r[1]));
+  let h = `<h3 style="font-size:14px;color:var(--ink);margin:6px 0 6px;">Monthly active users — English edition <span style="font-weight:400;font-size:10px;color:var(--muted-2);">last 12 complete months</span></h3>`;
+  for (const r of complete) {
+    h += `<div class="data-row"><span class="label">${esc(r[0])}</span><span class="value">${fmtN(r[1])}</span></div>`;
+    h += `<div class="bar"><div class="bar-fill" style="width:${Math.max(2, Math.round(r[1] / maxU * 100))}%"></div></div>`;
+  }
+  h += `<div style="font-size:10px;color:var(--muted-2);margin-top:6px;">Full history in the published file runs ${esc(first)} to ${esc(last)} (property collection began September 2020). ${esc(mo.note || "")}</div>`;
+  return h;
+}
+
+function finishGaRender(box, h, m, wd) {
   h += `<div style="margin:14px 0 4px;font-size:13px;line-height:1.8;">
     <a href="ask.html?q=${encodeURIComponent("Top 5 trending topics report")}">Ask the AI Analyst: top 5 trending topics report ↗</a><br>
     <a href="ask.html?q=${encodeURIComponent("Where should we focus dissemination?")}">Ask the AI Analyst: where should we focus dissemination? ↗</a>
   </div>`;
-
-  const cav = (m.caveats || []).slice(0, 5);
+  const cav = m.caveats || [];
   if (cav.length) {
     h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Read this before quoting</h3>`;
     h += `<ul style="font-size:11px;color:var(--muted);line-height:1.6;padding-left:16px;margin:0;">${cav.map(c => `<li>${esc(c)}</li>`).join("")}</ul>`;
   }
-  h += `<p style="font-size:10px;color:var(--muted-2);margin-top:10px;">Source: ${esc(m.source || "Google Analytics")} · window ${esc(w.start || "n/a")} to ${esc(w.end || "n/a")} · retrieved ${esc(m.retrieved_on || "n/a")}. ${esc(m.scope || "")} ${esc(m.method_note || "")}</p>`;
+  const winTxt = wd ? `window ${esc(wd.start || "n/a")} to ${esc(wd.end || "n/a")}` : `monthly history`;
+  h += `<p style="font-size:10px;color:var(--muted-2);margin-top:10px;">Source: ${esc(m.source || "Google Analytics")} · ${winTxt} · retrieved ${esc(m.retrieved_on || "n/a")}. ${esc(m.scope || "")} ${esc(m.method_note || "")}</p>`;
   box.innerHTML = h;
+  mountGaRange();
+}
+
+function mountGaRange() {
+  const slot = document.getElementById("ga-range-slot");
+  const D = window.GA_DATA;
+  if (!slot || !window.AtlasDateRange || !D) return;
+  // Options and their date tooltips are derived from the data file, so a
+  // refreshed summary re-labels the picker by itself and windows that were
+  // not pulled simply do not appear.
+  const m = D._meta || {}, wins = (D.english || {}).windows || {};
+  const opts = [];
+  const cw = m.window || {};
+  opts.push({ key: "28d", label: "Last 28 days", title: `${cw.start || ""} to ${cw.end || ""} — full detail` });
+  for (const k of ["prev28d", "90d"]) {
+    const w = wins[k];
+    if (w && !w.canonical) opts.push({ key: k, label: w.label || k, title: `${w.start || ""} to ${w.end || ""}` });
+  }
+  if (((D.english || {}).monthly || {}).rows) {
+    opts.push({ key: "monthly", label: "Monthly since 2020", title: "Full property history at monthly grain" });
+  }
+  window.AtlasDateRange(slot, {
+    ariaLabel: "Analytics reporting window",
+    active: GA_MODAL_WINDOW,
+    options: opts,
+    note: "pre-published aggregate windows — each matches the analytics source for that exact range",
+    onChange: (k) => { GA_MODAL_WINDOW = k; renderGa(); },
+  });
 }
 
 (async function loadGaSummary() {

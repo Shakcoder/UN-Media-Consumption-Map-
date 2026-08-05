@@ -140,6 +140,7 @@
   <div><a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-/issues/new" target="_blank" rel="noopener">Report an error</a></div>
 </footer>
 
+<script src="assets/date-range.js"></script>
 <script>
 const LANG_NAMES = {en:"English", fr:"French", es:"Spanish", ar:"Arabic", pt:"Portuguese",
   ru:"Russian", zh:"Chinese", hi:"Hindi", bn:"Bengali", id:"Indonesian", sw:"Swahili",
@@ -287,6 +288,11 @@ function renderGlobalMovers() {
     scored from older figures. Select any topic on the left for detail.</div>`;
 }
 
+/* Date-range for the attention chart (shared control): slices the topic's own
+   120-day daily series client-side. Velocity keeps its fixed definition
+   (7d vs prior 30d) regardless of the chart range — the label says so. */
+let TE_RANGE_DAYS = 120;
+
 function renderDetail() {
   const el = document.getElementById("detail");
   if (!activeQid) { el.innerHTML = renderGlobalMovers(); bindMoverClicks(el); return; }
@@ -314,8 +320,9 @@ function renderDetail() {
       <div class="kpi"><div class="v ${velCls}">${pct >= 0 ? "+" : ""}${pct}%</div><div class="l">global velocity (7d vs 30d)</div></div>
       ${t.news_articles_7d != null ? `<div class="kpi"><div class="v">${t.news_articles_7d.toLocaleString()}</div><div class="l">news articles, 7 days (GDELT)</div></div>` : ""}
     </div>
-    <h3 class="sect">Global attention — last 120 days (Wikipedia views/day, all tracked languages)</h3>
-    ${sparkline(t.global_series || [])}
+    <h3 class="sect">Global attention — last ${TE_RANGE_DAYS} days (Wikipedia views/day, all tracked languages)</h3>
+    <div id="te-range-slot"></div>
+    ${sparkline((t.global_series || []).slice(-TE_RANGE_DAYS))}
     <h3 class="sect">Demand by language (what people look up)</h3>
     <table><tr><th>Language</th><th style="text-align:right">Views/day (7d avg)</th><th style="text-align:right">Velocity</th></tr>${langRows}</table>
     ${mediaRows ? `<h3 class="sect">Where this topic gets the most airtime (GDELT, 14d)</h3>
@@ -335,6 +342,21 @@ function renderDetail() {
       <li>Country attribution of demand is a documented approximation: language-edition traffic is
         mapped to countries by speaker-population weights, never measured per country.</li>
     </ol></div>`;
+
+  // Mount the shared range control after the innerHTML swap. The velocity
+  // badge and KPIs keep their fixed 7d-vs-30d definition at every range.
+  const slot = document.getElementById("te-range-slot");
+  if (slot && window.AtlasDateRange) {
+    window.AtlasDateRange(slot, {
+      ariaLabel: "Attention chart range",
+      active: String(TE_RANGE_DAYS),
+      options: [
+        { key: "30", label: "30 days" }, { key: "60", label: "60 days" }, { key: "120", label: "120 days" },
+      ],
+      note: "chart range only — velocity stays 7d vs prior 30d",
+      onChange: (k) => { TE_RANGE_DAYS = parseInt(k, 10) || 120; renderDetail(); },
+    });
+  }
 }
 
 function bindMoverClicks(scope) {
