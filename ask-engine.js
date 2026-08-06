@@ -31,19 +31,18 @@ const DATA_BASE = "data";
 // ---------------------------------------------------------------------------
 // Data loading
 // ---------------------------------------------------------------------------
-let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null, AD_MARKET = null, TV_STATIONS = null, GA_SUMMARY = null;
+let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null, AD_MARKET = null, TV_STATIONS = null;
 let NAME_TO_ISO = {};   // every recognizable name/alias/demonym -> ISO3
 let GENERATED = new Set();  // machine-generated demonyms: exact-match only, never fuzzy targets
 
 export async function initEngine() {
   if (COUNTRIES) return true;
-  const [cRes, tRes, gRes, aRes, tvRes, gaRes] = await Promise.all([
+  const [cRes, tRes, gRes, aRes, tvRes] = await Promise.all([
     fetch(`${DATA_BASE}/countries.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/trends/topic_intelligence.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/topics.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/ad_market.json`, { cache: "no-cache" }).catch(() => null),
     fetch(`${DATA_BASE}/tv_stations.json`, { cache: "no-cache" }).catch(() => null),
-    fetch(`${DATA_BASE}/ga_summary.json`, { cache: "no-cache" }).catch(() => null),
   ]);
   if (!cRes.ok) throw new Error("countries.json failed to load (" + cRes.status + ")");
   COUNTRIES = await cRes.json();
@@ -56,11 +55,6 @@ export async function initEngine() {
   // Extended TV-station lists (Wikipedia lists gated through Wikidata,
   // monthly refresh) — optional layer under the curated top_tv line.
   TV_STATIONS = (tvRes && tvRes.ok) ? await tvRes.json().catch(() => null) : null;
-  // UN News Google Analytics aggregate summary (summaries only — Chief's
-  // 2026-07-30 scope; raw GA exports never enter the repo) — optional layer.
-  // GA measures arrivals on UN News sites, a different construct from survey
-  // reach, so its figures carry their own [un-traffic] tier everywhere.
-  GA_SUMMARY = (gaRes && gaRes.ok) ? await gaRes.json().catch(() => null) : null;
   // full registry: all tracked topics, including ones currently below the
   // trend-measurement floor (they match questions and report honestly)
   if (gRes.ok) {
@@ -870,9 +864,6 @@ function facts(iso) {
     rising: tr ? (tr.rising_topics || []) : [],
     distinctive: tr ? (tr.distinctive_topics || []) : [],
     topTopics: tr ? (tr.top_topics || []) : [],
-    // UN News measured arrivals for this country (aggregate GA summary) —
-    // [un-traffic] construct, never comparable with survey reach
-    ga: (GA_SUMMARY && GA_SUMMARY.countries) ? (GA_SUMMARY.countries[iso] || null) : null,
   };
 }
 
@@ -921,170 +912,6 @@ function adMarketSignal(f) {
     evTitle: `${f.name} — ad-market signal`,
     evDetail: `Industry forecast, hand-updated annually from the free year-end reports (${label}). ${AD_MARKET._meta ? AD_MARKET._meta.method_note : ""}`,
   };
-}
-
-// ---------------------------------------------------------------------------
-// UN News analytics signal (data/ga_summary.json — Google Analytics aggregate
-// summaries, approved scope: summaries only). GA measures ARRIVALS on UN News
-// web properties — people who already found the site — never the reachable
-// population of a country. That is a different construct from every survey in
-// the Atlas, so GA figures carry their own evidence tier, [un-traffic], and
-// must never be presented as [measured] survey reach.
-// ---------------------------------------------------------------------------
-const GA_LINKS = [
-  { label: "UN News (the property measured)", url: "https://news.un.org/en/" },
-];
-
-// The active GA reporting window — set by the shared date-range control on
-// the pages (assets/date-range.js). Only pre-published aggregate windows are
-// selectable, so a chosen range always shows numbers that were actually
-// pulled for that exact range, never an interpolation.
-let GA_WINDOW = "28d";
-export function setGaWindow(key) {
-  if (key === "28d" || key === "prev28d" || key === "90d") GA_WINDOW = key;
-  return GA_WINDOW;
-}
-
-/** {key, label, start, end, data} for the active window; data is null for
- * the canonical 28d window (whose detail lives in the english.* blocks). */
-function gaActiveWindow() {
-  if (!GA_SUMMARY || !GA_SUMMARY.english) return null;
-  const wins = GA_SUMMARY.english.windows || {};
-  const m = GA_SUMMARY._meta || {};
-  if (GA_WINDOW !== "28d" && wins[GA_WINDOW] && !wins[GA_WINDOW].canonical) {
-    const w = wins[GA_WINDOW];
-    return { key: GA_WINDOW, label: w.label || GA_WINDOW, start: w.start, end: w.end, data: w };
-  }
-  const cw = m.window || {};
-  return { key: "28d", label: "Last 28 days", start: cw.start, end: cw.end, data: null };
-}
-
-/** Per-country GA audience for the ACTIVE window where pulled (top-10 for
- * non-canonical windows), falling back to the canonical 28d figure with its
- * own label. The data-quality flag travels with the figure, always. */
-export function gaAudienceFor(iso) {
-  if (!GA_SUMMARY) return null;
-  const aw = gaActiveWindow();
-  const canonical = ((GA_SUMMARY.countries || {})[iso] || {}).en || null;
-  const flag = canonical ? canonical.quality_flag || null : null;
-  if (aw && aw.data && aw.data.countries) {
-    const row = aw.data.countries.find(c => c.iso3 === iso);
-    if (row) return { users: row.active_users, windowLabel: `${aw.label} (${aw.start} to ${aw.end})`, flag };
-  }
-  if (canonical && canonical.active_users != null) {
-    return { users: canonical.active_users, windowLabel: gaWindowLabel(), flag };
-  }
-  return null;
-}
-
-function gaWindowLabel() {
-  const w = GA_SUMMARY && GA_SUMMARY._meta ? GA_SUMMARY._meta.window : null;
-  return w ? `${w.days}-day window to ${w.end}` : "current window";
-}
-
-function addGaEvidence(ev, aw) {
-  if (!GA_SUMMARY) return null;
-  const m = GA_SUMMARY._meta || {};
-  const w = m.window || {};
-  // The citation must name the window the figures actually describe — for a
-  // non-canonical window selected via the date-range control, that window,
-  // never the canonical one.
-  const windowTxt = (aw && aw.key && aw.key !== "28d")
-    ? `window ${aw.start || "n/a"} to ${aw.end || "n/a"} (selected via the date-range control; summary retrieved ${m.retrieved_on || "n/a"})`
-    : `window ${w.start || "n/a"} to ${w.end || "n/a"}, retrieved ${m.retrieved_on || "n/a"}`;
-  return ev.add("UN News — Google Analytics aggregate summary",
-    `${m.source || "Google Analytics 4, UN News properties"}; ${windowTxt}. Aggregated summaries only (no raw or user-level data — internal UN operational data, no public dataset URL). GA measures arrivals on UN News sites, not the reachable population; never compare its figures with survey reach percentages.`,
-    GA_LINKS);
-}
-
-function gaCountrySignal(f) {
-  if (!GA_SUMMARY || !GA_SUMMARY.countries) return null;
-  const g = GA_SUMMARY.countries[f.iso];
-  if (!g || !g.en || g.en.active_users == null) return null;
-  const bits = [`${g.en.active_users.toLocaleString()} active users on the English edition in the ${gaWindowLabel()}`];
-  if (g.en.share_of_en_users_pct != null) bits.push(`${g.en.share_of_en_users_pct}% of the edition's global audience`);
-  if (g.en.engagement_rate_pct != null) bits.push(`engagement rate ${g.en.engagement_rate_pct}%`);
-  // English edition only by decision (2026-08-04): all-language figures are
-  // retained in the data file but not surfaced anywhere.
-  return {
-    text: `UN News already reaches ${f.name}: ${bits.join("; ")}. [un-traffic — measured arrivals on news.un.org, not population reach]${g.en.quality_flag ? ` *Caveat: ${g.en.quality_flag}.*` : ""}`,
-  };
-}
-
-// Ordered first-match rules that group UN News story headlines into topic
-// clusters for the trending report. Keyword rules over public headlines —
-// transparent and editable by a non-coder; order encodes specificity.
-const GA_TOPIC_RULES = [
-  { key: "mideast", label: "Middle East crisis (Gaza, Lebanon, Red Sea)", re: /gaza|israel|palestin|west bank|lebanon|houthi|red sea|middle ?east|netanyahu|hamas|two-?state|occupation/i, atlasHint: null },
-  { key: "ai", label: "Artificial intelligence and its governance", re: /\ba\.?i\b|artificial intelligence|killer robots/i, atlasHint: /^artificial intelligence$/i },
-  { key: "ukraine", label: "Ukraine war", re: /ukrain/i, atlasHint: null },
-  { key: "sudan", label: "Sudan crisis", re: /sudan/i, atlasHint: null },
-  { key: "haiti", label: "Haiti crisis", re: /haiti/i, atlasHint: null },
-  { key: "myanmar", label: "Myanmar", re: /myanmar|rohingya/i, atlasHint: null },
-  { key: "health", label: "Health emergencies (Ebola, WHO)", re: /ebola|\bwho\b|cancer|mental health|cholera|mpox|vaccin/i, atlasHint: /^ebola$/i },
-  { key: "justice", label: "International justice (ICC)", re: /\bicc\b|international criminal court|karim khan|reparations|tribunal/i, atlasHint: /^international criminal court$/i },
-  { key: "iran", label: "US–Iran war and Gulf security", re: /\biran\b|hormuz|strait|gulf|seafarers/i, atlasHint: null },
-  { key: "water", label: "Water scarcity", re: /water/i, atlasHint: /^water scarcity$/i },
-  { key: "climate", label: "Climate and extreme weather", re: /climate|el ni|wildfire|heat|weather|fast fashion|emissions/i, atlasHint: /^climate change$/i },
-  { key: "social", label: "Poverty and social issues", re: /homeless|poverty|hunger|food insecurity|inequality|on the streets/i, atlasHint: /^poverty$|^food security$/i },
-  { key: "rights", label: "Human rights and gender equality", re: /women|gender|rights|slavery|executions|road safety|epstein/i, atlasHint: /^gender equality$|^human rights$/i },
-];
-
-function classifyGaTopic(title) {
-  for (const r of GA_TOPIC_RULES) if (r.re.test(title)) return r;
-  return null;
-}
-
-/**
- * Cluster the GA top-page summaries into topic clusters with momentum.
- * Stories with an anomalous views/user ratio (>5) are excluded from the
- * ranking and reported by name — embed/refresh traffic must not create a
- * fake trending topic.
- */
-function gaTrendingClusters() {
-  if (!GA_SUMMARY || !GA_SUMMARY.english || !GA_SUMMARY.english.top_pages) return null;
-  const tp = GA_SUMMARY.english.top_pages;
-  const clusters = {}, anomalies = [], unclassified = [];
-  const touch = (rule) => clusters[rule.key] || (clusters[rule.key] = {
-    key: rule.key, label: rule.label, atlasHint: rule.atlasHint,
-    curViews: 0, prevViews: 0, curUsers: 0, stories: [], sectionViews: 0, sectionName: null,
-  });
-  const scan = (rows, windowKey) => {
-    for (const [path, title, views, users, type] of rows || []) {
-      // Anomaly test FIRST: an embed/refresh-inflated story must be disclosed
-      // even when no topic rule matches its headline.
-      if (type === "story" && users > 0 && views / users > 5) {
-        if (windowKey === "cur") anomalies.push({ title, views, users });
-        continue;
-      }
-      const rule = classifyGaTopic(title);
-      if (!rule) {
-        // An unmatched story must be disclosed, not silently dropped — a
-        // big human-interest piece outside the topic rules would otherwise
-        // vanish from a report that claims to rank what readers opened.
-        if (type === "story" && windowKey === "cur") unclassified.push({ title, views });
-        continue;
-      }
-      if (type === "story") {
-        const c = touch(rule);
-        if (windowKey === "cur") { c.curViews += views; c.curUsers += users; c.stories.push({ title, views, users, path }); }
-        else c.prevViews += views;
-      } else if (type === "section" && windowKey === "cur") {
-        const c = touch(rule);
-        c.sectionViews += views; c.sectionName = title;
-      }
-    }
-  };
-  scan(tp.current_14d, "cur");
-  scan(tp.previous_14d, "prev");
-  const list = Object.values(clusters).filter(c => c.curViews > 0);
-  list.forEach(c => {
-    c.stories.sort((a, b) => b.views - a.views);
-    c.growthPct = c.prevViews > 0 ? Math.round(((c.curViews - c.prevViews) / c.prevViews) * 100) : null;
-  });
-  list.sort((a, b) => b.curViews - a.curViews);
-  unclassified.sort((a, b) => b.views - a.views);
-  return { list, anomalies, unclassified };
 }
 
 const fmt = (v, suffix = "%") => v == null ? "no data" : `${Math.round(v * 10) / 10}${suffix}`;
@@ -1219,12 +1046,6 @@ function composeCountryBrief(f, ev, ents) {
     ev.add(`${f.name} — extended TV stations`,
       `Station names from Wikipedia's station-list pages; every entry gated through its Wikidata record (belongs to this country, carries no dissolution date, typed as a broadcaster). Ordering is international Wikipedia presence (sitelink count) — a presence proxy; no free source measures per-station audience share. ${f.tvStations.source || ""}`,
       srcUrl ? [{ label: "Wikipedia station list", url: srcUrl }] : []);
-  }
-
-  const gsig = gaCountrySignal(f);
-  if (gsig) {
-    lines.push(`- ${gsig.text}`);
-    addGaEvidence(ev);
   }
 
   // if a specific platform was asked about, say where it stands in this market
@@ -1590,8 +1411,6 @@ function composeMeta(ev, iso) {
   lines.push("");
   lines.push("**My sources:**");
   for (const s of srcList) lines.push("- " + s);
-  if (GA_SUMMARY && GA_SUMMARY._meta)
-    lines.push(`- UN News web analytics (Google Analytics) — aggregate summaries only, window ${(GA_SUMMARY._meta.window || {}).start || "n/a"} to ${(GA_SUMMARY._meta.window || {}).end || "n/a"}; measures arrivals on news.un.org, a different construct from survey reach`);
   lines.push("");
   lines.push("**What you can ask me:** country media profiles (\"How do people in Nigeria get news?\"), comparisons (\"France vs Germany on trust\"), rankings (\"Top 5 African countries by internet access\"), live trends (\"What's trending in Kenya?\"), topics (\"Who covers climate change most?\"), and campaign guidance (\"How should we reach rural audiences in Mali?\").");
   lines.push("");
@@ -1815,12 +1634,6 @@ export function findMarkets(opts = {}) {
       langPct, under15: f.under15, urban: f.urban, internet: f.internet,
       population: f.pop, reachPeople: f.pop != null ? Math.round((lead.effective / 100) * f.pop) : null,
       risingHit, flags, survey: f.survey, constructNote, rsf: f.rsf, fh: f.fh,
-      // Proven UN News audience (GA aggregate) — display-only supporting
-      // evidence, deliberately NOT scored: a traffic criterion would pull the
-      // ranking toward digital-heavy markets against the radio/TV-first rule.
-      // The data-quality flag travels with the figure, always.
-      gaUsers: (f.ga && f.ga.en && f.ga.en.active_users != null) ? f.ga.en.active_users : null,
-      gaFlag: (f.ga && f.ga.en && f.ga.en.quality_flag) || null,
     });
   }
   ranked.sort((a, b) => b.score - a.score);
@@ -1924,7 +1737,6 @@ function composeMarketFinder(ents, ev, qNorm) {
     }
     if (audience === "rural" && r.urban != null) why.push(`${fmt(100 - r.urban)} rural population [measured]`);
     if (r.risingHit) why.push(`attention to ${topic.label} is currently rising in this market (+${Math.round(r.risingHit.velocity * 100)}% vs baseline) [measured, ~120-day window]`);
-    if (r.gaUsers != null) { why.push(`UN News already reaches ${r.gaUsers.toLocaleString()} English-edition users here in the ${gaWindowLabel()} — supporting evidence, deliberately not scored${r.gaFlag ? `; caveat: ${r.gaFlag}` : ""} [un-traffic]`); addGaEvidence(ev); }
     if (r.flags.length) why.push(`caution: ${r.flags.join("; ")} [measured]`);
     L.push(`${i + 1}. **${r.name}** — ${why.join("; ")}.`);
     ev.add(`${r.name} — screening inputs`, `Score ${r.score}/100. Survey: ${r.survey || "n/a"}. All inputs from the Atlas country record.`, countryLinks(r.iso));
@@ -2206,11 +2018,6 @@ function composeConsultingBrief(f, ev, ents, qNorm) {
   if (adm) {
     ins.push(adm.text);
     ev.add(adm.evTitle, adm.evDetail, AD_MARKET_LINKS);
-  }
-  const gains = gaCountrySignal(f);
-  if (gains) {
-    ins.push(gains.text);
-    addGaEvidence(ev);
   }
   // a mandatory section must never render as a bare header — in a data-poor
   // market the absence of evidence IS the insight
@@ -2515,14 +2322,6 @@ function buildFollowups(ents, kind) {
     const nb = neighbourOf(iso);
     if (nb && COUNTRIES[nb]) chips.push(`Same strategy brief for ${COUNTRIES[nb].name.replace(/,.*$/, "")}`);
     chips.push(`What's trending in ${cName}?`);
-  } else if (kind === "report") {
-    chips.push("Where should we focus dissemination?");
-    chips.push("What's trending worldwide right now?");
-    chips.push("Which countries pay most attention to climate change?");
-  } else if (kind === "dissemination") {
-    chips.push("Top 5 trending topics report");
-    chips.push("Which countries should we prioritise for a radio campaign?");
-    chips.push("Full media profile of the United States");
   } else {
     chips.push("What data do you have?");
     chips.push("What's trending in Kenya this week?");
@@ -2539,9 +2338,6 @@ function maybeClarify(question, ents) {
   const q = normalize(question);
   // a rankable question never needs a location — "where/which countries" IS the ask
   if (ents.intents.includes("rank") && ents.attributes.length) return null;
-  // the GA-backed report and dissemination strategy are global by design —
-  // asking "which region?" would be backwards, exactly like discovery
-  if (ents.gaReport || ents.gaDissemination) return null;
   // market-discovery questions are deliberately placeless — the engine's job
   // is to PICK the places, so asking "which region?" would be backwards
   if (ents.discovery) return null;
@@ -2583,357 +2379,6 @@ function maybeClarify(question, ents) {
 }
 
 function noFollowContext() { return !LAST.isos.length && !LAST.regions.length; }
-
-// ---------------------------------------------------------------------------
-// GA-BACKED MODES — the trending-topics report and the global dissemination
-// strategy. Both exist only when data/ga_summary.json is loaded; both combine
-// the measured UN News traffic summaries with the Atlas's open-source signals,
-// and both keep the two constructs visibly apart: [un-traffic] is arrivals on
-// news.un.org, [measured] is a survey or index figure about a population.
-// ---------------------------------------------------------------------------
-
-/** Find the Atlas trend topic matching a GA cluster, if one is tracked. */
-function atlasTopicFor(cluster) {
-  if (!TRENDS || !TRENDS.topics || !cluster.atlasHint) return null;
-  for (const [qid, t] of Object.entries(TRENDS.topics)) {
-    if (cluster.atlasHint.test(t.label_en || "")) return { qid, ...t };
-  }
-  return null;
-}
-
-/**
- * One-page report: the top 5 trending topics among UN News English readers,
- * with the evidence for WHY each ranks where it does — GA story readership
- * (volume, momentum, breadth) corroborated against Wikipedia demand and GDELT
- * coverage wherever the Atlas tracks a matching topic.
- */
-function composeTrendingReport(ev) {
-  // Non-canonical windows (selected via the date-range control) get the
-  // per-window variant: same clustering over that window's own top pages,
-  // ranked by readership — but momentum and the live open-source signals are
-  // only measured for the canonical window, so the variant says so instead
-  // of faking them.
-  const aw = gaActiveWindow();
-  if (aw && aw.key !== "28d") return composeWindowTopicReport(ev, aw);
-  const ga = gaTrendingClusters();
-  if (!ga || !ga.list.length) return null;
-  const m = GA_SUMMARY._meta || {};
-  const tw = m.trend_windows || {};
-  const cur = tw.current || {}, prev = tw.previous || {};
-  addGaEvidence(ev);
-  if (TRENDS) addTrendEvidence("Global", ev);
-
-  // honesty input: how much of the window's reading the ranked pages represent
-  let coverageLine = null;
-  const daily = (GA_SUMMARY.english.daily || {}).rows || [];
-  const tp = GA_SUMMARY.english.top_pages || {};
-  if (daily.length >= 14 && (tp.current_14d || []).length) {
-    const windowViews = daily.slice(-14).reduce((a, r) => a + (r[2] || 0), 0);
-    const topViews = tp.current_14d.reduce((a, r) => a + (r[2] || 0), 0);
-    if (windowViews > 0)
-      coverageLine = `The ${tp.current_14d.length} most-read pages carry ${Math.round((topViews / windowViews) * 100)}% of all English page views in the window — stories below that cut-off are invisible to this ranking.`;
-  }
-
-  const L = [];
-  L.push(`**Top 5 trending topics — UN News English readers**`);
-  L.push(`*One-page report · story readership ${cur.start || "n/a"} to ${cur.end || "n/a"} vs the prior 14 days · open-source signals as of ${TRENDS ? TRENDS.generated : "n/a"} · GA summary retrieved ${m.retrieved_on || "n/a"}*`);
-  L.push("");
-  L.push(`**How the top 5 were chosen:** topic clusters ranked by measured story readership on the UN News English edition over the last 14 days [un-traffic], with momentum against the prior 14 days, breadth (how many distinct stories drew readers), and — where the Atlas tracks a matching topic — corroboration from Wikipedia reading demand and GDELT news coverage [measured]. Homepage, newsletter and section pages are excluded from the ranking; section-page traffic appears only as supporting evidence. [method]`);
-  L.push("");
-
-  const top5 = ga.list.slice(0, 5);
-  top5.forEach((c, i) => {
-    const growth = c.growthPct == null ? "no prior-window baseline among the top pages"
-      : `${c.growthPct >= 0 ? "+" : ""}${c.growthPct}% vs the prior 14 days`;
-    L.push(`### ${i + 1}. ${c.label} — ${c.curViews.toLocaleString()} story views (${growth})`);
-    const st = c.stories.slice(0, 3).map(s => `"${s.title}" (${s.views.toLocaleString()} views)`).join("; ");
-    L.push(`- **What readers opened:** ${st}${c.stories.length > 3 ? ` — and ${c.stories.length - 3} more ${c.stories.length - 3 === 1 ? "story" : "stories"}` : ""}. [un-traffic]`);
-    if (c.sectionViews > 0 && c.sectionName)
-      L.push(`- **Section-page corroboration:** the ${c.sectionName} page drew a further ${c.sectionViews.toLocaleString()} views — readers navigating to the topic, not just landing on one story. [un-traffic]`);
-    const at = atlasTopicFor(c);
-    if (at && at.global_velocity != null) {
-      const vel = Math.round(at.global_velocity * 100);
-      L.push(`- **Open-source signal:** Wikipedia attention to ${at.label_en} is ${at.momentum || "steady"} (${vel >= 0 ? "+" : ""}${vel}% vs its 30-day baseline)${at.news_articles_7d != null ? `; GDELT counted ${at.news_articles_7d.toLocaleString()} news articles in 7 days` : ""} — an independent demand-side signal from outside UN properties. [measured]`);
-    } else {
-      L.push(`- **Open-source signal:** the Atlas's trend registry tracks thematic topics (SDGs, health, climate…), so this news cluster has no tracked counterpart — the readership evidence stands alone here. [unknown]`);
-    }
-    const whyBits = [`${ordinalWord(i)} story readership in the window`];
-    if (c.growthPct != null && c.growthPct >= 25) whyBits.push("rising sharply against the prior window");
-    else if (c.growthPct != null && c.growthPct <= -25) whyBits.push("cooling from a larger prior peak — volume still ranks it, direction is down");
-    else if (c.growthPct != null) whyBits.push("holding steady against the prior window");
-    if (c.stories.length >= 4) whyBits.push(`broad interest across ${c.stories.length} distinct stories, not a single viral page`);
-    else if (c.stories.length === 1) whyBits.push("driven by a single story — narrower evidence than the clusters around it");
-    if (at) whyBits.push("independently visible in open-source demand");
-    L.push(`- **Why it ranks #${i + 1}:** ${whyBits.join("; ")}.`);
-    L.push("");
-  });
-
-  const dropped = ga.list.slice(5, 8);
-  if (dropped.length)
-    L.push(`**Just below the cut:** ${dropped.map(c => `${c.label} (${c.curViews.toLocaleString()} views${c.growthPct != null ? `, ${c.growthPct >= 0 ? "+" : ""}${c.growthPct}%` : ""})`).join("; ")}.`);
-  L.push("");
-  L.push(`### Confidence and limits`);
-  L.push(`- **[un-traffic] is arrivals, not opinion or reach.** These figures count visits to news.un.org's English edition — people who already found UN News. They say what UN News readers opened, not what any country's population cares about. [method]`);
-  L.push(`- **English edition only.** Other language editions may rank topics differently; this report deliberately starts with English per the current project scope. [method]`);
-  if (coverageLine) L.push(`- ${coverageLine} [method]`);
-  const trDelta = ((((GA_SUMMARY.english || {}).totals || {}).delta_pct) || {}).active_users;
-  if (trDelta != null)
-    L.push(`- **Momentum is relative:** overall English traffic ${trDelta < 0 ? "fell" : "rose"} ~${Math.abs(trDelta)}% against the previous 28 days — a topic can ${trDelta < 0 ? "rise in rank while shrinking in absolute readers" : "fall in rank while still growing in absolute readers"}. [un-traffic]`);
-  if (ga.anomalies.length)
-    L.push(`- **Excluded as anomalous:** ${ga.anomalies.map(a => `"${a.title}" (${a.views.toLocaleString()} views from ${a.users.toLocaleString()} users — ${Math.round(a.views / a.users)} views per user suggests embed or refresh traffic)`).join("; ")}. [method]`);
-  L.push(`- **Topic grouping is keyword-based** over public headlines — transparent, but a multi-topic story lands in one cluster only, and momentum compares only pages inside each window's top-40, so growth percentages are approximate near the cut-off. [method]`);
-  if ((ga.unclassified || []).length)
-    L.push(`- **Not classified:** ${ga.unclassified.length} ${ga.unclassified.length === 1 ? "story" : "stories"} in the window's top pages match${ga.unclassified.length === 1 ? "es" : ""} no topic rule (largest: "${ga.unclassified[0].title}", ${ga.unclassified[0].views.toLocaleString()} views) — absent from the clusters above, not from the data. [method]`);
-  L.push("");
-  L.push(`*Advisory. Analytical report generated from measured UN News traffic and open-source demand signals. Reading behaviour is not opinion, endorsement, or impact — validate before external use.*`);
-  return L.join("\n");
-}
-
-function ordinalWord(i) {
-  return ["the largest", "the second-largest", "the third-largest", "the fourth-largest", "the fifth-largest"][i] || "top-ranked";
-}
-
-/** The trending report's per-window variant (previous 28 days / last 90
- * days). Readership ranking only — no momentum (no sub-window comparison was
- * pulled for these ranges) and no live-trend corroboration (the trend engine
- * measures the current window, a different period). */
-function composeWindowTopicReport(ev, aw) {
-  const rows = ((aw.data || {}).top_pages || {}).rows;
-  if (!rows || !rows.length) return null;
-  const m = GA_SUMMARY._meta || {};
-  addGaEvidence(ev, aw);
-  const clusters = {}, anomalies = [], unclassified = [];
-  for (const [path, title, views, users, type] of rows) {
-    if (type === "story" && users > 0 && views / users > 5) { anomalies.push({ title, views, users }); continue; }
-    const rule = classifyGaTopic(title);
-    if (!rule) { if (type === "story") unclassified.push({ title, views }); continue; }
-    const c = clusters[rule.key] || (clusters[rule.key] = { label: rule.label, views: 0, stories: [], sectionViews: 0, sectionName: null });
-    if (type === "story") { c.views += views; c.stories.push({ title, views }); }
-    else if (type === "section") { c.sectionViews += views; c.sectionName = title; }
-  }
-  unclassified.sort((a, b) => b.views - a.views);
-  const list = Object.values(clusters).filter(c => c.views > 0).sort((a, b) => b.views - a.views).slice(0, 5);
-  if (!list.length) return null;
-  const L = [];
-  L.push(`**Top 5 topics — UN News English readers · ${aw.label}**`);
-  L.push(`*Story readership ${aw.start} to ${aw.end} · GA summary retrieved ${m.retrieved_on || "n/a"} · window selected via the date-range control*`);
-  L.push("");
-  L.push(`**How this ranking works:** topic clusters ranked by measured story readership among this window's most-read pages [un-traffic]. Momentum and open-source corroboration are shown only on the default 28-day report — no sub-window comparison was pulled for this range, and the live trend engine measures the current period, not this one. [method]`);
-  L.push("");
-  list.forEach((c, i) => {
-    L.push(`### ${i + 1}. ${c.label} — ${c.views.toLocaleString()} story views`);
-    const st = c.stories.sort((a, b) => b.views - a.views).slice(0, 3).map(s => `"${s.title}" (${s.views.toLocaleString()} views)`).join("; ");
-    L.push(`- **What readers opened:** ${st}${c.stories.length > 3 ? ` — and ${c.stories.length - 3} more ${c.stories.length - 3 === 1 ? "story" : "stories"}` : ""}. [un-traffic]`);
-    if (c.sectionViews > 0 && c.sectionName)
-      L.push(`- **Section-page corroboration:** ${c.sectionName} drew a further ${c.sectionViews.toLocaleString()} views. [un-traffic]`);
-    L.push(`- **Why it ranks #${i + 1}:** ${ordinalWord(i)} story readership among this window's top pages${c.stories.length >= 3 ? `, across ${c.stories.length} distinct stories` : ""}.`);
-    L.push("");
-  });
-  L.push(`### Confidence and limits`);
-  L.push(`- **[un-traffic] is arrivals, not opinion or reach** — visits to news.un.org's English edition only. [method]`);
-  L.push(`- **Ranking covers this window's top-${rows.length} pages only**; smaller stories are invisible to it${rows.some(r => r[4] === "other") ? ", and GA aggregated this window's long tail into an '(other)' bucket" : ""}. [method]`);
-  if (anomalies.length)
-    L.push(`- **Excluded as anomalous:** ${anomalies.map(a => `"${a.title}" (${Math.round(a.views / a.users)} views per user)`).join("; ")}. [method]`);
-  L.push(`- **Topic grouping is keyword-based** over public headlines — a multi-topic story lands in one cluster only. [method]`);
-  if (unclassified.length)
-    L.push(`- **Not classified:** ${unclassified.length} ${unclassified.length === 1 ? "story" : "stories"} in this window's top pages match${unclassified.length === 1 ? "es" : ""} no topic rule (largest: "${unclassified[0].title}", ${unclassified[0].views.toLocaleString()} views) — absent from the clusters above, not from the data. [method]`);
-  L.push("");
-  L.push(`*Advisory. Analytical report generated from measured UN News traffic. Reading behaviour is not opinion, endorsement, or impact — validate before external use.*`);
-  return L.join("\n");
-}
-
-/**
- * Global dissemination strategy — "which regions, topics, platforms, devices
- * and languages should we focus on?" asked with no single place named. The
- * one strategy question GA can genuinely anchor: it is the only measured
- * evidence of who UN content already reaches. Keeps the mandatory consulting
- * structure and the fit-before-reach doctrine.
- */
-function composeDisseminationStrategy(ev, qNorm) {
-  if (!GA_SUMMARY || !GA_SUMMARY.english) return null;
-  const en = GA_SUMMARY.english;
-  const m = GA_SUMMARY._meta || {};
-  addGaEvidence(ev);
-
-  // Open-source counterweight: in how many surveyed countries does radio
-  // still out-reach online news? GA cannot see broadcast at all.
-  let radioLed = 0, surveyed = 0;
-  for (const iso of Object.keys(COUNTRIES)) {
-    const nc = COUNTRIES[iso].news_consumption || {};
-    if (nc.radio_as_news_source_pct != null && nc.online_as_news_source_pct != null) {
-      surveyed++;
-      if (nc.radio_as_news_source_pct > nc.online_as_news_source_pct) radioLed++;
-    }
-  }
-
-  // Engagement leaders among the GA-covered countries (quality vs quantity).
-  const engaged = Object.entries(GA_SUMMARY.countries || {})
-    .filter(([, g]) => g.en && g.en.engagement_rate_pct != null && !g.en.quality_flag)
-    .map(([iso, g]) => ({ name: (COUNTRIES[iso] || {}).name || iso, rate: g.en.engagement_rate_pct, users: g.en.active_users }))
-    .sort((a, b) => b.rate - a.rate);
-
-  const ch = (en.channels || {}).rows || [];
-  const chBy = (name) => ch.find(r => r.channel === name) || {};
-  const search = chBy("Organic Search"), social = chBy("Organic Social"), email = chBy("Email"), ai = chBy("AI Assistant"), unassigned = chBy("Unassigned");
-  const engRate = (r) => (r.sessions ? Math.round((r.engaged_sessions / r.sessions) * 1000) / 10 : null);
-  const dev = en.devices || [];
-  const desktop = dev.find(d => d.device === "desktop") || {}, mobile = dev.find(d => d.device === "mobile") || {};
-  const cont = en.continents || [];
-  const africa = cont.find(c => c.continent === "Africa") || {};
-  const americas = cont.find(c => c.continent === "Americas") || {};
-  // Every derived figure is guarded to a finite number or null — a partial
-  // summary file must degrade a sentence, never crash or coerce null to 0.
-  const enUsers28 = Number.isFinite(((en.totals || {}).current_28d || {}).active_users)
-    ? en.totals.current_28d.active_users : null;
-  const deltaAU = (((en.totals || {}).delta_pct) || {}).active_users;
-  // All-language derivations removed 2026-08-04 (English-only scope) — the
-  // aggregates remain in the data file under global_all_languages for later.
-  const africaSharePct = (Number.isFinite(africa.active_users) && enUsers28 > 0)
-    ? Math.round((africa.active_users / enUsers28) * 100) : null;
-  const newSharePct = ((en.new_vs_returning || {}).new_share_pct != null) ? en.new_vs_returning.new_share_pct : null;
-  const chinaEn = ((GA_SUMMARY.countries || {}).CHN || {}).en || null;
-  const zhLocale = (((en.browser_languages || {}).rows) || []).find(r => r.language === "Chinese") || null;
-  // "Evergreen" claim computed from the data: current-window top stories whose
-  // /story/YYYY/MM/ path is 3+ months older than the window end.
-  const wEnd = ((m.window || {}).end || "").slice(0, 7);
-  const evergreens = ((((en.top_pages || {}).current_14d) || []))
-    .filter(r => r[4] === "story")
-    .filter(r => {
-      const mm = String(r[0] || "").match(/\/story\/(\d{4})\/(\d{2})\//);
-      if (!mm || !wEnd) return false;
-      const months = (parseInt(wEnd.slice(0, 4), 10) * 12 + parseInt(wEnd.slice(5, 7), 10))
-        - (parseInt(mm[1], 10) * 12 + parseInt(mm[2], 10));
-      return months >= 3;
-    });
-  const clusters = gaTrendingClusters();
-  const topTopics = clusters ? clusters.list.slice(0, 3).map(c => c.label) : [];
-
-  const L = [];
-  L.push(`**Dissemination strategy — where to focus UN News content**`);
-  L.push(`*Decision being addressed: which regions, topics, platforms, devices and languages the UN should prioritise when disseminating content — grounded in measured UN News traffic (${gaWindowLabel()}) plus the Atlas's landscape evidence.*`);
-  L.push("");
-  L.push(`### Executive summary`);
-  L.push(`1. **Defend the search-led core.** ${search.share_of_attributed_pct != null ? `${search.share_of_attributed_pct}% of attributed sessions arrive by organic search` : "Organic search dominates attributed arrivals"}, and search visits engage at ${engRate(search) != null ? `${engRate(search)}%` : "the highest rate"} — discoverability is the platform's proven strength. [un-traffic]`);
-  L.push(`2. **Growth potential sits where share is smallest and engagement highest** — Africa holds ${africaSharePct != null ? `${africaSharePct}%` : "a small share"} of English-edition users but the highest continental engagement rate (${africa.engagement_rate_pct != null ? `${africa.engagement_rate_pct}%` : "n/a"}). [un-traffic]`);
-  L.push(`3. **Digital traffic must not set the whole strategy.** In ${radioLed} of the ${surveyed} countries with survey data on both channels, radio still out-reaches online news — GA cannot see broadcast audiences at all. [measured]`);
-  L.push("");
-  L.push(`**Confidence: Medium.** Traffic is measured but arrivals-only; channel attribution has a known gap; survey evidence covers the broadcast world GA cannot see.`);
-  L.push("");
-
-  L.push(`### Key insights`);
-  L.push(`**Regions** [un-traffic]`);
-  L.push(`- The Americas lead English-edition use (${americas.active_users != null ? americas.active_users.toLocaleString() : "n/a"} users, ${americas.engagement_rate_pct != null ? `${americas.engagement_rate_pct}% engagement` : "n/a"}); Africa and Oceania are small but the most engaged (${africa.engagement_rate_pct || "n/a"}% and ${(cont.find(c => c.continent === "Oceania") || {}).engagement_rate_pct || "n/a"}%).`);
-  const usRate = ((GA_SUMMARY.countries || {}).USA || {}).en;
-  if (engaged.length >= 5)
-    L.push(`- The most engaged national audiences are not the largest: ${engaged.slice(0, 5).map(e => `${e.name} ${e.rate}%`).join(", ")}${usRate && usRate.engagement_rate_pct != null ? ` — versus the United States at ${usRate.engagement_rate_pct}%` : ""}.`);
-  if (chinaEn && chinaEn.quality_flag)
-    L.push(`- China's English-edition row (${chinaEn.active_users != null ? chinaEn.active_users.toLocaleString() : "n/a"} users${chinaEn.engagement_rate_pct != null ? `, ${chinaEn.engagement_rate_pct}% engagement` : ""}) is flagged — ${chinaEn.quality_flag} — treated as unverified, not as a top engaged audience. [un-traffic, flagged]`);
-  L.push(`**Topics** [un-traffic + measured]`);
-  if (topTopics.length)
-    L.push(`- Current reader demand concentrates on: ${topTopics.join("; ")} (ask me for the *top 5 trending topics report* for the story-level evidence).`);
-  if (evergreens.length)
-    L.push(`- Evergreen explainers keep earning arrivals long after publication — ${evergreens.length} ${evergreens.length === 1 ? "story" : "stories"} published three or more months ago ${evergreens.length === 1 ? "is" : "are"} still in the current most-read list (e.g. "${evergreens[0][1]}"). [un-traffic]`);
-  L.push(`**Platforms and channels** [un-traffic]`);
-  const newsletterPage = (((en.top_pages || {}).current_14d) || []).find(r => /newsletter/i.test(r[0] || ""));
-  L.push(`- Organic search: ${search.sessions != null ? search.sessions.toLocaleString() : "n/a"} sessions, ${engRate(search) != null ? `${engRate(search)}% engaged` : "n/a"} — the workhorse. Social: ${social.sessions != null ? social.sessions.toLocaleString() : "n/a"} sessions at ${engRate(social) != null ? `${engRate(social)}%` : "n/a"} engagement — small and shallow on-site (platform-native reach is not measured here). Email/newsletter: ${email.sessions != null ? email.sessions.toLocaleString() : "n/a"} sessions${newsletterPage ? `, and the newsletter-subscribe page is the single most-viewed non-home page (${newsletterPage[2].toLocaleString()} views in 14 days) — visible appetite for owned channels` : ""}.`);
-  L.push(`- AI assistants are an emerging referrer: ${ai.sessions != null ? ai.sessions.toLocaleString() : "n/a"} sessions from Gemini, ChatGPT and Perplexity — small, new, and growing in the channel mix. GA now groups these as their own channel.`);
-  L.push(`- ${unassigned.share_of_all_pct != null ? `${unassigned.share_of_all_pct}%` : "Over half"} of sessions carry no source attribution (feeds, apps, consent-blocked) — channel shares are quoted on attributed traffic only. [method]`);
-  L.push(`**Devices** [un-traffic]`);
-  L.push(`- Desktop ${desktop.share_of_users_pct || "n/a"}% vs mobile ${mobile.share_of_users_pct || "n/a"}% of users — unusually desktop-heavy for news (institutional readers, and some bot inflation, likely both [inferred]). Mobile sessions run shorter (${mobile.avg_session_duration_sec ? Math.round(mobile.avg_session_duration_sec) : "n/a"}s vs ${desktop.avg_session_duration_sec ? Math.round(desktop.avg_session_duration_sec) : "n/a"}s) — mobile pages must deliver the point faster.`);
-  L.push(`**Languages** [un-traffic + measured]`);
-  if (zhLocale && zhLocale.active_users != null)
-    L.push(`- ${zhLocale.active_users.toLocaleString()} users with Chinese-language devices read the *English* edition — a visible locale-vs-edition gap (device locale is not language preference). [un-traffic]`);
-  L.push(`- Cross-edition comparisons are outside the current English-only scope — per-language-edition summaries are the next data step if the team wants the language question answered with measurement. [method]`);
-  // Timing evidence — every figure computed from english.timing at answer
-  // time (never hardcoded), and every later mention of "the measured rhythm"
-  // is gated on hasTiming so a v1/partial file can't produce a fabricated
-  // measured-timing claim.
-  const tm = en.timing || null;
-  const hasTiming = !!(tm && (tm.day_of_week || []).length === 7 && (tm.hour || []).length === 24);
-  let timingClause = null;
-  if (hasTiming) {
-    const topDay = [...tm.day_of_week].sort((a, b) => b.active_users - a.active_users)[0];
-    const wknd = tm.day_of_week.filter(d3 => d3.day === "Saturday" || d3.day === "Sunday");
-    const midwk = tm.day_of_week.filter(d3 => d3.day !== "Saturday" && d3.day !== "Sunday");
-    const avg = (xs) => xs.reduce((a, x) => a + x.active_users, 0) / (xs.length || 1);
-    const wkndPct = Math.round((1 - avg(wknd) / avg(midwk)) * 100);
-    const byHour = [...tm.hour].sort((a, b) => b.active_users - a.active_users);
-    const peakHours = byHour.slice(0, 5).map(h3 => h3.hour).sort((a, b) => a - b);
-    const contiguous = peakHours.every((h3, i) => i === 0 || h3 === peakHours[i - 1] + 1);
-    const peakTxt = contiguous
-      ? `peak hours ${peakHours[0]}:00-${(peakHours[peakHours.length - 1] + 1) % 24}:00`
-      : `top hours ${peakHours.map(h3 => `${h3}:00`).join(", ")}`;
-    timingClause = `weekday-peaked (${topDay.day} highest, weekends ~${wkndPct}% below the weekday average) with ${peakTxt} New York time`;
-    L.push(`**Timing** [un-traffic]`);
-    L.push(`- Reading is ${timingClause} — the first measured timing evidence in the Atlas; every earlier brief carried timing as [unknown]. Hours are property-timezone, so treat as the rhythm of the site's dominant markets, not any single country.`);
-  }
-  const dg = en.demographics || null;
-  if (dg && (dg.age_brackets || []).length) {
-    const topBracket = [...dg.age_brackets].sort((a, b) => b.active_users - a.active_users)[0];
-    L.push(`**Audience (partial measurement)** [un-traffic, heavily caveated]`);
-    L.push(`- Among the ${dg.age_known_share_of_all_pct}% of users Google can classify (signed-in, consented — a non-representative slice), ${topBracket.bracket} is the largest age bracket at ${topBracket.share_of_known_pct}% of the classifiable subset. Directional at best; never quote as the audience's actual profile.`);
-  }
-  L.push("");
-
-  L.push(`### Strategic assessment`);
-  L.push(`**What's happening:** UN News's English edition reaches ${enUsers28 != null ? fmtPop(enUsers28) : "n/a"} users${m.country_rows_reported_by_ga != null ? ` across ${m.country_rows_reported_by_ga} countries and territories` : ""} in 28 days [un-traffic], but the audience is search-discovered, ${newSharePct != null ? `${newSharePct}% first-time` : "overwhelmingly first-time"}, and concentrated in high-connectivity markets. The Atlas's survey evidence shows the opposite world: in ${radioLed} of ${surveyed} dual-surveyed countries radio still out-reaches online news [measured]. The traffic data says what works on the website; the survey data says who the website alone can never reach.`);
-  L.push("");
-  L.push(`**Why it matters for this decision:** dissemination strategy set on traffic alone would double down on audiences already reached (English-speaking, connected, desktop) and structurally miss the broadcast-first majority in exactly the regions the UN most needs to reach. Fit before reach: choose channels by who must be reached, then maximise reach within that. [inferred]`);
-  L.push("");
-
-  L.push(`### Opportunities — ranked`);
-  L.push(`**1. Search-optimised explainers on the trending clusters** — confidence: High`);
-  L.push(`   - Why: organic search ${search.share_of_attributed_pct != null ? `is ${search.share_of_attributed_pct}% of attributed arrivals` : "dominates attributed arrivals"}${engRate(search) != null ? ` at ${engRate(search)}% engagement` : ""} [un-traffic]${evergreens.length ? `; explainers and evergreen pieces keep earning readers months after publication [un-traffic]` : ""}.`);
-  L.push(`**2. Convert the overwhelmingly-new audience into an owned one** — confidence: High`);
-  L.push(`   - Why: ${newSharePct != null ? `${newSharePct}% of users are first-time visitors [un-traffic]; ` : ""}the newsletter-subscribe page is the top non-home page by views [un-traffic] — demand for a durable relationship already exists; email arrivals are attributable and repeatable.`);
-  if (hasTiming) {
-    L.push(`**3. Publish to the measured reading rhythm** — confidence: Medium`);
-    L.push(`   - Why: readership is ${timingClause} [un-traffic] — timing was [unknown] in every earlier brief and is now measured; the caveat is that the rhythm reflects the site's dominant markets, so per-region timing still needs local validation. [inferred]`);
-  } else {
-    L.push(`**3. Measure the publishing rhythm before scheduling decisions** — confidence: Low`);
-    L.push(`   - Why: hour and day-of-week aggregates are absent from the current summary, so publish-time choices remain [unknown] — a timing pull is cheap and would turn this into measured evidence.`);
-  }
-  L.push(`**4. Pair digital with broadcast partnerships for Africa** — confidence: Medium`);
-  L.push(`   - Why: Africa is ${africaSharePct != null ? `${africaSharePct}%` : "a small share"} of English-edition users yet the most engaged continent [un-traffic]; radio leads measured news use across much of Africa [measured, Afrobarometer]; web traffic alone cannot close that gap — radio/TV pickup of UN News content can.`);
-  L.push(`**5. Treat AI assistants as a nascent distribution surface** — confidence: Low`);
-  L.push(`   - Why: ${ai.sessions != null ? `${ai.sessions.toLocaleString()} sessions already arrive from AI assistants [un-traffic]; ` : ""}the channel is new, unstable, and unmeasured beyond arrivals — watch it, structure content for machine citability, do not budget against it yet. [inferred]`);
-  L.push("");
-
-  L.push(`### Tradeoffs`);
-  L.push(`*Nothing here is universally best — these are the costs of each choice.*`);
-  L.push(`- Search-first optimises for pull, not push: it reaches people already looking. The audiences the UN most needs (low-connectivity, broadcast-first) never appear in search logs. [inferred]`);
-  if (hasTiming)
-    L.push(`- Publishing to the measured rhythm optimises for the site's dominant markets — the same clock under-serves audiences in other timezones, and per-region timing is unmeasured. [inferred]`);
-  L.push(`- Newsletter growth deepens engagement with the already-reached; it does not extend reach. [inferred]`);
-  L.push(`- Optimising for the desktop majority would neglect the mobile-first Global South — the survey data (smartphone-led connectivity in most low-income markets) contradicts the desktop skew in this traffic. [measured vs un-traffic — construct difference]`);
-  L.push("");
-
-  L.push(`### Risks`);
-  L.push(`- **Bot and VPN contamination:** China's row shows a non-human pattern and Netherlands/Singapore rank above population expectations — strategy set on raw country rows would misallocate effort. [un-traffic, flagged]`);
-  if (unassigned.share_of_all_pct != null)
-    L.push(`- **Attribution blindness:** ${unassigned.share_of_all_pct}% of sessions are unattributed — channel conclusions rest on the attributed minority. [method]`);
-  if (deltaAU != null)
-    L.push(`- **News-cycle dependence:** English traffic ${deltaAU < 0 ? "fell" : "moved"} ~${Math.abs(deltaAU)}% period-over-period with the news cycle — capacity planned on peak traffic will look like failure in quiet months. [un-traffic]`);
-  L.push(`- **Digital-only drift:** every figure here is web traffic; in ${radioLed} of ${surveyed} dual-surveyed countries radio out-reaches online news, and partner outlets in restricted media environments must still be vetted individually for independence before any placement. [measured]`);
-  L.push("");
-
-  L.push(`### Confidence and limits`);
-  L.push(`**Overall confidence: Medium** — the traffic is genuinely measured (a first for this Atlas), but it measures arrivals on one property family, in a single 28-day window, with known contamination and attribution gaps.`);
-  L.push("");
-  L.push(`**What the Atlas cannot tell you here** (and what would raise confidence):`);
-  L.push(`- Per-language-edition breakdowns (outside the current English-only scope) — would answer the language question with measurement.`);
-  L.push(`- Representative audience demographics — GA's age/gender aggregates cover only the ~15-17% of users Google can classify, so they are directional, never representative.`);
-  L.push(`- Social-platform-native performance (UN accounts on X, Facebook, Instagram, TikTok) — GA sees only click-throughs to the site.`);
-  L.push("");
-  L.push(`**Not available at any confidence level:** broadcast pickup of UN News content, offline reach, impact or opinion change, cost per channel, and past campaign performance. No connected data source measures these — treat any such claim from any tool with suspicion. [unknown]`);
-  L.push("");
-  L.push(`### Evidence used`);
-  L.push(`*Every figure above traces to the numbered sources beneath this answer — the GA aggregate summary (window ${(m.window || {}).start || "n/a"} to ${(m.window || {}).end || "n/a"}) and the Atlas survey/index records.*`);
-  L.push("");
-  L.push(`*Advisory. This is evidence-based decision support produced by an automated system, not a final strategy. [un-traffic] marks measured UN News arrivals (not population reach), [measured] marks survey/index figures, [inferred] marks reasoned judgement, [unknown] marks what needs human research. Validate with the DGC web team before committing budget.*`);
-  return L.join("\n");
-}
-
 // ---------------------------------------------------------------------------
 // SELF-KNOWLEDGE — the Atlas answering questions about itself.
 //
@@ -2985,8 +2430,6 @@ function composeCapabilities(ev) {
   L.push(`- ${cov.total} countries profiled; **${cov.news} with a real news-consumption survey** behind them`);
   L.push(`- ${cov.rsf} with a press-freedom score; ${cov.radio} with measured radio reach; ${cov.platform} with measured platform use`);
   L.push(`- ${REGISTRY.length} topics tracked daily${TRENDS && TRENDS.coverage ? `, of which ${TRENDS.coverage.topics_scored} are currently measurable` : ""}`);
-  if (GA_SUMMARY && GA_SUMMARY._meta)
-    L.push(`- Measured UN News readership (Google Analytics aggregate summaries, ${gaWindowLabel()}) — powering the **top 5 trending topics report** ("top 5 trending topics report") and the **global dissemination strategy** ("where should we focus dissemination?")`);
   L.push("");
   L.push(`**What I will never do:** invent a number, or fill a gap with an estimate. Where the data stops, I say so and tell you what would answer it instead. That's the point of me.`);
   ev.add("Atlas coverage", `Counted live from data/countries.json (${cov.total} records) and the topic registry at the moment of asking.`, []);
@@ -3017,7 +2460,7 @@ function composeMethodology(ev) {
   L.push("");
   L.push(`**The one adjustment I make:** online and social reach are capped at a country's internet penetration. A survey can honestly report 94% online news use in a country where 41% are online — because it surveyed the people who are already online. Treating that as national reach is the most expensive mistake this tool exists to prevent.`);
   L.push("");
-  L.push(`Everything else — connectivity, demographics, literacy — comes from the World Bank; press freedom from RSF; political and internet freedom from Freedom House; language shares from Unicode CLDR; live attention from Wikipedia reading patterns and the GDELT news monitor.${GA_SUMMARY ? " UN News readership figures come from Google Analytics aggregate summaries and carry their own [un-traffic] tag — they measure arrivals on the website (people who already found it), never the reachable population, so they are deliberately kept apart from every survey figure." : ""}`);
+  L.push(`Everything else — connectivity, demographics, literacy — comes from the World Bank; press freedom from RSF; political and internet freedom from Freedom House; language shares from Unicode CLDR; live attention from Wikipedia reading patterns and the GDELT news monitor.`);
   ev.add("Survey constructs", `Construct notes are carried per country in data/countries.json (news_consumption.survey_note) and applied on every figure the analyst reports.`, []);
   return L.join("\n");
 }
@@ -3086,8 +2529,6 @@ function reasoningTrace(question, ents, kind, ev) {
     self: "you asked about the Atlas itself rather than about the world, so I answered from what is actually loaded — the counts below are read from the data at the moment you asked, not written in advance",
     gap: "the measure you asked for is one no free source publishes, so instead of guessing I named what is missing and what the Atlas holds nearest to it",
     help: "nothing in it mapped to a country, topic or measure, so I answered about what I can do instead",
-    report: "you asked for the trending-topics report, so I ranked topic clusters by measured UN News story readership and corroborated each against the open-source demand signals",
-    dissemination: "you asked where to focus dissemination with no single place named, so I built the global strategy from measured UN News traffic plus the Atlas's survey and freedom data",
   };
   if (routes[kind]) steps.push(`**Chose the ${kind} route** — ${routes[kind]}.`);
 
@@ -3286,23 +2727,6 @@ export function answerQuestion(question) {
     if (!ents.intents.includes("strategy")) ents.intents.push("strategy");
   }
 
-  // GA-backed modes (data/ga_summary.json, optional). Both flags exist only
-  // when the GA summary is loaded — with the file absent, the old routes
-  // (global trends, clarify) keep these questions, so nothing regresses.
-  // The trending report is global-and-English by construction, so a named
-  // country or region routes to the per-place trend answers instead.
-  ents.gaReport = !!(GA_SUMMARY && !ents.countries.length && !ents.regions.length
-    && (/\btop ?(5|five)? ?trending (topics|stories)\b/.test(qNorm)
-      || /\btrending (topics|stories)\b.*\b(report|brief|un news)\b/.test(qNorm)
-      || /\b(report|brief)\b.*\btrending (topics|stories)\b/.test(qNorm)
-      || /\bun news\b.*\btrending\b|\btrending\b.*\bun news\b/.test(qNorm)
-      || /\bwhat (are people|do people) read(ing)? on un news\b/.test(qNorm)));
-  // The dissemination strategy is placeless by design — the ask IS "where".
-  ents.gaDissemination = !!(GA_SUMMARY && !ents.countries.length && !ents.regions.length && !discovery && !ents.gaReport
-    && (/\bdisseminat\w+\b/.test(qNorm)
-      || /\bwhich (regions?|topics?|platforms?|devices?|languages?)\b.*\b(focus|prioriti[sz]e)\b/.test(qNorm)
-      || /\b(focus|prioriti[sz]e)\b.*\b(regions?|platforms?|devices?|languages?)\b/.test(qNorm)));
-
   // "which countries prefer audio" — radio reach is the audio-habit ranking
   if (/\b(audio|podcasts?)\b/.test(qNorm) && /\b(which countries|where)\b/.test(qNorm) && !ents.countries.length) {
     if (!ents.attributes.includes("radio")) ents.attributes.unshift("radio");
@@ -3401,16 +2825,6 @@ export function answerQuestion(question) {
 
   // These specialised routes each FALL THROUGH when they can't compose —
   // a matched-but-empty branch must never swallow the question.
-  // UN News trending-topics report (GA summaries × open-source corroboration)
-  if (!parts.length && ents.gaReport) {
-    const r = composeTrendingReport(ev);
-    if (r) { parts.push(r); kind = "report"; }
-  }
-  // Global dissemination strategy — placeless by design
-  if (!parts.length && ents.gaDissemination) {
-    const r = composeDisseminationStrategy(ev, qNorm);
-    if (r) { parts.push(r); kind = "dissemination"; }
-  }
   // Topic coverage ranking ("which topics get the least media coverage")
   if (/\b(coverage|covered)\b/.test(qNorm) && /\b(least|most|lowest|highest|top|bottom|under)\b/.test(qNorm)
       && !ents.countries.length && (ents.topics.length || /\btopics?\b|\bsdgs?\b/.test(qNorm))) {

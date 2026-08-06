@@ -1,3 +1,5 @@
+> **REMOVED 2026-08-06 — historical document.** The Atlas's Google Analytics layer was removed: the team has a dedicated, automatically-updating GA dashboard, so the Atlas's manually-refreshed copy was redundant. Nothing GA-derived remains published on the site. This document stays as the record of the approvals, the method, and the lessons (the 48-hour settling rule, the interface-vs-API gap, the empty content tags). The code and data remain in git history.
+
 # Pulling the summary reports — step by step
 
 *The approved scope is **summaries, not full data** (Fang Chen, 2026-07-30 —

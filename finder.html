@@ -241,9 +241,8 @@
   <div><a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-/issues/new" target="_blank" rel="noopener">Report an error</a></div>
 </footer>
 
-<script src="assets/date-range.js"></script>
 <script type="module">
-import { initEngine, findMarkets, setGaWindow, gaAudienceFor } from "./ask-engine.js";
+import { initEngine, findMarkets } from "./ask-engine.js";
 
 const $ = (id) => document.getElementById(id);
 // Escapes quotes as well as angle brackets: several call sites interpolate
@@ -414,12 +413,6 @@ function runScreening() {
   ];
   if (res.weights && res.weights.momentum)
     notes.push(`Topic momentum — Wikimedia Pageviews API, measured over the window stated in the Topic Explorer. <a href="topics.html">Topic Explorer</a>`);
-  // Conditional GA footnote (same idiom as the momentum one): shown only when
-  // any ranked row carries a proven-audience figure. Deliberately NOT a
-  // scored criterion — a traffic weight would pull the ranking toward
-  // digital-heavy markets against the radio/TV-first rule.
-  if (res.ranked.some(r => r.gaUsers != null))
-    notes.push(`Proven UN News audience (shown in the "why is it ranked here?" check below) — Google Analytics aggregate summary, UN News English edition, 28-day window; measures site arrivals, not population reach, and carries no weight in the score. Internal UN data, summaries only.`);
   notes.push(`Every figure above also appears, with its own citation and retrieval date, on that country's profile — open "Profile ↗" on any row.`);
   $("sources").innerHTML = `<span class="fn-label">Sources</span><ol>${notes.map(n => `<li>${n}</li>`).join("")}</ol>`;
 
@@ -515,8 +508,6 @@ function renderCheck() {
     if (c.momentum != null) bits.push(r.risingHit ? "topic currently rising here" : "no current rise in this topic here (momentum scored 0)");
     if (c.openness != null) bits.push(`press-freedom openness ${Math.round(c.openness)}/100`);
     parts.push(`<span class="why-row">Inputs: ${bits.join(" · ")}.</span>`);
-    const gaA = gaAudienceFor(r.iso);
-    if (gaA) parts.push(`<span class="why-row">Proven UN News audience: ${gaA.users.toLocaleString()} English-edition users in the ${esc(gaA.windowLabel)} (Google Analytics aggregate; arrivals, not reach — carries no weight in the score).${gaA.flag ? ` <span class="risk">⚠ ${esc(gaA.flag)}</span>` : ""}</span>`);
     if (r.flags.length) parts.push(`<span class="risk">⚠ ${esc(r.flags.join("; "))}</span>`);
     parts.push(`<span class="hint">Survey: ${esc(r.survey || "n/a")}${r.constructNote ? " · " + esc(r.constructNote) : ""}</span>`);
     out.innerHTML = parts.join("<br>");
@@ -531,27 +522,6 @@ function renderCheck() {
   out.innerHTML = `<span class="hint">Not part of this screening — it may be outside the selected region. Try the exact name from the lists above.</span>`;
 }
 $("check-country").addEventListener("input", renderCheck);
-
-/* Shared date-range control (Task 6): scopes ONLY the UN News audience
-   evidence shown in the check above — scores, survey figures and the ranking
-   itself are annual/current-window data and are deliberately unaffected. */
-(function mountFinderRange() {
-  const cc = $("check-country");
-  if (!cc || !window.AtlasDateRange) return;
-  const slot = document.createElement("div");
-  cc.parentElement.insertBefore(slot, cc);
-  window.AtlasDateRange(slot, {
-    ariaLabel: "UN News audience-evidence window",
-    active: "28d",
-    options: [
-      { key: "28d", label: "Last 28 days" },
-      { key: "prev28d", label: "Previous 28 days" },
-      { key: "90d", label: "Last 90 days" },
-    ],
-    note: "scopes the UN News audience evidence only — scores and survey figures are unaffected",
-    onChange: (k) => { setGaWindow(k); renderCheck(); },
-  });
-})();
 $("check-country").addEventListener("change", renderCheck);
 
 function fmtPeople(v) {

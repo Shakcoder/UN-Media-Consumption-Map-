@@ -90,7 +90,6 @@ instructions. Rough publication months:
 | October | Freedom House — Freedom on the Net | follow the Issue's steps |
 | December | WPP Media + Dentsu ad forecasts | hand-update `data/ad_market.json` |
 | When published | Afrobarometer Round 10, new barometer waves | see the matching `scripts/compute_*.py` docstring |
-| Every reporting cycle | **UN News analytics** (`data/ga_summary.json`) — the only *frequent* manual job | re-pull the aggregate reports and rebuild the file: [docs/GA_SUMMARY_EXPORTS.md](docs/GA_SUMMARY_EXPORTS.md). Wait until the window is 48 hours old, or the figures will still be settling. This becomes automatic **only** if the read-only Analytics login described below is set up |
 
 Also once a year: skim `data/static_countries.json` for stale political facts
 (capitals, forms of government) — nothing refreshes that file automatically.
@@ -105,13 +104,6 @@ still listed as "Transitional government".
   each programme (Afrobarometer, Arab Barometer, World Values Survey,
   Eurobarometer/GESIS, Latinobarómetro, Asian Barometer). Each script's header
   says exactly which file it needs and where to register.
-- **UN News analytics are integrated but refresh by hand.** Aggregate summaries
-  from the UN's Google Analytics ship in `data/ga_summary.json` and feed the
-  Map's "UN News analytics" panel, the per-country readership blocks, the Topic
-  Explorer strip and two AI Analyst reports. Publishing scope was approved by
-  Fang Chen (2026-07-30, widened verbally 2026-08-04). **Raw exports must never
-  enter this repository** — it is public; `.gitignore` and the validator both
-  block them. Refreshing needs someone with Analytics access.
 - **Still blocked on UN-side access:** Salesforce, and the audience survey
   (Google Form) — see [docs/SURVEY_SETUP.md](docs/SURVEY_SETUP.md), which
   requires supervisor sign-off on
@@ -140,8 +132,8 @@ Two points that surprise people:
   indicators, topic trends, TV-station lists and the safety checks all continue
   without anyone touching them.
 
-What *stops* without a person: the UN News analytics refresh, the annual report
-updates, and reading the Issues the automation opens. Those are listed above.
+What *stops* without a person: the annual report updates, and reading the
+Issues the automation opens. Those are listed above.
 
 ### Three things to do before the handover
 
@@ -189,22 +181,6 @@ and need waking by hand:
 Worth knowing so a successor is not baffled by a site that quietly stopped
 updating.
 
-### If the analytics should refresh automatically too
-
-Right now the UN News numbers are a manual job. Making them automatic is
-technically small but needs three approvals no one on the technical side can
-grant:
-
-1. Written approval for a **standing connection** to Analytics (the current
-   approval covers pulling summaries, not a permanent link).
-2. A GA administrator to create a **read-only login** for the Atlas — it can
-   read the aggregate reports and change nothing.
-3. Whoever owns privacy and security sign-off to approve storing that login.
-
-Until all three exist, keep refreshing by hand — it takes minutes and the
-procedure is written down in
-[docs/GA_SUMMARY_EXPORTS.md](docs/GA_SUMMARY_EXPORTS.md).
-
 ### What happens if nobody does any of this
 
 Being honest about the failure mode: the site keeps publishing and the
@@ -216,6 +192,8 @@ account: if the personal GitHub account goes, so does the site. **That is the
 one item worth doing this week rather than in September.**
 
 ## What was deliberately NOT built
+
+- **A Google Analytics layer (added 2026-08-04, removed 2026-08-06).** The Atlas briefly carried aggregate UN News readership summaries from Google Analytics (integrated 2026-08-04, removed 2026-08-06). They were removed because DGC has a dedicated, automatically-updating GA dashboard — a second, manually-refreshed copy in the Atlas was redundant and would inevitably drift out of step with it. The approvals and method remain documented in docs/GA_SUMMARY_EXPORTS.md and docs/GA_DATA_REQUEST.md, and the code and data remain in git history if ever wanted again.
 
 - **The Cloudflare worker** (`worker/`) is experimental and switched off. The
   site does not need it. Do not deploy it without reading

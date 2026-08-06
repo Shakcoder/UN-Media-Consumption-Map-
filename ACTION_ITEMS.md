@@ -13,7 +13,7 @@ items below exist because of that.
 
 ## Do first (highest value first)
 
-### 1. Pull the Google Analytics summary reports ✅ approved, scoped
+### 1. Google Analytics — RESOLVED, integration removed 2026-08-06
 **Status: approved by Fang Chen on 2026-07-30** — *"your plan works fine with
 our goal!"* — **with a scope**: *"why don't we start with summaries, instead
 of the full access of data to see how it works?"* You told the team you would
@@ -40,6 +40,8 @@ Exports/`) — this repository is public. `.gitignore` now refuses
 `ga_*.csv` and similar as a second line of defence, but keeping them out of
 the folder is the real protection. Then say where the folder is and the
 aggregation gets built against the real column shapes.
+
+**Final update 2026-08-06 — removed as redundant.** The team learned in today's meeting that DGC already has a dedicated, automatically-updating GA dashboard. The Atlas's GA layer (which needed manual refreshes) was therefore removed the same day — data file, page sections, analyst modes, all of it. The Atlas is open-source-data only again. Nothing GA-derived remains published, so the written-confirmation ask below is no longer needed for the Atlas (it only matters if GA data ever comes back). Still worth passing on: UN News's story-tagging fields in Analytics are empty — filling them would improve the team's own dashboard too.
 
 **Update 2026-08-04 (later) — scope broadened verbally; get it in writing.**
 Fang gave a verbal go-ahead (relayed by Shakti the same day) to broaden beyond

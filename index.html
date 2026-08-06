@@ -9,7 +9,6 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="assets/date-range.js"></script>
 
 <style>
   :root {
@@ -593,7 +592,6 @@
     <a href="ask.html" data-i18n="nav_ask">AI Analyst</a>
     <button id="open-methodology" data-i18n="nav_methodology">Methodology</button>
     <button id="open-sources" data-i18n="nav_sources">Sources</button>
-    <button id="open-ga" data-i18n="nav_ga">UN News analytics</button>
     <!-- Survey link hidden until the survey is live:
     <a href="#" data-i18n="nav_survey">Take the survey</a> -->
     <a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-#readme" target="_blank" rel="noopener" data-i18n="nav_about">About</a>
@@ -747,10 +745,6 @@
           <a href="https://www.dentsu.com/" target="_blank" rel="noopener">Dentsu — Global Ad Spend Forecasts</a>
         </div>
         <div class="src-group">
-          <h4>UN platform analytics (internal, summaries only)</h4>
-          <a href="https://news.un.org/en/" target="_blank" rel="noopener">UN News — Google Analytics aggregate summaries</a>
-        </div>
-        <div class="src-group">
           <h4>Reference tools (linked, not ingested)</h4>
           <a href="https://www.unesco.org/en/world-media-trends" target="_blank" rel="noopener">UNESCO World Trends in Freedom of Expression</a>
           <a href="https://www.pewresearch.org" target="_blank" rel="noopener">Pew Research Center</a>
@@ -773,23 +767,6 @@
     </div>
   </div>
 </div>
-
-<!-- UN News analytics (Google Analytics aggregate summaries — internal UN data,
-     summaries-only scope approved 2026-07-30; the raw exports never enter this
-     public repository). Body is rendered by renderGa() from data/ga_summary.json. -->
-<div class="modal-backdrop" id="ga-modal">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ga-title">
-    <div class="modal-header">
-      <h2 id="ga-title" data-i18n="ga_modal_title">UN News analytics</h2>
-      <button class="close" data-close-modal aria-label="Close UN News analytics">✕</button>
-    </div>
-    <div class="modal-body">
-      <p data-i18n="ga_modal_intro">Measured readership of UN News (news.un.org) from the UN's own Google Analytics — published here as aggregated summaries only. These figures count arrivals on the site (people who already found UN News), which is a different construct from the survey-based reach figures elsewhere in the Atlas; the two are never directly comparable.</p>
-      <div id="ga-body"><p style="color: var(--muted);">Analytics summary not loaded — data/ga_summary.json is missing or blocked.</p></div>
-    </div>
-  </div>
-</div>
-
 <footer class="site">
   <div><span data-i18n="footer_copyright">© 2026 · United Nations · Audience Intelligence Atlas · Data last checked</span> <span id="last-check"></span></div>
   <div>
@@ -1133,9 +1110,6 @@ window.TRANSLATIONS = {
     brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "An open, source-cited public research resource",
     nav_map: "Map", nav_topics: "Topic Explorer", nav_finder: "Market Finder", nav_ask: "AI Analyst", nav_methodology: "Methodology", nav_sources: "Sources",
-    nav_ga: "UN News analytics",
-    ga_modal_title: "UN News analytics",
-    ga_modal_intro: "Measured readership of UN News (news.un.org) from the UN's own Google Analytics — published here as aggregated summaries only. These figures count arrivals on the site (people who already found UN News), which is a different construct from the survey-based reach figures elsewhere in the Atlas; the two are never directly comparable.",
     nav_survey: "Take the survey", nav_about: "About",
     search_placeholder: "Search a country…",
     chip_all: "All regions", chip_africa: "Africa", chip_americas: "Americas",
@@ -2188,15 +2162,13 @@ document.querySelector(".detail-tabs").addEventListener("keydown", (e) => {
   if (currentActiveIso) renderDetail(currentActiveIso);
 });
 
-/* ESC closes (in priority order): language menu, methodology modal, UN News
-   analytics modal, country panel */
+/* ESC closes (in priority order): language menu, methodology modal, country panel */
 let lastFocusBeforePanel = null;
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   const langMenu = document.getElementById("lang-menu");
   if (langMenu.classList.contains("open")) { langMenu.classList.remove("open"); return; }
   if (methodModal.classList.contains("open")) { closeMethodology(); return; }
-  if (gaModal.classList.contains("open")) { closeGaModal(); return; }
   if (panel.classList.contains("open")) closeDetail();
 });
 
@@ -2457,33 +2429,6 @@ function tabMedia(d) {
     html += `<div style="font-size:10px;color:var(--muted-2);margin-top:4px;">Referral share of web traffic only — app-first platforms (WhatsApp, TikTok, Telegram) are mostly invisible to this measure. Not a usage ranking.</div>`;
   }
 
-  // UN News readership (Google Analytics aggregate summary). Measures
-  // ARRIVALS on news.un.org — a different construct from the survey figures
-  // above, so it renders with its own construct caveat and never as a
-  // comparable bar next to survey reach.
-  const gaC = (window.GA_DATA && window.GA_DATA.countries || {})[currentActiveIso];
-  if (gaC && gaC.en && gaC.en.active_users != null) {
-    const gm = window.GA_DATA._meta || {};
-    const gw = gm.window || {};
-    const g = gaC.en;
-    html += `<h3>UN News readership <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Google Analytics · ${esc(String(gw.days || 28))}-day window to ${esc(gw.end || "n/a")}</span></h3>`;
-    html += `<div class="data-row"><span class="label">English edition — active users</span><span class="value">${g.active_users.toLocaleString()}</span></div>`;
-    if (g.share_of_en_users_pct != null) {
-      html += `<div class="data-row"><span class="label">Share of the edition's global audience</span><span class="value">${g.share_of_en_users_pct}%</span></div>`;
-      html += `<div class="bar"><div class="bar-fill" style="width:${Math.min(g.share_of_en_users_pct * 2.5, 100)}%"></div></div>`;
-    }
-    if (g.engagement_rate_pct != null) {
-      html += `<div class="data-row"><span class="label">Engagement rate (engaged sessions)</span><span class="value">${g.engagement_rate_pct}%</span></div>`;
-      html += `<div class="bar"><div class="bar-fill" style="width:${Math.min(g.engagement_rate_pct, 100)}%"></div></div>`;
-    }
-    // All-language figures deliberately not shown (English-only scope,
-    // decision 2026-08-04) — they remain in the data file for later.
-    if (g.quality_flag) {
-      html += `<div style="font-size:10px;color:var(--warn);margin-top:4px;">⚠ ${esc(g.quality_flag)}</div>`;
-    }
-    html += `<div style="font-size:10px;color:var(--muted-2);margin:4px 0 10px;">Measured arrivals on news.un.org (people who already found UN News) — not comparable with the survey reach figures above, which describe the whole population. Aggregated summaries only.</div>`;
-  }
-
   // Information freedom (RSF + Freedom House FOTN + Freedom House FITW)
   html += `<h3>Information freedom</h3>`;
   const rsfScore = m.press_freedom_score;
@@ -2603,16 +2548,6 @@ function tabSources(d) {
   const tvx = (window.TV_STATIONS || {})[currentActiveIso];
   const sourceEntries = Object.entries(d.sources || {});
   if (tvx && tvx.source) sourceEntries.push(["TV stations (extended list)", tvx.source]);
-  // UN News readership lives in its own file (data/ga_summary.json) — its
-  // citation is appended here like the TV-station one. No public URL exists:
-  // this is internal UN operational data published as aggregate summaries.
-  const gaSrc = (window.GA_DATA && window.GA_DATA.countries || {})[currentActiveIso];
-  if (gaSrc && gaSrc.en) {
-    const gm = window.GA_DATA._meta || {};
-    const gw = gm.window || {};
-    sourceEntries.push(["UN News readership (web analytics)",
-      `Google Analytics 4 (UN GA360), UN News properties | aggregate summary, window ${gw.start || "n/a"} to ${gw.end || "n/a"}, retrieved ${gm.retrieved_on || "n/a"} · internal UN data, summaries only — measures site arrivals, not population reach`]);
-  }
   return `
     <h3>${t("section_primary_sources")}</h3>
     <p style="color: var(--muted); font-size: 13px;">${t("sources_intro")}</p>
@@ -2664,28 +2599,6 @@ document.getElementById("footer-methodology").addEventListener("click", (e) => {
 methodModal.addEventListener("click", e => {
   if (e.target === methodModal || e.target.hasAttribute("data-close-modal")) closeMethodology();
 });
-
-/* ---------- UN News analytics modal ---------- */
-const gaModal = document.getElementById("ga-modal");
-let lastFocusBeforeGa = null;
-function openGaModal() {
-  lastFocusBeforeGa = document.activeElement;
-  gaModal.classList.add("open");
-  const closeBtn = gaModal.querySelector("[data-close-modal]");
-  if (closeBtn) closeBtn.focus({ preventScroll: true });
-}
-function closeGaModal() {
-  gaModal.classList.remove("open");
-  if (lastFocusBeforeGa && document.contains(lastFocusBeforeGa)) {
-    lastFocusBeforeGa.focus({ preventScroll: true });
-    lastFocusBeforeGa = null;
-  }
-}
-document.getElementById("open-ga").addEventListener("click", openGaModal);
-gaModal.addEventListener("click", e => {
-  if (e.target === gaModal || e.target.hasAttribute("data-close-modal")) closeGaModal();
-});
-
 /* ---------- Helpers (all null-safe: countries like the Holy See have no
    population/GDP figures — every formatter must render "—", never crash) ---------- */
 function formatPop(n) {
@@ -2755,11 +2668,6 @@ function openDeepLinkedCountry() {
       renderList();
       // Re-style, re-tooltip, and re-label the map with the full dataset
       refreshMapAnnotations();
-      // Country names in the analytics modal come from this dataset — if the
-      // GA summary loaded first, its top-countries list shows ISO codes until
-      // this re-render. Isolated: a GA render bug must never trip this
-      // loader's catch and masquerade as a countries.json failure.
-      if (window.GA_DATA) { try { renderGa(); } catch (gaErr) { console.info("[atlas] GA modal render failed:", gaErr.message); } }
       openDeepLinkedCountry();
       console.log("[atlas] live data loaded:", meta);
     }
@@ -2832,237 +2740,6 @@ function openDeepLinkedCountry() {
                 Object.keys(window.TV_STATIONS).filter(k => !k.startsWith("_")).length, "countries");
   } catch (err) {
     console.info("[atlas] extended TV station data unavailable:", err.message);
-  }
-})();
-
-/* ---------- UN News analytics loader ----------
- * Fetches data/ga_summary.json — aggregated Google Analytics summaries for
- * the UN News properties (summaries-only scope approved 2026-07-30; raw
- * exports never enter this public repository). Powers the "UN News
- * analytics" modal and the per-country "UN News readership" section.
- * Optional: if the file is missing, the modal shows a graceful notice and
- * the country section simply doesn't render.
- */
-// The panel is window-aware: "28d" is the canonical window (full detail),
-// "prev28d"/"90d" come from english.windows, "monthly" is the history view.
-// English edition only by decision (2026-08-04) — all-language aggregates
-// stay in the data file (_retained_for_later) and are not rendered.
-let GA_MODAL_WINDOW = "28d";
-
-function gaModalWindowData(D, key) {
-  const en = D.english, m = D._meta || {};
-  if (key === "prev28d" || key === "90d") {
-    const w = (en.windows || {})[key];
-    if (w && !w.canonical) {
-      return {
-        label: w.label || key, start: w.start, end: w.end, delta: null,
-        totals: w.totals || {}, countries: (w.countries || []).map(c => ({
-          iso: c.iso3, displayName: c.country, active_users: c.active_users,
-          share_of_en_users_pct: c.share_of_en_users_pct,
-        })),
-        devices: w.devices || [], channels: (w.channels || {}), stories: ((w.top_pages || {}).rows || []),
-        storiesLabel: (w.label || key).toLowerCase(),
-      };
-    }
-  }
-  const cw = m.window || {};
-  return {
-    label: "Last 28 days", start: cw.start, end: cw.end,
-    delta: (en.totals || {}).delta_pct || null,
-    totals: (en.totals || {}).current_28d || {},
-    countries: Object.entries(D.countries || {})
-      .map(([iso, g]) => Object.assign({ iso }, (g || {}).en || {}))
-      .filter(r => r.active_users != null)
-      .sort((a, b) => b.active_users - a.active_users).slice(0, 10),
-    devices: en.devices || [], channels: en.channels || {},
-    stories: ((en.top_pages || {}).current_14d) || [], storiesLabel: "last 14 days",
-    canonical: true,
-  };
-}
-
-function renderGa() {
-  const box = document.getElementById("ga-body");
-  const D = window.GA_DATA;
-  if (!box || !D || !D.english) return;
-  const m = D._meta || {}, en = D.english;
-  const key = GA_MODAL_WINDOW;
-  const fmtN = (v) => v == null ? "—" : v.toLocaleString();
-  let h = `<div id="ga-range-slot"></div>`;
-
-  if (key === "monthly") {
-    h += renderGaMonthly(en, m, fmtN);
-    finishGaRender(box, h, m);
-    return;
-  }
-
-  const wd = gaModalWindowData(D, key);
-  const deltaTxt = (v) => v == null ? "" : (v >= 0 ? "+" : "") + v + "% vs prior 28 days";
-  const t = wd.totals, dl = wd.delta || {};
-  h += `<div class="mini-stats">
-    <div class="stat"><div class="label">Active users — English</div><div class="value">${fmtN(t.active_users)}</div><div class="delta">${esc(deltaTxt(dl.active_users))}</div></div>
-    <div class="stat"><div class="label">Page views — English</div><div class="value">${fmtN(t.page_views)}</div><div class="delta">${esc(deltaTxt(dl.page_views))}</div></div>
-    <div class="stat"><div class="label">Engagement rate</div><div class="value">${t.engagement_rate_pct != null ? t.engagement_rate_pct + "%" : "—"}</div><div class="delta">avg session ${t.avg_session_duration_sec != null ? Math.round(t.avg_session_duration_sec) + "s" : "—"}</div></div>
-    <div class="stat"><div class="label">Sessions</div><div class="value">${fmtN(t.sessions)}</div><div class="delta">${m.country_rows_reported_by_ga != null ? esc(String(m.country_rows_reported_by_ga)) + " countries &amp; territories" : ""}</div></div>
-  </div>`;
-  h += `<p style="font-size:11px;color:var(--muted-2);margin:2px 0 8px;">Window ${esc(wd.start || "n/a")} to ${esc(wd.end || "n/a")} · English edition only · period-over-period changes are news-cycle sensitive — see "Read this before quoting" below.</p>`;
-
-  const rows = wd.countries;
-  if (rows.length) {
-    const max = rows[0].active_users;
-    h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Top countries — English edition <span style="font-weight:400;font-size:10px;color:var(--muted-2);">active users · ⚠ = data-quality flag</span></h3>`;
-    for (const r of rows) {
-      const name = r.displayName || ((window.COUNTRY_DATA && window.COUNTRY_DATA[r.iso]) ? window.COUNTRY_DATA[r.iso].name : r.iso);
-      // Flags live on the canonical country records; they apply to the same
-      // countries in every window (the pattern, not the period, is the issue).
-      const flag = r.quality_flag || (((D.countries || {})[r.iso] || {}).en || {}).quality_flag || null;
-      h += `<div class="data-row"><span class="label">${esc(name)}${flag ? ` <span title="${esc(flag)}" style="color:var(--warn);cursor:help;">⚠</span>` : ""}</span><span class="value">${fmtN(r.active_users)}${r.share_of_en_users_pct != null ? " · " + r.share_of_en_users_pct + "%" : ""}</span></div>`;
-      h += `<div class="bar"><div class="bar-fill" style="width:${Math.max(2, Math.round(r.active_users / max * 100))}%"></div></div>`;
-    }
-  }
-
-  const dev = (wd.devices || []).filter(d2 => d2.share_of_users_pct != null && d2.share_of_users_pct >= 1);
-  if (dev.length) {
-    h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Devices <span style="font-weight:400;font-size:10px;color:var(--muted-2);">share of English-edition users</span></h3>`;
-    for (const d2 of dev) {
-      h += `<div class="data-row"><span class="label">${esc(d2.device)}</span><span class="value">${d2.share_of_users_pct}%</span></div>`;
-      h += `<div class="bar"><div class="bar-fill" style="width:${Math.min(d2.share_of_users_pct, 100)}%"></div></div>`;
-    }
-  }
-
-  const ch = ((wd.channels || {}).rows || []).filter(r => r.share_of_attributed_pct != null);
-  if (ch.length) {
-    const unatt = ((wd.channels || {}).rows || []).find(r => r.channel === "Unassigned");
-    h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Arrival channels <span style="font-weight:400;font-size:10px;color:var(--muted-2);">share of attributed sessions</span></h3>`;
-    for (const r of ch) {
-      h += `<div class="data-row"><span class="label">${esc(r.channel)}</span><span class="value">${r.share_of_attributed_pct}%</span></div>`;
-      h += `<div class="bar"><div class="bar-fill" style="width:${Math.min(r.share_of_attributed_pct, 100)}%"></div></div>`;
-    }
-    if (unatt && unatt.share_of_all_pct != null)
-      h += `<div style="font-size:10px;color:var(--muted-2);margin-top:2px;">${unatt.share_of_all_pct}% of all sessions carry no source attribution (feeds, apps, consent-blocked) — shares above cover attributed traffic only.</div>`;
-  }
-
-  // Same anomaly guard as the analyst: a story with >5 views/user is
-  // embed/refresh-inflated and must not be presented as a most-read story.
-  const stories = (wd.stories || [])
-    .filter(r => r[4] === "story" && !(r[3] > 0 && r[2] / r[3] > 5)).slice(0, 6);
-  if (stories.length) {
-    h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Most-read stories <span style="font-weight:400;font-size:10px;color:var(--muted-2);">English edition · ${esc(wd.storiesLabel)}</span></h3>`;
-    for (const s of stories) {
-      const title = String(s[1] || "").length > 90 ? String(s[1]).slice(0, 90) + "…" : String(s[1] || "");
-      h += `<div class="data-row"><span class="label" style="max-width:75%;">${esc(title)}</span><span class="value">${fmtN(s[2])}</span></div>`;
-    }
-  }
-
-  // Canonical-window-only sections: timing, landing pages, and the heavily
-  // caveated partial demographics were pulled for the 28-day window only.
-  if (wd.canonical) {
-    const tm = en.timing || {};
-    if ((tm.day_of_week || []).length === 7) {
-      const maxD = Math.max(...tm.day_of_week.map(x => x.active_users));
-      h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Reading rhythm <span style="font-weight:400;font-size:10px;color:var(--muted-2);">active users by day · New York time</span></h3>`;
-      for (const d3 of tm.day_of_week) {
-        h += `<div class="data-row"><span class="label">${esc(d3.day)}</span><span class="value">${fmtN(d3.active_users)}</span></div>`;
-        h += `<div class="bar"><div class="bar-fill" style="width:${Math.max(2, Math.round(d3.active_users / maxD * 100))}%"></div></div>`;
-      }
-      h += `<div style="font-size:10px;color:var(--muted-2);margin-top:2px;">${esc(tm.timezone_note || "")}</div>`;
-    }
-    const lp = ((en.landing_pages || {}).rows || []).filter(r => r[0] !== "(not set)").slice(0, 5);
-    if (lp.length) {
-      h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Top landing pages <span style="font-weight:400;font-size:10px;color:var(--muted-2);">where sessions start</span></h3>`;
-      for (const r of lp) {
-        h += `<div class="data-row"><span class="label" style="max-width:75%;">${esc(r[0])}</span><span class="value">${fmtN(r[1])} sessions</span></div>`;
-      }
-    }
-    const dg = en.demographics || null;
-    if (dg && (dg.age_brackets || []).length) {
-      h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Audience age <span style="font-weight:400;font-size:10px;color:var(--muted-2);">partial — see caveat below</span></h3>`;
-      const maxA = Math.max(...dg.age_brackets.map(x => x.active_users));
-      for (const a of dg.age_brackets) {
-        h += `<div class="data-row"><span class="label">${esc(a.bracket)}</span><span class="value">${a.share_of_known_pct}% of classifiable</span></div>`;
-        h += `<div class="bar"><div class="bar-fill" style="width:${Math.max(2, Math.round(a.active_users / maxA * 100))}%"></div></div>`;
-      }
-      h += `<div style="font-size:10px;color:var(--warn);margin-top:2px;">⚠ ${esc(dg.coverage_note || "")}</div>`;
-    }
-  } else {
-    h += `<div style="font-size:10px;color:var(--muted-2);margin-top:10px;">Reading rhythm, landing pages and audience-age sections are measured for the last-28-days window — switch to it to see them.</div>`;
-  }
-
-  finishGaRender(box, h, m, wd);
-}
-
-/** Monthly history view: last 12 full months with bars, plus the property's
- * full range and the instrumentation caveats. */
-function renderGaMonthly(en, m, fmtN) {
-  const mo = en.monthly || {};
-  const rows = mo.rows || [];
-  if (!rows.length) return `<p style="color:var(--muted);">Monthly history not available in this summary.</p>`;
-  const first = rows[0][0], last = rows[rows.length - 1][0];
-  // last 12 complete months: drop the final row if it's the partial month
-  const complete = rows.slice(0, -1).slice(-12);
-  const maxU = Math.max(...complete.map(r => r[1]));
-  let h = `<h3 style="font-size:14px;color:var(--ink);margin:6px 0 6px;">Monthly active users — English edition <span style="font-weight:400;font-size:10px;color:var(--muted-2);">last 12 complete months</span></h3>`;
-  for (const r of complete) {
-    h += `<div class="data-row"><span class="label">${esc(r[0])}</span><span class="value">${fmtN(r[1])}</span></div>`;
-    h += `<div class="bar"><div class="bar-fill" style="width:${Math.max(2, Math.round(r[1] / maxU * 100))}%"></div></div>`;
-  }
-  h += `<div style="font-size:10px;color:var(--muted-2);margin-top:6px;">Full history in the published file runs ${esc(first)} to ${esc(last)} (property collection began September 2020). ${esc(mo.note || "")}</div>`;
-  return h;
-}
-
-function finishGaRender(box, h, m, wd) {
-  h += `<div style="margin:14px 0 4px;font-size:13px;line-height:1.8;">
-    <a href="ask.html?q=${encodeURIComponent("Top 5 trending topics report")}">Ask the AI Analyst: top 5 trending topics report ↗</a><br>
-    <a href="ask.html?q=${encodeURIComponent("Where should we focus dissemination?")}">Ask the AI Analyst: where should we focus dissemination? ↗</a>
-  </div>`;
-  const cav = m.caveats || [];
-  if (cav.length) {
-    h += `<h3 style="font-size:14px;color:var(--ink);margin:14px 0 6px;">Read this before quoting</h3>`;
-    h += `<ul style="font-size:11px;color:var(--muted);line-height:1.6;padding-left:16px;margin:0;">${cav.map(c => `<li>${esc(c)}</li>`).join("")}</ul>`;
-  }
-  const winTxt = wd ? `window ${esc(wd.start || "n/a")} to ${esc(wd.end || "n/a")}` : `monthly history`;
-  h += `<p style="font-size:10px;color:var(--muted-2);margin-top:10px;">Source: ${esc(m.source || "Google Analytics")} · ${winTxt} · retrieved ${esc(m.retrieved_on || "n/a")}. ${esc(m.scope || "")} ${esc(m.method_note || "")}</p>`;
-  box.innerHTML = h;
-  mountGaRange();
-}
-
-function mountGaRange() {
-  const slot = document.getElementById("ga-range-slot");
-  const D = window.GA_DATA;
-  if (!slot || !window.AtlasDateRange || !D) return;
-  // Options and their date tooltips are derived from the data file, so a
-  // refreshed summary re-labels the picker by itself and windows that were
-  // not pulled simply do not appear.
-  const m = D._meta || {}, wins = (D.english || {}).windows || {};
-  const opts = [];
-  const cw = m.window || {};
-  opts.push({ key: "28d", label: "Last 28 days", title: `${cw.start || ""} to ${cw.end || ""} — full detail` });
-  for (const k of ["prev28d", "90d"]) {
-    const w = wins[k];
-    if (w && !w.canonical) opts.push({ key: k, label: w.label || k, title: `${w.start || ""} to ${w.end || ""}` });
-  }
-  if (((D.english || {}).monthly || {}).rows) {
-    opts.push({ key: "monthly", label: "Monthly since 2020", title: "Full property history at monthly grain" });
-  }
-  window.AtlasDateRange(slot, {
-    ariaLabel: "Analytics reporting window",
-    active: GA_MODAL_WINDOW,
-    options: opts,
-    note: "pre-published aggregate windows — each matches the analytics source for that exact range",
-    onChange: (k) => { GA_MODAL_WINDOW = k; renderGa(); },
-  });
-}
-
-(async function loadGaSummary() {
-  try {
-    const r = await fetch("data/ga_summary.json", { cache: "no-cache" });
-    if (!r.ok) throw new Error("no GA summary yet (HTTP " + r.status + ")");
-    window.GA_DATA = await r.json();
-    renderGa();
-    if (currentActiveIso) renderDetail(currentActiveIso);
-    console.log("[atlas] UN News analytics summary loaded:",
-                Object.keys(window.GA_DATA.countries || {}).length, "countries");
-  } catch (err) {
-    console.info("[atlas] UN News analytics summary unavailable:", err.message);
   }
 })();
 
