@@ -533,6 +533,58 @@ def main() -> int:
     else:
         WARNS.append("tv_stations.json missing — extended TV-station layer not built yet")
 
+    # Per-country most-read Wikipedia pages (Wikimedia top-per-country, daily)
+    # — an optional trend layer, so absence is a warning; a malformed entry is
+    # an error. Withheld entries are legitimate (Wikimedia's privacy list /
+    # volume threshold) and are counted, not flagged.
+    cr_path = ROOT / "data" / "trends" / "country_reading.json"
+    if cr_path.exists():
+        cr = load_json(cr_path)
+        n_read = n_withheld = 0
+        for iso, rec in sorted((cr.get("countries") or {}).items()):
+            if iso not in countries:
+                ERRORS.append(f"country_reading {iso}: not a country the Atlas carries")
+                continue
+            if rec.get("withheld"):
+                n_withheld += 1
+                if not str(rec.get("note") or "").strip():
+                    ERRORS.append(f"country_reading {iso}: withheld entry with no note — "
+                                  f"the site must be able to say why nothing is shown")
+                continue
+            n_read += 1
+            arts = rec.get("articles") or []
+            if not arts:
+                ERRORS.append(f"country_reading {iso}: entry with no articles — an empty "
+                              f"entry should be withheld or absent")
+            if not re.search(r"https?://", str(rec.get("source") or "")):
+                ERRORS.append(f"country_reading {iso}: source line carries no URL — the "
+                              f"per-country citation must link the endpoint it came from")
+            if "retrieved" not in str(rec.get("source") or ""):
+                ERRORS.append(f"country_reading {iso}: source line names no retrieval date")
+            if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(rec.get("date") or "")):
+                ERRORS.append(f"country_reading {iso}: missing or malformed date "
+                              f"{rec.get('date')!r}")
+            for a in arts:
+                if not str(a.get("title") or "").strip():
+                    ERRORS.append(f"country_reading {iso}: article with an empty title")
+                v = a.get("views_ceil")
+                if not (isinstance(v, int) and v > 0):
+                    ERRORS.append(f"country_reading {iso}: views_ceil {v!r} for "
+                                  f"{a.get('title')!r} is not a positive integer")
+            mix = rec.get("language_mix") or {}
+            mix_total = sum(v for v in mix.values() if isinstance(v, (int, float)))
+            # 102, not 100.5: shares are independently rounded integers, so a
+            # legitimate mix can sum to 101-102 (same margin as the
+            # platform_web_shares check above).
+            if mix_total > 102:
+                ERRORS.append(f"country_reading {iso}: language mix sums "
+                              f"{round(mix_total, 1)} > 102 — beyond rounding error")
+        INFOS.append(f"per-country reading lists: {n_read}/{len(countries)} countries "
+                     f"with data, {n_withheld} withheld by Wikimedia (privacy/threshold)")
+    else:
+        WARNS.append("trends/country_reading.json missing — per-country reading layer "
+                     "not built yet")
+
     am_path = ROOT / "data" / "ad_market.json"
     if am_path.exists():
         am = load_json(am_path)

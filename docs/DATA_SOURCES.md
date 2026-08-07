@@ -2,7 +2,7 @@
 
 *The authoritative record of every source in the Audience Intelligence Atlas: what it provides, its license, how often it updates, and how conflicts between sources are resolved. Derived from the UN "Audience Intelligence Database: Feasibility and Data Availability Assessment" (June 2026) — every free source in that report is either integrated, covered by an equivalent, pending a registration only the account holder can complete, or documented as a linked reference tool.*
 
-Last updated: 2026-08-06
+Last updated: 2026-08-07
 
 > **If you are checking where a number came from, §1 is the list.** Every source label you can see on the site (a country's Sources tab, the footnotes under an analyst answer) must appear in §1 below. If you ever find a label on the site that is *not* in this table, that is a defect worth reporting — it is exactly the condition `scripts/validate_atlas.py` exists to prevent.
 
@@ -28,6 +28,7 @@ Last updated: 2026-08-06
 | Statcounter GlobalStats | social-platform share of *web referrals*, 3-month average (`data/platform_web_shares.json`) | 195 | Monthly data; re-fetched weekly with the country refresh by `scripts/fetch_statcounter.py` | Free public CSV endpoint, used with attribution — check Statcounter's own terms before redistributing it in bulk | ✅ live — shown *alongside*, never instead of, the curated leading-platform field. App-first platforms (WhatsApp, TikTok, Telegram) barely refer web traffic, so the top platform here is **not** necessarily the country's leading platform |
 | WPP Media "This Year, Next Year" + Dentsu Global Ad Spend Forecasts | global/regional/market advertising spend and growth (`data/ad_market.json`) | global + APAC + 7 markets (US, China, India, Brazil, UK, Japan, Australia) | Annual **hand-update** each December/January — the watchdog opens an Issue and `data/ad_market.json` → `_meta.how_to_update` lists every step | Free published year-end summaries, used with attribution (headline figures only) | ✅ live — **industry estimates, not surveys**. The two firms measure different market baskets, so their totals differ on purpose; the Atlas keeps both as a cross-check and treats every figure as directional |
 | Wikimedia Pageviews API | topic demand signal (167 topics × 22 languages, daily) | Global | **Automated daily** | CC0 | ✅ live |
+| Wikimedia Pageviews API — top-per-country | each country's most-read Wikipedia pages + reading-language mix (`data/trends/country_reading.json`, `scripts/fetch_trends_wiki_countries.py`) | **~45–60/195 with article-level data** (varies daily; first run: 45) — all major media markets. The rest carry an explicit **withheld** flag and are never estimated: Wikimedia's Country and Territory Protection List (e.g. RUS, CHN, IRN, SAU) plus its per-page privacy threshold, which truncates most smaller markets' lists to main/search pages only | **Automated daily** (trend engine) | CC0 | ✅ added 2026-08-07 — *directly* per-country demand (no language weighting, unlike the topic engine's attribution). Filtered to encyclopedia articles (main pages / Special: pages / single-page-edition bot artifacts removed — heuristic, documented in the file's method_note); view counts are Wikimedia's privacy-rounded ceilings. Measures Wikipedia readers, not the general population |
 | GDELT 2.0 | topic news-coverage volume + source-country mix | Global, 100+ languages | **Automated daily** | Open | ✅ live |
 | DataReportal 2024 | smartphone adoption estimates | 50 countries | Annual | Free, attribution (estimates) | ✅ live, tier-C estimates |
 | CIA World Factbook | cross-reference for curated profile fields (languages, government, media outlines) | Global | Continuous | Public domain | ✅ attributed |
@@ -72,11 +73,13 @@ Three GitHub Actions keep everything current without human attention. `docs/AUTO
 
 | Workflow | Cadence | What it refreshes |
 |---|---|---|
-| `trend-engine.yml` | **Daily** 05:30 UTC | Wikipedia pageviews + GDELT coverage → topic intelligence |
+| `trend-engine.yml` | **Daily** 05:30 UTC | Wikipedia pageviews + GDELT coverage → topic intelligence; per-country most-read Wikipedia pages → `data/trends/country_reading.json` (with its own 4-day freshness guard) |
 | `refresh-data.yml` | **Weekly** Mon 03:00 UTC (and on every data/script upload) | All World Bank indicators (incl. Findex), CLDR languages → `countries.json`; Statcounter platform web shares → `platform_web_shares.json`. `validate_atlas.py` runs as a gate **before** anything is committed, so data that fails the fabrication/range/citation checks is never published |
 | `source-watchdog.yml` | **Monthly** 3rd, 06:00 UTC | Probes RSF / Freedom House ×2 / DNR / GSMA / Afrobarometer / UN WPP / the WPP Media + Dentsu ad forecasts; **opens a GitHub Issue with step-by-step instructions** when a new annual edition is detected. Nothing annual can silently go stale again. |
 
 ## 4. Vetted future sources (verified free & working, July 2026 research sweep)
+
+> **A fuller August 2026 sweep supersedes parts of this table** — see [docs/SOURCE_RESEARCH_2026-08.md](SOURCE_RESEARCH_2026-08.md) (19 candidates live-verified 2026-08-06, ranked shortlist, license flags, and a blunt closed-platform list). Notable corrections from that sweep: the GDELT **GEO 2.0 API is dead** (404s), Media Cloud signup is an open form (not email), and Wikimedia top-per-country moved from this list into §1.
 
 Each was fetch-verified during the 2026-07-20 audit. Ordered by value; integration effort noted.
 

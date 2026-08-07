@@ -3,8 +3,10 @@ name: Trend engine (daily)
 # The daily heartbeat of the Content Intelligence Platform.
 # 1. Fetches GDELT global news coverage for 167 UN topics (supply signal)
 # 2. Fetches Wikipedia pageviews for the same topics x 22 languages (demand)
-# 3. Computes per-topic and per-country intelligence (velocity, trending)
-# 4. Commits the results — GitHub Pages republishes automatically.
+# 3. Fetches each country's most-read Wikipedia pages (per-country demand,
+#    Wikimedia top-per-country — directly measured, no language weighting)
+# 4. Computes per-topic and per-country intelligence (velocity, trending)
+# 5. Commits the results — GitHub Pages republishes automatically.
 #
 # RESILIENCE NOTES (learned from run #1):
 # - Wikimedia rate-limits anonymous cloud IPs to ~hundreds of requests/hour.
@@ -47,7 +49,10 @@ concurrency:
 jobs:
   trends:
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    # Step budgets (50 + 15 + 85) must stay BELOW this, with headroom for
+    # compute + commit: a job-level timeout cancels even if: always() steps,
+    # so if the fetchers can eat the whole budget, a bad day commits nothing.
+    timeout-minutes: 170
 
     steps:
       - name: Check out repository
@@ -65,6 +70,15 @@ jobs:
         timeout-minutes: 50
         continue-on-error: true
         run: python scripts/fetch_trends_gdelt.py
+
+      # Runs BEFORE the big pageviews fetch on purpose: both hit the same
+      # Wikimedia rate budget from the same runner IP, and this step's ~200
+      # requests are noise next to the pageviews step's thousands — in the
+      # other order, a throttled day starves this step entirely.
+      - name: Fetch per-country most-read Wikipedia pages
+        timeout-minutes: 15
+        continue-on-error: true
+        run: python scripts/fetch_trends_wiki_countries.py
 
       - name: Fetch Wikipedia pageviews (demand signal)
         timeout-minutes: 85
@@ -87,6 +101,11 @@ jobs:
           # commit (e.g. the weekly refresh), then push.
           # explicit paths: never publish stray files that land in data/trends/
           git add data/trends/wiki_pageviews.json data/trends/gdelt_coverage.json data/trends/topic_intelligence.json
+          # Guarded separately: under set -e, one missing pathspec would kill
+          # the WHOLE day's commit (git add exits 128 on a missing file).
+          if [ -f data/trends/country_reading.json ]; then
+            git add data/trends/country_reading.json
+          fi
           if git diff --cached --quiet; then
             echo "No changes — trend data already up to date."
           else
@@ -113,14 +132,37 @@ jobs:
           cur, stale = cov.get("series_current", 0), cov.get("series_stale_excluded", 0)
           total = cur + stale
           print(f"Series current: {cur} / {total}; topics scored: {cov.get('topics_scored')}")
+          rc = 0
           if total and stale > cur:
               print(f"::error::{stale} of {total} demand series are stale (no data in the "
                     f"measured 7-day window). The Wikipedia fetch is not completing — topic "
                     f"momentum now covers only a minority of tracked topics.")
-              sys.exit(1)
+              rc = 1
           if total and stale > total * 0.25:
               print(f"::warning::{stale} of {total} demand series are stale — watch this; "
                     f"if it keeps climbing the fetch step needs more time or fewer series.")
+
+          # Same idea for the per-country reading lists: their fetch step's
+          # exit code is swallowed by continue-on-error, so freshness has to
+          # be policed here or a permanent AQS breakage stays green forever.
+          from datetime import date, datetime
+          cr_p = Path("data/trends/country_reading.json")
+          if cr_p.exists():
+              crc = json.loads(cr_p.read_text()).get("countries", {})
+              dates = [r.get("date") for r in crc.values()
+                       if not r.get("withheld") and r.get("date")]
+              if dates:
+                  newest = max(dates)
+                  age = (date.today() - datetime.strptime(newest, "%Y-%m-%d").date()).days
+                  print(f"Country reading lists: newest data {newest} ({age} days old)")
+                  if age > 4:
+                      print(f"::error::country_reading.json's newest data is {age} days old — "
+                            f"the per-country fetch has been failing silently; check the "
+                            f"'Fetch per-country most-read Wikipedia pages' step logs.")
+                      rc = 1
+                  elif age > 2:
+                      print(f"::warning::country_reading.json is {age} days old — watch this.")
+          sys.exit(rc)
           PY
 
       - name: Open an issue if this run failed

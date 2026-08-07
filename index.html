@@ -737,6 +737,7 @@
         <div class="src-group">
           <h4>Live trends</h4>
           <a href="https://wikimedia.org/api/rest_v1/" target="_blank" rel="noopener">Wikimedia Pageviews API</a>
+          <a href="https://doc.wikimedia.org/analytics-api/" target="_blank" rel="noopener">Wikimedia per-country reading lists (top-per-country)</a>
           <a href="https://www.gdeltproject.org" target="_blank" rel="noopener">GDELT 2.0</a>
         </div>
         <div class="src-group">
@@ -2500,6 +2501,29 @@ function tabMedia(d) {
     html += `<div style="font-size:11px;color:var(--muted-2);">${t("trending_unavailable")}</div>`;
   }
 
+  // ---- Most-read Wikipedia pages (Wikimedia top-per-country, daily) ----
+  // Directly measured per country — unlike the topic block above, no language
+  // weighting is involved. Withheld countries get an honest note, never a
+  // blank: Wikimedia's privacy list / volume threshold is a fact worth showing.
+  const cr = ((window.COUNTRY_READING || {}).countries || {})[currentActiveIso];
+  if (cr && cr.withheld) {
+    html += `<h3>Most-read Wikipedia pages <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Wikimedia · daily</span></h3>`;
+    html += `<div style="font-size:11px;color:var(--muted-2);margin:2px 0 10px;">${esc(cr.note || "Wikimedia does not publish per-country reading data for this country.")}</div>`;
+  } else if (cr && (cr.articles || []).length) {
+    html += `<h3>Most-read Wikipedia pages <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Wikimedia · ${esc(cr.date)}</span></h3>`;
+    cr.articles.slice(0, 8).forEach(a => {
+      const lang = String(a.project || "").split(".")[0];
+      html += `<div class="data-row"><span class="label">${esc(a.title)} <span style="font-size:10px;color:var(--muted-2);">${esc(lang)}</span></span>` +
+              `<span class="value">~${fmtNum(a.views_ceil)}</span></div>`;
+    });
+    const mixEntries = Object.entries(cr.language_mix || {});
+    if (mixEntries.length > 1) {
+      const mix = mixEntries.slice(0, 4).map(([p, pct]) => `${esc(String(p).split(".")[0])} ${pct}%`).join(" · ");
+      html += `<div class="data-row"><span class="label">Reading languages</span><span class="value" style="font-size:11px;">${mix}</span></div>`;
+    }
+    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:4px;">The most-read Wikipedia articles from this country on ${esc(cr.date)} (Wikimedia Pageviews, CC0), filtered to encyclopedia articles. View counts are privacy-rounded ceilings; the language mix is approximated from these top pages only. Wikipedia readers, not the general population.</div>`;
+  }
+
   if ((d.topics_of_interest || []).length) {
     html += `<h3>${t("section_topics")}</h3>`;
     html += `<div class="pills">${d.topics_of_interest.map(topic => `<div class="pill">${esc(topic)}</div>`).join("")}</div>`;
@@ -2548,6 +2572,10 @@ function tabSources(d) {
   const tvx = (window.TV_STATIONS || {})[currentActiveIso];
   const sourceEntries = Object.entries(d.sources || {});
   if (tvx && tvx.source) sourceEntries.push(["TV stations (extended list)", tvx.source]);
+  // Same pattern for the per-country reading list — it lives in its own file
+  // (data/trends/country_reading.json), so its citation is appended here.
+  const crs = ((window.COUNTRY_READING || {}).countries || {})[currentActiveIso];
+  if (crs && crs.source) sourceEntries.push(["Most-read Wikipedia pages", crs.source]);
   return `
     <h3>${t("section_primary_sources")}</h3>
     <p style="color: var(--muted); font-size: 13px;">${t("sources_intro")}</p>
@@ -2740,6 +2768,23 @@ function openDeepLinkedCountry() {
                 Object.keys(window.TV_STATIONS).filter(k => !k.startsWith("_")).length, "countries");
   } catch (err) {
     console.info("[atlas] extended TV station data unavailable:", err.message);
+  }
+})();
+
+/* Per-country most-read Wikipedia pages (Wikimedia top-per-country, daily) —
+ * optional layer. Countries Wikimedia withholds (privacy protection list /
+ * volume threshold) carry an explicit withheld flag so the Media tab can say
+ * so instead of showing nothing. */
+(async function loadCountryReading() {
+  try {
+    const r = await fetch("data/trends/country_reading.json", { cache: "no-cache" });
+    if (!r.ok) throw new Error("no country reading data yet (HTTP " + r.status + ")");
+    window.COUNTRY_READING = await r.json();
+    if (currentActiveIso) renderDetail(currentActiveIso);
+    console.log("[atlas] country reading lists loaded:",
+                Object.keys(window.COUNTRY_READING.countries || {}).length, "countries");
+  } catch (err) {
+    console.info("[atlas] country reading data unavailable:", err.message);
   }
 })();
 
