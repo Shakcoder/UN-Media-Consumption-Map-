@@ -192,13 +192,21 @@ def main() -> int:
 
         stories_un = sum(int(d.get("count") or 0) for d in data)
         stories_total = sum(int(d.get("total_count") or 0) for d in data)
+        # The API omits days with no stories at all (observed on 20 tiny
+        # collections, 2026-08-10), so the daily array is padded to the full
+        # window with explicit zeros — sparse days are real zeros, and a
+        # 7-day window should always LOOK like 7 days.
+        by_date = {str(d.get("date"))[:10]: d for d in data}
         entry: dict = {
             "window": {"start": start.isoformat(), "end": end.isoformat()},
             "stories_total": stories_total,
             "stories_un": stories_un,
-            "daily": [{"date": str(d.get("date"))[:10],
-                       "un": int(d.get("count") or 0),
-                       "total": int(d.get("total_count") or 0)} for d in data],
+            "daily": [
+                {"date": (start + timedelta(days=n)).isoformat(),
+                 "un": int((by_date.get((start + timedelta(days=n)).isoformat()) or {}).get("count") or 0),
+                 "total": int((by_date.get((start + timedelta(days=n)).isoformat()) or {}).get("total_count") or 0)}
+                for n in range(WINDOW_DAYS)
+            ],
             "collection": {"id": coll["id"], "name": coll["name"],
                            "source_count": coll.get("source_count")},
             "retrieved": retrieved,
