@@ -217,7 +217,20 @@ jobs:
             echo "No changes — trend data already up to date."
           else
             git commit -m "chore(trends): daily update $(date -u +%Y-%m-%d)"
-            git pull --rebase origin main
+            # A run checks out the commit it was DISPATCHED on, so anything
+            # pushed to main during the ~90 fetch minutes must be absorbed by
+            # this rebase. Different files (e.g. the weekly refresh) merge
+            # cleanly; a conflict can only be another trend commit — normally
+            # impossible (the concurrency group serialises runs), but a
+            # cancelled run's always()-commit slipped one in on 2026-08-10.
+            # On conflict OUR side wins: every assembled file was seeded from
+            # the previous snapshot and only gains freshness. (During a
+            # rebase, the commit being replayed — ours — is "--theirs".)
+            if ! git pull --rebase origin main; then
+              git checkout --theirs -- data/trends/*.json || true
+              git add data/trends/
+              GIT_EDITOR=true git rebase --continue
+            fi
             git push
             echo "Pushed."
           fi
