@@ -1001,43 +1001,87 @@ function audienceNote(audiences, f) {
 
 function composeCountryBrief(f, ev, ents) {
   addCountryEvidence(f, ev);
-  const lines = [];
   const top = bestChannel(f);
   const wantsTrends = ents.wantsTrends;
+  const o = f.outlets;
 
+  // REPORT LAYOUT (2026-08-10). Country answers used to be one flat run of
+  // lines; they now assemble as labeled sections — the same facts, the same
+  // conditions, the same caveats, just grouped under ###-headers (mdLite has
+  // always rendered these; the consulting briefs are already built from
+  // them). The section() helper guarantees an empty section never renders a
+  // stray header, so data-poor countries collapse to exactly the sections
+  // they can honestly fill.
+  const out = [];
+  const section = (title, rows) => {
+    const body = rows.filter(x => x != null && x !== "");
+    if (!body.length) return;
+    out.push(`### ${title}`);
+    out.push(...body);
+    out.push("");
+  };
+
+  out.push(`## ${f.name} — media brief`);
+  out.push("");
+
+  // --- The headline answer comes first: recommendation or profile lead ---
+  if (ents.intents.includes("recommend") && top) {
+    // audience-adjusted headline: a rural/older ask must not lead with a
+    // population-level channel that the data itself contradicts for that group
+    const rural = ents.audiences.includes("rural") && f.radio != null && f.radio > (f.online ?? -1);
+    const older = ents.audiences.includes("older") && f.tv != null;
+    if (rural)
+      out.push(`**Recommendation for ${f.name}: population-level lead is ${top[0]} (${fmt(top[1])}), but for rural audiences lead with radio (${fmt(f.radio)} weekly reach).**`);
+    else if (older && top[0] !== "TV")
+      out.push(`**Recommendation for ${f.name}: population-level lead is ${top[0]} (${fmt(top[1])}); for older audiences TV (${fmt(f.tv)}) and radio typically out-reach social platforms.**`);
+    else
+      out.push(`**Recommendation for ${f.name}: lead with ${top[0]} (${fmt(top[1])} weekly news reach)${f.internet != null && f.internet < 40 ? ", and avoid digital-only plans" : ""}.**`);
+  } else if (ents.intents.includes("recommend") && !top) {
+    out.push(`**Recommendation for ${f.name}:** no news-source survey covers this country yet, so anchor on structure: internet penetration is ${fmt(f.internet)}${f.internet != null ? (f.internet >= 60 ? " (digital channels can reach most people)" : f.internet >= 35 ? " (pair digital with broadcast)" : " (broadcast and community channels first — digital-only would miss most people)") : ""}, and the leading outlets below are the practical entry points. Treat any channel mix as a hypothesis to validate with local partners.`);
+  } else if (top && top[1] != null) {
+    out.push(`**${f.name}: ${top[0]} leads for news reach — ${fmt(top[1])} weekly.**`);
+  } else {
+    out.push(`**${f.name} — media profile.**`);
+  }
+  out.push("");
+
+  // --- Audience note qualifies the headline, so it sits directly under it ---
+  const aud = audienceNote(ents.audiences, f);
+  if (aud) { out.push(`**Audience note:** ${aud}`); out.push(""); }
+
+  // --- Trending now ---
+  const trend = [];
   if (wantsTrends && f.rising.length) {
     addTrendEvidence(f.name, ev);
-    lines.push(`**Trending in ${f.name} right now** (as of ${TRENDS.generated}):`);
+    trend.push(`**Trending in ${f.name} right now** (as of ${TRENDS.generated}):`);
     for (const r of f.rising.slice(0, 5))
-      lines.push(`- **${r.label_en}** +${Math.round(r.velocity * 100)}% vs its 30-day baseline`);
+      trend.push(`- **${r.label_en}** +${Math.round(r.velocity * 100)}% vs its 30-day baseline`);
     if (f.distinctive.length)
-      lines.push(`\nDistinctive interests vs the world average: ${f.distinctive.slice(0, 4).map(d => `**${d.label_en}** (${d.vs_global_avg}×)`).join(", ")}`);
-    lines.push("");
+      trend.push(`\nDistinctive interests vs the world average: ${f.distinctive.slice(0, 4).map(d => `**${d.label_en}** (${d.vs_global_avg}×)`).join(", ")}`);
   } else if (wantsTrends && (f.topTopics.length || f.distinctive.length)) {
     // nothing spiking, but the attention profile still answers "what resonates";
     // when the question names a theme (health, climate…), filter to it
     addTrendEvidence(f.name, ev);
     const theme = ents.themeFilter || null;
     const catOf = (qid) => (TRENDS.topics[qid] || {}).category || "";
-    let top = f.topTopics;
+    let topAtt = f.topTopics;
     if (theme) {
       const themed = f.topTopics.filter(t => theme.includes(catOf(t.qid)));
       if (themed.length) {
-        top = themed;
-        lines.push(`**${theme.join("/")}-related attention in ${f.name}** (as of ${TRENDS.generated}):`);
+        topAtt = themed;
+        trend.push(`**${theme.join("/")}-related attention in ${f.name}** (as of ${TRENDS.generated}):`);
       } else {
-        lines.push(`**No ${theme.join("/")} topic makes ${f.name}'s measured top attention right now** (as of ${TRENDS.generated}) — the overall profile is below for context:`);
+        trend.push(`**No ${theme.join("/")} topic makes ${f.name}'s measured top attention right now** (as of ${TRENDS.generated}) — the overall profile is below for context:`);
       }
     }
     if (!theme || !f.topTopics.some(t => theme.includes(catOf(t.qid))))
-      lines.push(`**What draws attention in ${f.name}** (as of ${TRENDS.generated} — nothing is spiking sharply this week, so here is the standing attention profile):`);
-    for (const t of top.slice(0, 5))
-      lines.push(`- **${t.label_en}** — ${t.attention_share_pct}% of measured attention`);
+      trend.push(`**What draws attention in ${f.name}** (as of ${TRENDS.generated} — nothing is spiking sharply this week, so here is the standing attention profile):`);
+    for (const t of topAtt.slice(0, 5))
+      trend.push(`- **${t.label_en}** — ${t.attention_share_pct}% of measured attention`);
     if (f.distinctive.length)
-      lines.push(`\nFollowed notably more than the world average: ${f.distinctive.slice(0, 4).map(d => `**${d.label_en}** (${d.vs_global_avg}×)`).join(", ")}`);
-    lines.push("");
+      trend.push(`\nFollowed notably more than the world average: ${f.distinctive.slice(0, 4).map(d => `**${d.label_en}** (${d.vs_global_avg}×)`).join(", ")}`);
   } else if (wantsTrends) {
-    lines.push(`*No reliable trend signal is available for ${f.name} right now (below the measurement floor) — here is the country's media profile instead.*\n`);
+    trend.push(`*No reliable trend signal is available for ${f.name} right now (below the measurement floor) — here is the country's media profile instead.*`);
   }
 
   // Trending searches (Google Trends "Trending Now") — a second, directly
@@ -1046,55 +1090,54 @@ function composeCountryBrief(f, ev, ents) {
   // volumes: they are floors ("500+"), not measurements.
   if (wantsTrends && f.searches && !f.searches.unsupported && (f.searches.queries || []).length) {
     const qs = f.searches.queries.slice(0, 5);
-    lines.push(`**What ${f.name} is searching for** (Google Trends, ${f.searches.date}): ${qs.map(q => `**${q.query}**${q.new ? " (new today)" : ""}`).join(" · ")}. *Search interest of any kind — not news interest specifically.*`);
-    lines.push("");
+    trend.push(`**What ${f.name} is searching for** (Google Trends, ${f.searches.date}): ${qs.map(q => `**${q.query}**${q.new ? " (new today)" : ""}`).join(" · ")}. *Search interest of any kind — not news interest specifically.*`);
     const srcUrl = (String(f.searches.source || "").match(/https?:\/\/\S+/) || [null])[0];
     ev.add(`${f.name} — trending searches`,
       `Google Trends "Trending Now" RSS, retrieved ${f.searches.date}. Only derived facts are stored (query, traffic bucket, date) — never the feed's third-party headlines. Traffic buckets are floors, not counts, and are deliberately not quoted in the answer. Data source: Google Trends.`,
       srcUrl ? [{ label: "Google Trends — Trending Now RSS", url: srcUrl }] : []);
   }
 
-  if (ents.intents.includes("recommend") && top) {
-    // audience-adjusted headline: a rural/older ask must not lead with a
-    // population-level channel that the data itself contradicts for that group
-    const rural = ents.audiences.includes("rural") && f.radio != null && f.radio > (f.online ?? -1);
-    const older = ents.audiences.includes("older") && f.tv != null;
-    if (rural)
-      lines.push(`**Recommendation for ${f.name}: population-level lead is ${top[0]} (${fmt(top[1])}), but for rural audiences lead with radio (${fmt(f.radio)} weekly reach).**`);
-    else if (older && top[0] !== "TV")
-      lines.push(`**Recommendation for ${f.name}: population-level lead is ${top[0]} (${fmt(top[1])}); for older audiences TV (${fmt(f.tv)}) and radio typically out-reach social platforms.**`);
-    else
-      lines.push(`**Recommendation for ${f.name}: lead with ${top[0]} (${fmt(top[1])} weekly news reach)${f.internet != null && f.internet < 40 ? ", and avoid digital-only plans" : ""}.**`);
-  } else if (ents.intents.includes("recommend") && !top) {
-    lines.push(`**Recommendation for ${f.name}:** no news-source survey covers this country yet, so anchor on structure: internet penetration is ${fmt(f.internet)}${f.internet != null ? (f.internet >= 60 ? " (digital channels can reach most people)" : f.internet >= 35 ? " (pair digital with broadcast)" : " (broadcast and community channels first — digital-only would miss most people)") : ""}, and the leading outlets below are the practical entry points. Treat any channel mix as a hypothesis to validate with local partners.`);
-  } else if (top && top[1] != null) {
-    lines.push(`**${f.name}: ${top[0]} leads for news reach — ${fmt(top[1])} weekly.**`);
-  } else {
-    lines.push(`**${f.name} — media profile.**`);
+  if (!wantsTrends && f.rising.length) {
+    addTrendEvidence(f.name, ev);
+    trend.push(`- Rising topics this week: ${f.rising.slice(0, 3).map(r => `${r.label_en} (+${Math.round(r.velocity * 100)}%)`).join(", ")}`);
   }
-  lines.push("");
+  section("Trending now", trend);
+
+  // --- News consumption ---
+  const news = [];
   if (f.radio != null) {
     const cap = f.radioSource === "Afrobarometer Round 9 (2023)" ? "Afrobarometer Round 9 — the leading channel in much of Africa" : (f.radioSource || "source unspecified");
-    lines.push(`- Radio as a weekly news source: ${fmt(f.radio)} *(${cap})*`);
+    news.push(`- Radio as a weekly news source: ${fmt(f.radio)} *(${cap})*`);
   }
   if (f.tv == null && f.online == null && f.social == null && f.radio == null) {
-    lines.push(`- The Atlas has no news-source survey for ${f.name} yet (not covered by the Reuters Institute DNR or the regional barometers integrated so far) — the figures below are connectivity, freedom, and demographics.`);
+    news.push(`- The Atlas has no news-source survey for ${f.name} yet (not covered by the Reuters Institute DNR or the regional barometers integrated so far) — the figures below are connectivity, freedom, and demographics.`);
   } else {
-    lines.push(`- News sources (weekly reach): TV ${fmt(f.tv)}, online ${fmt(f.online)}, social media ${fmt(f.social)} *(survey: ${f.survey || "n/a"})*`);
+    news.push(`- News sources (weekly reach): TV ${fmt(f.tv)}, online ${fmt(f.online)}, social media ${fmt(f.social)} *(survey: ${f.survey || "n/a"})*`);
   }
-  if (f.trust != null) lines.push(`- Trust in news: ${f.trust}%`);
-  lines.push(`- Connectivity: ${fmt(f.internet)} internet penetration${f.smartphone != null ? `, ${fmt(f.smartphone)} smartphone adoption` : ""}${f.mci != null ? `, GSMA mobile connectivity index ${f.mci}/100` : ""}`);
-  if (f.rsf != null) lines.push(`- Press freedom: ${Math.round(f.rsf)}/100 (RSF ${f.rsfEdition || ""}); political status: ${f.fh || "n/a"}${f.electoral != null ? `; electoral democracy: ${f.electoral ? "yes" : "no"}` : ""}`);
-  if (f.fotn != null) lines.push(`- Internet freedom: ${f.fotn}/100 (Freedom House FOTN)`);
+  if (f.trust != null) news.push(`- Trust in news: ${f.trust}%`);
+  section("News consumption", news);
+
+  // --- Connectivity & audience ---
+  const conn = [];
+  conn.push(`- Connectivity: ${fmt(f.internet)} internet penetration${f.smartphone != null ? `, ${fmt(f.smartphone)} smartphone adoption` : ""}${f.mci != null ? `, GSMA mobile connectivity index ${f.mci}/100` : ""}`);
   if (f.under15 != null || f.urban != null || f.medianAge != null)
-    lines.push(`- Audience structure: ${f.medianAge != null ? `median age ${f.medianAge}, ` : ""}${f.under15 != null ? `${fmt(f.under15)} under 15, ` : ""}${f.urban != null ? `${fmt(f.urban)} urban` : ""}${f.literacy != null ? `, ${fmt(f.literacy)} literacy` : ""}`);
+    conn.push(`- Audience structure: ${f.medianAge != null ? `median age ${f.medianAge}, ` : ""}${f.under15 != null ? `${fmt(f.under15)} under 15, ` : ""}${f.urban != null ? `${fmt(f.urban)} urban` : ""}${f.literacy != null ? `, ${fmt(f.literacy)} literacy` : ""}`);
   if (f.languagesDetail.length)
-    lines.push(`- Languages (share of population): ${langsByShare(f).slice(0, 5).map(l => `${prettyLang(l)} ${Math.round(l.pct)}%${l.official ? " (official)" : ""}`).join(", ")} *(Unicode CLDR)*`);
-  const o = f.outlets;
-  if (o.top_tv || o.top_radio) lines.push(`- Leading outlets — TV: ${o.top_tv || "n/a"}; radio: ${o.top_radio || "n/a"}; online: ${o.top_online_news || "n/a"}${o.top_social ? `; social platforms (in order): ${o.top_social}` : ""}`);
+    conn.push(`- Languages (share of population): ${langsByShare(f).slice(0, 5).map(l => `${prettyLang(l)} ${Math.round(l.pct)}%${l.official ? " (official)" : ""}`).join(", ")} *(Unicode CLDR)*`);
+  section("Connectivity & audience", conn);
+
+  // --- Information environment ---
+  const info = [];
+  if (f.rsf != null) info.push(`- Press freedom: ${Math.round(f.rsf)}/100 (RSF ${f.rsfEdition || ""}); political status: ${f.fh || "n/a"}${f.electoral != null ? `; electoral democracy: ${f.electoral ? "yes" : "no"}` : ""}`);
+  if (f.fotn != null) info.push(`- Internet freedom: ${f.fotn}/100 (Freedom House FOTN)`);
+  section("Information environment", info);
+
+  // --- Media landscape ---
+  const land = [];
+  if (o.top_tv || o.top_radio) land.push(`- Leading outlets — TV: ${o.top_tv || "n/a"}; radio: ${o.top_radio || "n/a"}; online: ${o.top_online_news || "n/a"}${o.top_social ? `; social platforms (in order): ${o.top_social}` : ""}`);
   if (f.tvStations && (f.tvStations.stations || []).length) {
     const names = f.tvStations.stations.map(s => s.name);
-    lines.push(`- More active TV stations (beyond the leading outlets): ${names.join(", ")} *(Wikipedia station lists verified via Wikidata; ordered by international Wikipedia presence, not audience share)*`);
+    land.push(`- More active TV stations (beyond the leading outlets): ${names.join(", ")} *(Wikipedia station lists verified via Wikidata; ordered by international Wikipedia presence, not audience share)*`);
     const srcUrl = (String(f.tvStations.source || "").match(/https?:\/\/\S+/) || [null])[0];
     ev.add(`${f.name} — extended TV stations`,
       `Station names from Wikipedia's station-list pages; every entry gated through its Wikidata record (belongs to this country, carries no dissolution date, typed as a broadcaster). Ordering is international Wikipedia presence (sitelink count) — a presence proxy; no free source measures per-station audience share. ${f.tvStations.source || ""}`,
@@ -1105,7 +1148,7 @@ function composeCountryBrief(f, ev, ents) {
   // denominator and its floor-not-ceiling nature, never as a bare number.
   if (f.pressUN && f.pressUN.share_pct != null) {
     const pu = f.pressUN;
-    lines.push(`- UN in the national press: **${pu.share_pct}%** of the ${Number(pu.stories_total).toLocaleString()} stories the country's monitored national outlets published in the week to ${(pu.window || {}).end} mentioned the United Nations *(Media Cloud, ${(pu.collection || {}).source_count ?? "?"} outlets; phrase-match floor — acronym-heavy press understates)*`);
+    land.push(`- UN in the national press: **${pu.share_pct}%** of the ${Number(pu.stories_total).toLocaleString()} stories the country's monitored national outlets published in the week to ${(pu.window || {}).end} mentioned the United Nations *(Media Cloud, ${(pu.collection || {}).source_count ?? "?"} outlets; phrase-match floor — acronym-heavy press understates)*`);
     const puUrl = (String(pu.source || "").match(/https?:\/\/\S+/) || [null])[0];
     ev.add(`${f.name} — UN in the national press`,
       `Media Cloud curated national collection ‘${(pu.collection || {}).name}’: UN-phrase stories as a share of all monitored stories, ${(pu.window || {}).start} to ${(pu.window || {}).end}. Counts only, per Media Cloud's terms; a phrase-match floor (~20 languages, acronyms mostly excluded). Publication counts, not readership.`,
@@ -1118,36 +1161,29 @@ function composeCountryBrief(f, ev, ents) {
     // measured usage first (Latinobarometro battery), curated rank as fallback
     const measured = f.platformUse ? f.platformUse[p === "twitter" ? "x" : p] : null;
     if (measured != null) {
-      lines.push(`- **${pretty}** is actively used by **${measured}% of adults** in ${f.name} *(${f.platformUse.source}, weighted survey, n=${(f.platformUse.n || 0).toLocaleString()})* — a measured figure, not an estimate`);
+      land.push(`- **${pretty}** is actively used by **${measured}% of adults** in ${f.name} *(${f.platformUse.source}, weighted survey, n=${(f.platformUse.n || 0).toLocaleString()})* — a measured figure, not an estimate`);
       continue;
     }
     const socials = (o.top_social || "").toLowerCase().split(",").map(s => s.trim());
     const pos = socials.findIndex(s => platformMatches(s, p));
-    if (pos === 0) lines.push(`- **${pretty}** is the leading social platform in ${f.name} (${o.top_social})`);
-    else if (pos > 0) lines.push(`- **${pretty}** ranks #${pos + 1} among ${f.name}'s top platforms (${o.top_social})`);
-    else if (o.top_social) lines.push(`- **${pretty}** is not among ${f.name}'s leading platforms (${o.top_social})`);
+    if (pos === 0) land.push(`- **${pretty}** is the leading social platform in ${f.name} (${o.top_social})`);
+    else if (pos > 0) land.push(`- **${pretty}** ranks #${pos + 1} among ${f.name}'s top platforms (${o.top_social})`);
+    else if (o.top_social) land.push(`- **${pretty}** is not among ${f.name}'s leading platforms (${o.top_social})`);
   }
+  section("Media landscape", land);
 
-  if (!wantsTrends && f.rising.length) {
-    addTrendEvidence(f.name, ev);
-    lines.push(`- Rising topics this week: ${f.rising.slice(0, 3).map(r => `${r.label_en} (+${Math.round(r.velocity * 100)}%)`).join(", ")}`);
-  }
-
-  const aud = audienceNote(ents.audiences, f);
-  if (aud) { lines.push(""); lines.push(`**Audience note:** ${aud}`); }
-
+  // --- Risks & caveats ---
   const risks = riskLines(f);
-  if (risks.length) {
-    lines.push("");
-    lines.push("**Risks & caveats:**");
-    for (const r of risks) lines.push("- " + r);
-  }
-  return lines.join("\n");
-}
+  if (risks.length) section("Risks & caveats", risks.map(r => "- " + r));
 
+  return out.join("\n").replace(/\n+$/, "");
+}
 function composeComparison(fs, ev, ents) {
   fs.forEach(f => addCountryEvidence(f, ev));
   const lines = [];
+  // Same report layout as the country brief: a titled document, not a blob.
+  lines.push(`## ${fs.map(f => f.name).join(" vs ")} — comparison`);
+  lines.push("");
 
   // headline: use the asked-about attribute if there is one, else trust
   const attrKey = ents.attributes[0] || "trust";
