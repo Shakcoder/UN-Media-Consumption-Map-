@@ -647,6 +647,47 @@ def main() -> int:
         WARNS.append("trends/country_searches.json missing — trending-searches layer "
                      "not built yet")
 
+    # Global Bluesky trending topics (open-social pulse) — optional layer.
+    # GLOBAL only by design: there is deliberately no per-country structure
+    # here, and none may ever be invented for it. Aggregates only: a "posts"
+    # or "handles" field appearing would mean the fetcher started storing
+    # content, which the license posture forbids — hard error.
+    bt_path = ROOT / "data" / "trends" / "bluesky_trends.json"
+    if bt_path.exists():
+        bt = load_json(bt_path)
+        bts = bt.get("trends") or []
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(bt.get("date") or "")):
+            ERRORS.append("bluesky_trends: missing or malformed date")
+        if not bts:
+            ERRORS.append("bluesky_trends: no trends — an empty file should not "
+                          "be published")
+        for t in bts:
+            if not str(t.get("display_name") or "").strip():
+                ERRORS.append("bluesky_trends: trend with empty display_name")
+            rank = t.get("rank")
+            if not (isinstance(rank, int) and rank > 0):
+                ERRORS.append(f"bluesky_trends: rank {rank!r} for "
+                              f"{t.get('display_name')!r} is not a positive integer")
+            pc = t.get("post_count")
+            if not (isinstance(pc, int) and pc >= 0):
+                ERRORS.append(f"bluesky_trends: post_count {pc!r} for "
+                              f"{t.get('display_name')!r} is not a non-negative integer")
+            for forbidden in ("posts", "handles", "authors", "text"):
+                if forbidden in t:
+                    ERRORS.append(f"bluesky_trends: {t.get('display_name')!r} carries "
+                                  f"{forbidden!r} — aggregates only, never content")
+        for hday, names in (bt.get("history") or {}).items():
+            if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(hday)):
+                ERRORS.append(f"bluesky_trends: history key {hday!r} is not a date")
+            if not (isinstance(names, list) and names
+                    and all(str(x).strip() for x in names)):
+                ERRORS.append(f"bluesky_trends: history for {hday} is not a "
+                              f"non-empty list of names")
+        INFOS.append(f"Bluesky pulse: {len(bts)} global trends, dated {bt.get('date')}")
+    else:
+        WARNS.append("trends/bluesky_trends.json missing — open-social pulse "
+                     "not built yet")
+
     am_path = ROOT / "data" / "ad_market.json"
     if am_path.exists():
         am = load_json(am_path)

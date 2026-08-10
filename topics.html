@@ -260,10 +260,36 @@ function renderGlobalMovers() {
     <div class="sub">${scored} topics measured in 22 languages · attention data through ${esc(asOf)}${coverageNote}</div>
     <h3 class="sect">Rising this week</h3><div class="movers">${risers.map(row).join("") || '<div class="empty">No topics rising sharply this week.</div>'}</div>
     <h3 class="sect">Falling this week</h3><div class="movers">${fallers.map(row).join("") || '<div class="empty">No topics falling sharply this week.</div>'}</div>
+    ${bskyPulse()}
     <div class="note">Velocity = attention in the 7 days to ${esc(asOf)} vs. the prior 30 days, measured from
     Wikipedia reading patterns (Wikimedia Pageviews API — a measure of what people <em>look up</em>,
     not what media publish). Topics whose series hold no data in that window are left out rather than
     scored from older figures. Select any topic on the left for detail.</div>`;
+}
+
+/* Global open-social pulse (Bluesky) — a second live signal next to the
+   Wikipedia movers: what the open social web is talking about right now,
+   network-wide. GLOBAL only (the API has no country split, so this never
+   appears on country pages), and Bluesky users are not the general
+   population — the on-screen note says both. Renders nothing when the
+   optional file is absent; rows are deliberately inert (no data-qid), so
+   bindMoverClicks never picks them up. */
+function bskyPulse() {
+  if (!BSKY || !(BSKY.trends || []).length) return "";
+  const rows = BSKY.trends.slice(0, 8).map(t => {
+    const hot = t.hot ? ` <span style="font-size:10px;font-weight:600;color:var(--up,#0a7f4f);">hot</span>` : "";
+    const isNew = t.new ? ` <span style="font-size:10px;color:var(--muted,#888);">new today</span>` : "";
+    const cat = t.category ? `<span style="font-size:11px;color:var(--muted,#888);"> · ${esc(t.category)}</span>` : "";
+    return `<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 2px;font-size:13px;">
+      <span>${esc(t.display_name)}${cat}${hot}${isNew}</span>
+      <span style="color:var(--muted,#888);white-space:nowrap;">~${Number(t.post_count).toLocaleString()} posts</span></div>`;
+  }).join("");
+  return `<h3 class="sect">Open social web right now (Bluesky · global)</h3>
+    <div>${rows}</div>
+    <div class="note">Trending across Bluesky network-wide as of ${esc(BSKY.date)} — aggregate topics and
+    counts only; no posts or accounts are stored. Bluesky's users are not the general population; the Atlas
+    carries this as its open-social signal because X/Twitter's data access closed in 2026. Post counts are
+    the size of each trend's feed — magnitudes, not shares — and no per-country split exists.</div>`;
 }
 
 /* Date-range for the attention chart (shared control): slices the topic's own
@@ -354,10 +380,16 @@ function bindMoverClicks(scope) {
 
 document.getElementById("search").addEventListener("input", e => renderList(e.target.value));
 
+let BSKY = null;   // global Bluesky pulse — optional layer, see bskyPulse()
+
 (async function init() {
   try {
-    const r = await fetch("data/trends/topic_intelligence.json", { cache: "no-cache" });
+    const [r, bskyRes] = await Promise.all([
+      fetch("data/trends/topic_intelligence.json", { cache: "no-cache" }),
+      fetch("data/trends/bluesky_trends.json", { cache: "no-cache" }).catch(() => null),
+    ]);
     DATA = await r.json();
+    BSKY = (bskyRes && bskyRes.ok) ? await bskyRes.json().catch(() => null) : null;
     renderList("");
     renderDetail();
   } catch (err) {

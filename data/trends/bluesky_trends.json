@@ -1,0 +1,238 @@
+{
+ "_meta": {
+  "source": "Bluesky public API (app.bsky.unspecced.getTrends)",
+  "source_url": "https://public.api.bsky.app/xrpc/app.bsky.unspecced.getTrends",
+  "license": "Public, keyless API. Aggregates only are stored — trend topics and counts, never posts or account handles — so content-deletion obligations never attach to this file.",
+  "method_note": "Topics trending across Bluesky network-wide at fetch time. GLOBAL only — no per-country split exists, so this must never be shown as any single country's signal. Bluesky users are not the general population. post_count is the size of that trend's feed: a magnitude, never a share. The endpoint namespace is officially 'unspecced' (unstable); the fetcher refuses to write on any shape change. The history block is this project's own rolling archive — the API keeps none.",
+  "history_days_kept": 7
+ },
+ "retrieved_at": "2026-08-10T18:06:19+00:00",
+ "date": "2026-08-10",
+ "trends": [
+  {
+   "topic": "wisconsin",
+   "display_name": "Wisconsin Primary",
+   "rank": 1,
+   "post_count": 62,
+   "category": "politics",
+   "hot": true,
+   "started": "2026-08-10",
+   "new": true
+  },
+  {
+   "topic": "texas",
+   "display_name": "Texas Voting",
+   "rank": 2,
+   "post_count": 314,
+   "category": "politics",
+   "started": "2026-08-10",
+   "new": true
+  },
+  {
+   "topic": "steam",
+   "display_name": "Steam Games",
+   "rank": 3,
+   "post_count": 92,
+   "category": "video-games",
+   "started": "2026-08-10",
+   "new": true
+  },
+  {
+   "topic": "washington",
+   "display_name": "AI Cyber Defense",
+   "rank": 4,
+   "post_count": 96,
+   "category": "politics",
+   "started": "2026-08-10",
+   "new": true
+  },
+  {
+   "topic": "dsa",
+   "display_name": "Political Opposition",
+   "rank": 5,
+   "post_count": 390,
+   "category": "politics",
+   "started": "2026-08-10",
+   "new": true
+  },
+  {
+   "topic": "colombia",
+   "display_name": "Colombia Earthquake",
+   "rank": 6,
+   "post_count": 740,
+   "category": "other",
+   "started": "2026-08-10",
+   "new": true
+  },
+  {
+   "topic": "biden",
+   "display_name": "Biden Politics",
+   "rank": 7,
+   "post_count": 575,
+   "category": "politics",
+   "started": "2026-08-10",
+   "new": true
+  },
+  {
+   "topic": "epstein",
+   "display_name": "Epstein Files",
+   "rank": 8,
+   "post_count": 1100,
+   "category": "politics",
+   "started": "2026-08-10",
+   "new": true
+  },
+  {
+   "topic": "mallory",
+   "display_name": "BB28",
+   "rank": 9,
+   "post_count": 242,
+   "category": "pop-culture",
+   "started": "2026-08-10",
+   "new": true
+  },
+  {
+   "topic": "lala",
+   "display_name": "Lala",
+   "rank": 10,
+   "post_count": 224,
+   "category": "pop-culture",
+   "started": "2026-08-10",
+   "new": true
+  },
+  {
+   "topic": "leavehertoheaven",
+   "display_name": "Leave Her to Heaven",
+   "rank": 11,
+   "post_count": 246,
+   "category": "pop-culture",
+   "started": "2026-08-10",
+   "new": true
+  },
+  {
+   "topic": "malawi",
+   "display_name": "Malawi Women's World Cup",
+   "rank": 12,
+   "post_count": 171,
+   "category": "sports",
+   "started": "2026-08-09",
+   "new": true
+  },
+  {
+   "topic": "lynx",
+   "display_name": "Lynx Victory",
+   "rank": 13,
+   "post_count": 243,
+   "category": "sports",
+   "started": "2026-08-09",
+   "new": true
+  },
+  {
+   "topic": "kayla mcbride",
+   "display_name": "Kayla McBride",
+   "rank": 14,
+   "post_count": 217,
+   "category": "sports",
+   "started": "2026-08-09",
+   "new": true
+  },
+  {
+   "topic": "olivia miles",
+   "display_name": "Olivia Miles",
+   "rank": 15,
+   "post_count": 98,
+   "category": "sports",
+   "started": "2026-08-09",
+   "new": true
+  },
+  {
+   "topic": "grahaap",
+   "display_name": "GrahaAP",
+   "rank": 16,
+   "post_count": 260,
+   "category": "pop-culture",
+   "started": "2026-08-09",
+   "new": true
+  },
+  {
+   "topic": "jacknicholsong",
+   "display_name": "Music Challenge",
+   "rank": 17,
+   "post_count": 370,
+   "category": "pop-culture",
+   "started": "2026-08-09",
+   "new": true
+  },
+  {
+   "topic": "derek hill",
+   "display_name": "Derek Hill",
+   "rank": 18,
+   "post_count": 78,
+   "category": "sports",
+   "started": "2026-08-09",
+   "new": true
+  },
+  {
+   "topic": "canadian",
+   "display_name": "Climate Scientist",
+   "rank": 19,
+   "post_count": 1330,
+   "category": "other",
+   "started": "2026-08-09",
+   "new": true
+  },
+  {
+   "topic": "wildflowerhour",
+   "display_name": "Wildflowers",
+   "rank": 20,
+   "post_count": 298,
+   "category": "other",
+   "started": "2026-08-09",
+   "new": true
+  },
+  {
+   "topic": "don nelson",
+   "display_name": "Don Nelson",
+   "rank": 21,
+   "post_count": 608,
+   "category": "sports",
+   "started": "2026-08-09",
+   "new": true
+  },
+  {
+   "topic": "thearchers",
+   "display_name": "The Archers",
+   "rank": 22,
+   "post_count": 848,
+   "category": "pop-culture",
+   "started": "2026-08-09",
+   "new": true
+  }
+ ],
+ "history": {
+  "2026-08-10": [
+   "AI Cyber Defense",
+   "BB28",
+   "Biden Politics",
+   "Climate Scientist",
+   "Colombia Earthquake",
+   "Derek Hill",
+   "Don Nelson",
+   "Epstein Files",
+   "GrahaAP",
+   "Kayla McBride",
+   "Lala",
+   "Leave Her to Heaven",
+   "Lynx Victory",
+   "Malawi Women's World Cup",
+   "Music Challenge",
+   "Olivia Miles",
+   "Political Opposition",
+   "Steam Games",
+   "Texas Voting",
+   "The Archers",
+   "Wildflowers",
+   "Wisconsin Primary"
+  ]
+ }
+}

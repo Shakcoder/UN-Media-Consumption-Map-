@@ -82,6 +82,11 @@ jobs:
         continue-on-error: true
         run: python scripts/fetch_trends_google.py
 
+      - name: Fetch Bluesky trending topics (global open-social pulse)
+        timeout-minutes: 5
+        continue-on-error: true
+        run: python scripts/fetch_trends_bluesky.py
+
       - name: Fetch GDELT news coverage (supply signal)
         timeout-minutes: 50
         continue-on-error: true
@@ -102,6 +107,7 @@ jobs:
           name: supply-outputs
           path: |
             data/trends/country_searches.json
+            data/trends/bluesky_trends.json
             data/trends/gdelt_coverage.json
             data/trends/country_reading.json
           if-no-files-found: warn
@@ -213,6 +219,9 @@ jobs:
           if [ -f data/trends/country_searches.json ]; then
             git add data/trends/country_searches.json
           fi
+          if [ -f data/trends/bluesky_trends.json ]; then
+            git add data/trends/bluesky_trends.json
+          fi
           if git diff --cached --quiet; then
             echo "No changes — trend data already up to date."
           else
@@ -302,6 +311,22 @@ jobs:
                       rc = 1
                   elif age > 2:
                       print(f"::warning::country_searches.json is {age} days old — watch this.")
+
+          # Bluesky pulse: same snapshot-with-no-upstream-history logic.
+          bt_p = Path("data/trends/bluesky_trends.json")
+          if bt_p.exists():
+              bdate = json.loads(bt_p.read_text()).get("date")
+              if bdate:
+                  age = (date.today() - datetime.strptime(bdate, "%Y-%m-%d").date()).days
+                  print(f"Bluesky pulse: data date {bdate} ({age} days old)")
+                  if age > 4:
+                      print(f"::error::bluesky_trends.json is {age} days old — the Bluesky "
+                            f"fetch has been failing silently (its endpoint is 'unspecced' "
+                            f"and may have changed shape); check the "
+                            f"'Fetch Bluesky trending topics' step logs.")
+                      rc = 1
+                  elif age > 2:
+                      print(f"::warning::bluesky_trends.json is {age} days old — watch this.")
           sys.exit(rc)
           PY
 

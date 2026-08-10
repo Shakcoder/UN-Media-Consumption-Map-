@@ -64,7 +64,7 @@ Sample: `https://api.ooni.io/api/v1/aggregation?probe_cc=IR&test_name=web_connec
 "Is this country's internet up" in near-real-time (BGP + active probing + Google traffic signals). Keyless, JSON, **CORS-open — and that is the legal escape hatch**: data is stamped "All Rights Reserved" (Georgia Tech), so fetch live in the browser and display with attribution, commit nothing (the GDELT/Wikipedia pattern). Email ioda-info@cc.gatech.edu before ever committing snapshots. Usable history ~2021+.
 Sample: `https://api.ioda.inetintel.cc.gatech.edu/v2/outages/summary?entityType=country&from=1785369600&until=1785974400`
 
-### 2.8 Bluesky trends
+### 2.8 Bluesky trends — ✅ INTEGRATED 2026-08-10
 
 Network-wide trending topics with post counts and categories. Keyless, JSON, **CORS-open** (works from the browser today), verified live. **Global list only — no country/language parameter.** Store aggregates only (topics + counts, no posts/handles) and deletion obligations never apply. Risk: the endpoint namespace is officially "unspecced" (unstable) — fail loudly on shape changes.
 Sample: `https://public.api.bsky.app/xrpc/app.bsky.unspecced.getTrends?limit=25`
@@ -148,6 +148,6 @@ One-liners: **WHO GHO** works but its OData API is officially slated for replace
 4. **YouTube charts** — new consumption vertical, ~110 countries; needs the 30-day pruning design + correct labeling.
 5. **Cloudflare Radar** — trending domains + shutdown evidence; gated on the NC-license check.
 
-Then: OONI (press-freedom evidence), Bluesky (an afternoon), Mastodon/Netflix/Apple as labeled extras.
+Then: OONI (press-freedom evidence — NC license, needs the Chief), Bluesky — ✅ integrated 2026-08-10 (Topic Explorer, global-only, aggregates-only, shape-guarded), Mastodon/Netflix/Apple as labeled extras (Mastodon deliberately parked: per-instance sampling, thin value for its caveat load).
 
 **Actions only the account holder can take:** apply for the Google Trends API alpha; request a ReliefWeb appname; ask the Chief about tier-2 (NC) and tier-3 (no-license) sources.
