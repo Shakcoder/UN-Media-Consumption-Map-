@@ -1,12 +1,14 @@
 name: Trend engine (daily)
 
 # The daily heartbeat of the Content Intelligence Platform.
-# 1. Fetches GDELT global news coverage for 167 UN topics (supply signal)
-# 2. Fetches Wikipedia pageviews for the same topics x 22 languages (demand)
+# 1. Fetches each country's trending Google searches (Google Trends RSS —
+#    a snapshot feed with no history upstream, so a missed day is gone)
+# 2. Fetches GDELT global news coverage for 167 UN topics (supply signal)
 # 3. Fetches each country's most-read Wikipedia pages (per-country demand,
 #    Wikimedia top-per-country — directly measured, no language weighting)
-# 4. Computes per-topic and per-country intelligence (velocity, trending)
-# 5. Commits the results — GitHub Pages republishes automatically.
+# 4. Fetches Wikipedia pageviews for the same topics x 22 languages (demand)
+# 5. Computes per-topic and per-country intelligence (velocity, trending)
+# 6. Commits the results — GitHub Pages republishes automatically.
 #
 # RESILIENCE NOTES (learned from run #1):
 # - Wikimedia rate-limits anonymous cloud IPs to ~hundreds of requests/hour.
@@ -49,10 +51,10 @@ concurrency:
 jobs:
   trends:
     runs-on: ubuntu-latest
-    # Step budgets (50 + 15 + 85) must stay BELOW this, with headroom for
+    # Step budgets (10 + 50 + 15 + 85) must stay BELOW this, with headroom for
     # compute + commit: a job-level timeout cancels even if: always() steps,
     # so if the fetchers can eat the whole budget, a bad day commits nothing.
-    timeout-minutes: 170
+    timeout-minutes: 180
 
     steps:
       - name: Check out repository
@@ -65,6 +67,15 @@ jobs:
 
       - name: Install dependencies
         run: pip install requests
+
+      # Runs FIRST on purpose: it talks to a different host (trends.google.com)
+      # from the Wikimedia steps and finishes in ~5 minutes — and its feed is a
+      # snapshot with no history upstream, so a starved day here is
+      # unrecoverable, not merely late.
+      - name: Fetch per-country trending searches (Google Trends RSS)
+        timeout-minutes: 10
+        continue-on-error: true
+        run: python scripts/fetch_trends_google.py
 
       - name: Fetch GDELT news coverage (supply signal)
         timeout-minutes: 50
@@ -105,6 +116,9 @@ jobs:
           # the WHOLE day's commit (git add exits 128 on a missing file).
           if [ -f data/trends/country_reading.json ]; then
             git add data/trends/country_reading.json
+          fi
+          if [ -f data/trends/country_searches.json ]; then
+            git add data/trends/country_searches.json
           fi
           if git diff --cached --quiet; then
             echo "No changes — trend data already up to date."
@@ -162,6 +176,27 @@ jobs:
                       rc = 1
                   elif age > 2:
                       print(f"::warning::country_reading.json is {age} days old — watch this.")
+
+          # And the trending-searches snapshot. Its feed keeps no history
+          # upstream, so a silent failure is permanent data loss — that earns
+          # it the same policing as the reading lists.
+          csn_p = Path("data/trends/country_searches.json")
+          if csn_p.exists():
+              csc = json.loads(csn_p.read_text()).get("countries", {})
+              dates = [r.get("date") for r in csc.values()
+                       if not r.get("unsupported") and r.get("date")]
+              if dates:
+                  newest = max(dates)
+                  age = (date.today() - datetime.strptime(newest, "%Y-%m-%d").date()).days
+                  print(f"Trending searches: newest data {newest} ({age} days old)")
+                  if age > 4:
+                      print(f"::error::country_searches.json's newest data is {age} days old — "
+                            f"the Google Trends fetch has been failing silently, and every "
+                            f"missed day is unrecoverable; check the "
+                            f"'Fetch per-country trending searches' step logs.")
+                      rc = 1
+                  elif age > 2:
+                      print(f"::warning::country_searches.json is {age} days old — watch this.")
           sys.exit(rc)
           PY
 

@@ -585,6 +585,68 @@ def main() -> int:
         WARNS.append("trends/country_reading.json missing — per-country reading layer "
                      "not built yet")
 
+    # Per-country trending searches (Google Trends "Trending Now" RSS, daily)
+    # — an optional trend layer, so absence is a warning; a malformed entry is
+    # an error. Unsupported entries are legitimate (Google publishes no feed
+    # for ~74 countries) and are counted, not flagged. Traffic buckets are
+    # floors ("500+") stored verbatim plus a parsed integer floor; the check
+    # accepts any non-negative floor rather than re-parsing the bucket.
+    cs_path = ROOT / "data" / "trends" / "country_searches.json"
+    if cs_path.exists():
+        cs = load_json(cs_path)
+        n_search = n_unsupported = 0
+        for iso, rec in sorted((cs.get("countries") or {}).items()):
+            if iso not in countries:
+                ERRORS.append(f"country_searches {iso}: not a country the Atlas carries")
+                continue
+            if rec.get("unsupported"):
+                n_unsupported += 1
+                if not str(rec.get("note") or "").strip():
+                    ERRORS.append(f"country_searches {iso}: unsupported entry with no "
+                                  f"note — the site must be able to say why nothing is shown")
+                if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(rec.get("checked") or "")):
+                    ERRORS.append(f"country_searches {iso}: unsupported entry with no "
+                                  f"checked date — the weekly re-probe depends on it")
+                continue
+            n_search += 1
+            qs = rec.get("queries") or []
+            if not qs:
+                ERRORS.append(f"country_searches {iso}: entry with no queries — an "
+                              f"empty entry should be unsupported or absent")
+            if not re.search(r"https?://", str(rec.get("source") or "")):
+                ERRORS.append(f"country_searches {iso}: source line carries no URL — the "
+                              f"per-country citation must link the feed it came from")
+            if "retrieved" not in str(rec.get("source") or ""):
+                ERRORS.append(f"country_searches {iso}: source line names no retrieval date")
+            if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(rec.get("date") or "")):
+                ERRORS.append(f"country_searches {iso}: missing or malformed date "
+                              f"{rec.get('date')!r}")
+            for q in qs:
+                if not str(q.get("query") or "").strip():
+                    ERRORS.append(f"country_searches {iso}: query with empty text")
+                rank = q.get("rank")
+                if not (isinstance(rank, int) and rank > 0):
+                    ERRORS.append(f"country_searches {iso}: rank {rank!r} for "
+                                  f"{q.get('query')!r} is not a positive integer")
+                tm = q.get("traffic_min")
+                if tm is not None and not (isinstance(tm, int) and tm >= 0):
+                    ERRORS.append(f"country_searches {iso}: traffic_min {tm!r} for "
+                                  f"{q.get('query')!r} is not a non-negative integer")
+            hist = rec.get("history") or {}
+            for hday, hqueries in hist.items():
+                if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(hday)):
+                    ERRORS.append(f"country_searches {iso}: history key {hday!r} is "
+                                  f"not a date")
+                if not (isinstance(hqueries, list) and hqueries
+                        and all(str(x).strip() for x in hqueries)):
+                    ERRORS.append(f"country_searches {iso}: history for {hday} is not "
+                                  f"a non-empty list of queries")
+        INFOS.append(f"trending searches: {n_search}/{len(countries)} countries with "
+                     f"data, {n_unsupported} not covered by Google Trends")
+    else:
+        WARNS.append("trends/country_searches.json missing — trending-searches layer "
+                     "not built yet")
+
     am_path = ROOT / "data" / "ad_market.json"
     if am_path.exists():
         am = load_json(am_path)

@@ -2524,6 +2524,27 @@ function tabMedia(d) {
     html += `<div style="font-size:10px;color:var(--muted-2);margin-top:4px;">The most-read Wikipedia articles from this country on ${esc(cr.date)} (Wikimedia Pageviews, CC0), filtered to encyclopedia articles. View counts are privacy-rounded ceilings; the language mix is approximated from these top pages only. Wikipedia readers, not the general population.</div>`;
   }
 
+  // ---- Trending searches (Google Trends "Trending Now" RSS, daily) ----
+  // What this country is searching for right now — search interest of ANY
+  // kind, not news interest. Traffic figures are Google's buckets ("500+"):
+  // floors shown verbatim, never formatted as counts and never summed.
+  // Unsupported countries get an honest note, never a blank.
+  const cs = ((window.COUNTRY_SEARCHES || {}).countries || {})[currentActiveIso];
+  if (cs && cs.unsupported) {
+    html += `<h3>Trending searches <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Google Trends · daily</span></h3>`;
+    html += `<div style="font-size:11px;color:var(--muted-2);margin:2px 0 10px;">${esc(cs.note || "Google Trends does not publish a trending-searches feed for this country.")}</div>`;
+  } else if (cs && (cs.queries || []).length) {
+    html += `<h3>Trending searches <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Google Trends · ${esc(cs.date)}</span></h3>`;
+    cs.queries.slice(0, 8).forEach(q => {
+      const badge = q.new
+        ? ` <span style="font-size:10px;color:var(--accent);">new</span>`
+        : (q.days_seen > 1 ? ` <span style="font-size:10px;color:var(--muted-2);">${esc(String(q.days_seen))}d</span>` : "");
+      html += `<div class="data-row"><span class="label">${esc(q.query)}${badge}</span>` +
+              `<span class="value">${esc(q.traffic || "")}</span></div>`;
+    });
+    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:4px;">Searches trending in this country on ${esc(cs.date)}. Data source: Google Trends. Traffic figures are Google's buckets — floors, not measured volumes. Search interest of any kind, not news interest specifically; "new" = not seen in the previous 7 days' snapshots.</div>`;
+  }
+
   if ((d.topics_of_interest || []).length) {
     html += `<h3>${t("section_topics")}</h3>`;
     html += `<div class="pills">${d.topics_of_interest.map(topic => `<div class="pill">${esc(topic)}</div>`).join("")}</div>`;
@@ -2576,6 +2597,9 @@ function tabSources(d) {
   // (data/trends/country_reading.json), so its citation is appended here.
   const crs = ((window.COUNTRY_READING || {}).countries || {})[currentActiveIso];
   if (crs && crs.source) sourceEntries.push(["Most-read Wikipedia pages", crs.source]);
+  // And for the trending-searches layer (data/trends/country_searches.json).
+  const cse = ((window.COUNTRY_SEARCHES || {}).countries || {})[currentActiveIso];
+  if (cse && cse.source) sourceEntries.push(["Trending searches", cse.source]);
   return `
     <h3>${t("section_primary_sources")}</h3>
     <p style="color: var(--muted); font-size: 13px;">${t("sources_intro")}</p>
@@ -2785,6 +2809,24 @@ function openDeepLinkedCountry() {
                 Object.keys(window.COUNTRY_READING.countries || {}).length, "countries");
   } catch (err) {
     console.info("[atlas] country reading data unavailable:", err.message);
+  }
+})();
+
+/* Per-country trending searches (Google Trends "Trending Now" RSS, daily) —
+ * optional layer. Google covers ~120 of 195 countries; the rest carry an
+ * explicit unsupported flag so the country panel can say so instead of
+ * showing nothing. Only derived facts are in the file (query, bucket, date)
+ * — never the feed's third-party headlines or images. */
+(async function loadCountrySearches() {
+  try {
+    const r = await fetch("data/trends/country_searches.json", { cache: "no-cache" });
+    if (!r.ok) throw new Error("no trending-searches data yet (HTTP " + r.status + ")");
+    window.COUNTRY_SEARCHES = await r.json();
+    if (currentActiveIso) renderDetail(currentActiveIso);
+    console.log("[atlas] trending searches loaded:",
+                Object.keys(window.COUNTRY_SEARCHES.countries || {}).length, "countries");
+  } catch (err) {
+    console.info("[atlas] trending-searches data unavailable:", err.message);
   }
 })();
 

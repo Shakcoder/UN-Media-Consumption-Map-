@@ -31,19 +31,20 @@ const DATA_BASE = "data";
 // ---------------------------------------------------------------------------
 // Data loading
 // ---------------------------------------------------------------------------
-let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null, AD_MARKET = null, TV_STATIONS = null, COUNTRY_READING = null;
+let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null, AD_MARKET = null, TV_STATIONS = null, COUNTRY_READING = null, COUNTRY_SEARCHES = null;
 let NAME_TO_ISO = {};   // every recognizable name/alias/demonym -> ISO3
 let GENERATED = new Set();  // machine-generated demonyms: exact-match only, never fuzzy targets
 
 export async function initEngine() {
   if (COUNTRIES) return true;
-  const [cRes, tRes, gRes, aRes, tvRes, crRes] = await Promise.all([
+  const [cRes, tRes, gRes, aRes, tvRes, crRes, csRes] = await Promise.all([
     fetch(`${DATA_BASE}/countries.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/trends/topic_intelligence.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/topics.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/ad_market.json`, { cache: "no-cache" }).catch(() => null),
     fetch(`${DATA_BASE}/tv_stations.json`, { cache: "no-cache" }).catch(() => null),
     fetch(`${DATA_BASE}/trends/country_reading.json`, { cache: "no-cache" }).catch(() => null),
+    fetch(`${DATA_BASE}/trends/country_searches.json`, { cache: "no-cache" }).catch(() => null),
   ]);
   if (!cRes.ok) throw new Error("countries.json failed to load (" + cRes.status + ")");
   COUNTRIES = await cRes.json();
@@ -59,6 +60,10 @@ export async function initEngine() {
   // Per-country most-read Wikipedia pages (Wikimedia top-per-country, daily)
   // — directly measured per-country demand; withheld countries carry a flag.
   COUNTRY_READING = (crRes && crRes.ok) ? await crRes.json().catch(() => null) : null;
+  // Per-country trending Google searches (Trending Now RSS, daily snapshot
+  // plus our own rolling archive) — search interest, not news interest;
+  // countries Google does not cover carry an unsupported flag.
+  COUNTRY_SEARCHES = (csRes && csRes.ok) ? await csRes.json().catch(() => null) : null;
   // full registry: all tracked topics, including ones currently below the
   // trend-measurement floor (they match questions and report honestly)
   if (gRes.ok) {
@@ -871,6 +876,13 @@ function facts(iso) {
     // applies; consumers must treat that as "withheld", never "no interest".
     reading: (COUNTRY_READING && COUNTRY_READING.countries)
       ? (COUNTRY_READING.countries[iso] || null) : null,
+    // Trending searches FROM this country (Google Trends "Trending Now" RSS,
+    // daily snapshot + our own 7-day archive). Search interest of ANY kind,
+    // not news interest; traffic buckets are floors, never counts. May carry
+    // {unsupported: true} where Google publishes no feed for the country —
+    // consumers must treat that as "not covered", never "nothing trending".
+    searches: (COUNTRY_SEARCHES && COUNTRY_SEARCHES.countries)
+      ? (COUNTRY_SEARCHES.countries[iso] || null) : null,
     rising: tr ? (tr.rising_topics || []) : [],
     distinctive: tr ? (tr.distinctive_topics || []) : [],
     topTopics: tr ? (tr.top_topics || []) : [],
@@ -889,6 +901,8 @@ function addCountryEvidence(f, ev) {
   if (TRENDS) bits.push(`live trends: Wikimedia Pageviews + GDELT, daily engine as of ${TRENDS.generated} (language-weight attribution — approximation)`);
   if (f.reading && !f.reading.withheld) bits.push(`most-read Wikipedia pages: Wikimedia top-per-country ${f.reading.date} (CC0, directly per-country, articles only)`);
   else if (f.reading && f.reading.withheld) bits.push("per-country Wikipedia reading list: withheld by Wikimedia (privacy list / volume threshold)");
+  if (f.searches && !f.searches.unsupported) bits.push(`trending searches: Google Trends 'Trending Now' ${f.searches.date} (search interest of any kind, not news interest; traffic buckets are floors, not counts)`);
+  else if (f.searches && f.searches.unsupported) bits.push("trending searches: Google Trends publishes no feed for this country");
   return ev.add(`${f.name} — country profile`, "Atlas record. " + bits.join("; ") + ".", countryLinks(f.iso));
 }
 
@@ -1011,6 +1025,20 @@ function composeCountryBrief(f, ev, ents) {
     lines.push("");
   } else if (wantsTrends) {
     lines.push(`*No reliable trend signal is available for ${f.name} right now (below the measurement floor) — here is the country's media profile instead.*\n`);
+  }
+
+  // Trending searches (Google Trends "Trending Now") — a second, directly
+  // per-country demand signal next to the Wikipedia-based blocks above. The
+  // answer names the queries but never quotes Google's traffic buckets as
+  // volumes: they are floors ("500+"), not measurements.
+  if (wantsTrends && f.searches && !f.searches.unsupported && (f.searches.queries || []).length) {
+    const qs = f.searches.queries.slice(0, 5);
+    lines.push(`**What ${f.name} is searching for** (Google Trends, ${f.searches.date}): ${qs.map(q => `**${q.query}**${q.new ? " (new today)" : ""}`).join(" · ")}. *Search interest of any kind — not news interest specifically.*`);
+    lines.push("");
+    const srcUrl = (String(f.searches.source || "").match(/https?:\/\/\S+/) || [null])[0];
+    ev.add(`${f.name} — trending searches`,
+      `Google Trends "Trending Now" RSS, retrieved ${f.searches.date}. Only derived facts are stored (query, traffic bucket, date) — never the feed's third-party headlines. Traffic buckets are floors, not counts, and are deliberately not quoted in the answer. Data source: Google Trends.`,
+      srcUrl ? [{ label: "Google Trends — Trending Now RSS", url: srcUrl }] : []);
   }
 
   if (ents.intents.includes("recommend") && top) {

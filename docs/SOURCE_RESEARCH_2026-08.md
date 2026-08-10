@@ -4,6 +4,8 @@
 
 **Status of shortlist #1:** integrated 2026-08-07 — Wikimedia top-per-country now runs daily in `trend-engine.yml` (see `scripts/fetch_trends_wiki_countries.py` and DATA_SOURCES.md §1).
 
+**Status of shortlist #2:** integrated 2026-08-10 — Google Trends "Trending Now" RSS now runs daily as the trend engine's first step (`scripts/fetch_trends_google.py`; DATA_SOURCES.md §1). First full run: 121/195 countries returned data. Correction to §2.2 below: unsupported geos do **not** "fail soft" — Google answers **HTTP 400** with an HTML page, which the fetcher treats as "not covered" (and re-probes weekly) rather than as an error.
+
 ---
 
 ## 1. The state of platform APIs in 2026 — the blunt version
@@ -31,7 +33,7 @@ Sample: `https://wikimedia.org/api/rest_v1/metrics/pageviews/top-per-country/IN/
 Same family, not yet integrated: `top-by-country` (monthly ranking of countries by views per language edition) and the differential-privacy bulk CSVs (`analytics.wikimedia.org/published/datasets/country_project_page/`, daily since 2023-02, cover some withheld countries).
 **Integration reality check (2026-08-07):** article-level coverage after honest filtering is **~45–60 countries**, not the ~140–160 the API's raw reach suggests — the per-page privacy threshold truncates most smaller markets' lists to main/search pages, and those become explicit "withheld (below-threshold)" states. The DP bulk CSVs above are the route to broader coverage if ever wanted.
 
-### 2.2 Google Trends "Trending Now" RSS — next up
+### 2.2 Google Trends "Trending Now" RSS — ✅ INTEGRATED 2026-08-10
 
 ~10 currently-trending search queries per country with traffic buckets ("100+", "1000+") and linked headlines. The only live, free search-demand signal. Verified for 57/73 tested geos (realistic ceiling ~110–125 countries; unsupported geos fail soft). **No history — a snapshot; every unpolled day is lost forever**, so the archive should start as early as possible. No auth; RSS/XML; no CORS (Action only). License: Google's "Export, embed, and cite Trends data" guidance permits reuse with attribution ("Data source: Google Trends"); commit only derived facts (query, bucket, date), never the embedded third-party headlines/images.
 Sample: `https://trends.google.com/trending/rss?geo=KE`
@@ -141,7 +143,7 @@ One-liners: **WHO GHO** works but its OData API is officially slated for replace
 ## 6. Ranked shortlist
 
 1. **Wikimedia top-per-country** — ✅ integrated 2026-08-07.
-2. **Google Trends RSS** — search demand, ~110 countries, keyless; archive urgency.
+2. **Google Trends RSS** — ✅ integrated 2026-08-10 (121 countries on the first run; the no-history archive is now accruing daily).
 3. **Media Cloud** — news volume vs named national source lists; free key; counts explicitly redistributable.
 4. **YouTube charts** — new consumption vertical, ~110 countries; needs the 30-day pruning design + correct labeling.
 5. **Cloudflare Radar** — trending domains + shutdown evidence; gated on the NC-license check.
