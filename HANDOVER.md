@@ -53,9 +53,26 @@ button. Full detail: [docs/AUTOMATION.md](docs/AUTOMATION.md).
 
 **None of this needs a paid service, an AI subscription, or a password.** The
 workflows are ordinary Python and JavaScript scripts running on GitHub's free
-machines, fetching public data. There is no API key to renew and no account to
-keep paying for. (Checked August 2026: no workflow or script references any AI
-service, and none uses a stored secret beyond GitHub's own built-in token.)
+machines, fetching public data. Nothing here costs money and nothing expires on
+a billing date. (Checked August 2026: no workflow or script references any AI
+service.)
+
+**There is exactly one stored credential — know about it.** Since 2026-08-10 the
+Media Cloud fetcher (national-press coverage) uses a free API key, stored as the
+repository secret `MEDIACLOUD_API_KEY` (GitHub → Settings → Secrets and variables
+→ Actions). Two things a successor must know:
+
+- It was deliberately registered on the **UN media-partnerships team account**,
+  not a personal one, so the key itself outlives any individual's departure.
+- **After transferring the repository, confirm the secret is still there** (same
+  Settings page). If it is missing, log in to
+  [search.mediacloud.org](https://search.mediacloud.org/), copy the key from the
+  account page, and paste it back — one minute's work. Everything else keeps
+  running regardless; only the "UN in the national press" figures would stop
+  refreshing, and the engine raises a loud failure after 7 stale days.
+
+Every other source (Wikimedia, GDELT, Google Trends, Bluesky, World Bank,
+Statcounter, CLDR) is keyless and needs no account at all.
 
 **When something breaks, a GitHub Issue opens automatically** (and GitHub
 emails the repository owner). One failed day is normal noise. The
@@ -129,11 +146,19 @@ Two points that surprise people:
   it. It will keep working exactly as it does today. (The optional AI
   text-polishing layer in `worker/` was deliberately left switched **off**.)
 - **The daily and weekly data refreshes need no human at all.** Country
-  indicators, topic trends, TV-station lists and the safety checks all continue
-  without anyone touching them.
+  indicators, topic trends, per-country reading lists, trending searches, the
+  Bluesky pulse, national-press coverage, TV-station lists and the safety
+  checks all continue without anyone touching them.
 
 What *stops* without a person: the annual report updates, and reading the
 Issues the automation opens. Those are listed above.
+
+**The one thing that would stop everything** is not technical: it is the
+GitHub account. Today `Shakcoder` is the repository's **only** collaborator and
+administrator (verified 2026-08-10). Nobody else can currently re-enable a
+sleeping workflow, re-add the Media Cloud key, or recover the site. That is
+what item 1 below fixes, and it is the single highest-value hour of the whole
+handover.
 
 ### Three things to do before the handover
 
@@ -145,6 +170,11 @@ disappear with it.** Move it to an account or organisation the UN controls:
 
 > GitHub → the repository → **Settings** → scroll to the bottom (**Danger
 > Zone**) → **Transfer ownership** → type the new owner's account name.
+
+*After the transfer, check two things:* that the `MEDIACLOUD_API_KEY` secret is
+still listed under Settings → Secrets and variables → Actions (re-add it from
+the Media Cloud account page if not), and that the five workflows still show as
+enabled under the Actions tab.
 
 **One honest consequence:** the public web address changes. A GitHub Pages
 site is named after its owner, so `shakcoder.github.io/...` becomes
@@ -171,15 +201,23 @@ the Issue it created and follow the steps written inside it.*
 **3. Know about the 60-day sleep rule.**
 
 GitHub switches off scheduled jobs in a public project after **60 days with no
-activity at all**. In normal operation this never triggers, because the daily
-trend engine commits data every morning and that counts as activity. But if
-everything failed for two months and nobody looked, the jobs would go to sleep
-and need waking by hand:
+repository activity**. The daily trend engine does commit every morning — but
+those commits are made by the automation itself (the `atlas-bot` identity using
+GitHub's built-in token), and **GitHub does not reliably count a bot's own
+commits as "activity"** for this rule. Treat the safe assumption as the true
+one: *the jobs may fall asleep even while they appear to be working.*
 
-> GitHub → **Actions** tab → pick the workflow → **Enable workflow**.
+Two cheap defences, either is enough:
 
-Worth knowing so a successor is not baffled by a site that quietly stopped
-updating.
+1. **A human touches the repository at least once every couple of months** —
+   any real commit, comment, or edit through the website resets the clock. In
+   practice, anyone maintaining the data does this without trying.
+2. **Know how to wake it up.** GitHub emails the repository owner before
+   disabling, and re-enabling takes one click:
+   > GitHub → **Actions** tab → pick the workflow → **Enable workflow**.
+
+The symptom to recognise: the site's "Data last checked" date stops advancing
+while nothing appears to have failed. That is this rule, not a broken script.
 
 ### What happens if nobody does any of this
 
