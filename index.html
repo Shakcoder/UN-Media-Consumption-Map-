@@ -577,8 +577,11 @@
 <a class="skip-link" href="#country-list">Skip to country list</a>
 <header class="site">
   <div class="brand">
-    <!-- Official United Nations emblem (public domain UN document artwork). -->
-    <img class="logo" src="assets/un_emblem.png" alt="United Nations emblem" width="40" height="33">
+    <!-- Official United Nations emblem (public domain UN document artwork).
+         Linked home from every page (Shakti's request, 2026-08-10). -->
+    <a href="index.html" aria-label="United Nations emblem — back to the map" style="display:block; line-height:0;">
+      <img class="logo" src="assets/un_emblem.png" alt="United Nations emblem" width="40" height="33">
+    </a>
     <div>
       <div class="subtitle" style="text-transform:uppercase; letter-spacing:0.08em; font-weight:600;" data-i18n="brand_un">United Nations</div>
       <h1 class="title" style="margin:0; font-size:15px;" data-i18n="brand_title">Audience Intelligence Atlas</h1>
@@ -590,8 +593,9 @@
     <a href="topics.html" data-i18n="nav_topics">Topic Explorer</a>
     <a href="finder.html" data-i18n="nav_finder">Market Finder</a>
     <a href="ask.html" data-i18n="nav_ask">AI Analyst</a>
-    <button id="open-methodology" data-i18n="nav_methodology">Methodology</button>
-    <button id="open-sources" data-i18n="nav_sources">Sources</button>
+    <!-- One button, one modal: "Sources" used to sit beside this and opened
+         the SAME modal — merged 2026-08-10 (the modal covers both). -->
+    <button id="open-methodology" data-i18n="nav_methodology">Methodology &amp; sources</button>
     <!-- Survey link hidden until the survey is live:
     <a href="#" data-i18n="nav_survey">Take the survey</a> -->
     <a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-#readme" target="_blank" rel="noopener" data-i18n="nav_about">About</a>
@@ -767,7 +771,7 @@
       <p style="color: var(--muted); font-size: 12.5px; line-height: 1.6; font-style: italic;" data-i18n="modal_boundaries_note">The boundaries and names shown and the designations used on the map do not imply official endorsement or acceptance by the United Nations. Country outlines are generalized for display; where the underlying dataset diverges from United Nations cartographic practice and the geometry permits, the presentation follows the United Nations position.</p>
 
       <h3 style="font-size: 14px; color: var(--ink); margin: 18px 0 6px;" data-i18n="modal_confidence_flags">Confidence flags</h3>
-      <p style="color: var(--muted);" data-i18n="modal_confidence_body">Each country record carries a confidence flag: verified (checked against its primary sources) or preliminary (not yet verified — must not be cited publicly). Individual figures always name their source in the Sources tab.</p>
+      <p style="color: var(--muted);" data-i18n="modal_confidence_body">Each country carries a derived confidence level. High: the record is verified against its primary sources and a measured news-consumption survey covers the country. Medium: verified, but news figures rest on structural indicators or on a survey that carries a methodological caveat (sample or question construct). Low: not yet verified — must not be cited publicly. Individual figures always name their source in the Sources tab.</p>
     </div>
   </div>
 </div>
@@ -1113,7 +1117,7 @@ window.TRANSLATIONS = {
     brand_un: "United Nations",
     brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "An open, source-cited public research resource",
-    nav_map: "Map", nav_topics: "Topic Explorer", nav_finder: "Market Finder", nav_ask: "AI Analyst", nav_methodology: "Methodology", nav_sources: "Sources",
+    nav_map: "Map", nav_topics: "Topic Explorer", nav_finder: "Market Finder", nav_ask: "AI Analyst", nav_methodology: "Methodology & sources", nav_sources: "Sources",
     nav_survey: "Take the survey", nav_about: "About",
     search_placeholder: "Search a country…",
     chip_all: "All regions", chip_africa: "Africa", chip_americas: "Americas",
@@ -1171,7 +1175,8 @@ window.TRANSLATIONS = {
     no_data_body: "This area has no separate profile (it is shown under its sovereign state, or is a non-sovereign territory). All 195 countries — the 193 UN member states plus the two observer states — are covered.",
     no_data_subline: "Country profile not yet available",
     sources_intro: "Every figure on this page names its source below. Most are primary sources; where a figure is an Atlas editorial compilation rather than a measurement, the entry says so.",
-    sources_confidence_note: "Confidence reflects whether each value has been independently verified against its primary source within the last 12 months and whether the source is Tier 1 (institutional) or Tier 2 (peer-reviewed research).",
+    sources_confidence_note: "Confidence is derived from the record itself. High: verified against primary sources and covered by a measured news-consumption survey. Medium: verified, but news figures rest on structural indicators or a survey that carries a methodological caveat (sample or question construct). Low: not yet verified against primary sources — never cite publicly. Every figure names its own source and edition above.",
+    confidence_high: "High", confidence_medium: "Medium", confidence_low: "Low",
     translation_notice: "Country overviews and industry descriptions remain in English while translations are being finalised.",
     subline_capital: "Capital",
     subline_pop: "Pop.",
@@ -1187,7 +1192,7 @@ window.TRANSLATIONS = {
     modal_licences_body: "The Atlas redistributes figures from sources with their own terms. World Bank Open Data (including the ITU, UNESCO UIS and Global Findex series it republishes) is used under CC BY 4.0. Unicode CLDR language data is used under the Unicode License v3. Wikimedia Pageviews data is CC0. The CIA World Factbook is in the public domain. RSF, Freedom House, the Reuters Institute and the barometer programmes (Afrobarometer, Arab Barometer, World Values Survey, Eurobarometer / GESIS, Latinobarómetro, Asian Barometer) permit non-commercial research reuse with attribution; each figure names its programme and edition wherever it appears. Statcounter and GDELT are used under their published terms with attribution. DataReportal and the WPP Media / Dentsu ad forecasts are cited as industry estimates and are never redistributed in bulk. Google Trends data is reused with attribution (“Data source: Google Trends”). Bluesky and Media Cloud material is stored as aggregate topics and counts only — never posts, handles or story text — in line with their terms. Where a source's terms do not permit redistribution, the Atlas links to it rather than copying it.",
     modal_boundaries_note: "The boundaries and names shown and the designations used on the map do not imply official endorsement or acceptance by the United Nations. Country outlines are generalized for display; where the underlying dataset diverges from United Nations cartographic practice and the geometry permits, the presentation follows the United Nations position.",
     modal_confidence_flags: "Confidence flags",
-    modal_confidence_body: "Each country record carries a confidence flag: verified (checked against its primary sources) or preliminary (not yet verified — must not be cited publicly). Individual figures always name their source in the Sources tab.",
+    modal_confidence_body: "Each country carries a derived confidence level. High: the record is verified against its primary sources and a measured news-consumption survey covers the country. Medium: verified, but news figures rest on structural indicators or on a survey that carries a methodological caveat (sample or question construct). Low: not yet verified — must not be cited publicly. Individual figures always name their source in the Sources tab.",
     footer_copyright: "© 2026 · United Nations · Audience Intelligence Atlas · Data last checked",
     footer_methodology: "Methodology", footer_github: "GitHub", footer_report: "Report an error"
   },
@@ -1197,7 +1202,7 @@ window.TRANSLATIONS = {
     brand_un: "Nations Unies",
     brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "Une ressource publique de recherche, ouverte et sourcée",
-    nav_map: "Carte", nav_topics: "Explorateur de thèmes", nav_finder: "Recherche de marchés", nav_ask: "Analyste IA", nav_methodology: "Méthodologie", nav_sources: "Sources",
+    nav_map: "Carte", nav_topics: "Explorateur de thèmes", nav_finder: "Recherche de marchés", nav_ask: "Analyste IA", nav_methodology: "Méthodologie et sources", nav_sources: "Sources",
     nav_survey: "Répondre au sondage", nav_about: "À propos",
     search_placeholder: "Rechercher un pays…",
     chip_all: "Toutes les régions", chip_africa: "Afrique", chip_americas: "Amériques",
@@ -1255,7 +1260,8 @@ window.TRANSLATIONS = {
     no_data_body: "Cette zone n'a pas de profil distinct (elle est présentée sous celui de son État souverain, ou il s'agit d'un territoire non souverain). Les 195 pays — les 193 États membres de l'ONU et les deux États observateurs — sont tous couverts.",
     no_data_subline: "Profil du pays non encore disponible",
     sources_intro: "Chaque chiffre de cette page indique sa source ci-dessous. La plupart sont des sources primaires ; lorsqu'un chiffre relève d'une compilation éditoriale de l'Atlas plutôt que d'une mesure, la mention le précise.",
-    sources_confidence_note: "Le niveau de confiance indique si chaque valeur a été vérifiée de manière indépendante auprès de sa source primaire au cours des 12 derniers mois et si la source est de niveau 1 (institutionnel) ou niveau 2 (recherche évaluée par les pairs).",
+    sources_confidence_note: "Le niveau de confiance découle de la fiche elle-même. Élevé : vérifiée auprès des sources primaires et couverte par une enquête mesurée de consommation d'information. Moyen : vérifiée, mais les chiffres d'information reposent sur des indicateurs structurels ou sur une enquête assortie d'une réserve méthodologique (échantillon ou formulation). Faible : non encore vérifiée — à ne jamais citer publiquement. Chaque chiffre nomme sa source et son édition ci-dessus.",
+    confidence_high: "Élevé", confidence_medium: "Moyen", confidence_low: "Faible",
     translation_notice: "Les aperçus par pays et les descriptions des industries restent en anglais en attendant la finalisation des traductions.",
     subline_capital: "Capitale", subline_pop: "Pop.",
     modal_title: "Méthodologie et normes de données",
@@ -1270,7 +1276,7 @@ window.TRANSLATIONS = {
     modal_licences_body: "L'Atlas rediffuse des chiffres issus de sources ayant leurs propres conditions. Les données World Bank Open Data (y compris les séries ITU, UNESCO UIS et Global Findex qu'elles republient) sont utilisées sous licence CC BY 4.0. Les données linguistiques Unicode CLDR sont utilisées sous licence Unicode v3. Les données Wikimedia Pageviews sont en CC0. Le CIA World Factbook est dans le domaine public. RSF, Freedom House, le Reuters Institute et les programmes de baromètres autorisent une réutilisation de recherche non commerciale avec attribution ; chaque chiffre indique son programme et son édition. Statcounter et GDELT sont utilisés selon leurs conditions publiées, avec attribution. DataReportal et les prévisions publicitaires WPP Media / Dentsu sont citées comme estimations sectorielles et ne sont jamais rediffusées en masse. Les données Google Trends sont réutilisées avec attribution (« Data source: Google Trends »). Les contenus Bluesky et Media Cloud ne sont conservés que sous forme d'agrégats (sujets et décomptes) — jamais de publications, de comptes ni de textes d'articles — conformément à leurs conditions. Lorsque les conditions d'une source n'autorisent pas la rediffusion, l'Atlas y renvoie par un lien plutôt que de la copier.",
     modal_boundaries_note: "Les frontières, noms et désignations figurant sur la carte n'impliquent ni reconnaissance ni acceptation officielle de la part de l'Organisation des Nations Unies. Les contours des pays sont généralisés pour l'affichage ; lorsque les données sources divergent de la pratique cartographique des Nations Unies et que la géométrie le permet, la présentation suit la position des Nations Unies.",
     modal_confidence_flags: "Indicateurs de confiance",
-    modal_confidence_body: "Chaque fiche pays porte un indicateur de confiance : vérifié (contrôlé auprès de ses sources primaires) ou préliminaire (non encore vérifié — à ne pas citer publiquement). Chaque chiffre nomme sa source dans l'onglet Sources.",
+    modal_confidence_body: "Chaque pays porte un niveau de confiance dérivé. Élevé : la fiche est vérifiée auprès de ses sources primaires et une enquête mesurée de consommation d'information couvre le pays. Moyen : vérifiée, mais les chiffres d'information reposent sur des indicateurs structurels ou sur une enquête assortie d'une réserve méthodologique (échantillon ou formulation). Faible : non encore vérifiée — à ne pas citer publiquement. Chaque chiffre nomme sa source dans l'onglet Sources.",
     footer_copyright: "© 2026 · Nations Unies · Audience Intelligence Atlas · Données vérifiées le",
     footer_methodology: "Méthodologie", footer_github: "GitHub", footer_report: "Signaler une erreur"
   },
@@ -1280,7 +1286,7 @@ window.TRANSLATIONS = {
     brand_un: "Naciones Unidas",
     brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "Un recurso público de investigación, abierto y con citas",
-    nav_map: "Mapa", nav_topics: "Explorador de temas", nav_finder: "Buscador de mercados", nav_ask: "Analista IA", nav_methodology: "Metodología", nav_sources: "Fuentes",
+    nav_map: "Mapa", nav_topics: "Explorador de temas", nav_finder: "Buscador de mercados", nav_ask: "Analista IA", nav_methodology: "Metodología y fuentes", nav_sources: "Fuentes",
     nav_survey: "Responder la encuesta", nav_about: "Acerca de",
     search_placeholder: "Buscar un país…",
     chip_all: "Todas las regiones", chip_africa: "África", chip_americas: "Américas",
@@ -1338,7 +1344,8 @@ window.TRANSLATIONS = {
     no_data_body: "Esta zona no tiene un perfil propio (se muestra dentro del de su Estado soberano, o es un territorio no soberano). Los 195 países — los 193 Estados miembros de la ONU más los dos Estados observadores — están cubiertos.",
     no_data_subline: "Perfil del país aún no disponible",
     sources_intro: "Cada cifra de esta página indica su fuente más abajo. La mayoría son fuentes primarias; cuando una cifra es una compilación editorial del Atlas y no una medición, la entrada lo indica.",
-    sources_confidence_note: "El nivel de confianza refleja si cada valor ha sido verificado de forma independiente con su fuente primaria en los últimos 12 meses y si la fuente es de nivel 1 (institucional) o nivel 2 (investigación revisada por pares).",
+    sources_confidence_note: "La confianza se deriva de la propia ficha. Alta: verificada con fuentes primarias y cubierta por una encuesta medida de consumo de noticias. Media: verificada, pero las cifras de noticias se apoyan en indicadores estructurales o en una encuesta con una reserva metodológica (muestra o formulación). Baja: aún sin verificar — nunca debe citarse públicamente. Cada cifra nombra arriba su fuente y edición.",
+    confidence_high: "Alta", confidence_medium: "Media", confidence_low: "Baja",
     translation_notice: "Los resúmenes de país y descripciones de industrias permanecen en inglés mientras se finalizan las traducciones.",
     subline_capital: "Capital", subline_pop: "Pob.",
     modal_title: "Metodología y estándares de datos",
@@ -1353,7 +1360,7 @@ window.TRANSLATIONS = {
     modal_licences_body: "El Atlas redistribuye cifras procedentes de fuentes con sus propias condiciones. Los datos de World Bank Open Data (incluidas las series de la UIT, el UIS de la UNESCO y Global Findex que republica) se utilizan bajo CC BY 4.0. Los datos lingüísticos de Unicode CLDR se utilizan bajo la Licencia Unicode v3. Los datos de Wikimedia Pageviews son CC0. El CIA World Factbook es de dominio público. RSF, Freedom House, el Reuters Institute y los programas de barómetros permiten la reutilización de investigación no comercial con atribución; cada cifra indica su programa y edición. Statcounter y GDELT se utilizan conforme a sus condiciones publicadas, con atribución. DataReportal y las previsiones publicitarias de WPP Media / Dentsu se citan como estimaciones del sector y nunca se redistribuyen de forma masiva. Los datos de Google Trends se reutilizan con atribución («Data source: Google Trends»). El material de Bluesky y Media Cloud se conserva solo como agregados (temas y recuentos) — nunca publicaciones, cuentas ni textos de artículos — conforme a sus condiciones. Cuando las condiciones de una fuente no permiten la redistribución, el Atlas enlaza a ella en lugar de copiarla.",
     modal_boundaries_note: "Las fronteras, nombres y designaciones que figuran en el mapa no implican reconocimiento ni aceptación oficial por parte de las Naciones Unidas. Los contornos de los países están generalizados para su visualización; cuando los datos de origen divergen de la práctica cartográfica de las Naciones Unidas y la geometría lo permite, la presentación sigue la posición de las Naciones Unidas.",
     modal_confidence_flags: "Indicadores de confianza",
-    modal_confidence_body: "Cada ficha de país lleva un indicador de confianza: verificado (contrastado con sus fuentes primarias) o preliminar (aún sin verificar — no debe citarse públicamente). Cada cifra nombra su fuente en la pestaña Fuentes.",
+    modal_confidence_body: "Cada país lleva un nivel de confianza derivado. Alta: la ficha está verificada con sus fuentes primarias y una encuesta medida de consumo de noticias cubre el país. Media: verificada, pero las cifras de noticias se apoyan en indicadores estructurales o en una encuesta con una reserva metodológica (muestra o formulación). Baja: aún sin verificar — no debe citarse públicamente. Cada cifra nombra su fuente en la pestaña Fuentes.",
     footer_copyright: "© 2026 · Naciones Unidas · Audience Intelligence Atlas · Datos verificados el",
     footer_methodology: "Metodología", footer_github: "GitHub", footer_report: "Informar de un error"
   },
@@ -1363,7 +1370,7 @@ window.TRANSLATIONS = {
     brand_un: "الأمم المتحدة",
     brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "مورد بحثي عام مفتوح مع توثيق المصادر",
-    nav_map: "الخريطة", nav_topics: "مستكشف المواضيع", nav_finder: "مستكشف الأسواق", nav_ask: "محلل الذكاء الاصطناعي", nav_methodology: "المنهجية", nav_sources: "المصادر",
+    nav_map: "الخريطة", nav_topics: "مستكشف المواضيع", nav_finder: "مستكشف الأسواق", nav_ask: "محلل الذكاء الاصطناعي", nav_methodology: "المنهجية والمصادر", nav_sources: "المصادر",
     nav_survey: "المشاركة في الاستبيان", nav_about: "حول",
     search_placeholder: "ابحث عن دولة…",
     chip_all: "جميع المناطق", chip_africa: "أفريقيا", chip_americas: "الأمريكتان",
@@ -1421,7 +1428,8 @@ window.TRANSLATIONS = {
     no_data_body: "لا يوجد لهذه المنطقة ملف مستقل (تُعرض ضمن ملف الدولة ذات السيادة التابعة لها، أو أنها إقليم غير ذي سيادة). التغطية تشمل جميع الدول الـ 195 — الدول الأعضاء الـ 193 في الأمم المتحدة إضافة إلى الدولتين المراقبتين.",
     no_data_subline: "ملف الدولة غير متاح بعد",
     sources_intro: "كل رقم في هذه الصفحة يذكر مصدره أدناه. معظمها مصادر أولية؛ وحين يكون الرقم تجميعًا تحريريًا من الأطلس وليس قياسًا، فإن المدخل يوضح ذلك.",
-    sources_confidence_note: "يعكس مستوى الثقة ما إذا تم التحقق من كل قيمة بشكل مستقل مع مصدرها الأولي خلال الاثني عشر شهرًا الماضية، وما إذا كان المصدر من المستوى الأول (مؤسسي) أو المستوى الثاني (بحث خاضع لمراجعة الأقران).",
+    sources_confidence_note: "يُستمد مستوى الثقة من السجل نفسه. مرتفع: تم التحقق من السجل مقابل المصادر الأولية وتغطيه دراسة مسحية مقيسة لاستهلاك الأخبار. متوسط: سجل مُتحقَّق منه، لكن أرقام الأخبار تستند إلى مؤشرات بنيوية أو إلى مسح يحمل تحفظًا منهجيًا (على العينة أو صياغة السؤال). منخفض: لم يُتحقق منه بعد — لا يُستشهد به علنًا أبدًا. وكل رقم يُسمّي مصدره وإصداره أعلاه.",
+    confidence_high: "مرتفع", confidence_medium: "متوسط", confidence_low: "منخفض",
     translation_notice: "تظل نظرات الدول ووصف الصناعات بالإنجليزية ريثما تُنجز الترجمات.",
     subline_capital: "العاصمة", subline_pop: "عدد السكان",
     modal_title: "المنهجية ومعايير البيانات",
@@ -1436,7 +1444,7 @@ window.TRANSLATIONS = {
     modal_licences_body: "يعيد الأطلس نشر أرقام من مصادر لكل منها شروطها الخاصة. تُستخدم بيانات World Bank Open Data (بما فيها سلاسل الاتحاد الدولي للاتصالات ومعهد اليونسكو للإحصاء وGlobal Findex التي يعيد نشرها) بموجب رخصة CC BY 4.0. وتُستخدم بيانات اللغات من Unicode CLDR بموجب رخصة Unicode الإصدار 3. وبيانات Wikimedia Pageviews متاحة بموجب CC0. وكتاب حقائق العالم الصادر عن CIA في الملك العام. وتسمح منظمة مراسلون بلا حدود وFreedom House ومعهد رويترز وبرامج الباrometer بإعادة الاستخدام البحثي غير التجاري مع الإسناد؛ ويذكر كل رقم برنامجه وإصداره. ويُستخدم Statcounter وGDELT وفق شروطهما المنشورة مع الإسناد. أما DataReportal وتوقعات الإنفاق الإعلاني من WPP Media وDentsu فتُذكر بوصفها تقديرات قطاعية ولا يُعاد نشرها بالجملة. وتُستخدم بيانات Google Trends مع الإسناد («Data source: Google Trends»). ولا يُحتفظ من Bluesky وMedia Cloud إلا ببيانات مجمّعة (موضوعات وأعداد) — لا منشورات ولا حسابات ولا نصوص أخبار — وفقًا لشروطهما. وحين لا تسمح شروط مصدر ما بإعادة النشر، يكتفي الأطلس بالإحالة إليه بدل نسخه.",
     modal_boundaries_note: "لا تعني الحدود والأسماء المبينة على الخريطة والتسميات المستخدمة فيها إقرارًا أو قبولًا رسميًا من جانب الأمم المتحدة. وقد بُسطت حدود البلدان لأغراض العرض؛ وحيثما تختلف البيانات المصدرية عن الممارسة الخرائطية للأمم المتحدة وتسمح البنية الهندسية بذلك، يتبع العرض موقف الأمم المتحدة.",
     modal_confidence_flags: "مستويات الثقة",
-    modal_confidence_body: "يحمل سجل كل دولة مؤشر ثقة: مُتحقَّق منه (رُوجع مقابل مصادره الأولية) أو أولي (لم يُتحقق منه بعد — لا يجوز الاستشهاد به علنًا). ويُسمّي كل رقم مصدره في تبويب المصادر.",
+    modal_confidence_body: "يحمل كل بلد مستوى ثقة مُستمدًا. مرتفع: السجل مُتحقَّق منه مقابل مصادره الأولية وتغطي البلدَ دراسةٌ مسحية مقيسة لاستهلاك الأخبار. متوسط: مُتحقَّق منه، لكن أرقام الأخبار تستند إلى مؤشرات بنيوية أو إلى مسح يحمل تحفظًا منهجيًا (على العينة أو صياغة السؤال). منخفض: لم يُتحقق منه بعد — لا يجوز الاستشهاد به علنًا. ويُسمّي كل رقم مصدره في تبويب المصادر.",
     footer_copyright: "© ٢٠٢٦ · الأمم المتحدة · Audience Intelligence Atlas · آخر تحقق من البيانات",
     footer_methodology: "المنهجية", footer_github: "GitHub", footer_report: "الإبلاغ عن خطأ"
   },
@@ -1446,7 +1454,7 @@ window.TRANSLATIONS = {
     brand_un: "联合国",
     brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "一个公开、附有来源引用的公共研究资源",
-    nav_map: "地图", nav_topics: "话题浏览器", nav_finder: "市场筛选器", nav_ask: "AI 分析师", nav_methodology: "方法论", nav_sources: "来源",
+    nav_map: "地图", nav_topics: "话题浏览器", nav_finder: "市场筛选器", nav_ask: "AI 分析师", nav_methodology: "方法论与来源", nav_sources: "来源",
     nav_survey: "参与调查", nav_about: "关于",
     search_placeholder: "搜索国家……",
     chip_all: "所有地区", chip_africa: "非洲", chip_americas: "美洲",
@@ -1504,7 +1512,8 @@ window.TRANSLATIONS = {
     no_data_body: "此区域没有单独的资料（其数据显示在所属主权国家的资料中，或该区域并非主权国家）。全部 195 个国家——193 个联合国会员国及 2 个观察员国——均已覆盖。",
     no_data_subline: "国家资料尚未提供",
     sources_intro: "本页每一项数字均在下方注明来源。多数为一手来源；若某项数字属于本图集的编辑汇编而非实测数据，条目中会予以说明。",
-    sources_confidence_note: "可信度反映每一数值是否在过去 12 个月内对照其主要来源独立核实，以及该来源属于第一层（机构）还是第二层（同行评议研究）。",
+    sources_confidence_note: "可信度由记录本身推导：高——已对照主要来源核实，且该国有实测的新闻消费调查覆盖；中——已核实，但新闻数据依赖结构性指标，或所依据的调查带有方法学保留说明（样本或问法）；低——尚未对照主要来源核实，绝不可公开引用。每个数字的来源与版次均在上方注明。",
+    confidence_high: "高", confidence_medium: "中", confidence_low: "低",
     translation_notice: "各国概览与行业描述在翻译最终确定前暂保留英文。",
     subline_capital: "首都", subline_pop: "人口",
     modal_title: "方法论与数据标准",
@@ -1519,7 +1528,7 @@ window.TRANSLATIONS = {
     modal_licences_body: "本图集转载的数据来自各有其使用条款的来源。世界银行开放数据（含其转载的国际电联、联合国教科文组织统计研究所及 Global Findex 系列）依 CC BY 4.0 使用。Unicode CLDR 语言数据依 Unicode 许可证 v3 使用。维基媒体页面浏览量数据为 CC0。美国中央情报局《世界概况》属公有领域。无国界记者、自由之家、路透社研究院及各民意调查项目允许在署名前提下用于非商业研究；每项数字均注明其项目与版次。Statcounter 与 GDELT 依其公布条款并署名使用。DataReportal 及 WPP Media／电通的广告支出预测均作为行业估算引用，绝不批量转载。Google Trends 数据在注明来源（“Data source: Google Trends”）的前提下使用。Bluesky 与 Media Cloud 的内容仅以聚合形式（主题与计数）保存——绝不存储帖子、账号或新闻正文——符合其条款。若某来源的条款不允许转载，本图集仅提供链接而不复制其内容。",
     modal_boundaries_note: "地图上所示的边界、名称及所用称谓并不意味着联合国的正式认可或接受。国家轮廓经过概化处理以便显示；当源数据与联合国制图惯例不一致且几何数据允许时，地图呈现遵循联合国的立场。",
     modal_confidence_flags: "可信度标记",
-    modal_confidence_body: "每条国家记录均带有可信度标记：已核实（已对照其主要来源核对）或初步（尚未核实——不得公开引用）。每个数字都会在「来源」选项卡中注明其来源。",
+    modal_confidence_body: "每个国家带有推导得出的可信度等级：高——记录已对照主要来源核实，且该国有实测的新闻消费调查覆盖；中——已核实，但新闻数据依赖结构性指标，或所依据的调查带有方法学保留说明（样本或问法）；低——尚未核实，不得公开引用。每个数字都会在「来源」选项卡中注明其来源。",
     footer_copyright: "© 2026 · 联合国 · Audience Intelligence Atlas · 数据最近核查",
     footer_methodology: "方法论", footer_github: "GitHub", footer_report: "报告错误"
   },
@@ -1529,7 +1538,7 @@ window.TRANSLATIONS = {
     brand_un: "Организация Объединённых Наций",
     brand_title: "Audience Intelligence Atlas",
     brand_subtitle: "Открытый общественный исследовательский ресурс с указанием источников",
-    nav_map: "Карта", nav_topics: "Обзор тем", nav_finder: "Поиск рынков", nav_ask: "ИИ-аналитик", nav_methodology: "Методология", nav_sources: "Источники",
+    nav_map: "Карта", nav_topics: "Обзор тем", nav_finder: "Поиск рынков", nav_ask: "ИИ-аналитик", nav_methodology: "Методология и источники", nav_sources: "Источники",
     nav_survey: "Пройти опрос", nav_about: "О проекте",
     search_placeholder: "Поиск страны…",
     chip_all: "Все регионы", chip_africa: "Африка", chip_americas: "Америки",
@@ -1587,7 +1596,8 @@ window.TRANSLATIONS = {
     no_data_body: "У этой территории нет отдельного профиля (она показана в профиле своего суверенного государства либо не является суверенным государством). Охвачены все 195 стран — 193 государства — члена ООН и два государства-наблюдателя.",
     no_data_subline: "Профиль страны пока недоступен",
     sources_intro: "Каждый показатель на этой странице указывает свой источник ниже. Большинство — первичные источники; если показатель является редакционной подборкой Атласа, а не измерением, это указано в записи.",
-    sources_confidence_note: "Уровень достоверности отражает, была ли каждая величина независимо проверена по первичному источнику за последние 12 месяцев, и относится ли источник к уровню 1 (институциональный) или уровню 2 (рецензируемые исследования).",
+    sources_confidence_note: "Уровень достоверности выводится из самой записи. Высокий: запись сверена с первичными источниками и страну покрывает измеренное обследование потребления новостей. Средний: запись проверена, но новостные показатели опираются на структурные индикаторы или на обследование с методологической оговоркой (выборка или формулировка). Низкий: ещё не сверено с первичными источниками — публично не цитировать. Каждый показатель называет свой источник и издание выше.",
+    confidence_high: "Высокий", confidence_medium: "Средний", confidence_low: "Низкий",
     translation_notice: "Страновые обзоры и описания отраслей остаются на английском до завершения переводов.",
     subline_capital: "Столица", subline_pop: "Нас.",
     modal_title: "Методология и стандарты данных",
@@ -1602,7 +1612,7 @@ window.TRANSLATIONS = {
     modal_licences_body: "Атлас воспроизводит данные из источников с собственными условиями использования. World Bank Open Data (включая переиздаваемые ряды МСЭ, Института статистики ЮНЕСКО и Global Findex) используются на условиях CC BY 4.0. Языковые данные Unicode CLDR используются по лицензии Unicode v3. Данные Wikimedia Pageviews распространяются под CC0. CIA World Factbook находится в общественном достоянии. RSF, Freedom House, Институт Рейтер и барометрические программы допускают некоммерческое исследовательское использование с указанием авторства; каждый показатель называет свою программу и издание. Statcounter и GDELT используются на их опубликованных условиях с указанием авторства. DataReportal и рекламные прогнозы WPP Media / Dentsu цитируются как отраслевые оценки и никогда не воспроизводятся массово. Данные Google Trends используются с указанием источника («Data source: Google Trends»). Материалы Bluesky и Media Cloud хранятся только в виде агрегатов (темы и счётчики) — без постов, аккаунтов и текстов статей — в соответствии с их условиями. Если условия источника не допускают воспроизведения, Атлас ссылается на него, а не копирует.",
     modal_boundaries_note: "Границы, названия и обозначения, показанные на карте, не означают официального одобрения или признания со стороны Организации Объединённых Наций. Контуры стран генерализованы для отображения; там, где исходные данные расходятся с картографической практикой ООН и геометрия это позволяет, представление следует позиции ООН.",
     modal_confidence_flags: "Флаги достоверности",
-    modal_confidence_body: "Каждая страновая запись имеет флаг достоверности: «проверено» (сверено с первичными источниками) или «предварительно» (ещё не проверено — публично цитировать нельзя). Источник каждого показателя всегда указан во вкладке «Источники».",
+    modal_confidence_body: "Каждая страна имеет выведенный уровень достоверности. Высокий: запись сверена с первичными источниками и страну покрывает измеренное обследование потребления новостей. Средний: запись проверена, но новостные показатели опираются на структурные индикаторы или на обследование с методологической оговоркой (выборка или формулировка). Низкий: ещё не проверено — публично цитировать нельзя. Источник каждого показателя всегда указан во вкладке «Источники».",
     footer_copyright: "© 2026 · Организация Объединённых Наций · Audience Intelligence Atlas · Данные проверены",
     footer_methodology: "Методология", footer_github: "GitHub", footer_report: "Сообщить об ошибке"
   }
@@ -2627,6 +2637,17 @@ function tabSources(d) {
   // And the national-press UN-coverage share (data/trends/press_un_coverage.json).
   const pcs = ((window.PRESS_UN || {}).countries || {})[currentActiveIso];
   if (pcs && pcs.source) sourceEntries.push(["UN in the national press", pcs.source]);
+  // Confidence as a DERIVED three-tier level (Shakti's request, 2026-08-10).
+  // Never invented: High needs a verified record AND a measured news survey;
+  // a representativeness caveat (survey_note) or survey-less record is
+  // Medium; only unverified records — today just the offline fallback
+  // snapshot — are Low. The note below the pill explains the same rule.
+  const nc = d.news_consumption || {};
+  const tier = d.confidence !== "verified" ? "low"
+    : (nc.source ? (nc.survey_note ? "medium" : "high") : "medium");
+  const tierStyle = tier === "high" ? "background: #E7F5EC; color: #0F6B3B;"
+    : tier === "medium" ? "background: #FFF4E5; color: #B4651A;"
+    : "background: #FDEBEA; color: #A33A32;";
   return `
     <h3>${t("section_primary_sources")}</h3>
     <p style="color: var(--muted); font-size: 13px;">${t("sources_intro")}</p>
@@ -2652,7 +2673,7 @@ function tabSources(d) {
       }).join("")}
     </div>
     <h3>${t("section_confidence_level")}</h3>
-    <div class="pill" style="background: #FFF4E5; color: #B4651A;">${esc(d.confidence)}</div>
+    <div class="pill" style="${tierStyle}">${t("confidence_" + tier)}</div>
     <p style="font-size: 12px; color: var(--muted); margin-top: 14px;">${t("sources_confidence_note")}</p>`;
 }
 
@@ -2673,7 +2694,6 @@ function closeMethodology() {
   }
 }
 document.getElementById("open-methodology").addEventListener("click", openMethodology);
-document.getElementById("open-sources").addEventListener("click", openMethodology);
 document.getElementById("footer-methodology").addEventListener("click", (e) => { e.preventDefault(); openMethodology(); });
 methodModal.addEventListener("click", e => {
   if (e.target === methodModal || e.target.hasAttribute("data-close-modal")) closeMethodology();
