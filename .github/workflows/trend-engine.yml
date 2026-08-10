@@ -10,24 +10,33 @@ name: Trend engine (daily)
 # 5. Computes per-topic and per-country intelligence (velocity, trending)
 # 6. Commits the results — GitHub Pages republishes automatically.
 #
-# RESILIENCE NOTES (learned from run #1):
-# - Wikimedia rate-limits anonymous cloud IPs to ~hundreds of requests/hour.
-#   The fetcher prunes dormant series (weekdays fetch ~1,100 calls, Sundays
-#   refresh all ~3,100), adapts its pace to 429s, and checkpoints progress
-#   every 250 series.
-# - Compute + commit run even if a fetch step fails or times out
-#   (if: always()), so partial progress is committed and the next daily
-#   run continues incrementally. A bad day degrades gracefully; it never
-#   breaks the site or loses data.
+# PARALLEL LANES (2026-08-10). One job used to do all of this in sequence,
+# and every fetch step hit its timeout every single day: Wikimedia and GDELT
+# rate-limit PER IP, and one runner's IP simply has a smaller budget than a
+# day's work needs (observed steady state: ~1,150 of ~3,100 pageview series
+# stale, the per-country fetch dying at ~100 of 195). Now the work runs in
+# parallel lanes, each on its own runner — its own IP, its own rate budget:
+#
+#   supply lane   — Google Trends, then GDELT, then per-country reading
+#                   lists (three different hosts sharing one runner)
+#   demand lanes  — Wikipedia pageviews split into 3 shards, taken
+#                   round-robin from the stalest-first work list
+#   assemble      — merges the shard outputs, computes the intelligence,
+#                   makes the single daily commit, and polices freshness
+#
+# Every fetcher still checkpoints to disk and seeds from the previous
+# snapshot, so a killed lane costs freshness only, never data — the shard
+# artifacts upload whatever the checkpoints saved (if: always()).
 #
 # STALENESS ALERT (added 2026-07-26): "degrades gracefully" was hiding a
 # real failure. The Wikipedia step had been hitting its timeout every day
 # for three weeks; continue-on-error meant the run still reported SUCCESS,
-# and two-thirds of series stayed frozen at 2026-07-05 while the published
-# file said it was updated daily. Two changes prevent a repeat:
-#   * the fetcher now works stalest-series-first, so a truncated run
+# and two-thirds of series stayed frozen while the published file said it
+# was updated daily. Two protections remain in force:
+#   * every fetcher works stalest-series-first, so a truncated run
 #     refreshes exactly what the previous one missed (self-healing);
-#   * the step below fails the run when most series are stale, so the
+#   * the assemble job fails the run when most series are stale or a
+#     per-country file's newest data ages past 4 days, so the
 #     failure-alert issue actually fires instead of a green tick.
 #
 # Runs at 05:30 UTC daily (after Wikimedia finalizes yesterday's pageviews).
@@ -49,12 +58,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  trends:
+  supply:
+    # Google Trends runs FIRST (snapshot feed — a missed day is
+    # unrecoverable), then GDELT, then the per-country reading lists.
+    # Three different hosts, so they share this runner amicably.
     runs-on: ubuntu-latest
-    # Step budgets (10 + 50 + 15 + 85) must stay BELOW this, with headroom for
-    # compute + commit: a job-level timeout cancels even if: always() steps,
-    # so if the fetchers can eat the whole budget, a bad day commits nothing.
-    timeout-minutes: 180
+    timeout-minutes: 95
 
     steps:
       - name: Check out repository
@@ -68,10 +77,6 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      # Runs FIRST on purpose: it talks to a different host (trends.google.com)
-      # from the Wikimedia steps and finishes in ~5 minutes — and its feed is a
-      # snapshot with no history upstream, so a starved day here is
-      # unrecoverable, not merely late.
       - name: Fetch per-country trending searches (Google Trends RSS)
         timeout-minutes: 10
         continue-on-error: true
@@ -82,27 +87,115 @@ jobs:
         continue-on-error: true
         run: python scripts/fetch_trends_gdelt.py
 
-      # Runs BEFORE the big pageviews fetch on purpose: both hit the same
-      # Wikimedia rate budget from the same runner IP, and this step's ~200
-      # requests are noise next to the pageviews step's thousands — in the
-      # other order, a throttled day starves this step entirely.
       - name: Fetch per-country most-read Wikipedia pages
-        timeout-minutes: 15
+        timeout-minutes: 25
         continue-on-error: true
         run: python scripts/fetch_trends_wiki_countries.py
 
-      - name: Fetch Wikipedia pageviews (demand signal)
-        timeout-minutes: 85
+      # Whatever the steps above managed to save (checkpoints included)
+      # travels to the assemble job. Missing files are only a warning: the
+      # repo's previous copies then stand for another day.
+      - name: Upload supply outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supply-outputs
+          path: |
+            data/trends/country_searches.json
+            data/trends/gdelt_coverage.json
+            data/trends/country_reading.json
+          if-no-files-found: warn
+
+  demand:
+    # Wikipedia pageviews, split across 3 runners. Wikimedia's per-IP budget
+    # was the binding constraint — three runners mean three budgets. Each
+    # shard is a round-robin slice of the stalest-first work list, so each
+    # is itself stalest-first and self-healing.
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false          # one throttled shard must not cancel the rest
+      matrix:
+        shard: [1, 2, 3]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch Wikipedia pageviews (shard ${{ matrix.shard }} of 3)
+        timeout-minutes: 45
         continue-on-error: true
-        run: python scripts/fetch_trends_wikipedia.py
+        run: >
+          python scripts/fetch_trends_wikipedia.py
+          --shard ${{ matrix.shard }} 3
+          --out data/trends/wiki_shard_${{ matrix.shard }}.json
+
+      - name: Upload shard output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wiki-shard-${{ matrix.shard }}
+          path: data/trends/wiki_shard_${{ matrix.shard }}.json
+          if-no-files-found: warn
+
+  assemble:
+    # Runs whatever happened above (if: always()): partial lanes still
+    # publish what they saved, and the freshness police below decides
+    # whether the day counts as healthy.
+    needs: [supply, demand]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Download supply outputs
+        continue-on-error: true      # missing artifact = repo copies stand
+        uses: actions/download-artifact@v4
+        with:
+          name: supply-outputs
+          path: data/trends/
+
+      - name: Download pageview shards
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wiki-shard-*
+          merge-multiple: true
+          path: data/trends/
+
+      - name: Merge pageview shards
+        run: |
+          python scripts/fetch_trends_wikipedia.py --merge \
+            data/trends/wiki_shard_1.json \
+            data/trends/wiki_shard_2.json \
+            data/trends/wiki_shard_3.json
+          # shard files are working files, never published
+          rm -f data/trends/wiki_shard_*.json
 
       - name: Compute topic intelligence
-        if: always()
         run: python scripts/compute_topic_intelligence.py
 
       - name: Commit updated trend data (if changed)
         id: commit
-        if: always()
         run: |
           set -e
           git config user.name "atlas-bot"
@@ -133,7 +226,6 @@ jobs:
       # available figures — but if most of the tracked universe is stale the
       # run must NOT report success, or nobody learns the fetch is starving.
       - name: Fail if most trend series are stale
-        if: always()
         run: |
           python3 - <<'PY'
           import json, sys
@@ -154,7 +246,7 @@ jobs:
               rc = 1
           if total and stale > total * 0.25:
               print(f"::warning::{stale} of {total} demand series are stale — watch this; "
-                    f"if it keeps climbing the fetch step needs more time or fewer series.")
+                    f"if it keeps climbing the fetch needs more shards or more time.")
 
           # Same idea for the per-country reading lists: their fetch step's
           # exit code is swallowed by continue-on-error, so freshness has to
@@ -209,9 +301,9 @@ jobs:
           existing=$(gh issue list --state open --search "in:title \"Trend engine failed\"" --json number --jq 'length')
           if [ "$existing" = "0" ]; then
             cat > /tmp/trend_issue.md <<'BODY'
-          The daily trend-engine workflow failed. Open the Actions tab, click the failed run, and check which step went red.
+          The daily trend-engine workflow failed. Open the Actions tab, click the failed run, and check which job and step went red.
 
-          If the red step is **Fail if most trend series are stale**, the data is still published, but the Wikipedia fetch is not keeping up: most tracked series have no data in the measured 7-day window, so topic momentum covers only a minority of topics. The fetcher works stalest-first, so a few consecutive successful runs normally clear it. If it persists beyond a week, see docs/AUTOMATION.md, section "trend engine falls behind".
+          If the red step is **Fail if most trend series are stale** (in the assemble job), the data is still published, but a fetch lane is not keeping up: check which file the error names. The fetchers work stalest-first, so a few consecutive successful runs normally clear it. If it persists beyond a week, see docs/AUTOMATION.md, section "trend engine falls behind".
 
           A single bad day is usually harmless (the next run catches up) — this issue exists so repeated failures never go unnoticed. Close it once a later run succeeds.
           BODY

@@ -15,10 +15,33 @@ are filled in on a later one — and merge (a few minutes).
 Wikipedia pageviews measure information DEMAND (what people look up),
 per language edition — country attribution happens later in
 compute_topic_intelligence.py via documented language→country weights.
+
+SHARDING (added 2026-08-10). Wikimedia's per-IP budget for anonymous CI
+clients proved smaller than one runner can spend: the single-job fetch hit
+its 85-minute cap every day and ~1,150 of ~3,100 series were stale and
+climbing. The fix is to run several copies of this script in PARALLEL
+GitHub jobs — each runner gets its own IP, so each gets its own budget:
+
+    --shard K N     fetch only every Nth series (K of N, 1-based), taken
+                    round-robin from the stalest-first work list, so each
+                    shard is itself stalest-first and the staleness backlog
+                    is spread evenly. Writes ONLY the series it fetched
+                    (a partial file, marked "partial": true) to --out.
+    --out PATH      where a shard writes its partial output.
+    --merge P1 P2…  assemble mode: overlay the shard partials onto the
+                    previous full snapshot, re-align every series to the
+                    current window, and write the real wiki_pageviews.json.
+                    Missing/empty partials are skipped with a warning —
+                    a lost shard costs freshness, never data.
+    --limit N       TESTING ONLY: cap the work list at N series.
+
+Run with no flags and it behaves exactly as before (single-process full
+fetch) — that is still the right way to run it by hand.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -124,7 +147,100 @@ def fetch_series(lang: str, title: str, start: date, end: date) -> dict[str, int
     return {}
 
 
-def main() -> None:
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Wikipedia pageviews fetcher")
+    p.add_argument("--shard", nargs=2, type=int, metavar=("K", "N"),
+                   help="fetch shard K of N (1-based) and write a partial file")
+    p.add_argument("--out", type=Path,
+                   help="output path for a shard's partial file")
+    p.add_argument("--merge", nargs="*", type=Path, metavar="PARTIAL",
+                   help="merge shard partials into the full snapshot and exit")
+    p.add_argument("--limit", type=int,
+                   help="TESTING ONLY: cap the work list at N series")
+    return p.parse_args()
+
+
+def current_window() -> tuple[date, date, list[str]]:
+    """(full_start, end, all_dates) for today's run — shared by fetch+merge."""
+    end = date.today() - timedelta(days=1)   # pageview data lags ~1 day
+    full_start = end - timedelta(days=WINDOW_DAYS - 1)
+    all_dates = [(full_start + timedelta(days=i)).isoformat()
+                 for i in range(WINDOW_DAYS)]
+    return full_start, end, all_dates
+
+
+def realign(entry: dict, all_dates: list[str]) -> dict:
+    """Re-key one stored series onto the current window's date axis."""
+    pstart = datetime.strptime(entry["start"], "%Y-%m-%d").date()
+    prev_map = {
+        (pstart + timedelta(days=i)).isoformat(): v
+        for i, v in enumerate(entry["values"])
+        if v is not None
+    }
+    return {"start": all_dates[0], "values": [prev_map.get(d) for d in all_dates]}
+
+
+def merge_partials(partials: list[Path]) -> None:
+    """Overlay shard partials onto the previous snapshot and write the result.
+
+    Each series was fetched by exactly one shard (round-robin partition), so
+    the overlay is a plain union — no conflicts are possible. Series no shard
+    reached (dormant weekday carries, or a shard that died early) keep their
+    previous data, re-aligned to today's window: the same monotonic
+    never-lose-data guarantee the single-process path has always had.
+    """
+    _, end, all_dates = current_window()
+
+    existing: dict = {}
+    if OUTPUT_PATH.exists():
+        try:
+            existing = json.loads(OUTPUT_PATH.read_text(encoding="utf-8")).get("series", {})
+        except (json.JSONDecodeError, OSError) as exc:
+            print(f"WARNING: existing {OUTPUT_PATH.name} unreadable ({exc}) — "
+                  f"merging shards onto an empty base", flush=True)
+
+    merged: dict[str, dict[str, dict]] = {
+        qid: {lang: realign(e, all_dates) for lang, e in langs.items()}
+        for qid, langs in existing.items()
+    }
+
+    n_overlaid = 0
+    for path in partials:
+        if not path.exists() or path.stat().st_size == 0:
+            print(f"WARNING: shard partial {path} missing or empty — skipped "
+                  f"(its series keep yesterday's data)", flush=True)
+            continue
+        try:
+            part = json.loads(path.read_text(encoding="utf-8")).get("series", {})
+        except (json.JSONDecodeError, OSError) as exc:
+            print(f"WARNING: shard partial {path} unreadable ({exc}) — skipped",
+                  flush=True)
+            continue
+        for qid, langs in part.items():
+            for lang, entry in langs.items():
+                merged.setdefault(qid, {})[lang] = realign(entry, all_dates)
+                n_overlaid += 1
+
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    tmp = OUTPUT_PATH.with_suffix(".json.tmp")
+    tmp.write_text(
+        json.dumps({
+            "source": "Wikimedia Pageviews API (user traffic, all access methods)",
+            "license": "CC0 / public API",
+            "signal_type": "demand (what people look up)",
+            "updated": end.isoformat(),
+            "window_days": WINDOW_DAYS,
+            "series": merged,
+        }, separators=(",", ":"), ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(tmp, OUTPUT_PATH)
+    n_series = sum(len(v) for v in merged.values())
+    print(f"Merged {len(partials)} partial(s): {n_overlaid} series refreshed, "
+          f"{n_series} total in {OUTPUT_PATH}")
+
+
+def main(args: argparse.Namespace) -> None:
     registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
     topics = registry["topics"]
 
@@ -140,11 +256,8 @@ def main() -> None:
             existing = {}
 
     # Pageview data lags ~1 day; end at yesterday.
-    end = date.today() - timedelta(days=1)
-    full_start = end - timedelta(days=WINDOW_DAYS - 1)
+    full_start, end, all_dates = current_window()
     merge_start = end - timedelta(days=MERGE_DAYS - 1)
-    all_dates = [(full_start + timedelta(days=i)).isoformat()
-                 for i in range(WINDOW_DAYS)]
 
     def stored_mean(qid: str, lang: str) -> float | None:
         prev = existing.get(qid, {}).get(lang)
@@ -220,9 +333,22 @@ def main() -> None:
     _EPOCH = date(1970, 1, 1)
     jobs.sort(key=lambda j: (stored_last_data(j[0], j[1]) or _EPOCH, j[0], j[1]))
 
+    # Shard filter (see docstring): a round-robin slice of the stalest-first
+    # list, so each shard is itself stalest-first and the backlog is spread
+    # evenly across the parallel runners.
+    partial_mode = bool(args.shard or args.out)
+    if args.shard:
+        k, n = args.shard
+        if not (1 <= k <= n):
+            sys.exit(f"--shard {k} {n}: K must be within 1..N")
+        jobs = jobs[k - 1::n]
+    if args.limit:
+        jobs = jobs[:args.limit]
+
     total = len(jobs)
     oldest = stored_last_data(jobs[0][0], jobs[0][1]) if jobs else None
-    print(f"Fetching {total} series, stalest first"
+    shard_note = f"shard {args.shard[0]}/{args.shard[1]}, " if args.shard else ""
+    print(f"Fetching {total} series ({shard_note}stalest first)"
           f"{f' (oldest stored data: {oldest})' if oldest else ''} "
           f"({'full Sunday refresh' if FULL_REFRESH else f'{len(carried)} dormant series carried forward'})",
           flush=True)
@@ -232,23 +358,30 @@ def main() -> None:
         start = fetch_start(qid, lang) if incremental else full_start
         return qid, lang, fetch_series(lang, title, start, end), incremental
 
+    out_path = args.out or OUTPUT_PATH
+
     def write_output(series: dict) -> None:
         # ATOMIC write: dump to a temp file, then os.replace() — so a timeout
         # kill mid-write can never leave a half-written (corrupt) JSON behind.
-        OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-        tmp = OUTPUT_PATH.with_suffix(".json.tmp")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = out_path.with_suffix(".json.tmp")
+        doc = {
+            "source": "Wikimedia Pageviews API (user traffic, all access methods)",
+            "license": "CC0 / public API",
+            "signal_type": "demand (what people look up)",
+            "updated": end.isoformat(),
+            "window_days": WINDOW_DAYS,
+            "series": series,
+        }
+        if partial_mode:
+            # A shard's file holds ONLY what it fetched this run — it must be
+            # merged (--merge) onto the previous snapshot, never used directly.
+            doc["partial"] = True
         tmp.write_text(
-            json.dumps({
-                "source": "Wikimedia Pageviews API (user traffic, all access methods)",
-                "license": "CC0 / public API",
-                "signal_type": "demand (what people look up)",
-                "updated": end.isoformat(),
-                "window_days": WINDOW_DAYS,
-                "series": series,
-            }, separators=(",", ":"), ensure_ascii=False) + "\n",
+            json.dumps(doc, separators=(",", ":"), ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
-        os.replace(tmp, OUTPUT_PATH)
+        os.replace(tmp, out_path)
 
     # IMPORTANT: seed series_out from `existing`, not empty dicts. If this run
     # gets killed by the workflow timeout partway through (observed in
@@ -260,6 +393,13 @@ def main() -> None:
     series_out: dict[str, dict[str, dict]] = {
         t["qid"]: dict(existing.get(t["qid"], {})) for t in topics
     }
+    # In shard mode only the series THIS shard fetched are written out —
+    # the merge step overlays them onto the previous snapshot. (Writing the
+    # full seeded map from every shard would have each shard overwrite the
+    # others' fresh series with stale copies.)
+    fetched_out: dict[str, dict[str, dict]] = {}
+    target = fetched_out if partial_mode else series_out
+
     n_fetched = n_backfilled = n_done = 0
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
         futures = [pool.submit(run_job, j) for j in jobs]
@@ -280,34 +420,32 @@ def main() -> None:
                 n_backfilled += 1
 
             values = [prev_map.get(d) for d in all_dates]  # None = no data that day
-            series_out[qid][lang] = {"start": all_dates[0], "values": values}
+            entry = {"start": all_dates[0], "values": values}
+            series_out[qid][lang] = entry
+            if partial_mode:
+                fetched_out.setdefault(qid, {})[lang] = entry
 
             n_done += 1
             if n_done % 100 == 0:
                 print(f"  …{n_done}/{total} series", flush=True)
             if n_done % 250 == 0:
                 # checkpoint: safe at any interruption point (see note above)
-                write_output(series_out)
+                write_output(target)
 
-    # carry dormant series forward unchanged, re-aligned to the new window
-    for qid, lang in carried:
-        prev = existing[qid][lang]
-        pstart = datetime.strptime(prev["start"], "%Y-%m-%d").date()
-        prev_map = {
-            (pstart + timedelta(days=i)).isoformat(): v
-            for i, v in enumerate(prev["values"])
-            if v is not None
-        }
-        series_out[qid][lang] = {
-            "start": all_dates[0],
-            "values": [prev_map.get(dd) for dd in all_dates],
-        }
+    if not partial_mode:
+        # carry dormant series forward unchanged, re-aligned to the new window
+        # (in shard mode the merge step does this for every untouched series)
+        for qid, lang in carried:
+            series_out[qid][lang] = realign(existing[qid][lang], all_dates)
 
-    write_output(series_out)
-    size_mb = OUTPUT_PATH.stat().st_size / 1e6
-    print(f"Wrote {OUTPUT_PATH} ({size_mb:.1f} MB) — "
+    write_output(target)
+    size_mb = out_path.stat().st_size / 1e6
+    print(f"Wrote {out_path} ({size_mb:.1f} MB) — "
           f"{n_backfilled} backfilled, {n_fetched} updated series.")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    _args = parse_args()
+    if _args.merge is not None:
+        sys.exit(merge_partials(_args.merge))
+    sys.exit(main(_args))

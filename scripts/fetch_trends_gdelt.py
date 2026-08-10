@@ -28,12 +28,26 @@ gain topics/freshness, never lose them. If GDELT is unreachable, this
 signal simply stays "stale" or absent; the daily "Trending now" feature
 depends only on Wikipedia data and is unaffected.
 
+TIME BUDGET (reworked 2026-08-10 — the step was hitting its 50-minute cap
+every day with only ~50 of 167 topics refreshed per cycle):
+  * Topics are processed STALEST-FIRST using each topic's own
+    volume_retrieved stamp, so whatever a timeout cuts off runs first
+    tomorrow — the worst refresh interval is bounded (~4 days) instead of
+    left to the luck of the old daily shuffle (which survives only as the
+    tie-breaker for equal stamps).
+  * The source-country mix is a 14-day mean and moves slowly, so it is
+    re-fetched only when older than SOURCE_COUNTRY_REFRESH_DAYS — on most
+    visits a topic now costs one call instead of two, roughly doubling how
+    many topics fit in the budget.
+--limit N caps the topics processed (TESTING ONLY).
+
 Output: data/trends/gdelt_coverage.json (rolling snapshot; the volume
 timeline covers the trailing TIMESPAN).
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import random
 import re
@@ -42,7 +56,7 @@ import sys
 import time
 import urllib.parse
 import urllib.request
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -56,6 +70,7 @@ SLEEP = 6.5               # seconds between calls (GDELT limit: 1 per 5s)
 MAX_BACKOFF_RETRIES = 2   # fail fast: better to cover more topics partially
 BACKOFF_BASE = 12         # seconds; attempt N waits BACKOFF_BASE*(N+1)
 CHECKPOINT_EVERY = 20     # topics between merged, safe-to-interrupt saves
+SOURCE_COUNTRY_REFRESH_DAYS = 5  # reuse the 14d source-country mix this long
 
 
 def _ssl_context() -> ssl.SSLContext:
@@ -152,30 +167,49 @@ def write_output(results: dict) -> None:
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser(description="GDELT news-coverage fetcher")
+    ap.add_argument("--limit", type=int,
+                    help="TESTING ONLY: cap the number of topics processed")
+    args = ap.parse_args()
+
     registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
-    topics = registry["topics"]
+    topics = list(registry["topics"])
 
-    # Rotate processing order daily. The per-run budget only covers ~40
-    # topics before rate limits bite; a fixed order would keep the same
-    # topics fresh forever and starve the rest. Deterministic per-day
-    # shuffle -> every topic gets fresh data within a few days.
-    rng = random.Random(date.today().toordinal())
-    topics = list(topics)
-    rng.shuffle(topics)
-
-    # Previous snapshot — used as per-topic fallback when today's fetch fails,
-    # so a rate-limited run (or a mid-run kill) can never erase good data.
+    # Previous snapshot — the per-topic fallback when today's fetch fails, and
+    # (since 2026-08-10) the carrier of the freshness stamps that drive the
+    # processing order below.
     previous: dict[str, dict] = {}
     if OUTPUT_PATH.exists():
         previous = json.loads(OUTPUT_PATH.read_text(encoding="utf-8")).get("topics", {})
+
+    # STALEST-FIRST (2026-08-10), replacing order-by-daily-shuffle. The
+    # shuffle gave every topic a fair CHANCE at the ~40-50 slots a throttled
+    # 50-minute budget really holds, but chance is not a guarantee — an
+    # unlucky topic could starve for a week. Sorting by each topic's own
+    # last-successful-fetch stamp bounds the worst case (~4 days), and
+    # whatever a timeout cuts off is exactly what runs first tomorrow.
+    # The shuffle survives as the tie-breaker so equal stamps (e.g. the
+    # whole never-stamped backlog on this change's first day) rotate fairly
+    # instead of falling into registry order.
+    rng = random.Random(date.today().toordinal())
+    rng.shuffle(topics)
+    topics.sort(key=lambda t: (previous.get(t["qid"], {}).get("volume_retrieved") or ""))
+    if args.limit:
+        topics = topics[:args.limit]
+
+    today_iso = date.today().isoformat()
+    country_cutoff = (date.today()
+                      - timedelta(days=SOURCE_COUNTRY_REFRESH_DAYS)).isoformat()
 
     # Seed results from `previous` (not empty) so every checkpoint — and a
     # timeout kill at any point — leaves a file at least as complete as
     # what existed before this run started.
     results: dict[str, dict] = {qid: dict(entry) for qid, entry in previous.items()}
+    n_country_fetched = n_country_reused = 0
     for i, t in enumerate(topics, 1):
         qid, label = t["qid"], t["label_en"]
         query = f'"{label}"' if " " in label else label
+        prev_entry = previous.get(qid, {})
 
         vol_data = gdelt_call({
             "query": query, "mode": "timelinevolraw",
@@ -183,26 +217,43 @@ def main() -> None:
         })
         time.sleep(SLEEP)
 
-        country_data = gdelt_call({
-            "query": query, "mode": "timelinesourcecountry",
-            "timespan": COUNTRY_TIMESPAN, "format": "json",
-        })
-        time.sleep(SLEEP)
+        # The source-country mix is a 14-day mean — it moves slowly, and at
+        # 6.5 s a call it used to double every topic's cost. Reuse it while
+        # it is at most SOURCE_COUNTRY_REFRESH_DAYS old: deliberate reuse
+        # within a declared freshness contract, NOT staleness — the
+        # countries_stale flag stays reserved for fetches that failed.
+        c_stamp = prev_entry.get("countries_retrieved") or ""
+        country_data = None
+        if c_stamp >= country_cutoff and prev_entry.get("source_countries"):
+            n_country_reused += 1
+        else:
+            country_data = gdelt_call({
+                "query": query, "mode": "timelinesourcecountry",
+                "timespan": COUNTRY_TIMESPAN, "format": "json",
+            })
+            time.sleep(SLEEP)
+            n_country_fetched += 1
 
         entry: dict = {"label_en": label}
         if vol_data:
             entry["volume_daily"] = parse_volume(vol_data)
+            entry["volume_retrieved"] = today_iso
         if country_data:
             entry["source_countries"] = parse_source_countries(country_data)
+            entry["countries_retrieved"] = today_iso
 
         # per-topic fallback: keep yesterday's data rather than nothing
-        prev_entry = previous.get(qid, {})
         if not entry.get("volume_daily") and prev_entry.get("volume_daily"):
             entry["volume_daily"] = prev_entry["volume_daily"]
             entry["volume_stale"] = True
+            if prev_entry.get("volume_retrieved"):
+                entry["volume_retrieved"] = prev_entry["volume_retrieved"]
         if not entry.get("source_countries") and prev_entry.get("source_countries"):
             entry["source_countries"] = prev_entry["source_countries"]
-            entry["countries_stale"] = True
+            if c_stamp:
+                entry["countries_retrieved"] = c_stamp
+            if not (c_stamp >= country_cutoff):
+                entry["countries_stale"] = True
 
         results[qid] = entry
 
@@ -218,8 +269,10 @@ def main() -> None:
                  if e.get("source_countries") and not e.get("countries_stale"))
     size_mb = OUTPUT_PATH.stat().st_size / 1e6
     print(f"Wrote {OUTPUT_PATH} ({size_mb:.1f} MB) — "
-          f"volume fresh for {ok_vol}/{len(topics)}, "
-          f"source-country fresh for {ok_cty}/{len(topics)}.")
+          f"volume fresh for {ok_vol}/{len(results)}, "
+          f"source-country usable for {ok_cty}/{len(results)} "
+          f"({n_country_fetched} country calls made, "
+          f"{n_country_reused} reused within {SOURCE_COUNTRY_REFRESH_DAYS}d).")
 
 
 if __name__ == "__main__":

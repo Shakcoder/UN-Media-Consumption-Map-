@@ -202,8 +202,6 @@ def main() -> int:
     static = json.loads(STATIC_PATH.read_text(encoding="utf-8"))
     iso3s = sorted(k for k in static if not k.startswith("_"))
     limit = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else None
-    if limit:
-        iso3s = iso3s[:limit]
 
     previous: dict = {}
     if OUTPUT_PATH.exists():
@@ -211,6 +209,20 @@ def main() -> int:
             previous = json.loads(OUTPUT_PATH.read_text(encoding="utf-8")).get("countries", {})
         except (json.JSONDecodeError, OSError) as exc:
             print(f"WARNING: existing {OUTPUT_PATH.name} unreadable ({exc}) — rebuilding", flush=True)
+
+    # STALEST-FIRST (2026-08-10). This step used to process alphabetically and
+    # hit its time budget around country ~100 on throttled days — so the same
+    # back half of the alphabet (roughly N through Z) starved every single
+    # day. Ordering by each country's own last-touch date makes a truncated
+    # run self-healing: whatever the timeout cuts off runs first tomorrow.
+    # Never-seen countries ("" sorts first) are picked up promptly; withheld
+    # countries rotate on their weekly re-check via their `checked` stamp.
+    def _last_touch(iso3: str) -> str:
+        rec = previous.get(iso3) or {}
+        return rec.get("date") or rec.get("checked") or ""
+    iso3s.sort(key=lambda i: (_last_touch(i), i))
+    if limit:
+        iso3s = iso3s[:limit]
 
     today = date.today()
     retrieved = today.isoformat()
