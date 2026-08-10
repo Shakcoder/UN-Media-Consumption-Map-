@@ -39,7 +39,7 @@ Same family, not yet integrated: `top-by-country` (monthly ranking of countries 
 Sample: `https://trends.google.com/trending/rss?geo=KE`
 Watch item: the official Trends API (consistently-scaled interest, 5-year window) is application-gated alpha — apply, but do not build on a waitlist.
 
-### 2.3 Media Cloud
+### 2.3 Media Cloud — ✅ INTEGRATED 2026-08-10
 
 Searchable archive of 1.8B news stories with human-curated **National collections for 100+ countries** — "how much is Kenya's own press covering X this week" with a defensible denominator. Free key (open signup, verified); **4,000 requests/week, some endpoints 2/minute** — a paced daily 195-country sweep fits. JSON; no CORS → Action + key in Actions secrets. **License standout:** ToS explicitly permits reproducing/distributing "Platform Outputs" (counts, time series) — precisely what the Atlas commits. Never commit story text. Archive solid from the ~2022 rebuild; verify per-collection depth before promising history.
 Sample (needs key): `https://search.mediacloud.org/api/search/count-over-time?q=%22climate%22&start=2026-07-01&end=2026-08-05&cs=34412118&platform=onlinenews-mediacloud` (34412118 = India National)
@@ -144,7 +144,7 @@ One-liners: **WHO GHO** works but its OData API is officially slated for replace
 
 1. **Wikimedia top-per-country** — ✅ integrated 2026-08-07.
 2. **Google Trends RSS** — ✅ integrated 2026-08-10 (121 countries on the first run; the no-history archive is now accruing daily).
-3. **Media Cloud** — news volume vs named national source lists; free key; counts explicitly redistributable.
+3. **Media Cloud** — ✅ integrated 2026-08-10 (key from the UN media-partnerships team account, stored as a repo secret; 195/195 countries mapped to national collections; v1 = the UN-share-of-national-press measure, quota-honest at ~1,400 of 4,000 calls/week — headroom deliberately kept for a future topic battery).
 4. **YouTube charts** — new consumption vertical, ~110 countries; needs the 30-day pruning design + correct labeling.
 5. **Cloudflare Radar** — trending domains + shutdown evidence; gated on the NC-license check.
 

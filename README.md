@@ -18,7 +18,7 @@ An interactive, source-cited public resource showing **where and how the world g
 
 ## How it stays current, at $0
 
-- **Daily** — the trend engine (GitHub Actions) refreshes Wikipedia-attention and GDELT news-coverage signals, each country's most-read Wikipedia pages, each country's trending Google searches, and a global Bluesky social pulse.
+- **Daily** — the trend engine (GitHub Actions) refreshes Wikipedia-attention and GDELT news-coverage signals, each country's most-read Wikipedia pages, each country's trending Google searches, each country's UN-share of national-press coverage (Media Cloud), and a global Bluesky social pulse.
 - **Weekly** — the data refresh pulls 15 World Bank indicators and Unicode CLDR language data for every country.
 - **Monthly** — a source watchdog probes the annual flagship sources (RSF, Freedom House, Reuters DNR, GSMA, Afrobarometer, UN WPP) and **opens a GitHub Issue with step-by-step instructions** whenever a new edition is published.
 - **Hosting** — GitHub Pages. **Automation** — GitHub Actions. **AI analyst** — in-browser, no server. Total running cost: **$0**.

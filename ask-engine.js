@@ -31,13 +31,13 @@ const DATA_BASE = "data";
 // ---------------------------------------------------------------------------
 // Data loading
 // ---------------------------------------------------------------------------
-let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null, AD_MARKET = null, TV_STATIONS = null, COUNTRY_READING = null, COUNTRY_SEARCHES = null;
+let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null, AD_MARKET = null, TV_STATIONS = null, COUNTRY_READING = null, COUNTRY_SEARCHES = null, PRESS_UN = null;
 let NAME_TO_ISO = {};   // every recognizable name/alias/demonym -> ISO3
 let GENERATED = new Set();  // machine-generated demonyms: exact-match only, never fuzzy targets
 
 export async function initEngine() {
   if (COUNTRIES) return true;
-  const [cRes, tRes, gRes, aRes, tvRes, crRes, csRes] = await Promise.all([
+  const [cRes, tRes, gRes, aRes, tvRes, crRes, csRes, puRes] = await Promise.all([
     fetch(`${DATA_BASE}/countries.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/trends/topic_intelligence.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/topics.json`, { cache: "no-cache" }),
@@ -45,6 +45,7 @@ export async function initEngine() {
     fetch(`${DATA_BASE}/tv_stations.json`, { cache: "no-cache" }).catch(() => null),
     fetch(`${DATA_BASE}/trends/country_reading.json`, { cache: "no-cache" }).catch(() => null),
     fetch(`${DATA_BASE}/trends/country_searches.json`, { cache: "no-cache" }).catch(() => null),
+    fetch(`${DATA_BASE}/trends/press_un_coverage.json`, { cache: "no-cache" }).catch(() => null),
   ]);
   if (!cRes.ok) throw new Error("countries.json failed to load (" + cRes.status + ")");
   COUNTRIES = await cRes.json();
@@ -64,6 +65,10 @@ export async function initEngine() {
   // plus our own rolling archive) — search interest, not news interest;
   // countries Google does not cover carry an unsupported flag.
   COUNTRY_SEARCHES = (csRes && csRes.ok) ? await csRes.json().catch(() => null) : null;
+  // UN-in-the-national-press shares (Media Cloud national collections,
+  // rolling week) — the denominator-honest attention share; low-volume
+  // collections carry share_withheld instead of a percentage.
+  PRESS_UN = (puRes && puRes.ok) ? await puRes.json().catch(() => null) : null;
   // full registry: all tracked topics, including ones currently below the
   // trend-measurement floor (they match questions and report honestly)
   if (gRes.ok) {
@@ -883,6 +888,12 @@ function facts(iso) {
     // consumers must treat that as "not covered", never "nothing trending".
     searches: (COUNTRY_SEARCHES && COUNTRY_SEARCHES.countries)
       ? (COUNTRY_SEARCHES.countries[iso] || null) : null,
+    // UN share of the country's own national-press stories (Media Cloud,
+    // rolling week). A phrase-match FLOOR (acronyms mostly excluded), and
+    // share_pct is absent (share_withheld) when the collection's weekly
+    // volume is too small to quote honestly — never invent a % from it.
+    pressUN: (PRESS_UN && PRESS_UN.countries)
+      ? (PRESS_UN.countries[iso] || null) : null,
     rising: tr ? (tr.rising_topics || []) : [],
     distinctive: tr ? (tr.distinctive_topics || []) : [],
     topTopics: tr ? (tr.top_topics || []) : [],
@@ -903,6 +914,8 @@ function addCountryEvidence(f, ev) {
   else if (f.reading && f.reading.withheld) bits.push("per-country Wikipedia reading list: withheld by Wikimedia (privacy list / volume threshold)");
   if (f.searches && !f.searches.unsupported) bits.push(`trending searches: Google Trends 'Trending Now' ${f.searches.date} (search interest of any kind, not news interest; traffic buckets are floors, not counts)`);
   else if (f.searches && f.searches.unsupported) bits.push("trending searches: Google Trends publishes no feed for this country");
+  if (f.pressUN && f.pressUN.share_pct != null) bits.push(`UN share of national-press stories: Media Cloud national collection, week to ${(f.pressUN.window || {}).end} (phrase-match floor — local acronyms mostly excluded; publication counts, not readership)`);
+  else if (f.pressUN && f.pressUN.share_withheld) bits.push("UN share of national-press stories: withheld — the national collection's weekly volume is below the honesty floor");
   return ev.add(`${f.name} — country profile`, "Atlas record. " + bits.join("; ") + ".", countryLinks(f.iso));
 }
 
@@ -1086,6 +1099,17 @@ function composeCountryBrief(f, ev, ents) {
     ev.add(`${f.name} — extended TV stations`,
       `Station names from Wikipedia's station-list pages; every entry gated through its Wikidata record (belongs to this country, carries no dissolution date, typed as a broadcaster). Ordering is international Wikipedia presence (sitelink count) — a presence proxy; no free source measures per-station audience share. ${f.tvStations.source || ""}`,
       srcUrl ? [{ label: "Wikipedia station list", url: srcUrl }] : []);
+  }
+
+  // UN presence in the country's own press (Media Cloud) — quoted with its
+  // denominator and its floor-not-ceiling nature, never as a bare number.
+  if (f.pressUN && f.pressUN.share_pct != null) {
+    const pu = f.pressUN;
+    lines.push(`- UN in the national press: **${pu.share_pct}%** of the ${Number(pu.stories_total).toLocaleString()} stories the country's monitored national outlets published in the week to ${(pu.window || {}).end} mentioned the United Nations *(Media Cloud, ${(pu.collection || {}).source_count ?? "?"} outlets; phrase-match floor — acronym-heavy press understates)*`);
+    const puUrl = (String(pu.source || "").match(/https?:\/\/\S+/) || [null])[0];
+    ev.add(`${f.name} — UN in the national press`,
+      `Media Cloud curated national collection ‘${(pu.collection || {}).name}’: UN-phrase stories as a share of all monitored stories, ${(pu.window || {}).start} to ${(pu.window || {}).end}. Counts only, per Media Cloud's terms; a phrase-match floor (~20 languages, acronyms mostly excluded). Publication counts, not readership.`,
+      puUrl ? [{ label: "Media Cloud", url: puUrl }] : []);
   }
 
   // if a specific platform was asked about, say where it stands in this market

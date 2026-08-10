@@ -112,6 +112,40 @@ jobs:
             data/trends/country_reading.json
           if-no-files-found: warn
 
+  press:
+    # Media Cloud national-press UN shares — its own small lane: it spends a
+    # per-KEY quota (not an IP budget), needs the repo secret, and finishes
+    # in minutes, so it must never queue behind the Wikimedia steps.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch national-press UN-coverage shares (Media Cloud)
+        timeout-minutes: 15
+        continue-on-error: true
+        env:
+          MEDIACLOUD_API_KEY: ${{ secrets.MEDIACLOUD_API_KEY }}
+        run: python scripts/fetch_press_un_coverage.py
+
+      - name: Upload press output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: press-output
+          path: data/trends/press_un_coverage.json
+          if-no-files-found: warn
+
   demand:
     # Wikipedia pageviews, split across 3 runners. Wikimedia's per-IP budget
     # was the binding constraint — three runners mean three budgets. Each
@@ -156,7 +190,7 @@ jobs:
     # Runs whatever happened above (if: always()): partial lanes still
     # publish what they saved, and the freshness police below decides
     # whether the day counts as healthy.
-    needs: [supply, demand]
+    needs: [supply, demand, press]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -178,6 +212,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: supply-outputs
+          path: data/trends/
+
+      - name: Download press output
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: press-output
           path: data/trends/
 
       - name: Download pageview shards
@@ -221,6 +262,9 @@ jobs:
           fi
           if [ -f data/trends/bluesky_trends.json ]; then
             git add data/trends/bluesky_trends.json
+          fi
+          if [ -f data/trends/press_un_coverage.json ]; then
+            git add data/trends/press_un_coverage.json
           fi
           if git diff --cached --quiet; then
             echo "No changes — trend data already up to date."
@@ -311,6 +355,26 @@ jobs:
                       rc = 1
                   elif age > 2:
                       print(f"::warning::country_searches.json is {age} days old — watch this.")
+
+          # National-press UN shares: rolling weekly measure refreshed daily,
+          # stalest-first — the newest per-country retrieval date is the
+          # health signal (the fetcher exits 0 even on a partial day).
+          pu_p = Path("data/trends/press_un_coverage.json")
+          if pu_p.exists():
+              puc = json.loads(pu_p.read_text()).get("countries", {})
+              rdates = [r.get("retrieved") for r in puc.values() if r.get("retrieved")]
+              if rdates:
+                  newest = max(rdates)
+                  age = (date.today() - datetime.strptime(newest, "%Y-%m-%d").date()).days
+                  print(f"National-press UN shares: newest retrieval {newest} ({age} days old)")
+                  if age > 7:
+                      print(f"::error::press_un_coverage.json's newest retrieval is {age} days "
+                            f"old — the Media Cloud fetch has been failing silently (key "
+                            f"expired? quota? endpoint change?); check the "
+                            f"'Fetch national-press UN-coverage shares' step logs.")
+                      rc = 1
+                  elif age > 3:
+                      print(f"::warning::press_un_coverage.json is {age} days old — watch this.")
 
           # Bluesky pulse: same snapshot-with-no-upstream-history logic.
           bt_p = Path("data/trends/bluesky_trends.json")

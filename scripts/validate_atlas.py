@@ -688,6 +688,65 @@ def main() -> int:
         WARNS.append("trends/bluesky_trends.json missing — open-social pulse "
                      "not built yet")
 
+    # UN-in-the-national-press shares (Media Cloud) — optional layer. The
+    # honesty floor is machine-enforced here: a share may exist ONLY when the
+    # window's total volume clears _meta.min_stories, and a withheld entry
+    # must carry its explanation. Counts only — story text/titles/URLs in
+    # this file would violate the license posture and are hard errors.
+    pu_path = ROOT / "data" / "trends" / "press_un_coverage.json"
+    if pu_path.exists():
+        pu = load_json(pu_path)
+        pu_floor = ((pu.get("_meta") or {}).get("min_stories")) or 100
+        n_share = n_lowvol = 0
+        for iso, rec in sorted((pu.get("countries") or {}).items()):
+            if iso not in countries:
+                ERRORS.append(f"press_un {iso}: not a country the Atlas carries")
+                continue
+            for forbidden in ("stories", "titles", "urls", "text", "headlines"):
+                if forbidden in rec:
+                    ERRORS.append(f"press_un {iso}: carries {forbidden!r} — counts "
+                                  f"only, never story content")
+            w = rec.get("window") or {}
+            if not (re.match(r"^\d{4}-\d{2}-\d{2}$", str(w.get("start") or ""))
+                    and re.match(r"^\d{4}-\d{2}-\d{2}$", str(w.get("end") or ""))):
+                ERRORS.append(f"press_un {iso}: missing or malformed window")
+            tot, un = rec.get("stories_total"), rec.get("stories_un")
+            if not (isinstance(tot, int) and tot >= 0 and isinstance(un, int)
+                    and 0 <= un <= tot):
+                ERRORS.append(f"press_un {iso}: story counts malformed "
+                              f"(total {tot!r}, un {un!r})")
+            share = rec.get("share_pct")
+            if share is not None:
+                n_share += 1
+                if rec.get("share_withheld"):
+                    ERRORS.append(f"press_un {iso}: both share_pct and "
+                                  f"share_withheld set — pick one")
+                if not (is_number(share) and 0 <= share <= 100):
+                    ERRORS.append(f"press_un {iso}: share_pct {share!r} out of range")
+                if isinstance(tot, int) and tot < pu_floor:
+                    ERRORS.append(f"press_un {iso}: share quoted from only {tot} "
+                                  f"stories — below the {pu_floor}-story floor")
+            elif rec.get("share_withheld"):
+                n_lowvol += 1
+                if not str(rec.get("low_volume_note") or "").strip():
+                    ERRORS.append(f"press_un {iso}: withheld share with no note — "
+                                  f"the site must be able to say why")
+            else:
+                ERRORS.append(f"press_un {iso}: neither share_pct nor "
+                              f"share_withheld — entry is unusable")
+            if not re.search(r"https?://", str(rec.get("source") or "")):
+                ERRORS.append(f"press_un {iso}: source line carries no URL")
+            if "retrieved" not in str(rec.get("source") or ""):
+                ERRORS.append(f"press_un {iso}: source line names no retrieval date")
+            if not isinstance((rec.get("collection") or {}).get("id"), int):
+                ERRORS.append(f"press_un {iso}: collection id missing — the "
+                              f"citation must name which outlet list measured this")
+        INFOS.append(f"national-press UN share: {n_share}/{len(countries)} countries "
+                     f"with a share, {n_lowvol} withheld (low volume)")
+    else:
+        WARNS.append("trends/press_un_coverage.json missing — national-press "
+                     "layer not built yet")
+
     am_path = ROOT / "data" / "ad_market.json"
     if am_path.exists():
         am = load_json(am_path)
