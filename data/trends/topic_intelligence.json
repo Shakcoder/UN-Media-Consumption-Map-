@@ -6,7 +6,7 @@
   "series_stale_excluded": 1151,
   "topics_scored": 165,
   "topics_stale_excluded": 0,
-  "topics_with_news_volume": 50,
+  "topics_with_news_volume": 53,
   "countries_without_profile": 0,
   "note": "Velocity windows are anchored to measured_as_of by calendar date. Series with no data in that 7-day window are excluded rather than contributing older figures; a large series_stale_excluded count means the daily fetch has not been completing (see docs/AUTOMATION.md). News volume is reported only for topics whose GDELT timeline covers the seven complete days before the run, so topics_with_news_volume is normally well below topics_scored."
  },
@@ -3206,11 +3206,8 @@
      "velocity": -0.256
     }
    },
-   "news_articles_7d": 1447,
-   "news_articles_7d_window": {
-    "start": "2026-08-03",
-    "end": "2026-08-09"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "PRK",
@@ -3984,8 +3981,11 @@
      "velocity": -0.115
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 0,
+   "news_articles_7d_window": {
+    "start": "2026-08-03",
+    "end": "2026-08-09"
+   },
    "media_intensity_by_country": [
     {
      "iso3": "NZL",
@@ -4769,12 +4769,12 @@
      "pct_of_country_news_volume": 0.5494
     },
     {
-     "iso3": "OMN",
-     "pct_of_country_news_volume": 0.3232
-    },
-    {
      "iso3": "MUS",
      "pct_of_country_news_volume": 0.1984
+    },
+    {
+     "iso3": "OMN",
+     "pct_of_country_news_volume": 0.1831
     },
     {
      "iso3": "LBN",
@@ -4789,10 +4789,6 @@
      "pct_of_country_news_volume": 0.0406
     },
     {
-     "iso3": "THA",
-     "pct_of_country_news_volume": 0.0342
-    },
-    {
      "iso3": "NLD",
      "pct_of_country_news_volume": 0.018
     },
@@ -4801,8 +4797,12 @@
      "pct_of_country_news_volume": 0.0168
     },
     {
-     "iso3": "NGA",
-     "pct_of_country_news_volume": 0.0146
+     "iso3": "KOR",
+     "pct_of_country_news_volume": 0.014
+    },
+    {
+     "iso3": "JPN",
+     "pct_of_country_news_volume": 0.0128
     }
    ],
    "series_start": "2026-04-12",
@@ -5345,8 +5345,11 @@
      "velocity": -0.041
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 200,
+   "news_articles_7d_window": {
+    "start": "2026-08-03",
+    "end": "2026-08-09"
+   },
    "media_intensity_by_country": [
     {
      "iso3": "ETH",
@@ -6721,11 +6724,8 @@
      "velocity": 0.062
     }
    },
-   "news_articles_7d": 583,
-   "news_articles_7d_window": {
-    "start": "2026-08-03",
-    "end": "2026-08-09"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "SUR",
@@ -16602,8 +16602,11 @@
      "velocity": 0.445
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 18454,
+   "news_articles_7d_window": {
+    "start": "2026-08-03",
+    "end": "2026-08-09"
+   },
    "media_intensity_by_country": [
     {
      "iso3": "SAU",
@@ -20035,48 +20038,51 @@
      "velocity": -0.12
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 1756,
+   "news_articles_7d_window": {
+    "start": "2026-08-03",
+    "end": "2026-08-09"
+   },
    "media_intensity_by_country": [
     {
-     "iso3": "SSD",
-     "pct_of_country_news_volume": 9.346
-    },
-    {
-     "iso3": "ZMB",
-     "pct_of_country_news_volume": 7.1429
-    },
-    {
-     "iso3": "DJI",
-     "pct_of_country_news_volume": 7.1429
-    },
-    {
      "iso3": "LBR",
-     "pct_of_country_news_volume": 5.5616
-    },
-    {
-     "iso3": "BLZ",
-     "pct_of_country_news_volume": 2.3809
-    },
-    {
-     "iso3": "BWA",
-     "pct_of_country_news_volume": 2.3809
+     "pct_of_country_news_volume": 4.2395
     },
     {
      "iso3": "NER",
-     "pct_of_country_news_volume": 1.5047
+     "pct_of_country_news_volume": 1.6618
     },
     {
      "iso3": "SOM",
-     "pct_of_country_news_volume": 1.1905
+     "pct_of_country_news_volume": 1.6384
     },
     {
-     "iso3": "GHA",
-     "pct_of_country_news_volume": 1.1727
+     "iso3": "MWI",
+     "pct_of_country_news_volume": 1.6079
     },
     {
      "iso3": "NGA",
-     "pct_of_country_news_volume": 1.108
+     "pct_of_country_news_volume": 1.5705
+    },
+    {
+     "iso3": "SSD",
+     "pct_of_country_news_volume": 1.3492
+    },
+    {
+     "iso3": "GHA",
+     "pct_of_country_news_volume": 1.3433
+    },
+    {
+     "iso3": "CUB",
+     "pct_of_country_news_volume": 1.144
+    },
+    {
+     "iso3": "AFG",
+     "pct_of_country_news_volume": 0.8731
+    },
+    {
+     "iso3": "AUS",
+     "pct_of_country_news_volume": 0.8526
     }
    ],
    "series_start": "2026-04-12",
@@ -20448,7 +20454,7 @@
     },
     {
      "iso3": "MDG",
-     "pct_of_country_news_volume": 0.794
+     "pct_of_country_news_volume": 0.8713
     },
     {
      "iso3": "HTI",
@@ -20460,15 +20466,7 @@
     },
     {
      "iso3": "VEN",
-     "pct_of_country_news_volume": 0.5826
-    },
-    {
-     "iso3": "AZE",
-     "pct_of_country_news_volume": 0.5744
-    },
-    {
-     "iso3": "MMR",
-     "pct_of_country_news_volume": 0.4762
+     "pct_of_country_news_volume": 0.5878
     },
     {
      "iso3": "NAM",
@@ -20477,6 +20475,14 @@
     {
      "iso3": "SUR",
      "pct_of_country_news_volume": 0.3983
+    },
+    {
+     "iso3": "LKA",
+     "pct_of_country_news_volume": 0.3413
+    },
+    {
+     "iso3": "BLR",
+     "pct_of_country_news_volume": 0.3152
     }
    ],
    "series_start": "2026-04-12",
@@ -20855,44 +20861,44 @@
    "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
-     "iso3": "MMR",
-     "pct_of_country_news_volume": 1.3225
-    },
-    {
      "iso3": "IRN",
-     "pct_of_country_news_volume": 1.03
-    },
-    {
-     "iso3": "AFG",
-     "pct_of_country_news_volume": 1.0064
+     "pct_of_country_news_volume": 2.2864
     },
     {
      "iso3": "IRQ",
-     "pct_of_country_news_volume": 0.935
+     "pct_of_country_news_volume": 1.3342
+    },
+    {
+     "iso3": "MMR",
+     "pct_of_country_news_volume": 1.1137
+    },
+    {
+     "iso3": "AFG",
+     "pct_of_country_news_volume": 0.9471
+    },
+    {
+     "iso3": "OMN",
+     "pct_of_country_news_volume": 0.7493
     },
     {
      "iso3": "SYR",
-     "pct_of_country_news_volume": 0.7529
+     "pct_of_country_news_volume": 0.7089
     },
     {
-     "iso3": "PRK",
-     "pct_of_country_news_volume": 0.6493
+     "iso3": "GEO",
+     "pct_of_country_news_volume": 0.6595
+    },
+    {
+     "iso3": "KEN",
+     "pct_of_country_news_volume": 0.5645
     },
     {
      "iso3": "ISR",
-     "pct_of_country_news_volume": 0.5748
-    },
-    {
-     "iso3": "KHM",
-     "pct_of_country_news_volume": 0.5603
+     "pct_of_country_news_volume": 0.5258
     },
     {
      "iso3": "TKM",
      "pct_of_country_news_volume": 0.4762
-    },
-    {
-     "iso3": "AZE",
-     "pct_of_country_news_volume": 0.4124
     }
    ],
    "series_start": "2026-04-12",
@@ -22412,36 +22418,32 @@
    "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
-     "iso3": "MUS",
-     "pct_of_country_news_volume": 0.4307
-    },
-    {
-     "iso3": "NZL",
-     "pct_of_country_news_volume": 0.0671
+     "iso3": "LKA",
+     "pct_of_country_news_volume": 0.0554
     },
     {
      "iso3": "IRL",
-     "pct_of_country_news_volume": 0.0275
+     "pct_of_country_news_volume": 0.0279
+    },
+    {
+     "iso3": "ZAF",
+     "pct_of_country_news_volume": 0.0263
     },
     {
      "iso3": "SGP",
      "pct_of_country_news_volume": 0.025
     },
     {
-     "iso3": "AUS",
-     "pct_of_country_news_volume": 0.0148
-    },
-    {
-     "iso3": "PAK",
-     "pct_of_country_news_volume": 0.0137
-    },
-    {
-     "iso3": "MYS",
-     "pct_of_country_news_volume": 0.0108
+     "iso3": "CYP",
+     "pct_of_country_news_volume": 0.02
     },
     {
      "iso3": "VNM",
-     "pct_of_country_news_volume": 0.0093
+     "pct_of_country_news_volume": 0.0118
+    },
+    {
+     "iso3": "AUS",
+     "pct_of_country_news_volume": 0.0116
     },
     {
      "iso3": "POL",
@@ -22449,7 +22451,11 @@
     },
     {
      "iso3": "IND",
-     "pct_of_country_news_volume": 0.0023
+     "pct_of_country_news_volume": 0.0033
+    },
+    {
+     "iso3": "GBR",
+     "pct_of_country_news_volume": 0.0032
     }
    ],
    "series_start": "2026-04-12",
@@ -25089,8 +25095,11 @@
      "velocity": 0.161
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 59,
+   "news_articles_7d_window": {
+    "start": "2026-08-03",
+    "end": "2026-08-09"
+   },
    "media_intensity_by_country": [
     {
      "iso3": "BWA",
