@@ -218,6 +218,21 @@ const form = document.getElementById("askform");
 const input = document.getElementById("q");
 const send = document.getElementById("send");
 const banner = document.getElementById("mode-banner");
+
+/* Starter-question chips. NOTE: this constant was accidentally deleted on
+ * 2026-08-06 along with the (adjacent, unrelated) Google-Analytics block —
+ * the reference at the suggestions loop then threw at module top level and
+ * took the whole page down: no chips, and a submit handler that never bound.
+ * The eval suites did not catch it because they import ask-engine.js
+ * directly and never execute this page. If you remove a block here, run the
+ * page itself once in a browser before shipping. */
+const STARTERS = [
+  "Top 5 trending topics report",
+  "Where should we focus dissemination?",
+  "What is trending in Kenya this week?",
+  "Compare news trust in France and Germany",
+];
+
 /* ---------- Engine boot ---------- */
 let engineReady = false, engineError = null;
 initEngine().then(() => { engineReady = true; })
