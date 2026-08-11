@@ -3,7 +3,7 @@ name: Trend engine (daily)
 # The daily heartbeat of the Content Intelligence Platform.
 # 1. Fetches each country's trending Google searches (Google Trends RSS —
 #    a snapshot feed with no history upstream, so a missed day is gone)
-# 2. Fetches GDELT global news coverage for 167 UN topics (supply signal)
+# 2. Fetches GDELT global news coverage for 183 UN topics (supply signal)
 # 3. Fetches each country's most-read Wikipedia pages (per-country demand,
 #    Wikimedia top-per-country — directly measured, no language weighting)
 # 4. Fetches Wikipedia pageviews for the same topics x 22 languages (demand)

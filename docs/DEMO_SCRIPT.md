@@ -167,7 +167,7 @@ Which countries have state-controlled media environments?
 > Usually the honest answer is that no free source measures it. Where a paid source exists, that's a budget conversation. Where a free source exists that we haven't integrated, there's a documented list of vetted candidates in `docs/DATA_SOURCES.md` §4.
 
 **"Can we add more countries / topics?"**
-> All 195 UN countries are already covered. Topics are a tracked list of 167 — adding more is a small, documented change.
+> All 195 UN countries are already covered. Topics are a tracked list of 183 — adding more is a small, documented change.
 
 ---
 

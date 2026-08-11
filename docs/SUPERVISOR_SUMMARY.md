@@ -29,7 +29,7 @@ Because it runs in the browser rather than on a server, there is **no subscripti
 
 | How often | What happens |
 |---|---|
-| **Daily** | Live attention trends refresh for 167 UN-relevant topics across 22 languages (Wikipedia reading patterns + the GDELT global news monitor) |
+| **Daily** | Live attention trends refresh for 183 UN-relevant topics across 22 languages (Wikipedia reading patterns + the GDELT global news monitor) |
 | **Weekly** | All World Bank country indicators refresh, now including financial-account ownership (digital-inclusion signal), per-country language shares, and measured social-platform web-traffic shares |
 | **Monthly** | A watchdog checks whether any of the eight annual sources — RSF, Freedom House (×2), Reuters, GSMA, Afrobarometer, UN DESA, or the advertising-market forecasts — has published a new edition, and files a reminder with step-by-step instructions when it has |
 | **Every refresh** | Refreshed data must pass an automatic quality check before it can reach the site. If a source returns something implausible, uncited, or from a source not on the approved list, nothing is published and an alert is filed |

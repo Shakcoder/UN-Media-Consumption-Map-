@@ -215,6 +215,23 @@ TOPICS: list[tuple[str, str]] = [
     ("International Criminal Court", "institutions"),
     ("Universal Declaration of Human Rights", "institutions"),
     ("United Nations Climate Change conference", "institutions"),
+    # --- Added 2026-08-11 (audit-recommended gaps, approved by Shakti) ---
+    ("Influenza", "health"),
+    ("Tobacco smoking", "health"),
+    ("Ocean acidification", "climate"),
+    ("Freedom of religion", "rights"),
+    ("LGBTQ rights", "rights"),
+    ("Social protection", "development"),
+    ("Peacebuilding", "peace"),
+    ("Statelessness", "humanitarian"),
+    ("Wartime sexual violence", "peace"),
+    ("Energy poverty", "infrastructure"),
+    ("Electronic waste", "climate"),
+    ("Submarine communications cable", "technology"),
+    ("International Court of Justice", "institutions"),
+    ("United Nations Security Council", "institutions"),
+    ("United Nations General Assembly", "institutions"),
+    ("UNRWA", "institutions"),
 ]
 
 
@@ -254,6 +271,10 @@ TITLE_OVERRIDES: dict[str, dict[str, str | None]] = {
     },
     "Q575619": {           # Cost of living — tr article deleted upstream
         "tr": None,
+    },
+    "Q7212330": {          # Tobacco smoking — es/ar readers use the general
+        "es": "Tabaquismo",          # smoking articles (41/day vs sitelinked
+        "ar": "تدخين",               # 'Fumar tabaco' 6/day; ar 22 vs 2)
     },
 }
 
