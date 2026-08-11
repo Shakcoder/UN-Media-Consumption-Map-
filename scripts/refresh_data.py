@@ -750,6 +750,40 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
 # 2024 wave dropped the channel-of-news battery, so news_consumption
 # cannot be filled from it. A separate construct, a separate field.
 # Citation: Latinobarómetro 2024, Corporación Latinobarómetro, Santiago.
+NEWS_ATTENTION_2023: dict[str, dict[str, Any]] = {
+    # LAPOP AmericasBarometer 2023 (Vanderbilt), gi0n, wt-weighted — computed
+    # by scripts/compute_lapop_news.py from the free public country files
+    # (raw .sav files stay local per LAPOP's terms; aggregates only here).
+    # OVERALL news attention, all media combined — a separate construct that
+    # never fills the per-channel news_consumption fields. Haiti is absent:
+    # its 2023 release (reduced phone survey) does not carry gi0n.
+    "ARG": {"daily_pct": 49.0, "weekly_plus_pct": 81.7, "never_pct": 11.8, "n": 1538},
+    "BHS": {"daily_pct": 50.5, "weekly_plus_pct": 81.1, "never_pct": 5.5, "n": 1572},
+    "BLZ": {"daily_pct": 45.7, "weekly_plus_pct": 81.0, "never_pct": 9.6, "n": 1544},
+    "BOL": {"daily_pct": 50.2, "weekly_plus_pct": 86.5, "never_pct": 4.7, "n": 1698},
+    "BRA": {"daily_pct": 51.2, "weekly_plus_pct": 85.1, "never_pct": 9.1, "n": 1522},
+    "CAN": {"daily_pct": 59.9, "weekly_plus_pct": 85.9, "never_pct": 3.0, "n": 2498},
+    "CHL": {"daily_pct": 49.4, "weekly_plus_pct": 82.4, "never_pct": 10.8, "n": 1649},
+    "COL": {"daily_pct": 36.4, "weekly_plus_pct": 75.0, "never_pct": 13.4, "n": 1499},
+    "CRI": {"daily_pct": 44.6, "weekly_plus_pct": 80.0, "never_pct": 12.0, "n": 1522},
+    "DOM": {"daily_pct": 51.5, "weekly_plus_pct": 80.7, "never_pct": 12.7, "n": 1592},
+    "ECU": {"daily_pct": 46.2, "weekly_plus_pct": 83.2, "never_pct": 8.4, "n": 1563},
+    "GRD": {"daily_pct": 41.4, "weekly_plus_pct": 76.1, "never_pct": 9.1, "n": 1541},
+    "GTM": {"daily_pct": 32.6, "weekly_plus_pct": 72.0, "never_pct": 15.1, "n": 1545},
+    "HND": {"daily_pct": 40.8, "weekly_plus_pct": 72.4, "never_pct": 18.3, "n": 1577},
+    "JAM": {"daily_pct": 50.3, "weekly_plus_pct": 79.3, "never_pct": 7.7, "n": 1506},
+    "MEX": {"daily_pct": 34.1, "weekly_plus_pct": 74.7, "never_pct": 13.6, "n": 1619},
+    "NIC": {"daily_pct": 24.5, "weekly_plus_pct": 71.8, "never_pct": 12.3, "n": 2966},
+    "PAN": {"daily_pct": 52.2, "weekly_plus_pct": 83.7, "never_pct": 9.9, "n": 1525},
+    "PER": {"daily_pct": 44.4, "weekly_plus_pct": 86.7, "never_pct": 5.3, "n": 1529},
+    "PRY": {"daily_pct": 47.0, "weekly_plus_pct": 82.5, "never_pct": 10.0, "n": 1500},
+    "SLV": {"daily_pct": 37.2, "weekly_plus_pct": 81.3, "never_pct": 8.0, "n": 1515},
+    "SUR": {"daily_pct": 57.1, "weekly_plus_pct": 84.5, "never_pct": 6.3, "n": 1537},
+    "TTO": {"daily_pct": 53.1, "weekly_plus_pct": 82.5, "never_pct": 7.1, "n": 1649},
+    "URY": {"daily_pct": 54.9, "weekly_plus_pct": 84.2, "never_pct": 10.7, "n": 1515},
+    "USA": {"daily_pct": 54.8, "weekly_plus_pct": 82.7, "never_pct": 7.1, "n": 1500},
+}
+
 PLATFORM_USE_2024: dict[str, dict[str, Any]] = {
     "ARG": {"whatsapp": 85.0, "facebook": 62.4, "instagram": 53.6, "tiktok": 25.3, "youtube": 53.2,
             "x": 15.2, "snapchat": 4.0, "linkedin": 6.3, "none": 9.4, "n": 1205},
@@ -1281,6 +1315,14 @@ def build_country(
             "https://www.latinobarometro.org/"
         )
 
+    # News-attention frequency (LAPOP AmericasBarometer 2023, 25 countries)
+    news_attention = NEWS_ATTENTION_2023.get(iso3)
+    if news_attention:
+        sources["news_attention"] = (
+            "LAPOP AmericasBarometer 2023 (Vanderbilt), weighted microdata (gi0n: attention to news, "
+            "all media combined) | https://www.vanderbilt.edu/lapop/"
+        )
+
     # Media-landscape narrative (CIA World Factbook, public domain)
     # The leading-outlet lists (top_tv / top_radio / top_online_news /
     # top_social) come from data/static_countries.json — hand-compiled, not
@@ -1365,6 +1407,8 @@ def build_country(
         "languages_detail": languages_detail or None,
         "platform_use": ({**platform_use, "source": "Latinobarometro 2024", "year": 2024}
                          if platform_use else None),
+        "news_attention": ({**news_attention, "source": "LAPOP AmericasBarometer 2023", "year": 2023}
+                           if news_attention else None),
         "media": {
             **static_meta.get("media", {}),
             "landscape_note": landscape_note,

@@ -903,6 +903,10 @@ function facts(iso) {
     // the strong signal; no_measurements means UNKNOWN — consumers must
     // never read it as an open internet.
     ooni: (OONI && OONI.countries) ? (OONI.countries[iso] || null) : null,
+    // News-attention frequency (LAPOP AmericasBarometer, Americas only) —
+    // one question, ALL media combined; a separate construct that never
+    // fills or compares with the per-channel figures.
+    newsAttention: c.news_attention || null,
     rising: tr ? (tr.rising_topics || []) : [],
     distinctive: tr ? (tr.distinctive_topics || []) : [],
     topTopics: tr ? (tr.top_topics || []) : [],
@@ -927,6 +931,7 @@ function addCountryEvidence(f, ev) {
   else if (f.pressUN && f.pressUN.share_withheld) bits.push("UN share of national-press stories: withheld — the national collection's weekly volume is below the honesty floor");
   if (f.ooni && !f.ooni.no_measurements) bits.push(`measured news-site censorship: OONI web-connectivity vs the Citizen Lab NEWS list, 28 days to ${(f.ooni.window || {}).end} (volunteer-run probes — volume follows volunteers, not censorship)`);
   else if (f.ooni && f.ooni.no_measurements) bits.push("measured news-site censorship: no OONI measurements in the window — unknown, never evidence of an open internet");
+  if (f.newsAttention) bits.push(`news-attention frequency: LAPOP AmericasBarometer ${f.newsAttention.year}, weighted microdata (one question, all media combined — never comparable with per-channel figures)`);
   return ev.add(`${f.name} — country profile`, "Atlas record. " + bits.join("; ") + ".", countryLinks(f.iso));
 }
 
@@ -1126,6 +1131,10 @@ function composeCountryBrief(f, ev, ents) {
     news.push(`- News sources (weekly reach): TV ${fmt(f.tv)}, online ${fmt(f.online)}, social media ${fmt(f.social)} *(survey: ${f.survey || "n/a"})*`);
   }
   if (f.trust != null) news.push(`- Trust in news: ${f.trust}%`);
+  if (f.newsAttention && f.newsAttention.daily_pct != null) {
+    const na = f.newsAttention;
+    news.push(`- Follows the news daily: **${na.daily_pct}%** (${na.weekly_plus_pct}% at least a few times a week) *(LAPOP AmericasBarometer ${na.year}, weighted, n=${Number(na.n || 0).toLocaleString()} — overall attention across all media combined, a different question from the channel figures above and never comparable with them)*`);
+  }
   section("News consumption", news);
 
   // --- Connectivity & audience ---

@@ -1190,7 +1190,7 @@ window.TRANSLATIONS = {
     modal_refresh_cadence: "Refresh cadence",
     modal_refresh_body: "Topic trends refresh daily (Wikimedia + GDELT + Google Trends + Bluesky + Media Cloud). Country indicators refresh weekly via the World Bank API. Annual flagship reports (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobarometer) are integrated once a year — a monthly watchdog opens a reminder automatically when a new edition appears.",
     modal_licences_heading: "Licences & attribution",
-    modal_licences_body: "The Atlas redistributes figures from sources with their own terms. World Bank Open Data (including the ITU, UNESCO UIS and Global Findex series it republishes) is used under CC BY 4.0. Unicode CLDR language data is used under the Unicode License v3. Wikimedia Pageviews data is CC0. The CIA World Factbook is in the public domain. RSF, Freedom House, the Reuters Institute and the barometer programmes (Afrobarometer, Arab Barometer, World Values Survey, Eurobarometer / GESIS, Latinobarómetro, Asian Barometer) permit non-commercial research reuse with attribution; each figure names its programme and edition wherever it appears. Statcounter and GDELT are used under their published terms with attribution. DataReportal and the WPP Media / Dentsu ad forecasts are cited as industry estimates and are never redistributed in bulk. Google Trends data is reused with attribution (“Data source: Google Trends”). Bluesky and Media Cloud material is stored as aggregate topics and counts only — never posts, handles or story text — in line with their terms. OONI censorship measurements are CC BY-NC-SA (non-commercial) — suitable for this non-profit Atlas, to be removed if it ever becomes a paid product. Where a source's terms do not permit redistribution, the Atlas links to it rather than copying it.",
+    modal_licences_body: "The Atlas redistributes figures from sources with their own terms. World Bank Open Data (including the ITU, UNESCO UIS and Global Findex series it republishes) is used under CC BY 4.0. Unicode CLDR language data is used under the Unicode License v3. Wikimedia Pageviews data is CC0. The CIA World Factbook is in the public domain. RSF, Freedom House, the Reuters Institute and the barometer programmes (Afrobarometer, Arab Barometer, World Values Survey, Eurobarometer / GESIS, Latinobarómetro, Asian Barometer, LAPOP AmericasBarometer) permit non-commercial research reuse with attribution; each figure names its programme and edition wherever it appears. Statcounter and GDELT are used under their published terms with attribution. DataReportal and the WPP Media / Dentsu ad forecasts are cited as industry estimates and are never redistributed in bulk. Google Trends data is reused with attribution (“Data source: Google Trends”). Bluesky and Media Cloud material is stored as aggregate topics and counts only — never posts, handles or story text — in line with their terms. OONI censorship measurements are CC BY-NC-SA (non-commercial) — suitable for this non-profit Atlas, to be removed if it ever becomes a paid product. Where a source's terms do not permit redistribution, the Atlas links to it rather than copying it.",
     modal_boundaries_note: "The boundaries and names shown and the designations used on the map do not imply official endorsement or acceptance by the United Nations. Country outlines are generalized for display; where the underlying dataset diverges from United Nations cartographic practice and the geometry permits, the presentation follows the United Nations position.",
     modal_confidence_flags: "Confidence flags",
     modal_confidence_body: "Each country carries a derived confidence level. High: the record is verified against its primary sources and a measured news-consumption survey covers the country. Medium: verified, but news figures rest on structural indicators or on a survey that carries a methodological caveat (sample or question construct). Low: not yet verified — must not be cited publicly. Individual figures always name their source in the Sources tab.",
@@ -2343,6 +2343,21 @@ function tabMedia(d) {
     if (nc.survey_note) {
       html += `<div style="font-size:10px;color:var(--warn);margin-top:4px;">⚠ ${esc(nc.survey_note)}</div>`;
     }
+  }
+
+  // ---- News-attention frequency (LAPOP AmericasBarometer, Americas only) ----
+  // A deliberately SEPARATE construct from the channel figures above: one
+  // question covering all media combined ("how often do you pay attention to
+  // the news, whether on TV, the radio, newspapers, or the internet"). It can
+  // never fill the per-channel fields — but for a dozen Caribbean and Central
+  // American countries it is the only measured news figure that exists.
+  const na = d.news_attention;
+  if (na && na.daily_pct != null) {
+    html += `<div class="data-row"><span class="label">Follows the news daily <span style="font-size:10px;color:var(--muted-2);">LAPOP ${esc(String(na.year || "2023"))} · any medium</span></span>` +
+            `<span class="value">${esc(String(na.daily_pct))}%</span></div>`;
+    html += `<div class="data-row"><span class="label">At least a few times a week</span>` +
+            `<span class="value">${esc(String(na.weekly_plus_pct))}%</span></div>`;
+    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:2px;">AmericasBarometer ${esc(String(na.year || "2023"))} (LAPOP Lab, Vanderbilt), weighted, n=${esc(Number(na.n || 0).toLocaleString())}. Overall news attention across TV, radio, print and internet combined — a different question from the per-channel figures above, never comparable with them.</div>`;
   }
 
   // connectivity rows render only when the indicator exists — "null%" is

@@ -747,6 +747,34 @@ def main() -> int:
         WARNS.append("trends/press_un_coverage.json missing — national-press "
                      "layer not built yet")
 
+    # News-attention frequency (LAPOP AmericasBarometer) — lives in
+    # countries.json per country. Construct separation is the invariant:
+    # this field must never leak into news_consumption, and its own numbers
+    # must be internally coherent (daily ≤ weekly_plus, everything 0–100,
+    # real sample sizes, the exact source label).
+    n_na = 0
+    for iso, rec in sorted(countries.items()):
+        na = rec.get("news_attention")
+        if not na:
+            continue
+        n_na += 1
+        d_, w_, nv = na.get("daily_pct"), na.get("weekly_plus_pct"), na.get("never_pct")
+        if not all(is_number(x) and 0 <= x <= 100 for x in (d_, w_, nv)):
+            ERRORS.append(f"{iso} news_attention: values out of range ({d_!r}/{w_!r}/{nv!r})")
+        elif d_ > w_ + 0.05:
+            ERRORS.append(f"{iso} news_attention: daily ({d_}) exceeds weekly_plus ({w_})")
+        if not (isinstance(na.get("n"), int) and na["n"] >= 500):
+            ERRORS.append(f"{iso} news_attention: sample n={na.get('n')!r} below the "
+                          f"500 floor")
+        if na.get("source") != "LAPOP AmericasBarometer 2023":
+            ERRORS.append(f"{iso} news_attention: unexpected source label "
+                          f"{na.get('source')!r}")
+        if not (rec.get("sources") or {}).get("news_attention"):
+            ERRORS.append(f"{iso} news_attention: no sources{{}} citation entry")
+    if n_na:
+        INFOS.append(f"news-attention (LAPOP): {n_na}/{len(countries)} countries "
+                     f"(separate construct — never fills channel figures)")
+
     # OONI measured censorship — optional layer. The honesty invariants are
     # machine-enforced: counts must reconcile, a zero-measurement country
     # must carry the no_measurements flag AND its unknown-not-open note, and
