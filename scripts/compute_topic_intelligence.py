@@ -52,6 +52,9 @@ INCLUDE_FLOOR = 25
 RISING_FLOOR = 150
 RISING_THRESHOLD = 0.30
 FALLING_THRESHOLD = -0.25
+# Minimum language→country attribution weight before a language-edition spike
+# may appear in that country's rising_topics (see the guard note below).
+MIN_RISING_WEIGHT = 0.05
 
 # A country profile is expressed as shares of that country's own attributed
 # attention. With one or two qualifying topics that arithmetic says nothing:
@@ -65,7 +68,11 @@ MIN_PROFILE_TOPICS = 3
 # usual traffic. Below this share the day is left empty: editions differ in
 # how far back their stored history reaches, and plotting a partial sum draws
 # a hole in the data as a collapse in attention.
-SERIES_COVERAGE_FLOOR = 0.5
+# Raised 0.5 → 0.7 (2026-08-11 audit): at 0.5 a displayed global mover's
+# entire final nine days were drawn from 66% of its usual traffic and
+# presented as full totals. A broken line is honest; a two-thirds line
+# passed off as whole is not.
+SERIES_COVERAGE_FLOOR = 0.7
 
 # ---------------------------------------------------------------------------
 # HEURISTIC language-edition → country weights (speaker-population based).
@@ -314,6 +321,7 @@ def main() -> None:
 
     n_series_fresh = n_series_stale = n_stale_scoreable = 0
     stale_topics: list[str] = []
+    floor_topics: list[str] = []   # tracked, fresh, but under the volume floor
 
     def _overall_mean(s: dict) -> float:
         """Whole-window mean, independent of freshness — used only to decide
@@ -347,19 +355,39 @@ def main() -> None:
                 lang_stats[lang] = st
         if not lang_stats:
             # Either genuinely low-traffic everywhere, or every series for
-            # this topic is stale. Record the latter so the count of
-            # "topics we cannot currently speak to" is visible rather than
-            # silently absent from the output.
+            # this topic is stale. BOTH are recorded so no tracked topic can
+            # vanish from the UI without an accounting (2026-08-11 audit:
+            # three below-floor topics simply disappeared, and the coverage
+            # arithmetic 164 + 0 != 167 had no bucket explaining the gap).
             if all(series_stats(s, as_of) is None for s in langs.values()):
                 stale_topics.append(qid)
+            else:
+                floor_topics.append(qid)
             continue
 
         # volume-weighted global velocity (only series above the rising floor
-        # participate, so tiny editions can't dominate the global number)
-        big = {l: st for l, st in lang_stats.items() if st["mean_7d"] >= RISING_FLOOR}
+        # participate, so tiny editions can't dominate the global number).
+        # SYMMETRIC BASIS (2026-08-11 audit): a series qualifies on EITHER
+        # window's mean. Testing only mean_7d let series spike INTO the basis
+        # (their positive velocity counted) while series that collapsed fell
+        # OUT of it (their negative velocity vanished) — survivorship bias
+        # that flipped Tropical cyclone to 'rising' on 2026-08-11 (+0.32
+        # asymmetric vs +0.25 symmetric). Weights use max(mean) so a
+        # collapsing series keeps the weight its baseline size earned.
+        big = {l: st for l, st in lang_stats.items()
+               if st["mean_7d"] >= RISING_FLOOR
+               or st["mean_30d_prior"] >= RISING_FLOOR}
         basis = big or lang_stats
-        wsum = sum(st["mean_7d"] for st in basis.values())
-        g_velocity = sum(st["velocity"] * st["mean_7d"] for st in basis.values()) / wsum
+        _w = {l: max(st["mean_7d"], st["mean_30d_prior"])
+              for l, st in basis.items()}
+        wsum = sum(_w.values())
+        g_velocity = sum(st["velocity"] * _w[l] for l, st in basis.items()) / wsum
+        # Edition concentration: how much of the velocity basis one edition
+        # carries. topics.html flags movers driven >=70% by a single edition
+        # (a ja-only burst once topped the global movers list at +1121% with
+        # no cue that 85% of the signal was one language).
+        top_lang = max(_w, key=_w.get)
+        top_share = _w[top_lang] / wsum if wsum else 1.0
 
         label = ("rising" if g_velocity > RISING_THRESHOLD
                  else "falling" if g_velocity < FALLING_THRESHOLD
@@ -414,6 +442,10 @@ def main() -> None:
             "category": meta["category"],
             "global_velocity": round(g_velocity, 3),
             "momentum": label,
+            # which language edition dominates the velocity basis, and by how
+            # much — lets the UI say "driven by Japanese Wikipedia" instead of
+            # presenting a single-edition burst as a global movement
+            "top_edition": {"lang": top_lang, "share": round(top_share, 2)},
             "demand_by_language": {
                 l: {"weekly_daily_avg_views": st["mean_7d"],
                     "velocity": st["velocity"]}
@@ -444,7 +476,17 @@ def main() -> None:
                 score = w * st["mean_7d"]
                 country_scores.setdefault(iso3, {})
                 country_scores[iso3][qid] = country_scores[iso3].get(qid, 0) + score
-                if st["velocity"] > RISING_THRESHOLD and st["mean_7d"] >= RISING_FLOOR:
+                # A language spike may only claim "rising in this country"
+                # where the country carries a real share of that language's
+                # readership (2026-08-11 audit: without the weight guard, 23
+                # language spikes fanned out into 219 identical entries
+                # across 88 of 96 countries, down to a 0.002 weight — one
+                # Spanish burst read as rising in Paraguay and El Salvador
+                # alike). 0.05 keeps every country that plausibly produced
+                # part of the spike and cuts the homeopathic attributions.
+                if (st["velocity"] > RISING_THRESHOLD
+                        and st["mean_7d"] >= RISING_FLOOR
+                        and w >= MIN_RISING_WEIGHT):
                     country_rising.setdefault(iso3, []).append({
                         "qid": qid, "label_en": meta["label_en"],
                         "velocity": st["velocity"], "via_language": lang,
@@ -542,6 +584,11 @@ def main() -> None:
                 "series_stale_scoreable": n_stale_scoreable,
                 "topics_scored": len(topic_out),
                 "topics_stale_excluded": len(stale_topics),
+                # Tracked topics whose fresh series all sit under the
+                # 25-views/day floor. scored + stale + below_floor must equal
+                # the registry count — no tracked topic may vanish without a
+                # bucket (2026-08-11 audit).
+                "topics_below_floor": len(floor_topics),
                 "topics_with_news_volume": sum(
                     1 for t in topic_out.values() if t["news_articles_7d"] is not None),
                 "countries_without_profile": n_thin_profiles,
@@ -559,7 +606,7 @@ def main() -> None:
                 ),
             },
             "method_notes": {
-                "velocity": "(mean last 7d − mean prior 30d) / prior mean, per language series, volume-weighted globally; windows are calendar-dated against measured_as_of",
+                "velocity": "(mean last 7d − mean prior 30d) / prior mean, per language series, volume-weighted globally; windows are calendar-dated against measured_as_of. The weighting basis admits a series when EITHER window's mean clears the rising floor and weights it by the larger mean, so a collapsing edition keeps the influence its baseline earned (an asymmetric basis systematically over-reported rises)",
                 "country_attribution": "HEURISTIC: language-edition demand mapped to countries by speaker-population weights; approximation, not measurement",
                 "demand_vs_supply": "Wikipedia pageviews = demand (what people look up); GDELT = supply (what media publish); never merged",
                 "media_intensity_by_country": "pct_of_country_news_volume is GDELT 'Volume Intensity': the percentage of THAT COUNTRY'S OWN monitored news output matching the topic — NOT its share of world coverage. A small media market that covers the topic intensively outranks a large one publishing far more articles on it; read it as editorial focus, never as volume or concentration.",
@@ -570,6 +617,14 @@ def main() -> None:
                 "rising_threshold": RISING_THRESHOLD,
             },
             "topics": topic_out,
+            # Tracked-but-unscored topics, with the reason — the Topic
+            # Explorer lists these dimmed instead of letting them vanish.
+            "topics_unscored": [
+                {"qid": q, "label_en": topics[q]["label_en"],
+                 "category": topics[q]["category"],
+                 "reason": ("stale" if q in stale_topics else "below_floor")}
+                for q in [*stale_topics, *floor_topics]
+            ],
             "countries": country_out,
         }, indent=1, ensure_ascii=False) + "\n",
         encoding="utf-8",

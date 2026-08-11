@@ -63,6 +63,9 @@
     padding: 7px 8px; border-radius: 7px; cursor: pointer; font-size: 13px; }
   .topic-row:hover { background: var(--accent-soft); }
   .topic-row.active { background: var(--accent-soft); font-weight: 600; }
+  .topic-row.unscored { cursor: default; color: var(--muted-2); }
+  .topic-row.unscored:hover { background: none; }
+  .drive-note { font-size: 10px; color: var(--muted-2); white-space: nowrap; }
   .badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; font-weight: 600; }
   .badge.rising  { background: #E8F7EE; color: var(--positive); }
   .badge.falling { background: #FDEBEA; color: var(--danger); }
@@ -200,15 +203,31 @@ function renderList(filter) {
     if (q && !t.label_en.toLowerCase().includes(q)) continue;
     (byCat[t.category] = byCat[t.category] || []).push([qid, t]);
   }
+  // Tracked topics that could not be scored today still appear, dimmed with
+  // the reason — a tracked topic must never silently vanish from this list.
+  const unscoredByCat = {};
+  for (const u of DATA.topics_unscored || []) {
+    if (q && !u.label_en.toLowerCase().includes(q)) continue;
+    (unscoredByCat[u.category] = unscoredByCat[u.category] || []).push(u);
+  }
   let html = "";
   for (const cat of Object.keys(CAT_LABELS)) {
     const rows = (byCat[cat] || []).sort((a, b) => b[1].global_velocity - a[1].global_velocity);
-    if (!rows.length) continue;
+    const unscored = unscoredByCat[cat] || [];
+    if (!rows.length && !unscored.length) continue;
     html += `<div class="cat">${esc(CAT_LABELS[cat])}</div>`;
     for (const [qid, t] of rows) {
       html += `<div class="topic-row ${qid === activeQid ? "active" : ""}" data-qid="${esc(qid)}"
         role="button" tabindex="0" aria-label="${esc(t.label_en)} — ${esc(t.momentum)}">
         <span>${esc(t.label_en)}</span>${momentumBadge(t.momentum)}</div>`;
+    }
+    for (const u of unscored) {
+      const why = u.reason === "stale"
+        ? "no current data today"
+        : "too little traffic to measure today";
+      html += `<div class="topic-row unscored" aria-label="${esc(u.label_en)} — tracked, ${esc(why)}"
+        title="Tracked daily, but ${esc(why)} — it returns to the list when its data does.">
+        <span>${esc(u.label_en)}</span><span class="drive-note">${esc(why)}</span></div>`;
     }
   }
   body.innerHTML = html || `<div class="empty">No topics match.</div>`;
@@ -240,8 +259,15 @@ function renderGlobalMovers() {
     const pct = Math.round(t.global_velocity * 100);
     const cls = pct >= 0 ? "up" : "down";
     const sym = pct >= 0 ? "+" : "";
+    // A "global" mover carried >=70% by one language edition is a regional
+    // or single-community wave — say so in the row itself (a ja-only burst
+    // once headlined this list at +1121% with no cue).
+    const te = t.top_edition;
+    const drive = te && te.share >= 0.7 && LANG_NAMES[te.lang]
+      ? `<span class="drive-note">driven by ${esc(LANG_NAMES[te.lang])} Wikipedia</span>`
+      : "";
     return `<div class="topic-row" data-qid="${esc(qid)}" role="button" tabindex="0"
-      aria-label="${esc(t.label_en)}, ${sym}${pct}%"><span>${esc(t.label_en)}</span>
+      aria-label="${esc(t.label_en)}, ${sym}${pct}%"><span>${esc(t.label_en)} ${drive}</span>
       <span class="${cls}">${sym}${pct}%</span></div>`;
   };
   // Coverage honesty: the file reports how much of the tracked universe was
@@ -251,10 +277,10 @@ function renderGlobalMovers() {
   // is the series' own, not the day the file happened to be written.
   const cov = DATA.coverage || {};
   const scored = Object.keys(DATA.topics).length;
-  const unscorable = cov.topics_stale_excluded || 0;
+  const unscorable = (cov.topics_stale_excluded || 0) + (cov.topics_below_floor || 0);
   const asOf = DATA.measured_as_of || DATA.generated;
   const coverageNote = unscorable
-    ? ` · ${unscorable} more tracked ${unscorable === 1 ? "topic has" : "topics have"} no current data and ${unscorable === 1 ? "is" : "are"} not scored today`
+    ? ` · ${unscorable} more tracked ${unscorable === 1 ? "topic is" : "topics are"} not scored today (no current data, or too little traffic to measure) — shown dimmed in the list`
     : "";
   // tabindex="-1" on the heading: it is never in the tab order, but it can be
   // given focus by script when the pane is replaced (see bindMoverClicks)
