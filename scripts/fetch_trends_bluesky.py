@@ -119,7 +119,11 @@ def main() -> int:
     # applies to the archive too), then badge what is genuinely new today.
     history = {d: names for d, names in (previous.get("history") or {}).items()
                if d > keep_after and d != today_str}
-    history[today_str] = sorted({t["display_name"] for t in trends})
+    # UNION with anything already captured today, never replace — same fix as
+    # fetch_trends_google.py (2026-08-11 audit): the feed rotates all day, the
+    # archive is unrebuildable, and a same-day rerun must add, not erase.
+    prev_today = set((previous.get("history") or {}).get(today_str) or [])
+    history[today_str] = sorted(prev_today | {t["display_name"] for t in trends})
     earlier = {n for d, names in history.items() if d != today_str for n in names}
     for t in trends:
         t["new"] = t["display_name"] not in earlier

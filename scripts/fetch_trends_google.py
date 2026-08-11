@@ -61,6 +61,7 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 from datetime import date, datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 import requests
@@ -131,12 +132,19 @@ def fetch_country(iso2: str) -> list[dict] | None:
     try:
         root = ET.fromstring(resp.content)
     except ET.ParseError:
-        return []          # non-feed body = not covered either
+        # A 200 with a non-XML body is a bot-wall/consent page or an outage,
+        # NOT Google dropping the country. Only HTTP 400 means unsupported
+        # (the documented contract above); treating this as unsupported wiped
+        # a covered country's unrebuildable history for up to a week
+        # (found in the 2026-08-11 audit).
+        return None
 
     out: list[dict] = []
     for rank, item in enumerate(root.findall(".//item"), start=1):
         title = (item.findtext("title") or "").strip()
-        if not title:
+        # Single-character "queries" (a literal "1" reached Iran's published
+        # top-10 on 2026-08-11) are feed noise, not search terms.
+        if len(title) < 2:
             continue
         # Namespaced ht:* children: matched by local name so a namespace-URI
         # change upstream cannot silently blank the traffic column.
@@ -155,16 +163,22 @@ def fetch_country(iso2: str) -> list[dict] | None:
             entry["traffic"] = traffic
             entry["traffic_min"] = parse_traffic(traffic)
         if started:
-            # "Mon, 10 Aug 2026 06:20:00 -0700" -> "2026-08-10"; best-effort,
-            # the field is a nicety and never worth failing a country over.
-            m = re.search(r"(\d{1,2})\s+(\w{3})\s+(\d{4})", started)
-            if m:
-                try:
-                    entry["started"] = datetime.strptime(
-                        f"{m.group(1)} {m.group(2)} {m.group(3)}", "%d %b %Y"
-                    ).date().isoformat()
-                except ValueError:
-                    pass
+            # "Mon, 10 Aug 2026 06:20:00 -0700" -> the UTC calendar date;
+            # best-effort, never worth failing a country over. The feed
+            # stamps US-Pacific time, so taking its calendar day verbatim
+            # shifted every 00:00–07:00 UTC trend to the previous day.
+            try:
+                dt = parsedate_to_datetime(started)
+                entry["started"] = dt.astimezone(timezone.utc).date().isoformat()
+            except (TypeError, ValueError):
+                m = re.search(r"(\d{1,2})\s+(\w{3})\s+(\d{4})", started)
+                if m:
+                    try:
+                        entry["started"] = datetime.strptime(
+                            f"{m.group(1)} {m.group(2)} {m.group(3)}", "%d %b %Y"
+                        ).date().isoformat()
+                    except ValueError:
+                        pass
         out.append(entry)
         if len(out) >= TOP_N:
             break
@@ -257,12 +271,20 @@ def main() -> int:
             return "error"
 
         if not queries:                           # Google does not cover this geo
-            out[iso3] = {
+            rec = {
                 "unsupported": True,
                 "note": ("Google Trends does not publish a trending-searches feed "
                          "for this country."),
                 "checked": retrieved,
             }
+            # If this country ever had data, its rolling archive is
+            # unrebuildable — carry it inside the unsupported record so a
+            # later flip back to supported resumes with history intact.
+            prev_hist = (previous.get(iso3) or {}).get("history")
+            if prev_hist:
+                rec["history"] = {d: q for d, q in prev_hist.items()
+                                  if d > keep_after}
+            out[iso3] = rec
             n_unsupported += 1
             return "unsupported"
 
@@ -272,7 +294,14 @@ def main() -> int:
         prev_rec = previous.get(iso3) or {}
         history = {d: q for d, q in (prev_rec.get("history") or {}).items()
                    if d > keep_after and d != today_str}
-        history[today_str] = [q["query"] for q in queries]
+        # UNION with anything already captured today, never replace: the feed
+        # rotates all day and this archive is unrebuildable, so a second run in
+        # the same UTC day (a manual rerun, or the intraday pulse workflow)
+        # must ADD to the day's record. Replacing here silently erased every
+        # earlier snapshot of the day (found in the 2026-08-11 audit).
+        prev_today = (prev_rec.get("history") or {}).get(today_str) or []
+        history[today_str] = list(dict.fromkeys(
+            [*prev_today, *(q["query"] for q in queries)]))
 
         earlier = {q for d, qs in history.items() if d != today_str for q in qs}
         for q in queries:
