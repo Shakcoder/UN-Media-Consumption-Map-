@@ -39,11 +39,18 @@ name: Trend engine (daily)
 #     per-country file's newest data ages past 4 days, so the
 #     failure-alert issue actually fires instead of a green tick.
 #
-# Runs at 05:30 UTC daily (after Wikimedia finalizes yesterday's pageviews).
+# Runs at 16:05 UTC daily. MOVED from 05:30 (2026-08-11): Wikimedia's
+# per-article data for "yesterday" is NOT yet published at 05:30 — the
+# 2026-08-11 05:30 run stored series ending Aug 9 and missed the Colombia
+# earthquake spike that a 15:00 UTC rerun then captured. The per-article
+# dumps land late morning UTC; 16:05 is reliably after them, so every run
+# gets a complete yesterday. (The intraday Google-Trends/Bluesky snapshots
+# have their own lightweight workflow, trends-pulse.yml, so breaking search
+# trends no longer depend on this single daily moment.)
 
 on:
   schedule:
-    - cron: "30 5 * * *"
+    - cron: "5 16 * * *"
   workflow_dispatch:        # manual "Run workflow" button
 
 permissions:
@@ -377,6 +384,47 @@ jobs:
                       rc = 1
                   elif age > 2:
                       print(f"::warning::country_searches.json is {age} days old — watch this.")
+
+          # PER-COUNTRY staleness distribution (2026-08-11): the newest-date
+          # checks above can stay green while individual countries freeze —
+          # one fresh country holds max(dates) current forever. Count the
+          # frozen ones instead.
+          def stale_country_count(path, date_key, skip_key):
+              p = Path(path)
+              if not p.exists():
+                  return None
+              recs = json.loads(p.read_text()).get("countries", {})
+              n = 0
+              for r in recs.values():
+                  if r.get(skip_key):
+                      continue
+                  d = r.get(date_key)
+                  if not d:
+                      continue
+                  try:
+                      age = (date.today() - datetime.strptime(d, "%Y-%m-%d").date()).days
+                  except ValueError:
+                      continue
+                  if age > 5:
+                      n += 1
+              return n
+          for path, dk, sk, label in (
+              ("data/trends/country_reading.json", "date", "withheld", "reading lists"),
+              ("data/trends/country_searches.json", "date", "unsupported", "trending searches"),
+          ):
+              n = stale_country_count(path, dk, sk)
+              if n is None:
+                  continue
+              print(f"{label}: {n} countries individually older than 5 days")
+              if n > 40:
+                  print(f"::error::{n} countries' {label} are each >5 days old — "
+                        f"the per-country fetch is starving broadly even though the "
+                        f"file's newest date looks current; check the fetch logs.")
+                  rc = 1
+              elif n > 10:
+                  print(f"::warning::{n} countries' {label} are each >5 days old — "
+                        f"watch this; the stalest-first ordering should clear it in "
+                        f"a few runs if the budget allows.")
 
           # National-press UN shares: rolling weekly measure refreshed daily,
           # stalest-first — the newest per-country retrieval date is the

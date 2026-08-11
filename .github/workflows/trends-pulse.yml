@@ -1,0 +1,87 @@
+name: Trends pulse (intraday)
+
+# WHY THIS EXISTS (2026-08-11 audit). Google's Trending-Now feed lists only
+# the searches accelerating RIGHT NOW and keeps no history — and the Atlas
+# used to snapshot it once a day at 05:30 UTC, which is 00:30 in Bogotá.
+# When a magnitude-7.4 earthquake struck Colombia at 07:34 local time on
+# 2026-08-10, its search wave rose and rotated out of the feed entirely
+# between our snapshots: the Atlas published lottery numbers as Colombia's
+# trending searches on quake day. Bluesky's trends feed has the same
+# snapshot-only nature.
+#
+# This lightweight lane polls both feeds three more times a day (the main
+# trend-engine run at 16:05 UTC is the fourth). Both fetchers UNION each
+# snapshot into their per-day history, so the day's record accumulates
+# instead of being overwritten.
+#
+# It shares the trend-engine concurrency group ON PURPOSE: both workflows
+# commit the same files, so they must serialize, never interleave.
+
+on:
+  schedule:
+    - cron: "30 5 * * *"    # 05:30 UTC — Asia/Africa/Europe morning wave
+    - cron: "30 11 * * *"   # 11:30 UTC — Europe/Africa midday, Asia evening
+    - cron: "30 22 * * *"   # 22:30 UTC — Americas afternoon/evening wave
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trend-engine       # serialize with the main daily run — same files
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  pulse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Snapshot per-country trending searches (Google Trends RSS)
+        timeout-minutes: 12
+        continue-on-error: true
+        run: python scripts/fetch_trends_google.py
+
+      - name: Snapshot Bluesky trending topics
+        timeout-minutes: 5
+        continue-on-error: true
+        run: python scripts/fetch_trends_bluesky.py
+
+      - name: Commit snapshot (if changed)
+        run: |
+          set -e
+          git config user.name "atlas-bot"
+          git config user.email "actions@github.com"
+          # Same discipline as the trend engine's assemble job: commit first,
+          # then rebase onto whatever landed while we fetched, then push.
+          # Only these two files may travel in a pulse commit.
+          git add data/trends/country_searches.json data/trends/bluesky_trends.json
+          if git diff --cached --quiet; then
+            echo "No changes — feeds quiet since the last snapshot."
+          else
+            git commit -m "chore(trends): intraday pulse $(date -u +%Y-%m-%dT%H:%M)"
+            # On conflict the replayed pulse commit wins for these files: it
+            # was built by UNION on top of the previous snapshot, so it can
+            # only add. (During a rebase the replayed commit is "--theirs".)
+            if ! git pull --rebase origin main; then
+              git checkout --theirs -- data/trends/country_searches.json data/trends/bluesky_trends.json || true
+              git add data/trends/country_searches.json data/trends/bluesky_trends.json
+              GIT_EDITOR=true git rebase --continue
+            fi
+            git push
+            echo "Pushed."
+          fi
