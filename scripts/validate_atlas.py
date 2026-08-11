@@ -747,6 +747,52 @@ def main() -> int:
         WARNS.append("trends/press_un_coverage.json missing — national-press "
                      "layer not built yet")
 
+    # OONI measured censorship — optional layer. The honesty invariants are
+    # machine-enforced: counts must reconcile, a zero-measurement country
+    # must carry the no_measurements flag AND its unknown-not-open note, and
+    # no derived rate/percentage field may ever appear (counts only).
+    oo_path = ROOT / "data" / "trends" / "ooni_censorship.json"
+    if oo_path.exists():
+        oo = load_json(oo_path)
+        n_meas = n_conf = n_unk = 0
+        for iso, rec in sorted((oo.get("countries") or {}).items()):
+            if iso not in countries:
+                ERRORS.append(f"ooni {iso}: not a country the Atlas carries")
+                continue
+            for forbidden in ("rate", "pct", "share", "percentage", "blocking_rate"):
+                for k in rec:
+                    if forbidden in k.lower():
+                        ERRORS.append(f"ooni {iso}: derived field {k!r} — counts only, "
+                                      f"a rate from thin volunteer data would be invented")
+            w = rec.get("window") or {}
+            if not (re.match(r"^\d{4}-\d{2}-\d{2}$", str(w.get("start") or ""))
+                    and re.match(r"^\d{4}-\d{2}-\d{2}$", str(w.get("end") or ""))):
+                ERRORS.append(f"ooni {iso}: missing or malformed window")
+            m_, c_, a_ = rec.get("measurements"), rec.get("confirmed"), rec.get("anomalies")
+            if not all(isinstance(x, int) and x >= 0 for x in (m_, c_, a_)):
+                ERRORS.append(f"ooni {iso}: counts malformed ({m_!r}/{c_!r}/{a_!r})")
+            elif c_ + (a_ or 0) > m_:
+                ERRORS.append(f"ooni {iso}: confirmed+anomalies exceed measurements")
+            if m_ == 0:
+                n_unk += 1
+                if not rec.get("no_measurements") or not str(rec.get("note") or "").strip():
+                    ERRORS.append(f"ooni {iso}: zero measurements without the "
+                                  f"no_measurements flag and its unknown-status note")
+            else:
+                n_meas += 1
+                if c_ and c_ > 0:
+                    n_conf += 1
+            if not re.search(r"https?://", str(rec.get("source") or "")):
+                ERRORS.append(f"ooni {iso}: source line carries no URL")
+            if "retrieved" not in str(rec.get("source") or ""):
+                ERRORS.append(f"ooni {iso}: source line names no retrieval date")
+        INFOS.append(f"OONI censorship: {n_meas}/{len(countries)} countries with "
+                     f"measurements, {n_conf} with confirmed blocking, {n_unk} unknown "
+                     f"(no volunteer coverage)")
+    else:
+        WARNS.append("trends/ooni_censorship.json missing — censorship-evidence "
+                     "layer not built yet")
+
     am_path = ROOT / "data" / "ad_market.json"
     if am_path.exists():
         am = load_json(am_path)

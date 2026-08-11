@@ -31,13 +31,13 @@ const DATA_BASE = "data";
 // ---------------------------------------------------------------------------
 // Data loading
 // ---------------------------------------------------------------------------
-let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null, AD_MARKET = null, TV_STATIONS = null, COUNTRY_READING = null, COUNTRY_SEARCHES = null, PRESS_UN = null;
+let COUNTRIES = null, TRENDS = null, REGISTRY = [], META = null, AD_MARKET = null, TV_STATIONS = null, COUNTRY_READING = null, COUNTRY_SEARCHES = null, PRESS_UN = null, OONI = null;
 let NAME_TO_ISO = {};   // every recognizable name/alias/demonym -> ISO3
 let GENERATED = new Set();  // machine-generated demonyms: exact-match only, never fuzzy targets
 
 export async function initEngine() {
   if (COUNTRIES) return true;
-  const [cRes, tRes, gRes, aRes, tvRes, crRes, csRes, puRes] = await Promise.all([
+  const [cRes, tRes, gRes, aRes, tvRes, crRes, csRes, puRes, ooRes] = await Promise.all([
     fetch(`${DATA_BASE}/countries.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/trends/topic_intelligence.json`, { cache: "no-cache" }),
     fetch(`${DATA_BASE}/topics.json`, { cache: "no-cache" }),
@@ -46,6 +46,7 @@ export async function initEngine() {
     fetch(`${DATA_BASE}/trends/country_reading.json`, { cache: "no-cache" }).catch(() => null),
     fetch(`${DATA_BASE}/trends/country_searches.json`, { cache: "no-cache" }).catch(() => null),
     fetch(`${DATA_BASE}/trends/press_un_coverage.json`, { cache: "no-cache" }).catch(() => null),
+    fetch(`${DATA_BASE}/trends/ooni_censorship.json`, { cache: "no-cache" }).catch(() => null),
   ]);
   if (!cRes.ok) throw new Error("countries.json failed to load (" + cRes.status + ")");
   COUNTRIES = await cRes.json();
@@ -69,6 +70,10 @@ export async function initEngine() {
   // rolling week) — the denominator-honest attention share; low-volume
   // collections carry share_withheld instead of a percentage.
   PRESS_UN = (puRes && puRes.ok) ? await puRes.json().catch(() => null) : null;
+  // OONI measured news-site censorship (rolling 28 days) — the empirical
+  // companion to the RSF/FH rankings. No measurements = UNKNOWN, never
+  // "not censored". CC BY-NC-SA data (non-profit use, decision 2026-08-11).
+  OONI = (ooRes && ooRes.ok) ? await ooRes.json().catch(() => null) : null;
   // full registry: all tracked topics, including ones currently below the
   // trend-measurement floor (they match questions and report honestly)
   if (gRes.ok) {
@@ -894,6 +899,10 @@ function facts(iso) {
     // volume is too small to quote honestly — never invent a % from it.
     pressUN: (PRESS_UN && PRESS_UN.countries)
       ? (PRESS_UN.countries[iso] || null) : null,
+    // Measured news-site censorship (OONI, rolling 28 days). confirmed is
+    // the strong signal; no_measurements means UNKNOWN — consumers must
+    // never read it as an open internet.
+    ooni: (OONI && OONI.countries) ? (OONI.countries[iso] || null) : null,
     rising: tr ? (tr.rising_topics || []) : [],
     distinctive: tr ? (tr.distinctive_topics || []) : [],
     topTopics: tr ? (tr.top_topics || []) : [],
@@ -916,6 +925,8 @@ function addCountryEvidence(f, ev) {
   else if (f.searches && f.searches.unsupported) bits.push("trending searches: Google Trends publishes no feed for this country");
   if (f.pressUN && f.pressUN.share_pct != null) bits.push(`UN share of national-press stories: Media Cloud national collection, week to ${(f.pressUN.window || {}).end} (phrase-match floor — local acronyms mostly excluded; publication counts, not readership)`);
   else if (f.pressUN && f.pressUN.share_withheld) bits.push("UN share of national-press stories: withheld — the national collection's weekly volume is below the honesty floor");
+  if (f.ooni && !f.ooni.no_measurements) bits.push(`measured news-site censorship: OONI web-connectivity vs the Citizen Lab NEWS list, 28 days to ${(f.ooni.window || {}).end} (volunteer-run probes — volume follows volunteers, not censorship)`);
+  else if (f.ooni && f.ooni.no_measurements) bits.push("measured news-site censorship: no OONI measurements in the window — unknown, never evidence of an open internet");
   return ev.add(`${f.name} — country profile`, "Atlas record. " + bits.join("; ") + ".", countryLinks(f.iso));
 }
 
@@ -1130,6 +1141,16 @@ function composeCountryBrief(f, ev, ents) {
   const info = [];
   if (f.rsf != null) info.push(`- Press freedom: ${Math.round(f.rsf)}/100 (RSF ${f.rsfEdition || ""}); political status: ${f.fh || "n/a"}${f.electoral != null ? `; electoral democracy: ${f.electoral ? "yes" : "no"}` : ""}`);
   if (f.fotn != null) info.push(`- Internet freedom: ${f.fotn}/100 (Freedom House FOTN)`);
+  // Measured censorship (OONI) — quoted as counts with the volunteer caveat,
+  // never as a rate; zero-measurement countries stay silent in the answer
+  // body (the evidence line carries the unknown-status note instead).
+  if (f.ooni && !f.ooni.no_measurements && f.ooni.confirmed > 0) {
+    info.push(`- Measured censorship: **${Number(f.ooni.confirmed).toLocaleString()} confirmed news-site blocking measurements** (of ${Number(f.ooni.measurements).toLocaleString()} OONI volunteer tests in the 28 days to ${(f.ooni.window || {}).end}) — empirical evidence beside the rankings above`);
+    const ooUrl = (String(f.ooni.source || "").match(/https?:\/\/\S+/) || [null])[0];
+    ev.add(`${f.name} — measured news-site blocking`,
+      `OONI volunteer-run web-connectivity measurements against the Citizen Lab NEWS list, ${(f.ooni.window || {}).start} to ${(f.ooni.window || {}).end}: ${f.ooni.confirmed} confirmed blocked, ${f.ooni.anomalies} weaker anomalies, ${f.ooni.measurements} tests. Volume reflects volunteer presence, not censorship intensity. CC BY-NC-SA (non-commercial) data.`,
+      ooUrl ? [{ label: "OONI aggregation API", url: ooUrl }] : []);
+  }
   section("Information environment", info);
 
   // --- Media landscape ---

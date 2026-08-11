@@ -138,12 +138,22 @@ jobs:
           MEDIACLOUD_API_KEY: ${{ secrets.MEDIACLOUD_API_KEY }}
         run: python scripts/fetch_press_un_coverage.py
 
+      # OONI is keyless and finishes in ~5 minutes; it shares this lane
+      # because both are per-country evidence layers with per-service (not
+      # per-IP-starved) budgets. CC BY-NC-SA data — non-profit use only.
+      - name: Fetch measured news-site censorship (OONI)
+        timeout-minutes: 10
+        continue-on-error: true
+        run: python scripts/fetch_ooni_censorship.py
+
       - name: Upload press output
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: press-output
-          path: data/trends/press_un_coverage.json
+          path: |
+            data/trends/press_un_coverage.json
+            data/trends/ooni_censorship.json
           if-no-files-found: warn
 
   demand:
@@ -266,6 +276,9 @@ jobs:
           if [ -f data/trends/press_un_coverage.json ]; then
             git add data/trends/press_un_coverage.json
           fi
+          if [ -f data/trends/ooni_censorship.json ]; then
+            git add data/trends/ooni_censorship.json
+          fi
           if git diff --cached --quiet; then
             echo "No changes — trend data already up to date."
           else
@@ -384,6 +397,24 @@ jobs:
                       rc = 1
                   elif age > 3:
                       print(f"::warning::press_un_coverage.json is {age} days old — watch this.")
+
+          # OONI censorship layer: rolling window refreshed daily; the newest
+          # per-country retrieval date is the health signal.
+          oo_p = Path("data/trends/ooni_censorship.json")
+          if oo_p.exists():
+              ooc = json.loads(oo_p.read_text()).get("countries", {})
+              rdates = [r.get("retrieved") for r in ooc.values() if r.get("retrieved")]
+              if rdates:
+                  newest = max(rdates)
+                  age = (date.today() - datetime.strptime(newest, "%Y-%m-%d").date()).days
+                  print(f"OONI censorship: newest retrieval {newest} ({age} days old)")
+                  if age > 7:
+                      print(f"::error::ooni_censorship.json's newest retrieval is {age} days "
+                            f"old — the OONI fetch has been failing silently; check the "
+                            f"'Fetch measured news-site censorship' step logs.")
+                      rc = 1
+                  elif age > 3:
+                      print(f"::warning::ooni_censorship.json is {age} days old — watch this.")
 
           # Bluesky pulse: same snapshot-with-no-upstream-history logic.
           bt_p = Path("data/trends/bluesky_trends.json")

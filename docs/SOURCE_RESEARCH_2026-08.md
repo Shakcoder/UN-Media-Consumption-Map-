@@ -54,7 +54,7 @@ Sample: `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPop
 Per-country **top-100 and trending domains** (daily, `rankingType=TRENDING_RISE`), traffic-change timelines (15-min resolution), internet quality, and a curated Outage Center with cause labels (including government-directed shutdowns) and citation links. Free account + API token (Radar-read); 1,200 req/5 min global cap; JSON/CSV. History ~3–4.5 years by endpoint. **License: CC BY-NC 4.0 (non-commercial) — needs the Chief's read given the DGC pivot before it touches anything monetized.**
 Sample (needs token): `https://api.cloudflare.com/client/v4/radar/ranking/top?rankingType=TRENDING_RISE&location=NG&limit=10`
 
-### 2.6 OONI — censorship evidence
+### 2.6 OONI — censorship evidence — ✅ INTEGRATED 2026-08-11 (non-profit ruling cleared the NC licence)
 
 Per-country, per-day counts of measurements confirming news/social sites are blocked (Citizen Lab NEWS category works). Keyless; JSON; history to ~2017; ~4k-request rate bucket observed; **no CORS → Action**. License **CC BY-NC-SA 4.0** (committed JSON must carry the license; NC flag as above). Live-verified: Iran returned 300–600 confirmed-blocked NEWS measurements/day. Natural companion to the RSF layer — measured, citable evidence next to rankings.
 Sample: `https://api.ooni.io/api/v1/aggregation?probe_cc=IR&test_name=web_connectivity&category_code=NEWS&since=2026-07-25&until=2026-08-06&axis_x=measurement_start_day`
@@ -148,6 +148,6 @@ One-liners: **WHO GHO** works but its OData API is officially slated for replace
 4. **YouTube charts** — new consumption vertical, ~110 countries; needs the 30-day pruning design + correct labeling.
 5. **Cloudflare Radar** — trending domains + shutdown evidence; gated on the NC-license check.
 
-Then: OONI (press-freedom evidence — NC license, needs the Chief), Bluesky — ✅ integrated 2026-08-10 (Topic Explorer, global-only, aggregates-only, shape-guarded), Mastodon/Netflix/Apple as labeled extras (Mastodon deliberately parked: per-instance sampling, thin value for its caveat load).
+Then: OONI — ✅ integrated 2026-08-11 (the 2026-08-11 non-profit ruling cleared NC licences: as long as the licence permits our use, it is fair game — Fang via Shakti), Bluesky — ✅ integrated 2026-08-10 (Topic Explorer, global-only, aggregates-only, shape-guarded), Mastodon/Netflix/Apple as labeled extras (Mastodon deliberately parked: per-instance sampling, thin value for its caveat load). Cloudflare Radar is likewise licence-cleared now but needs a token from the account holder.
 
 **Actions only the account holder can take:** apply for the Google Trends API alpha; request a ReliefWeb appname; ask the Chief about tier-2 (NC) and tier-3 (no-license) sources.
