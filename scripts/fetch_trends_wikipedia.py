@@ -264,7 +264,14 @@ def main(args: argparse.Namespace) -> None:
         if not prev:
             return None
         vals = [v for v in prev["values"] if v is not None]
-        return (sum(vals) / len(vals)) if vals else 0.0
+        # An ALL-None series means "never successfully fetched", not
+        # "zero-traffic article" — returning 0.0 here classified 29 real,
+        # above-floor series (e.g. en 'Vocational education' at ~187
+        # views/day upstream) as dormant, so weekday runs skipped them
+        # forever and the hole self-perpetuated (2026-08-11 audit). None
+        # sends them back through the non-incremental path, where
+        # stalest-first ordering retries them at the front of every run.
+        return (sum(vals) / len(vals)) if vals else None
 
     def stored_last_data(qid: str, lang: str) -> date | None:
         """Newest day this series actually holds data for (None = never fetched)."""

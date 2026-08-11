@@ -218,6 +218,46 @@ TOPICS: list[tuple[str, str]] = [
 ]
 
 
+# CURATED TITLE OVERRIDES (2026-08-11 audit) — cases where the Wikidata
+# sitelink points at a near-zero synonym page while the language's real
+# article for the concept lives on a sibling Wikidata item, plus redirect
+# targets that would be wrong to follow. Each entry was verified against
+# live per-article traffic before being added; None means "do not track
+# this language for this topic" (the redirect target is a broader concept
+# and tracking it would measure something else).
+#   qid -> {lang: title | None}
+TITLE_OVERRIDES: dict[str, dict[str, str | None]] = {
+    "Q169950": {           # Wildfire — sitelinks live on Q107434304 'forest fire'
+        "fr": "Feu de forêt",        # 283 views/day vs no fr sitelink at all
+        "es": "Incendio forestal",   # 72/day vs no es sitelink
+        "de": "Waldbrand",           # 125/day vs tracked 'Lauffeuer' at ~0
+    },
+    "Q1483757": {          # Solar power
+        "es": "Energía solar",       # 66/day vs tracked synonym at 1.9/day
+    },
+    "Q13629441": {         # Electric vehicle
+        "ja": "電気自動車",           # 77/day vs tracked '電動輸送機器' at ~0
+    },
+    "Q9166713": {          # Higher education (tertiary-education item)
+        "ru": "Высшее образование",  # 129/day, invisible via the sitelink
+    },
+    "Q320863": {           # World Bank — main-language articles sit on the
+        "es": "Banco Mundial",       # sibling item; sitelinked pages are the
+        "fr": "Banque mondiale",     # marginal 'World Bank Group' stubs
+        "ru": "Всемирный банк",
+    },
+    "Q651936": {           # Debt relief — ja redirect target 免除 is the
+        "ja": None,                  # generic legal 'exemption', wrong concept
+    },
+    "Q159595": {           # Distance education — fa redirect lands on
+        "fa": None,                  # 'online university', a different thing
+    },
+    "Q575619": {           # Cost of living — tr article deleted upstream
+        "tr": None,
+    },
+}
+
+
 def _ssl_context() -> ssl.SSLContext:
     try:
         import certifi  # noqa: PLC0415
@@ -229,12 +269,19 @@ def _ssl_context() -> ssl.SSLContext:
 CTX = _ssl_context()
 
 
-def fetch_json(url: str, retries: int = 3) -> dict:
+def fetch_json(url: str, retries: int = 4) -> dict:
     for attempt in range(retries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
             with urllib.request.urlopen(req, timeout=30, context=CTX) as resp:
                 return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            if attempt == retries - 1:
+                raise
+            # 429 means the IP's budget is spent — waiting seconds does
+            # nothing; back off properly (this builder runs rarely, patience
+            # is free).
+            time.sleep(45 if exc.code == 429 else 2 ** attempt)
         except Exception:
             if attempt == retries - 1:
                 raise
@@ -295,6 +342,44 @@ def fetch_sitelinks(qids: list[str]) -> dict[str, dict[str, str]]:
     return out
 
 
+def resolve_redirects(by_lang: dict[str, dict[str, str]]) -> dict[str, dict[str, str]]:
+    """
+    {lang: {title: qid}} -> {lang: {title: final_title}} following redirects.
+
+    WHY (2026-08-11 audit): pageviews accrue to the page actually served, so
+    a sitelink that has become a redirect counts only the trickle of readers
+    who hit the old name — es 'Climate change' and zh 'COVID-19' were among
+    21 series silently undercounting this way after upstream renames.
+    """
+    out: dict[str, dict[str, str]] = {}
+    for lang, titles in sorted(by_lang.items()):
+        out[lang] = {}
+        tlist = list(titles)
+        for i in range(0, len(tlist), 50):
+            batch = tlist[i:i + 50]
+            url = (
+                f"https://{lang}.wikipedia.org/w/api.php?action=query"
+                "&format=json&redirects=1&formatversion=2&titles="
+                + urllib.parse.quote("|".join(batch))
+            )
+            data = fetch_json(url)
+            q = data.get("query", {})
+            normalized = {n["from"]: n["to"] for n in q.get("normalized", [])}
+            redirected = {r["from"]: r["to"] for r in q.get("redirects", [])}
+            missing = {p["title"] for p in q.get("pages", []) if p.get("missing")}
+            for t in batch:
+                t2 = normalized.get(t, t)
+                final = redirected.get(t2, t2)
+                if final in missing:
+                    print(f"  ! {lang}: '{t}' is missing upstream — dropped")
+                    continue
+                if final != t:
+                    print(f"  · {lang}: '{t}' → '{final}' (redirect resolved)")
+                out[lang][t] = final
+            time.sleep(0.2)
+    return out
+
+
 def main() -> None:
     titles = [t for t, _ in TOPICS]
     cats = dict(TOPICS)
@@ -305,6 +390,51 @@ def main() -> None:
     qids = [v["qid"] for v in resolved.values()]
     print("Fetching sitelinks for tracked languages…")
     sitelinks = fetch_sitelinks(qids)
+
+    # Apply curated overrides, then resolve redirects per language edition.
+    for qid, overrides in TITLE_OVERRIDES.items():
+        if qid not in sitelinks and any(v for v in overrides.values()):
+            sitelinks[qid] = {}
+        for lang, title in overrides.items():
+            if title is None:
+                sitelinks.get(qid, {}).pop(lang, None)
+            else:
+                sitelinks[qid][lang] = title
+
+    print("Resolving redirects in every tracked language…")
+    by_lang: dict[str, dict[str, str]] = {}
+    for qid, links in sitelinks.items():
+        for lang, title in links.items():
+            by_lang.setdefault(lang, {})[title] = qid
+    final_titles = resolve_redirects(by_lang)
+
+    # COLLISION GUARD: after redirect resolution two topics can land on the
+    # same article in one language (e.g. a specific concept merged into a
+    # broader one). Tracking one article under two topics double-counts it,
+    # so the topic whose claim arrived via redirect loses the language.
+    for qid, links in sitelinks.items():
+        for lang in list(links):
+            resolved_title = final_titles.get(lang, {}).get(links[lang])
+            if resolved_title is None:
+                del links[lang]        # missing upstream
+            else:
+                links[lang] = resolved_title
+    for lang in {l for links in sitelinks.values() for l in links}:
+        owners: dict[str, list[str]] = {}
+        for qid, links in sitelinks.items():
+            if lang in links:
+                owners.setdefault(links[lang], []).append(qid)
+        for title, qs in owners.items():
+            if len(qs) > 1:
+                # keep the topic whose original sitelink WAS this title;
+                # drop the ones that arrived via redirect
+                direct = [q for q in qs if by_lang.get(lang, {}).get(title) == q]
+                keep = direct[0] if direct else sorted(qs)[0]
+                for q in qs:
+                    if q != keep:
+                        print(f"  ! {lang}: '{title}' claimed by {qs} — "
+                              f"kept {keep}, dropped the rest (collision)")
+                        del sitelinks[q][lang]
 
     registry = []
     for title, info in sorted(resolved.items()):
