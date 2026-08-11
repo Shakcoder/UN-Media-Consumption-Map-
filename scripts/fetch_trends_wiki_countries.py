@@ -146,16 +146,117 @@ def fetch_day(session: requests.Session, iso2: str, day: date) -> tuple[str, lis
     return "error", []
 
 
-def summarize(raw: list, iso2: str, day: date, retrieved: str) -> dict | None:
+# Articles at or above this many country views get checked against their own
+# GLOBAL per-article series before publication (two API calls per unique
+# title per run, cached). Big bot floods are big — the 2026-08-10 flood put
+# "Roblox" at 4.78M "user" views worldwide (683x its baseline, with automated
+# views in lockstep at 4.75M) and ranked it #1-2 in the raw lists of India,
+# the Philippines, Indonesia and Colombia. Smaller entries are left to the
+# structural filters; checking everything would multiply API load for noise
+# that cannot dominate a list.
+FLOOD_CHECK_MIN_VIEWS = 25_000
+
+
+def flood_check(session: requests.Session, project: str, title: str,
+                day: date, cache: dict) -> bool:
+    """
+    True when an article's own global traffic says its big number is
+    automation, not people. Two measured signals (2026-08-11 audit):
+
+    - LOCKSTEP: automated-classified views on the list day are at least half
+      of user-classified views. Organic events (elections, deaths, disasters)
+      spike user traffic with automated remaining proportionally tiny; view
+      floods leak into both classifications at similar volume (Roblox
+      2026-08-10: user 4.78M, automated 4.75M).
+    - CONCENTRATION + WHIPSAW: this one country accounts for >=80% of the
+      article's worldwide user views that day AND the global series swings
+      >=5x within the last week. All of the world's readers of a page being
+      in one country, on a violently swinging series, is a VPN/bot exit, not
+      a readership (Morocco's fr "Cookie (informatique)": 65,100 of 65,225
+      worldwide, series whipsawing 974k->62k across four days).
+
+    Fails OPEN (returns False) on any API trouble: a Wikimedia hiccup must
+    never delete measured data. `cache` maps (project, title) -> the fetched
+    series so a flood is checked once per run, not once per country.
+    """
+    key = (project, title)
+    if key not in cache:
+        base = ("https://wikimedia.org/api/rest_v1/metrics/pageviews/"
+                f"per-article/{project}.org/all-access")
+        start = (day - timedelta(days=7)).strftime("%Y%m%d00")
+        end = day.strftime("%Y%m%d00")
+        series = {}
+        for agent in ("user", "automated"):
+            series[agent] = None
+            for attempt in range(2):     # one retry — fail-open must be rare
+                try:
+                    resp = session.get(
+                        f"{base}/{agent}/{requests.utils.quote(title, safe='')}"
+                        f"/daily/{start}/{end}", timeout=REQ_TIMEOUT)
+                    if resp.status_code == 200:
+                        series[agent] = {
+                            str(i.get("timestamp", ""))[:8]: i.get("views", 0)
+                            for i in resp.json().get("items", [])}
+                        break
+                    if resp.status_code == 404:
+                        break            # no data for this agent split
+                    time.sleep(2 * (attempt + 1))
+                except Exception:
+                    time.sleep(1 + attempt)
+            time.sleep(0.3)
+        cache[key] = series
+    series = cache[key]
+    if not series.get("user"):
+        return False
+    dkey = day.strftime("%Y%m%d")
+    user_today = series["user"].get(dkey)
+    if not user_today:
+        return False
+    auto_today = (series.get("automated") or {}).get(dkey, 0)
+    if auto_today >= 0.5 * user_today:
+        return True          # lockstep
+    prior = [v for k, v in series["user"].items() if k != dkey and v]
+    if prior and (max(prior + [user_today]) >= 5 * max(1, min(prior))):
+        # whipsaw present — concentration is judged by the caller, which
+        # knows the country's views_ceil
+        return None          # sentinel: "whipsaw, check concentration"
+    return False
+
+
+def summarize(session: requests.Session, raw: list, iso2: str, day: date,
+              retrieved: str, flood_cache: dict) -> tuple[dict | None, bool]:
     """
     Filter the raw top-per-country list into the published record.
-    Returns None when nothing article-like survives — small countries' lists
-    are truncated by the privacy threshold to a couple of main pages (observed:
-    Angola = 2 entries, both main pages), and an empty entry must not publish.
+    Returns (record, had_articles): record is None when nothing article-like
+    survives — small countries' lists are truncated by the privacy threshold
+    to a couple of main pages (observed: Angola = 2 entries, both main pages),
+    and an empty entry must not publish. had_articles reports whether any
+    encyclopedia article existed BEFORE the Atlas's own quality gates, so the
+    withheld note can say truthfully who removed what.
     """
     kept = [a for a in raw
             if is_article(str(a.get("article") or ""), str(a.get("project") or ""))
             and isinstance(a.get("views_ceil"), int) and a["views_ceil"] > 0]
+    had_articles = bool(kept)
+
+    # AUTOMATED-TRAFFIC GATE (2026-08-11): large entries must survive a check
+    # against their own global per-article series — see flood_check above.
+    gated = []
+    for a in kept:
+        if a["views_ceil"] >= FLOOD_CHECK_MIN_VIEWS:
+            verdict = flood_check(session, str(a["project"]),
+                                  str(a["article"]), day, flood_cache)
+            if verdict is True:
+                continue                         # lockstep flood — drop
+            if verdict is None:
+                # whipsaw series: drop only when this country also holds
+                # >=80% of the article's worldwide user views that day
+                series = flood_cache.get((str(a["project"]), str(a["article"]))) or {}
+                world = (series.get("user") or {}).get(day.strftime("%Y%m%d"))
+                if world and a["views_ceil"] >= 0.8 * world:
+                    continue
+        gated.append(a)
+    kept = gated
 
     # Editions represented by a SINGLE page in the country's list are excluded
     # everywhere — observed to be bot/VPN spikes, not people (a French
@@ -167,7 +268,7 @@ def summarize(raw: list, iso2: str, day: date, retrieved: str) -> dict | None:
         counts[a["project"]] = counts.get(a["project"], 0) + 1
     kept = [a for a in kept if counts[a["project"]] >= 2]
     if not kept:
-        return None
+        return None, had_articles
     articles = [{
         "title": str(a["article"]).replace("_", " "),
         "project": a["project"],
@@ -195,7 +296,7 @@ def summarize(raw: list, iso2: str, day: date, retrieved: str) -> dict | None:
             f"{day.isoformat()} | {API}/{iso2}/all-access/"
             f"{day.year}/{day.month:02d}/{day.day:02d} | retrieved {retrieved}"
         ),
-    }
+    }, had_articles
 
 
 def main() -> int:
@@ -232,6 +333,9 @@ def main() -> int:
 
     session = requests.Session()
     session.headers["User-Agent"] = USER_AGENT
+    # (project, title) -> global per-article series, shared across countries so
+    # a flood that hits 20 lists costs 2 API calls, not 40. See flood_check.
+    flood_cache: dict = {}
 
     # Seed the working state from the previous file, so EVERY write — the
     # 50-country checkpoints included — is a superset of the last good state.
@@ -262,7 +366,11 @@ def main() -> int:
                     "views per Wikipedia edition within the filtered top-100 — an "
                     "approximation from the top of the distribution; editions "
                     "represented by a single page are excluded as likely "
-                    "automated-traffic artifacts. Measures "
+                    "automated-traffic artifacts, and large entries are "
+                    "checked against their own global per-article traffic "
+                    "(user vs automated split, day-to-day shape) so view "
+                    "floods that leak through Wikimedia's bot classifier are "
+                    "dropped rather than published as reading. Measures "
                     "Wikipedia readers only, not the general population. Countries "
                     "Wikimedia withholds (Country and Territory Protection List, "
                     "or below the volume reporting threshold) carry withheld:true "
@@ -292,12 +400,21 @@ def main() -> int:
             print(f"WARNING: no ISO2 mapping for {iso3} — country skipped",
                   file=sys.stderr, flush=True)
             return "error"
-        status, rec = "error", None
+        status, rec, had_articles = "error", None, False
         for day in days:
             status, raw = fetch_day(session, iso2, day)
             if status == "ok":
-                rec = summarize(raw, iso2, day, retrieved)
-                break
+                rec, had = summarize(session, raw, iso2, day, retrieved,
+                                     flood_cache)
+                had_articles = had_articles or had
+                if rec is not None:
+                    break
+                # A 200 whose list yields nothing publishable must NOT stop
+                # the fallback day: on 2026-08-11 Ecuador's day-1 answer was
+                # empty while day-2 (quake day) held two publishable quake
+                # articles — breaking here stamped the country 'withheld'
+                # and the sliding window then lost the data for good.
+                continue
             if status == "error":
                 break   # network trouble — do not burn the fallback day too
         if rec is not None:
@@ -306,26 +423,41 @@ def main() -> int:
             return "fresh"
         if status in ("no-data", "ok"):
             # Either two clean 404s (Wikimedia does not publish this country)
-            # or a published list so truncated by the privacy threshold that
-            # no article survives filtering (small countries). Both are an
-            # honest "nothing to show" — but a previously good entry is NOT
-            # downgraded on a single odd day (the seeded entry simply stays);
-            # withheld applies only where the file has never held data.
+            # or published lists that yield nothing publishable (small
+            # countries under the privacy threshold, or everything removed by
+            # our own gates). Both are an honest "nothing to show" — but a
+            # previously good entry is NOT downgraded on a single odd day
+            # (the seeded entry simply stays); withheld applies only where
+            # the file has never held data.
             if iso3 in previous and not previous[iso3].get("withheld"):
                 carried_isos.add(iso3)
             else:
-                note = (
-                    "Wikimedia publishes too little per-country reading data "
-                    "here to report: only pages above a privacy threshold are "
-                    "listed, and none of them are encyclopedia articles."
-                    if status == "ok" else
-                    "Wikimedia does not publish per-country reading data for "
-                    "this country (privacy protection list or below the "
-                    "reporting threshold)."
-                )
+                # Three truthful variants — never blame Wikimedia for the
+                # Atlas's own filters (2026-08-11 audit: the old single note
+                # claimed "none of them are encyclopedia articles" for
+                # countries where our gates had removed real articles).
+                if status != "ok":
+                    reason, note = "not-published", (
+                        "Wikimedia does not publish per-country reading data "
+                        "for this country (privacy protection list or below "
+                        "the reporting threshold).")
+                elif had_articles:
+                    reason, note = "filtered", (
+                        "Wikimedia publishes only a heavily truncated list "
+                        "for this country, and the few encyclopedia articles "
+                        "in it were excluded by the Atlas's own quality "
+                        "gates (single-edition spikes and automated-traffic "
+                        "patterns), so no reliable reading list can be "
+                        "shown.")
+                else:
+                    reason, note = "below-threshold", (
+                        "Wikimedia publishes too little per-country reading "
+                        "data here to report: only pages above a privacy "
+                        "threshold are listed, and none of them are "
+                        "encyclopedia articles.")
                 out[iso3] = {
                     "withheld": True,
-                    "reason": "below-threshold" if status == "ok" else "not-published",
+                    "reason": reason,
                     "note": note,
                     "checked": retrieved,
                 }
