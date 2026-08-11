@@ -312,8 +312,14 @@ def main() -> None:
         as_of = date.today()
         print(f"WARNING: wiki_pageviews.json has no usable 'updated' date — anchoring to today ({as_of})")
 
-    n_series_fresh = n_series_stale = 0
+    n_series_fresh = n_series_stale = n_stale_scoreable = 0
     stale_topics: list[str] = []
+
+    def _overall_mean(s: dict) -> float:
+        """Whole-window mean, independent of freshness — used only to decide
+        whether a STALE series could ever have mattered to scoring."""
+        vals = [v for v in s.get("values", []) if v is not None]
+        return (sum(vals) / len(vals)) if vals else 0.0
 
     for qid, langs in wiki.get("series", {}).items():
         meta = topics.get(qid)
@@ -325,6 +331,16 @@ def main() -> None:
             st = series_stats(s, as_of)
             if st is None:
                 n_series_stale += 1
+                # THE DISTINCTION THAT KEEPS THE ALARM HONEST (2026-08-11).
+                # ~65% of tracked series sit below INCLUDE_FLOOR: they are
+                # refreshed only on Sundays BY DESIGN and can never influence
+                # a topic score even when fresh. Counting them as "stale"
+                # made the daily run warn about 1,100+ series forever —
+                # a false alarm that teaches people to ignore the real one.
+                # Only a stale series whose own history clears the scoring
+                # floor represents lost signal.
+                if _overall_mean(s) >= INCLUDE_FLOOR:
+                    n_stale_scoreable += 1
                 continue
             n_series_fresh += 1
             if st["mean_7d"] >= INCLUDE_FLOOR:
@@ -520,6 +536,10 @@ def main() -> None:
             "coverage": {
                 "series_current": n_series_fresh,
                 "series_stale_excluded": n_series_stale,
+                # The alarm-worthy subset of the line above: stale series
+                # whose history clears the scoring floor. The rest of the
+                # stale count is the Sunday-refreshed dormant tail (design).
+                "series_stale_scoreable": n_stale_scoreable,
                 "topics_scored": len(topic_out),
                 "topics_stale_excluded": len(stale_topics),
                 "topics_with_news_volume": sum(
@@ -528,8 +548,11 @@ def main() -> None:
                 "note": (
                     "Velocity windows are anchored to measured_as_of by calendar date. "
                     "Series with no data in that 7-day window are excluded rather than "
-                    "contributing older figures; a large series_stale_excluded count means "
-                    "the daily fetch has not been completing (see docs/AUTOMATION.md). "
+                    "contributing older figures. series_stale_excluded includes the "
+                    "dormant low-traffic tail that is refreshed only on Sundays by design "
+                    "and can never affect scores; series_stale_scoreable is the subset "
+                    "that represents real lost signal — THAT number climbing means the "
+                    "daily fetch is not completing (see docs/AUTOMATION.md). "
                     "News volume is reported only for topics whose GDELT timeline covers "
                     "the seven complete days before the run, so topics_with_news_volume is "
                     "normally well below topics_scored."
@@ -556,7 +579,9 @@ def main() -> None:
     print(f"Wrote {OUTPUT_PATH} — {len(topic_out)} topics scored "
           f"({n_rising} rising globally), {len(country_out)} countries profiled.")
     print(f"  measured as of {as_of}: {n_series_fresh} current series, "
-          f"{n_series_stale} stale series excluded, {len(stale_topics)} topics unscorable today.")
+          f"{n_series_stale} stale excluded (of which {n_stale_scoreable} scoreable — "
+          f"the rest are the Sunday-refreshed dormant tail), "
+          f"{len(stale_topics)} topics unscorable today.")
     n_news = sum(1 for t in topic_out.values() if t["news_articles_7d"] is not None)
     print(f"  news volume reported for {n_news}/{len(topic_out)} topics "
           f"(the rest could not be refreshed from GDELT in time for a complete week); "
@@ -567,10 +592,11 @@ def main() -> None:
         worst = sorted(unmapped_media.items(), key=lambda kv: -kv[1])[:10]
         print("  WARNING: GDELT source countries with no ISO3 match (dropped from media "
               "lists): " + ", ".join(f"{n} ({c} topics)" for n, c in worst))
-    if n_series_stale > n_series_fresh:
-        print("  WARNING: most series are stale — the daily Wikipedia fetch is not "
-              "completing. Topic momentum is being computed from a minority of the "
-              "tracked universe. See docs/AUTOMATION.md → 'trend engine falls behind'.")
+    if n_series_fresh and n_stale_scoreable > n_series_fresh * 0.25:
+        print("  WARNING: a large share of SCOREABLE series is stale — the daily "
+              "Wikipedia fetch is losing real signal (the dormant Sunday tail is "
+              "excluded from this check). See docs/AUTOMATION.md → 'trend engine "
+              "falls behind'.")
 
 
 if __name__ == "__main__":

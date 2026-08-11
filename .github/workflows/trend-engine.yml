@@ -302,17 +302,26 @@ jobs:
               sys.exit(0)
           cov = json.loads(p.read_text()).get("coverage", {})
           cur, stale = cov.get("series_current", 0), cov.get("series_stale_excluded", 0)
+          # The alarm watches SCOREABLE staleness only (added 2026-08-11):
+          # ~65% of series are a dormant low-traffic tail refreshed on
+          # Sundays by design, which used to trip a 1,100-series warning on
+          # every single run — a false alarm that teaches people to ignore
+          # the real one. Older files lack the key; fall back to the total
+          # so the guard can never silently vanish.
+          scoreable_stale = cov.get("series_stale_scoreable", stale)
           total = cur + stale
-          print(f"Series current: {cur} / {total}; topics scored: {cov.get('topics_scored')}")
+          print(f"Series current: {cur} / {total} "
+                f"(stale-and-scoreable: {scoreable_stale}); "
+                f"topics scored: {cov.get('topics_scored')}")
           rc = 0
-          if total and stale > cur:
-              print(f"::error::{stale} of {total} demand series are stale (no data in the "
-                    f"measured 7-day window). The Wikipedia fetch is not completing — topic "
-                    f"momentum now covers only a minority of tracked topics.")
+          if cur and scoreable_stale > cur * 0.25:
+              print(f"::error::{scoreable_stale} scoreable demand series are stale (>25% of "
+                    f"the {cur} current ones). The Wikipedia fetch is losing real signal — "
+                    f"check the demand-shard logs; raise the shard count if it persists.")
               rc = 1
-          if total and stale > total * 0.25:
-              print(f"::warning::{stale} of {total} demand series are stale — watch this; "
-                    f"if it keeps climbing the fetch needs more shards or more time.")
+          elif cur and scoreable_stale > cur * 0.10:
+              print(f"::warning::{scoreable_stale} scoreable demand series are stale — "
+                    f"watch this; if it keeps climbing the fetch needs more shards.")
 
           # Same idea for the per-country reading lists: their fetch step's
           # exit code is swallowed by continue-on-error, so freshness has to

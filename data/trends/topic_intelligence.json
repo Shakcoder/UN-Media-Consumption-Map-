@@ -4,11 +4,12 @@
  "coverage": {
   "series_current": 1980,
   "series_stale_excluded": 1131,
+  "series_stale_scoreable": 0,
   "topics_scored": 164,
   "topics_stale_excluded": 0,
   "topics_with_news_volume": 71,
   "countries_without_profile": 0,
-  "note": "Velocity windows are anchored to measured_as_of by calendar date. Series with no data in that 7-day window are excluded rather than contributing older figures; a large series_stale_excluded count means the daily fetch has not been completing (see docs/AUTOMATION.md). News volume is reported only for topics whose GDELT timeline covers the seven complete days before the run, so topics_with_news_volume is normally well below topics_scored."
+  "note": "Velocity windows are anchored to measured_as_of by calendar date. Series with no data in that 7-day window are excluded rather than contributing older figures. series_stale_excluded includes the dormant low-traffic tail that is refreshed only on Sundays by design and can never affect scores; series_stale_scoreable is the subset that represents real lost signal — THAT number climbing means the daily fetch is not completing (see docs/AUTOMATION.md). News volume is reported only for topics whose GDELT timeline covers the seven complete days before the run, so topics_with_news_volume is normally well below topics_scored."
  },
  "method_notes": {
   "velocity": "(mean last 7d − mean prior 30d) / prior mean, per language series, volume-weighted globally; windows are calendar-dated against measured_as_of",
