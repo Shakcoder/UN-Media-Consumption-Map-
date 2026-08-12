@@ -6,24 +6,42 @@
   "method_note": "Topics trending across Bluesky network-wide at fetch time. GLOBAL only — no per-country split exists, so this must never be shown as any single country's signal. Bluesky users are not the general population. post_count is the size of that trend's feed: a magnitude, never a share. The endpoint namespace is officially 'unspecced' (unstable); the fetcher refuses to write on any shape change. The history block is this project's own rolling archive — the API keeps none.",
   "history_days_kept": 7
  },
- "retrieved_at": "2026-08-12T06:56:20+00:00",
+ "retrieved_at": "2026-08-12T12:08:11+00:00",
  "date": "2026-08-12",
  "trends": [
   {
-   "topic": "kornacki",
-   "display_name": "Kornacki",
+   "topic": "chinese",
+   "display_name": "Zhu Rongji",
    "rank": 1,
-   "post_count": 160,
+   "post_count": 88,
    "category": "politics",
    "hot": true,
    "started": "2026-08-12",
    "new": true
   },
   {
+   "topic": "clacton",
+   "display_name": "Nigel Farage",
+   "rank": 2,
+   "post_count": 649,
+   "category": "politics",
+   "started": "2026-08-12",
+   "new": true
+  },
+  {
+   "topic": "kornacki",
+   "display_name": "Kornacki",
+   "rank": 3,
+   "post_count": 214,
+   "category": "politics",
+   "started": "2026-08-12",
+   "new": true
+  },
+  {
    "topic": "craig",
    "display_name": "Peggy Flanagan",
-   "rank": 2,
-   "post_count": 363,
+   "rank": 4,
+   "post_count": 392,
    "category": "politics",
    "started": "2026-08-12",
    "new": true
@@ -31,8 +49,8 @@
   {
    "topic": "amy klobuchar",
    "display_name": "Amy Klobuchar",
-   "rank": 3,
-   "post_count": 1116,
+   "rank": 5,
+   "post_count": 1326,
    "category": "politics",
    "started": "2026-08-12",
    "new": true
@@ -40,8 +58,8 @@
   {
    "topic": "hong",
    "display_name": "Wisconsin Primary",
-   "rank": 4,
-   "post_count": 2951,
+   "rank": 6,
+   "post_count": 3650,
    "category": "politics",
    "started": "2026-08-12",
    "new": false
@@ -49,8 +67,8 @@
   {
    "topic": "dem",
    "display_name": "Dem Primaries",
-   "rank": 5,
-   "post_count": 450,
+   "rank": 7,
+   "post_count": 597,
    "category": "politics",
    "started": "2026-08-12",
    "new": true
@@ -58,8 +76,8 @@
   {
    "topic": "john larson",
    "display_name": "Luke Bronin",
-   "rank": 6,
-   "post_count": 170,
+   "rank": 8,
+   "post_count": 198,
    "category": "politics",
    "started": "2026-08-12",
    "new": true
@@ -67,8 +85,8 @@
   {
    "topic": "wi",
    "display_name": "Election Updates",
-   "rank": 7,
-   "post_count": 657,
+   "rank": 9,
+   "post_count": 842,
    "category": "politics",
    "started": "2026-08-12",
    "new": true
@@ -76,8 +94,8 @@
   {
    "topic": "seattle",
    "display_name": "Rental Fees",
-   "rank": 8,
-   "post_count": 562,
+   "rank": 10,
+   "post_count": 669,
    "category": "politics",
    "started": "2026-08-12",
    "new": true
@@ -85,35 +103,35 @@
   {
    "topic": "minnesota",
    "display_name": "Minnesota Elections",
-   "rank": 9,
-   "post_count": 3501,
+   "rank": 11,
+   "post_count": 4409,
    "category": "politics",
    "started": "2026-08-11",
    "new": true
   },
   {
+   "topic": "aoc",
+   "display_name": "AOC",
+   "rank": 12,
+   "post_count": 2301,
+   "category": "politics",
+   "started": "2026-08-11",
+   "new": false
+  },
+  {
    "topic": "theladyeve",
    "display_name": "The Lady Eve",
-   "rank": 10,
+   "rank": 13,
    "post_count": 181,
    "category": "pop-culture",
    "started": "2026-08-12",
    "new": true
   },
   {
-   "topic": "aoc",
-   "display_name": "AOC",
-   "rank": 11,
-   "post_count": 1918,
-   "category": "politics",
-   "started": "2026-08-11",
-   "new": false
-  },
-  {
    "topic": "nicholas hoult",
    "display_name": "Nicholas Hoult",
-   "rank": 12,
-   "post_count": 689,
+   "rank": 14,
+   "post_count": 836,
    "category": "pop-culture",
    "started": "2026-08-11",
    "new": false
@@ -121,8 +139,8 @@
   {
    "topic": "google",
    "display_name": "AI Labs",
-   "rank": 13,
-   "post_count": 516,
+   "rank": 15,
+   "post_count": 751,
    "category": "politics",
    "started": "2026-08-11",
    "new": false
@@ -130,8 +148,8 @@
   {
    "topic": "texas",
    "display_name": "Texas Oil",
-   "rank": 14,
-   "post_count": 1274,
+   "rank": 16,
+   "post_count": 1416,
    "category": "politics",
    "started": "2026-08-11",
    "new": false
@@ -139,17 +157,8 @@
   {
    "topic": "house",
    "display_name": "House Investigations",
-   "rank": 15,
-   "post_count": 971,
-   "category": "politics",
-   "started": "2026-08-11",
-   "new": false
-  },
-  {
-   "topic": "doj",
-   "display_name": "Jamie Raskin",
-   "rank": 16,
-   "post_count": 2130,
+   "rank": 17,
+   "post_count": 1160,
    "category": "politics",
    "started": "2026-08-11",
    "new": false
@@ -157,8 +166,17 @@
   {
    "topic": "nyt",
    "display_name": "NYT Politics",
-   "rank": 17,
-   "post_count": 656,
+   "rank": 18,
+   "post_count": 798,
+   "category": "politics",
+   "started": "2026-08-11",
+   "new": false
+  },
+  {
+   "topic": "doj",
+   "display_name": "Jamie Raskin",
+   "rank": 19,
+   "post_count": 2247,
    "category": "politics",
    "started": "2026-08-11",
    "new": false
@@ -166,8 +184,8 @@
   {
    "topic": "marvel",
    "display_name": "Star Wars/Marvel",
-   "rank": 18,
-   "post_count": 1490,
+   "rank": 20,
+   "post_count": 1616,
    "category": "pop-culture",
    "started": "2026-08-11",
    "new": false
@@ -175,8 +193,8 @@
   {
    "topic": "chicago",
    "display_name": "Chicago Tornadoes",
-   "rank": 19,
-   "post_count": 1353,
+   "rank": 21,
+   "post_count": 1434,
    "category": "other",
    "started": "2026-08-11",
    "new": false
@@ -184,8 +202,8 @@
   {
    "topic": "europe",
    "display_name": "European Defence",
-   "rank": 20,
-   "post_count": 1209,
+   "rank": 22,
+   "post_count": 1661,
    "category": "politics",
    "started": "2026-08-11",
    "new": false
@@ -193,8 +211,8 @@
   {
    "topic": "canada",
    "display_name": "Canada Child Benefit",
-   "rank": 21,
-   "post_count": 1965,
+   "rank": 23,
+   "post_count": 2195,
    "category": "politics",
    "started": "2026-08-11",
    "new": false
@@ -202,8 +220,8 @@
   {
    "topic": "gamedev",
    "display_name": "Game Development",
-   "rank": 22,
-   "post_count": 815,
+   "rank": 24,
+   "post_count": 1017,
    "category": "video-games",
    "started": "2026-08-11",
    "new": false
@@ -211,18 +229,9 @@
   {
    "topic": "biden",
    "display_name": "Biden Policies",
-   "rank": 23,
-   "post_count": 1998,
+   "rank": 25,
+   "post_count": 2103,
    "category": "politics",
-   "started": "2026-08-11",
-   "new": false
-  },
-  {
-   "topic": "booksky",
-   "display_name": "Book Releases",
-   "rank": 24,
-   "post_count": 3153,
-   "category": "other",
    "started": "2026-08-11",
    "new": false
   }
@@ -306,12 +315,14 @@
    "Minnesota Elections",
    "NYT Politics",
    "Nicholas Hoult",
+   "Nigel Farage",
    "Peggy Flanagan",
    "Rental Fees",
    "Star Wars/Marvel",
    "Texas Oil",
    "The Lady Eve",
-   "Wisconsin Primary"
+   "Wisconsin Primary",
+   "Zhu Rongji"
   ]
  }
 }
