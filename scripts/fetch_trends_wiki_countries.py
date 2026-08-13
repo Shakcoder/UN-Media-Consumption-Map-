@@ -108,12 +108,19 @@ NAMESPACE_PREFIXES = {
 }
 
 
+# Legacy endpoints and site plumbing that carry no namespace prefix and so
+# slip past the checks below. "wiki.phtml" is a pre-2003 MediaWiki URL that
+# only scanners still request — it showed up as a "most-read article" in
+# three editions of Kenya's raw list on 2026-08-11.
+NON_ARTICLE_TITLES = {"wiki.phtml", "index.php", "index.html"}
+
+
 def is_article(title: str, project: str) -> bool:
     """True when a top-per-country entry looks like an encyclopedia article."""
     if not project.endswith(".wikipedia"):
         return False
     t = title.strip()
-    if not t or t in MAIN_PAGES:
+    if not t or t in MAIN_PAGES or t in NON_ARTICLE_TITLES:
         return False
     if ":" in t and t.split(":", 1)[0] in NAMESPACE_PREFIXES:
         return False
@@ -155,6 +162,24 @@ def fetch_day(session: requests.Session, iso2: str, day: date) -> tuple[str, lis
 # structural filters; checking everything would multiply API load for noise
 # that cannot dominate a list.
 FLOOD_CHECK_MIN_VIEWS = 25_000
+
+# Pages with a DOCUMENTED history of automated traffic that defeats every
+# shape-based test because the bot traffic has become their own baseline.
+# Curated, evidence required per entry; titles in space form.
+#   fr "Cookie (informatique)": flagged in the 2026-08-11 audit — fr edition
+#   out-reading en 5:1 on a consent-banner tech page, 99.4% mobile-web
+#   access split (healthy pages run ~40/60), one country holding ~100% of
+#   its worldwide readership on single days (Morocco 65,100 of 65,225), and
+#   the code below had already met it as Germany's raw #1 at 165k. By
+#   2026-08-13 its series had flattened at ~58k/day with automated share
+#   under 2% — i.e. the artifact now LOOKS organic on any single day, which
+#   is exactly why it needs a curated entry instead of a heuristic.
+KNOWN_ARTIFACT_PAGES = {("fr.wikipedia", "Cookie (informatique)")}
+
+# Cross-country sweep: an article appearing in this many countries' lists on
+# the same day gets ONE global check applied to every occurrence at once.
+SWEEP_MIN_COUNTRIES = 3
+SWEEP_MIN_VIEWS = 1_000
 
 
 def flood_check(session: requests.Session, project: str, title: str,
@@ -236,7 +261,9 @@ def summarize(session: requests.Session, raw: list, iso2: str, day: date,
     """
     kept = [a for a in raw
             if is_article(str(a.get("article") or ""), str(a.get("project") or ""))
-            and isinstance(a.get("views_ceil"), int) and a["views_ceil"] > 0]
+            and isinstance(a.get("views_ceil"), int) and a["views_ceil"] > 0
+            and (str(a.get("project")),
+                 str(a.get("article")).replace("_", " ")) not in KNOWN_ARTIFACT_PAGES]
     had_articles = bool(kept)
 
     # AUTOMATED-TRAFFIC GATE (2026-08-11): large entries must survive a check
@@ -297,6 +324,138 @@ def summarize(session: requests.Session, raw: list, iso2: str, day: date,
             f"{day.year}/{day.month:02d}/{day.day:02d} | retrieved {retrieved}"
         ),
     }, had_articles
+
+
+def _rebuild_language_mix(rec: dict) -> None:
+    """Recompute language_mix from the articles that remain in a record."""
+    by_project: dict[str, int] = {}
+    for a in rec.get("articles", []):
+        by_project[a["project"]] = by_project.get(a["project"], 0) + a["views_ceil"]
+    total = sum(by_project.values())
+    mix = {}
+    if total:
+        top = sorted(by_project.items(), key=lambda kv: -kv[1])[:MIX_TOP]
+        mix = {p: round(100 * v / total) for p, v in top if round(100 * v / total) >= 1}
+    rec["language_mix"] = mix
+
+
+def sweep_cross_country_floods(session: requests.Session, out: dict,
+                               retrieved: str, cache: dict,
+                               stale_cutoff: str = "") -> list[str]:
+    """
+    Post-pass over EVERY published entry — fresh and carried alike.
+
+    WHY (2026-08-13): the in-summarize gate only inspects entries above
+    FLOOD_CHECK_MIN_VIEWS, so the 2026-08-10 Roblox flood was scrubbed from
+    India (930k) but survived in Kenya (11.5k) — backwards for a platform
+    whose point is the small markets. And carried-forward entries were never
+    re-screened at all, so a flood frozen into a small country's last good
+    day outlived the flood itself. A flood is cross-country by nature, so
+    the same-day presence of one article in several countries' lists is the
+    cheap tell: each flagged (article, day) costs ONE global check applied
+    to every occurrence at once — fewer API calls than lowering the
+    per-entry threshold, and it reaches carried entries.
+
+    The verdict is LOCKSTEP ONLY (automated >= 0.5x user on the entry's own
+    day), plus the curated KNOWN_ARTIFACT_PAGES list. Deliberately NOT used:
+    whipsaw/concentration shapes. Calibrated against every multi-country
+    article live on 2026-08-13: the Aug-12 solar eclipse's de/fr/es articles
+    legitimately hit 91-97% listed-country concentration WITH event-day
+    whipsaw — a shape rule would have deleted the day's biggest genuine
+    reading event, while every real article (eclipse, films, quake pages,
+    Deaths in 2026) showed automated shares of 0.3-14% against Roblox's
+    99%. Lockstep separates cleanly; shapes do not.
+
+    Fails OPEN per group on API trouble. Returns human-readable action lines.
+    """
+    groups: dict[tuple, list] = {}   # (project, title, date) -> [(iso3, views)]
+    for iso3, rec in out.items():
+        if rec.get("withheld"):
+            continue
+        d = rec.get("date")
+        for a in rec.get("articles", []):
+            if a.get("views_ceil", 0) >= SWEEP_MIN_VIEWS:
+                groups.setdefault((a["project"], a["title"], d), []).append(
+                    (iso3, a["views_ceil"]))
+
+    actions: list[str] = []
+    for (project, title, d), hits in sorted(groups.items()):
+        curated = (project, title) in KNOWN_ARTIFACT_PAGES
+        # Entries older than the run's own fetch window are carryovers no
+        # gate has re-examined — screen their articles individually, however
+        # few countries still hold them. Without this, a flood's footprint
+        # decays below the group threshold as countries heal and the last
+        # holdouts keep it forever (observed 2026-08-13: Tanzania refreshed
+        # itself clean mid-run, the Roblox group fell to 2 countries, and
+        # Kenya + Sri Lanka kept publishing the flood).
+        stale_entry = bool(stale_cutoff) and bool(d) and d < stale_cutoff
+        if len(hits) < SWEEP_MIN_COUNTRIES and not curated and not stale_entry:
+            continue
+        if curated:
+            verdict, why = True, "curated artifact page"
+        else:
+            try:
+                day = datetime.strptime(d, "%Y-%m-%d").date()
+            except (TypeError, ValueError):
+                continue
+            key = (project, title, d)
+            if key not in cache:
+                base = ("https://wikimedia.org/api/rest_v1/metrics/pageviews/"
+                        f"per-article/{project}.org/all-access")
+                t_url = requests.utils.quote(title.replace(" ", "_"), safe="")
+                win = (f"{(day - timedelta(days=7)).strftime('%Y%m%d')}00/"
+                       f"{day.strftime('%Y%m%d')}00")
+                series = {}
+                for agent in ("user", "automated"):
+                    series[agent] = None
+                    for attempt in range(2):
+                        try:
+                            resp = session.get(f"{base}/{agent}/{t_url}/daily/{win}",
+                                               timeout=REQ_TIMEOUT)
+                            if resp.status_code == 200:
+                                series[agent] = {
+                                    str(i.get("timestamp", ""))[:8]: i.get("views", 0)
+                                    for i in resp.json().get("items", [])}
+                                break
+                            if resp.status_code == 404:
+                                break
+                            time.sleep(2 * (attempt + 1))
+                        except Exception:
+                            time.sleep(1 + attempt)
+                    time.sleep(0.3)
+                cache[key] = series
+            series = cache[key]
+            dkey = day.strftime("%Y%m%d")
+            user_today = (series.get("user") or {}).get(dkey)
+            if not user_today:
+                continue                      # fail-open
+            auto_today = (series.get("automated") or {}).get(dkey, 0)
+            verdict = auto_today >= 0.5 * user_today
+            why = (f"lockstep: automated {auto_today:,} vs user {user_today:,}"
+                   if verdict else "")
+        if not verdict:
+            continue
+        for iso3, _v in hits:
+            rec = out[iso3]
+            rec["articles"] = [a for a in rec["articles"]
+                               if not (a["project"] == project and a["title"] == title)]
+            if rec["articles"]:
+                _rebuild_language_mix(rec)
+            else:
+                out[iso3] = {
+                    "withheld": True,
+                    "reason": "filtered",
+                    "note": ("Wikimedia publishes only a heavily truncated list "
+                             "for this country, and the few encyclopedia "
+                             "articles in it were excluded by the Atlas's own "
+                             "quality gates (single-edition spikes and "
+                             "automated-traffic patterns), so no reliable "
+                             "reading list can be shown."),
+                    "checked": retrieved,
+                }
+        actions.append(f"swept '{title}' ({project}, {d}) from "
+                       f"{len(hits)} countries — {why}")
+    return actions
 
 
 def main() -> int:
@@ -370,7 +529,10 @@ def main() -> int:
                     "checked against their own global per-article traffic "
                     "(user vs automated split, day-to-day shape) so view "
                     "floods that leak through Wikimedia's bot classifier are "
-                    "dropped rather than published as reading. Measures "
+                    "dropped rather than published as reading; a cross-country "
+                    "sweep re-screens every published entry the same way, and "
+                    "a small curated list excludes pages with a documented "
+                    "history of automated traffic. Measures "
                     "Wikipedia readers only, not the general population. Countries "
                     "Wikimedia withholds (Country and Territory Protection List, "
                     "or below the volume reporting threshold) carry withheld:true "
@@ -498,12 +660,27 @@ def main() -> int:
                   f"— absent from the file until a later run succeeds.",
                   flush=True)
 
+    # CROSS-COUNTRY FLOOD SWEEP (2026-08-13): re-screens every entry about
+    # to be published, including carried-forward ones the fetch loop never
+    # touched this run. See sweep_cross_country_floods for the reasoning.
+    sweep_actions = sweep_cross_country_floods(session, out, retrieved,
+                                               flood_cache,
+                                               stale_cutoff=days[-1].isoformat())
+    for line in sweep_actions:
+        print(f"  {line}", flush=True)
+
     if n_fresh == 0 and previous:
         # Nothing fetched at all (API down / shape change / hard throttle).
         # Every previously-good entry is preserved (the working state was
         # seeded from the previous file, so any checkpoint that fired wrote a
         # superset of it) — skip the final write to avoid a churn-only commit
         # and fail loudly so the breakage is visible in the workflow logs.
+        # Exception: if the sweep scrubbed something, that cleanup must
+        # still reach the published file.
+        if sweep_actions:
+            write_output()
+            print(f"NOTE: wrote sweep cleanup ({len(sweep_actions)} actions) "
+                  "despite zero fresh fetches.")
         print("ERROR: no country returned fresh data — previous data "
               "preserved; check the AQS endpoint and the response shape.",
               file=sys.stderr)
