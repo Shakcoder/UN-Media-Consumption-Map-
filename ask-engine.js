@@ -487,7 +487,7 @@ const ATTRIBUTES = {
   population: { label: "Population", unit: "", get: f => f.pop, fmt: v => fmtPop(v),
                 words: ["population", "biggest country", "largest country", "most populous"], source: "World Bank" },
   mci:        { label: "Mobile connectivity index", unit: "/100", get: f => f.mci,
-                words: ["mobile connectivity", "mobile internet", "mci"], source: "GSMA MCI 2024" },
+                words: ["mobile connectivity", "mobile internet", "mci"], source: "GSMA MCI 2025" },
   finaccount: { label: "Financial account ownership", unit: "%", get: f => f.finAccount,
                 words: ["financial account", "bank account", "mobile money", "financial inclusion", "digital payments"],
                 source: "World Bank Global Findex" },
@@ -920,7 +920,7 @@ function addCountryEvidence(f, ev) {
   bits.push("political & internet freedom: Freedom House 2026 official data files");
   bits.push("connectivity & demographics: World Bank CC BY 4.0 (ICT compiled by ITU; literacy by UNESCO UIS)");
   if (f.medianAge != null) bits.push("median age: UN DESA WPP 2024");
-  if (f.mci != null) bits.push("mobile connectivity: GSMA MCI 2024");
+  if (f.mci != null) bits.push("mobile connectivity: GSMA MCI 2025");
   if (f.landscapeNote) bits.push("media landscape: CIA World Factbook (public domain, weekly)");
   if (TRENDS) bits.push(`live trends: Wikimedia Pageviews + GDELT, daily engine as of ${TRENDS.generated} (language-weight attribution — approximation)`);
   if (f.reading && !f.reading.withheld) bits.push(`most-read Wikipedia pages: Wikimedia top-per-country ${f.reading.date} (CC0, directly per-country, articles only)`);

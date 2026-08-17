@@ -387,45 +387,48 @@ WPP_MEDIAN_AGE_2025: dict[str, float] = {
     "WSM": 19.8, "YEM": 18.4, "ZAF": 28.7, "ZMB": 17.9, "ZWE": 18.1,
 }
 
-# GSMA Mobile Connectivity Index 2024 (0-100; higher = more enabling
+# GSMA Mobile Connectivity Index 2025 (0-100; higher = more enabling
 # environment for mobile internet). Free dataset from
-# mobileconnectivityindex.com (GSMA Intelligence). 172 countries.
-GSMA_MCI_2024: dict[str, float] = {
-    "AFG": 26.8, "AGO": 48.0, "ALB": 72.2, "ARE": 90.7, "ARG": 72.2,
-    "ARM": 72.3, "AUS": 91.6, "AUT": 88.4, "AZE": 73.8, "BDI": 25.1,
-    "BEL": 90.0, "BEN": 42.4, "BFA": 35.3, "BGD": 56.7, "BGR": 81.4,
-    "BHR": 81.8, "BHS": 70.2, "BIH": 67.7, "BLR": 70.5, "BLZ": 64.2,
-    "BOL": 62.2, "BRA": 77.1, "BRB": 65.5, "BRN": 74.6, "BTN": 64.4,
-    "BWA": 64.4, "CAF": 22.3, "CAN": 88.2, "CHE": 91.2, "CHL": 79.7,
-    "CHN": 83.5, "CIV": 50.6, "CMR": 49.0, "COD": 28.2, "COG": 40.8,
-    "COL": 72.2, "COM": 34.1, "CPV": 60.0, "CRI": 73.0, "CYP": 86.7,
-    "CZE": 87.4, "DEU": 92.0, "DNK": 93.4, "DOM": 70.3, "DZA": 57.9,
-    "ECU": 68.8, "EGY": 65.9, "ESP": 90.9, "EST": 90.1, "ETH": 41.6,
-    "FIN": 91.5, "FJI": 61.7, "FRA": 89.6, "GAB": 55.2, "GBR": 91.4,
-    "GEO": 74.9, "GHA": 57.6, "GIN": 38.5, "GMB": 44.6, "GNB": 33.0,
-    "GNQ": 43.5, "GRC": 84.1, "GTM": 64.8, "GUY": 63.9, "HND": 54.7,
-    "HRV": 87.3, "HTI": 47.0, "HUN": 86.6, "IDN": 76.3, "IND": 69.2,
-    "IRL": 91.1, "IRN": 65.4, "IRQ": 56.0, "ISL": 91.5, "ISR": 84.0,
-    "ITA": 85.2, "JAM": 55.5, "JOR": 66.2, "JPN": 87.7, "KAZ": 76.9,
-    "KEN": 56.8, "KGZ": 62.8, "KHM": 61.7, "KOR": 85.2, "KWT": 81.7,
-    "LAO": 57.7, "LBN": 66.7, "LBR": 38.5, "LBY": 67.1, "LCA": 60.8,
-    "LKA": 64.0, "LSO": 47.8, "LTU": 88.2, "LUX": 89.3, "LVA": 86.6,
-    "MAR": 65.3, "MDA": 73.0, "MDG": 38.3, "MDV": 64.2, "MEX": 76.3,
-    "MKD": 76.0, "MLI": 37.2, "MLT": 85.8, "MMR": 52.7, "MNE": 75.6,
-    "MNG": 68.2, "MOZ": 40.6, "MRT": 42.8, "MUS": 73.0, "MWI": 39.8,
-    "MYS": 80.3, "NAM": 56.3, "NER": 27.5, "NGA": 53.4, "NIC": 55.8,
-    "NLD": 91.5, "NOR": 92.1, "NPL": 53.1, "NZL": 89.5, "OMN": 74.1,
-    "PAK": 49.1, "PAN": 73.5, "PER": 72.3, "PHL": 71.5, "PNG": 47.6,
-    "POL": 83.8, "PRT": 84.2, "PRY": 73.1, "QAT": 86.3, "ROU": 82.8,
-    "RUS": 80.2, "RWA": 52.5, "SAU": 84.8, "SDN": 29.2, "SEN": 51.4,
-    "SGP": 93.4, "SLB": 45.6, "SLE": 44.4, "SLV": 66.3, "SOM": 40.7,
-    "SRB": 77.4, "SSD": 12.7, "SUR": 60.1, "SVK": 85.3, "SVN": 89.5,
-    "SWE": 90.4, "SWZ": 57.1, "SYC": 74.0, "TCD": 26.9, "TGO": 47.9,
-    "THA": 78.6, "TJK": 44.3, "TLS": 47.9, "TON": 64.2, "TTO": 69.3,
-    "TUN": 66.6, "TUR": 77.9, "TZA": 46.8, "UGA": 45.5, "UKR": 71.3,
-    "URY": 84.0, "USA": 91.3, "UZB": 67.8, "VCT": 62.0, "VEN": 59.8,
-    "VNM": 79.5, "VUT": 59.0, "WSM": 64.3, "YEM": 28.4, "ZAF": 71.7,
-    "ZMB": 44.2, "ZWE": 38.3,
+# mobileconnectivityindex.com (GSMA Intelligence). 173 countries — the
+# 2025 edition adds the Marshall Islands. GSMA recalculates back-years
+# with every edition, so this snapshot supersedes (and will not match)
+# archived copies of earlier tables.
+GSMA_MCI_2025: dict[str, float] = {
+    "AFG": 27.9, "AGO": 48.6, "ALB": 74.6, "ARE": 91.1, "ARG": 73.5,
+    "ARM": 75.0, "AUS": 92.5, "AUT": 88.9, "AZE": 75.4, "BDI": 23.6,
+    "BEL": 90.6, "BEN": 41.2, "BFA": 40.5, "BGD": 59.3, "BGR": 82.8,
+    "BHR": 82.5, "BHS": 71.6, "BIH": 69.5, "BLR": 71.3, "BLZ": 64.5,
+    "BOL": 64.9, "BRA": 77.9, "BRB": 67.0, "BRN": 75.2, "BTN": 65.6,
+    "BWA": 66.7, "CAF": 22.5, "CAN": 88.6, "CHE": 92.9, "CHL": 82.0,
+    "CHN": 83.5, "CIV": 52.7, "CMR": 50.0, "COD": 30.8, "COG": 39.0,
+    "COL": 71.9, "COM": 36.3, "CPV": 62.6, "CRI": 80.7, "CYP": 88.0,
+    "CZE": 89.1, "DEU": 92.6, "DNK": 94.1, "DOM": 74.6, "DZA": 61.3,
+    "ECU": 68.3, "EGY": 67.5, "ESP": 90.5, "EST": 90.6, "ETH": 45.6,
+    "FIN": 91.7, "FJI": 64.8, "FRA": 89.3, "GAB": 56.0, "GBR": 92.2,
+    "GEO": 78.5, "GHA": 59.5, "GIN": 41.9, "GMB": 44.4, "GNB": 36.2,
+    "GNQ": 45.9, "GRC": 86.5, "GTM": 63.7, "GUY": 66.5, "HND": 57.3,
+    "HRV": 86.9, "HTI": 49.5, "HUN": 87.5, "IDN": 74.7, "IND": 71.5,
+    "IRL": 92.6, "IRN": 61.3, "IRQ": 57.6, "ISL": 92.4, "ISR": 84.7,
+    "ITA": 86.6, "JAM": 57.7, "JOR": 69.1, "JPN": 88.9, "KAZ": 80.2,
+    "KEN": 59.9, "KGZ": 63.9, "KHM": 63.5, "KOR": 85.8, "KWT": 82.8,
+    "LAO": 59.7, "LBN": 68.8, "LBR": 39.5, "LBY": 69.2, "LCA": 61.1,
+    "LKA": 64.5, "LSO": 50.1, "LTU": 88.8, "LUX": 89.8, "LVA": 87.3,
+    "MAR": 67.8, "MDA": 76.5, "MDG": 38.6, "MDV": 63.6, "MEX": 78.5,
+    "MHL": 54.6, "MKD": 77.3, "MLI": 38.2, "MLT": 87.8, "MMR": 53.0,
+    "MNE": 78.8, "MNG": 70.3, "MOZ": 43.4, "MRT": 43.2, "MUS": 74.9,
+    "MWI": 39.3, "MYS": 79.7, "NAM": 57.3, "NER": 31.0, "NGA": 59.9,
+    "NIC": 55.9, "NLD": 92.2, "NOR": 92.4, "NPL": 53.5, "NZL": 90.7,
+    "OMN": 77.5, "PAK": 53.1, "PAN": 71.1, "PER": 73.8, "PHL": 73.7,
+    "PNG": 49.4, "POL": 86.8, "PRT": 88.2, "PRY": 70.7, "QAT": 80.3,
+    "ROU": 84.6, "RUS": 77.3, "RWA": 54.4, "SAU": 84.4, "SDN": 29.2,
+    "SEN": 53.7, "SGP": 92.7, "SLB": 46.8, "SLE": 48.3, "SLV": 67.4,
+    "SOM": 46.2, "SRB": 78.5, "SSD": 13.2, "SUR": 60.9, "SVK": 87.1,
+    "SVN": 90.7, "SWE": 91.0, "SWZ": 57.1, "SYC": 72.7, "TCD": 30.4,
+    "TGO": 47.3, "THA": 78.9, "TJK": 45.4, "TLS": 49.2, "TON": 66.6,
+    "TTO": 72.6, "TUN": 66.3, "TUR": 80.8, "TZA": 49.2, "UGA": 48.2,
+    "UKR": 72.2, "URY": 86.5, "USA": 91.4, "UZB": 68.3, "VCT": 60.9,
+    "VEN": 60.8, "VNM": 84.1, "VUT": 59.8, "WSM": 69.7, "YEM": 28.0,
+    "ZAF": 72.5, "ZMB": 45.8, "ZWE": 47.5,
 }
 
 # Primary compilers behind World Bank-republished indicators. The World Bank
@@ -1290,10 +1293,10 @@ def build_country(
         sources["median_age"] = "UN DESA, World Population Prospects 2024 (2025 estimate) | https://population.un.org/wpp/"
 
     # Mobile Connectivity Index (GSMA)
-    mci = GSMA_MCI_2024.get(iso3)
+    mci = GSMA_MCI_2025.get(iso3)
     if mci is not None:
         values["mobile_connectivity_index"] = mci
-        sources["mobile_connectivity_index"] = "GSMA Mobile Connectivity Index 2024 | https://www.mobileconnectivityindex.com/"
+        sources["mobile_connectivity_index"] = "GSMA Mobile Connectivity Index 2025 | https://www.mobileconnectivityindex.com/"
 
     # Language shares (Unicode CLDR territory-language data) — which languages
     # actually reach this country's population, with official status.
@@ -1401,7 +1404,7 @@ def build_country(
             "smartphone_pct": values.get("smartphone_pct"),
             "fixed_broadband_per_100": values.get("fixed_broadband_per_100"),
             "mobile_connectivity_index": values.get("mobile_connectivity_index"),
-            "mobile_connectivity_index_source": "GSMA Mobile Connectivity Index 2024" if values.get("mobile_connectivity_index") is not None else None,
+            "mobile_connectivity_index_source": "GSMA Mobile Connectivity Index 2025" if values.get("mobile_connectivity_index") is not None else None,
             "financial_account_pct": values.get("financial_account_pct"),
         },
         "languages_detail": languages_detail or None,
@@ -1522,7 +1525,7 @@ def main() -> int:
             "World Bank Open Data API (15 indicators incl. Global Findex financial-account ownership, automated weekly; ICT indicators originally compiled by ITU, education/literacy by UNESCO Institute for Statistics; CC BY 4.0)",
             "Unicode CLDR territory-language data (per-country language shares & official status, automated weekly; Unicode License V3)",
             "UN DESA World Population Prospects 2024 (median age, 195 countries)",
-            "GSMA Mobile Connectivity Index 2024 (172 countries)",
+            "GSMA Mobile Connectivity Index 2025 (173 countries)",
             "RSF Press Freedom Index 2025 (174 countries)",
             "Freedom House: Freedom on the Net 2025 (70 countries)",
             "Freedom House: Freedom in the World 2026, official FH data files incl. PR/CL scores & electoral democracy (193 countries)",

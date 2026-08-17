@@ -62,7 +62,7 @@ INTEGRATED = {
     "fh_fitw": 2026,      # Freedom House — Freedom in the World
     "fh_fotn": 2025,      # Freedom House — Freedom on the Net
     "dnr": 2026,          # Reuters Institute Digital News Report
-    "gsma": 2024,         # GSMA Mobile Connectivity Index
+    "gsma": 2025,         # GSMA Mobile Connectivity Index
     "afrobarometer": 9,   # Afrobarometer survey round (not a year)
     "wpp": 2024,          # UN DESA World Population Prospects (biennial)
     # YEAR CONVENTION (2026-08-17, closes the issue-#3 phantom): the number
