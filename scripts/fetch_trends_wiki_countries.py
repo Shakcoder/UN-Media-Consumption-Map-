@@ -114,6 +114,28 @@ NAMESPACE_PREFIXES = {
 # three editions of Kenya's raw list on 2026-08-11.
 NON_ARTICLE_TITLES = {"wiki.phtml", "index.php", "index.html"}
 
+# EDITORIAL EXCLUSION (decided by the project owner, 2026-08-17): articles
+# about adult-entertainment sites and explicit-content markers are not
+# published in the Atlas's reading lists, even when genuinely among a
+# country's most-read pages (they reliably are, in small privacy-thresholded
+# markets). This is an editorial call for a UN-branded product, not a data
+# judgement — the method note discloses it. The list is deliberately NARROW:
+# site/brand articles and rating-marker pages only. Encyclopedic sexuality,
+# health and rights topics (sex education, HIV/AIDS, LGBT rights) are NOT
+# excluded and never will be under this rule. Underscore form, as the API
+# returns titles; brand names are near-identical across language editions.
+ADULT_CONTENT_TITLES = {
+    "XNXX", "XVideos", "Pornhub", "XHamster", "xHamster", "YouPorn",
+    "RedTube", "Brazzers", "Chaturbate", "Stripchat", "OnlyFans",
+    "XXX", ".xxx", "Xnxx", "PornHub",
+    "Pornography", "Pornographie", "Pornografía", "Pornografia",
+    "Порнография", "Порнографія",
+    # ja: ポルノ (pornography). NEVER add ポルノグラフィティ — that is a
+    # rock band whose article is legitimate popular reading in Japan.
+    "ポルノ",
+    "إباحية", "پورنوگرافی",
+}
+
 
 def is_article(title: str, project: str) -> bool:
     """True when a top-per-country entry looks like an encyclopedia article."""
@@ -263,7 +285,8 @@ def summarize(session: requests.Session, raw: list, iso2: str, day: date,
             if is_article(str(a.get("article") or ""), str(a.get("project") or ""))
             and isinstance(a.get("views_ceil"), int) and a["views_ceil"] > 0
             and (str(a.get("project")),
-                 str(a.get("article")).replace("_", " ")) not in KNOWN_ARTIFACT_PAGES]
+                 str(a.get("article")).replace("_", " ")) not in KNOWN_ARTIFACT_PAGES
+            and str(a.get("article")).replace("_", " ") not in ADULT_CONTENT_TITLES]
     had_articles = bool(kept)
 
     # AUTOMATED-TRAFFIC GATE (2026-08-11): large entries must survive a check
@@ -532,7 +555,12 @@ def main() -> int:
                     "dropped rather than published as reading; a cross-country "
                     "sweep re-screens every published entry the same way, and "
                     "a small curated list excludes pages with a documented "
-                    "history of automated traffic. Measures "
+                    "history of automated traffic. One editorial exclusion "
+                    "applies: articles about adult-entertainment sites and "
+                    "explicit-content markers are not published even when "
+                    "genuinely among a country's most-read pages (owner "
+                    "decision, 2026-08-17); encyclopedic sexuality, health "
+                    "and rights topics are unaffected. Measures "
                     "Wikipedia readers only, not the general population. Countries "
                     "Wikimedia withholds (Country and Territory Protection List, "
                     "or below the volume reporting threshold) carry withheld:true "
