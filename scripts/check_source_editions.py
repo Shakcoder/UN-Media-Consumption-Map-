@@ -138,15 +138,31 @@ SOURCES = [
     {
         "key": "gsma",
         "name": "GSMA Mobile Connectivity Index",
-        "check_url": "https://www.gsma.com/r/somic/",
-        "fallback_url": "https://www.mobileconnectivityindex.com/",
-        "pattern": r"State of Mobile Internet Connectivity (20\d\d)|(20\d\d) (?:Index|index|data)",
+        # REPOINTED 2026-08-17 (issue #4): the SOMIC report moved to GSMA
+        # Intelligence, and gsma.com now answers plain requests with 403.
+        # The Intelligence site's sitemap is plain XML, explicitly allowed
+        # by its robots.txt, and lists every edition as a year-stamped slug
+        # (…/state-of-mobile-internet-connectivity-2025-…), so new editions
+        # appear there automatically. The newsroom RSS feed (bot-wall
+        # exempt) is the cross-host fallback around launch time.
+        "check_url": "https://www.gsmaintelligence.com/sitemap.xml",
+        "fallback_url": "https://www.gsma.com/newsroom/feed/",
+        # The bridge between the title and the year must not cross an XML/HTML
+        # tag boundary ('<'): in the sitemap a year-less slug sits right next
+        # to a <lastmod>2026-…</lastmod> timestamp, and an unanchored bridge
+        # happily captured the file-metadata year as an "edition" (caught in
+        # testing 2026-08-17 — the checker announced a 2026 edition that does
+        # not exist).
+        "pattern": r"[Ss]tate[- ]of[- ][Mm]obile[- ][Ii]nternet[- ][Cc]onnectivity[^0-9<]{0,40}(20\d\d)",
         "instructions": (
+            "Note: since 2025 the report is published by GSMA Intelligence as a\n"
+            "six-part series; the underlying index data still lives at\n"
+            "mobileconnectivityindex.com.\n"
             "1. Open https://www.mobileconnectivityindex.com and check the latest data year.\n"
             "2. Download the new country scores (free download on the site).\n"
             "3. Update the MCI table/year labels in scripts/refresh_data.py.\n"
             "4. Bump the 'gsma' year in scripts/check_source_editions.py.\n"
-            "5. Upload via GitHub → Add file → Upload files (one batch)."
+            "5. Commit and push the changed files together (git add … && git commit && git push)."
         ),
     },
     {
