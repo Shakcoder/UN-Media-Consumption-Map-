@@ -15,6 +15,7 @@ Last updated: 2026-08-10
 | — UNESCO Institute for Statistics (via World Bank) | literacy, education spending originally compiled by UIS | | | CC BY 4.0 via WB | ✅ attributed |
 | UN DESA World Population Prospects 2024 | median age (2025 estimates) | 195/195 | Biennial revision | CC BY 3.0 IGO | ✅ live |
 | GSMA Mobile Connectivity Index | composite mobile-internet enabling score (0–100) | 173/195 | Annual (2025 edition) | Free dataset, attribution | ✅ live |
+| ITU DataHub (via World Bank Data360 mirror) | TV/radio household reach, 4G+ population coverage, mobile-data affordability (4 indicators) | ~85–200 economies per indicator | **Automated weekly** | CC BY 4.0 | ✅ live (2026-08-17) |
 | RSF World Press Freedom Index 2026 | rank (1–180), score (0–100), and RSF's five context sub-scores (political, economic, legal, social, safety) | 175/195 | Annual — one command, `python3 scripts/fetch_rsf.py`, which downloads RSF's own published CSV (no hand-typed numbers) | Free, attribution | ✅ live |
 | Freedom House — Freedom in the World 2026 | political freedom 0–100, official status, political rights /40, civil liberties /60, electoral-democracy designation | 193/195 | Annual | Official data files provided directly by Freedom House (July 2026); free with attribution | ✅ live, verified 192/192 vs our prior compilation |
 | Freedom House — Freedom on the Net 2025 | internet freedom 0–100 | 70/195 | Annual | Free, attribution | ✅ live |

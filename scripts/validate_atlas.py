@@ -747,6 +747,21 @@ def main() -> int:
         WARNS.append("trends/press_un_coverage.json missing — national-press "
                      "layer not built yet")
 
+    # ITU DataHub layer (2026-08-17): broadcast reach + connectivity depth.
+    # Radio is survey-sparse by nature (~100 economies) — reported, never
+    # padded; a sudden collapse to near zero would mean the Data360 mirror
+    # moved or the fetch broke.
+    n_tv = sum(1 for c in countries.values()
+               if ((c.get("media") or {}).get("tv_households_pct")) is not None)
+    n_rad = sum(1 for c in countries.values()
+                if ((c.get("media") or {}).get("radio_households_pct")) is not None)
+    n_4g = sum(1 for c in countries.values()
+               if ((c.get("connectivity") or {}).get("mobile_4g_coverage_pct")) is not None)
+    n_price = sum(1 for c in countries.values()
+                  if ((c.get("connectivity") or {}).get("mobile_data_price_pct_income")) is not None)
+    INFOS.append(f"ITU DataHub layer: TV households {n_tv}/195, radio households "
+                 f"{n_rad}/195, 4G+ coverage {n_4g}/195, data affordability {n_price}/195")
+
     # News-attention frequency (LAPOP AmericasBarometer) — lives in
     # countries.json per country. Construct separation is the invariant:
     # this field must never leak into news_consumption, and its own numbers

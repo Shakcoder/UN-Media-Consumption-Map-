@@ -72,6 +72,30 @@ WORLD_BANK_INDICATORS: dict[str, str] = {
     "financial_account_pct": "FX.OWN.TOTL.ZS",
 }
 
+# --------------------------------------------------------------------------
+# ITU DataHub indicators (added 2026-08-17, owner request). Fetched from the
+# World Bank Data360 MIRROR of the ITU DataHub dataset rather than
+# datahub.itu.int directly: the DataHub sits behind CloudFront and 403s
+# non-browser clients, while Data360 is an open keyless API — and the mirror
+# was verified faithful before adoption (IT_NET_USER vs our published World
+# Bank internet_pct across 193 countries: median difference 0.02pp, none
+# above 5pp, checked 2026-08-17). Licence: ITU data is CC BY 4.0.
+#   IT_HH_TV   — % of households with a television    (unit PT_HH)
+#   IT_HH_RAD  — % of households with a radio         (unit PT_HH; sparse,
+#                ~100 countries — surveys only)
+#   MOB_COV_4G — % of population covered by ≥4G mobile signal (PT_POP)
+#   PRI_DO_MOB — monthly data-only mobile basket price as % of GNI per
+#                capita (PT_GNI_PS) — the ITU affordability measure
+# --------------------------------------------------------------------------
+ITU_INDICATORS: dict[str, str] = {
+    "tv_households_pct": "IT_HH_TV",
+    "radio_households_pct": "IT_HH_RAD",
+    "mobile_4g_coverage_pct": "MOB_COV_4G",
+    "mobile_data_price_pct_income": "PRI_DO_MOB",
+}
+ITU_DATA360_URL = ("https://data360api.worldbank.org/data360/data"
+                   "?DATABASE_ID=ITU_DH&INDICATOR={code}&skip={skip}")
+
 ISO3_TO_ISO2: dict[str, str] = {
     "AFG": "AF", "AGO": "AO", "ALB": "AL", "AND": "AD", "ARE": "AE",
     "ARG": "AR", "ARM": "AM", "ATG": "AG", "AUS": "AU", "AUT": "AT",
@@ -951,6 +975,46 @@ CLDR_LANG_NAMES_URL = ("https://raw.githubusercontent.com/unicode-org/cldr-json/
                        "cldr-json/cldr-localenames-full/main/en/languages.json")
 
 
+def fetch_itu_indicator(itu_code: str) -> dict[str, tuple[float, int]]:
+    """Latest total value per country for one ITU DataHub indicator.
+
+    Same contract as fetch_indicator_all_countries: {ISO3: (value, year)}.
+    Rows are SDMX-shaped; only national TOTALS are kept (every
+    disaggregation dimension must be '_Z'/'_T'), else a sex- or
+    urban-breakdown row could masquerade as the country figure. The API
+    pages at 1,000 rows, so pagination is mandatory (MOB_COV_4G alone is
+    ~1,900 rows).
+    """
+    TOTAL_DIMS = ("SEX", "AGE", "URBANISATION",
+                  "COMP_BREAKDOWN_1", "COMP_BREAKDOWN_2", "COMP_BREAKDOWN_3")
+    out: dict[str, tuple[float, int]] = {}
+    rows: list[dict] = []
+    skip = 0
+    while True:
+        try:
+            payload = fetch_json(ITU_DATA360_URL.format(code=itu_code, skip=skip))
+        except Exception as exc:
+            print(f"  ! ITU {itu_code}: fetch failed at skip={skip}: {exc}")
+            return {}
+        batch = payload.get("value") or []
+        rows.extend(batch)
+        if not batch or len(rows) >= int(payload.get("count") or 0):
+            break
+        skip += len(batch)
+    for r in rows:
+        if any(r.get(d) not in ("_Z", "_T", None) for d in TOTAL_DIMS):
+            continue
+        iso3 = str(r.get("REF_AREA") or "")
+        try:
+            value = float(r.get("OBS_VALUE"))
+            year = int(r.get("TIME_PERIOD"))
+        except (TypeError, ValueError):
+            continue
+        if iso3 not in out or year > out[iso3][1]:
+            out[iso3] = (value, year)
+    return out
+
+
 def fetch_cldr_languages() -> dict[str, list[dict[str, Any]]]:
     """Per-country language shares from Unicode CLDR (free, Unicode License V3).
 
@@ -1143,6 +1207,8 @@ def build_country(
     cldr_langs: dict[str, list[dict[str, Any]]] | None = None,
     factbook_media: dict[str, str] | None = None,
     wb_fetch_ok: set[str] | None = None,
+    itu_data: dict[str, dict[str, tuple[float, int]]] | None = None,
+    itu_fetch_ok: set[str] | None = None,
 ) -> dict[str, Any]:
     iso2 = ISO3_TO_ISO2.get(iso3, iso3)
     print(f"→ {iso3} ({static_meta.get('name', iso3)})")
@@ -1197,6 +1263,27 @@ def build_country(
             if field == "internet_pct" and year and datetime.now().year - year >= 5:
                 print(f"  · {iso3}: internet_pct is a {year} observation "
                       f"({datetime.now().year - year} years old); World Bank has nothing newer")
+
+    # ITU DataHub indicators — same carry/citation discipline as the World
+    # Bank loop above: previous values survive only a FAILED fetch, and every
+    # citation names the observation year.
+    for field, itu_code in ITU_INDICATORS.items():
+        pair = (itu_data or {}).get(field, {}).get(iso3)
+        value, year = pair if pair else (None, None)
+        if value is None and prev and field not in (itu_fetch_ok or ()):
+            prev_value = _lookup_previous(prev, field)
+            if prev_value is not None:
+                values[field] = prev_value
+                carried_from_prev.add(field)
+                sources[field] = (
+                    (prev.get("sources") or {}).get(field)
+                    or "ITU DataHub (CC BY 4.0), via World Bank Data360 | https://datahub.itu.int/")
+                continue
+        if value is not None:
+            values[field] = round(value, 1) if field != "mobile_data_price_pct_income" else round(value, 2)
+            sources[field] = (
+                f"ITU DataHub (CC BY 4.0), {year} observation, via World Bank "
+                f"Data360 mirror | https://datahub.itu.int/data/?i={itu_code}")
 
     # Smartphone % (DataReportal)
     if iso3 in SMARTPHONE_PCT_2024:
@@ -1406,6 +1493,8 @@ def build_country(
             "mobile_connectivity_index": values.get("mobile_connectivity_index"),
             "mobile_connectivity_index_source": "GSMA Mobile Connectivity Index 2025" if values.get("mobile_connectivity_index") is not None else None,
             "financial_account_pct": values.get("financial_account_pct"),
+            "mobile_4g_coverage_pct": values.get("mobile_4g_coverage_pct"),
+            "mobile_data_price_pct_income": values.get("mobile_data_price_pct_income"),
         },
         "languages_detail": languages_detail or None,
         "platform_use": ({**platform_use, "source": "Latinobarometro 2024", "year": 2024}
@@ -1421,6 +1510,8 @@ def build_country(
             # edition comes from the fetched index, so it can never drift
             # out of step with the numbers it labels
             "press_freedom_source": f"RSF {RSF_EDITION}",
+            "tv_households_pct": values.get("tv_households_pct"),
+            "radio_households_pct": values.get("radio_households_pct"),
         },
         "information_freedom": {
             "press_freedom_rank": values.get("press_freedom_rank"),
@@ -1499,6 +1590,20 @@ def main() -> int:
         print(f"  ! World Bank fetch looks incomplete for: {', '.join(wb_failed)}"
               f" — previous values kept for those indicators")
 
+    print("Fetching ITU DataHub indicators (Data360 mirror, paginated)...")
+    itu_data: dict[str, dict[str, tuple[float, int]]] = {}
+    for field, itu_code in ITU_INDICATORS.items():
+        itu_data[field] = fetch_itu_indicator(itu_code)
+        print(f"  · {field} ({itu_code}): {len(itu_data[field])} countries returned")
+    # Health floor is 60, not 100: radio-in-households comes from national
+    # surveys and genuinely covers only ~100 economies; a healthy fetch of it
+    # is still far above 60, while a failed one returns 0.
+    itu_fetch_ok = {field for field, rows in itu_data.items() if len(rows) >= 60}
+    itu_failed = sorted(set(ITU_INDICATORS) - itu_fetch_ok)
+    if itu_failed:
+        print(f"  ! ITU fetch looks incomplete for: {', '.join(itu_failed)}"
+              f" — previous values kept for those indicators")
+
     print("Fetching Unicode CLDR language data (two requests)...")
     cldr_langs = fetch_cldr_languages()
     print(f"  · language shares for {len(cldr_langs)} territories")
@@ -1510,7 +1615,8 @@ def main() -> int:
     result: dict[str, Any] = {}
     for iso3, meta in sorted(static.items()):
         result[iso3] = build_country(iso3, meta, previous.get(iso3), wb_data,
-                                     cldr_langs, factbook_media, wb_fetch_ok)
+                                     cldr_langs, factbook_media, wb_fetch_ok,
+                                     itu_data, itu_fetch_ok)
 
     world_pop_row = wb_data.get("population", {}).get("WLD")
     result["_meta"] = {

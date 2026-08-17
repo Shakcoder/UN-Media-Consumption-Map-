@@ -2499,6 +2499,13 @@ function tabMedia(d) {
   html += connRow(t("label_fixed_broadband"), c.fixed_broadband_per_100, null);
   html += connRow(`Financial account ownership <span style="font-size:10px;color:var(--muted-2);">World Bank Findex, adults 15+</span>`,
                   c.financial_account_pct == null ? null : Math.round(c.financial_account_pct) + "%", c.financial_account_pct);
+  html += connRow(`4G+ mobile coverage <span style="font-size:10px;color:var(--muted-2);">ITU, % of population</span>`,
+                  c.mobile_4g_coverage_pct == null ? null : Math.round(c.mobile_4g_coverage_pct) + "%", c.mobile_4g_coverage_pct);
+  // Affordability: LOWER is better, so no progress bar — a long bar here
+  // would read as "good" for the most expensive markets.
+  if (c.mobile_data_price_pct_income != null) {
+    html += `<div class="data-row"><span class="label">Mobile data price <span style="font-size:10px;color:var(--muted-2);">ITU basket, % of monthly income — lower is better</span></span><span class="value">${c.mobile_data_price_pct_income}%</span></div>`;
+  }
   if (c.mobile_connectivity_index != null) {
     html += `<div class="data-row"><span class="label">${t("label_mci")}</span><span class="value">${c.mobile_connectivity_index}/100</span></div>`;
     html += `<div class="bar"><div class="bar-fill" style="width:${c.mobile_connectivity_index}%"></div></div>`;
@@ -2506,6 +2513,15 @@ function tabMedia(d) {
 
   const outletRow = (label, v) => !v ? "" :
     `<div class="data-row"><span class="label">${label}</span><span class="value" style="text-align:end; font-weight:500; font-size:12px; max-width:60%;">${esc(v)}</span></div>`;
+  // Household reach of the two broadcast channels (ITU DataHub, CC BY 4.0):
+  // the first measured "how many homes can this channel even reach" figures
+  // in the Atlas — they ground the Finder's radio/TV channel logic.
+  if (m.tv_households_pct != null || m.radio_households_pct != null) {
+    html += `<h3>Broadcast reach <span style="font-size:10px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted-2);">ITU — share of households owning the receiver</span></h3>`;
+    html += connRow("TV in households", m.tv_households_pct == null ? null : Math.round(m.tv_households_pct) + "%", m.tv_households_pct);
+    html += connRow("Radio in households", m.radio_households_pct == null ? null : Math.round(m.radio_households_pct) + "%", m.radio_households_pct);
+  }
+
   const outletsHtml = outletRow(t("label_tv"), m.top_tv) + outletRow(t("label_radio"), m.top_radio) +
     outletRow(t("label_online_news"), m.top_online_news) + outletRow(t("label_social_platforms"), m.top_social);
   if (outletsHtml) html += `<h3>${t("section_leading_outlets")}</h3>` + outletsHtml;
