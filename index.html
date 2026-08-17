@@ -1742,9 +1742,30 @@ let map = null;
 if (window.L) {
   map = L.map("map", {
     center: [20, 10], zoom: 2, minZoom: 2, maxZoom: 6,
-    worldCopyJump: true, zoomControl: true, attributionControl: true
+    zoomControl: true, attributionControl: true,
+    // ONE WORLD, BOUNDED (2026-08-16). The map used to wrap horizontally
+    // (worldCopyJump), but Leaflet only repeats TILES across the
+    // antimeridian — vector layers render on the primary copy alone. Any
+    // sideways pan therefore revealed a second world of grey continent
+    // ghosts with no country colouring ("half blue, half grey"). A UN
+    // choropleth needs no infinite scroll: hard-bound the world instead.
+    // Slight longitude slack (±200°) keeps the edge stop elastic rather
+    // than a wall; beyond-bounds space shows the container's sea colour.
+    maxBounds: [[-85, -200], [85, 200]], maxBoundsViscosity: 1.0
   });
-  L.tileLayer(BASE_TILES, { attribution: BASE_TILES_ATTRIB, subdomains: "abcd", maxZoom: 19 }).addTo(map);
+  L.tileLayer(BASE_TILES, { attribution: BASE_TILES_ATTRIB, subdomains: "abcd", maxZoom: 19,
+    // noWrap stops tiles repeating past the antimeridian; bounds stops
+    // Leaflet even REQUESTING beyond-edge tiles (the CDN answers those
+    // with 400s that pollute the console when panning into the elastic
+    // slack around the bounded world).
+    noWrap: true, bounds: [[-85, -180], [85, 180]] }).addTo(map);
+  // A drag that starts over a country never delivers its mouseout, leaving
+  // a stray hover highlight stuck on the map — clear it when panning starts.
+  map.on("movestart", () => {
+    if (countryLayer) countryLayer.eachLayer(l => {
+      if (resolveIso(l.feature) !== currentActiveIso) countryLayer.resetStyle(l);
+    });
+  });
 } else {
   const banner = document.getElementById("error-banner");
   banner.classList.add("show");
@@ -1864,6 +1885,17 @@ if (map) fetch(COUNTRY_BOUNDARIES_URL)
     if (!features.length || features.filter(f => resolveIso(f)).length < features.length / 2)
       throw new Error("boundary file carries too few recognisable ISO country codes");
     countryLayer = L.geoJSON(geojson, {
+      // PAN SMOOTHNESS (2026-08-13). The default SVG renderer clips to the
+      // viewport + 10%, so every drag revealed unpainted void (bare grey
+      // base tiles) where countries should be, then re-projected all
+      // ~178k boundary points in one hitch on release — the map looked
+      // like it was tearing between blue and grey. padding 1.5 draws
+      // geometry 1.5 viewports past every edge, so ordinary pans never
+      // reach undrawn space; smoothFactor trims sub-pixel points per zoom
+      // at render time only (the boundary FILE, with its UN-position
+      // adjustments, is untouched).
+      renderer: L.svg({ padding: 1.5 }),
+      smoothFactor: 1.5,
       style: styleCountry,
       onEachFeature: (feature, layer) => {
         const iso = resolveIso(feature);
