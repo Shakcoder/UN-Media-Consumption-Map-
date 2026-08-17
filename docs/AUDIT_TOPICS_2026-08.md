@@ -119,9 +119,10 @@ place. Four verified causes:
 - **7-day velocity damps one-day catastrophes** by ~1/7 on day one; the
   reading lists and (now) intraday searches carry the fast signal.
 - **Some published lists contain uncomfortable but genuine reading**
-  (e.g. porn-site articles in small privacy-thresholded markets). They are
-  measured reality; whether to editorially suppress them is a decision for
-  DGC, not the pipeline.
+  (e.g. porn-site articles in small privacy-thresholded markets). They were
+  measured reality; on 2026-08-17 the owner decided adult-entertainment
+  site articles are excluded editorially (narrow curated list, disclosed
+  in the method note; sexuality/health/rights topics unaffected).
 
 ### Refuted claims (checked, not real — recorded so they aren't re-found)
 

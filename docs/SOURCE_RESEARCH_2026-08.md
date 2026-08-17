@@ -151,3 +151,25 @@ One-liners: **WHO GHO** works but its OData API is officially slated for replace
 Then: OONI — ✅ integrated 2026-08-11 (the 2026-08-11 non-profit ruling cleared NC licences: as long as the licence permits our use, it is fair game — Fang via Shakti), Bluesky — ✅ integrated 2026-08-10 (Topic Explorer, global-only, aggregates-only, shape-guarded), Mastodon/Netflix/Apple as labeled extras (Mastodon deliberately parked: per-instance sampling, thin value for its caveat load). Cloudflare Radar is likewise licence-cleared now but needs a token from the account holder.
 
 **Actions only the account holder can take:** apply for the Google Trends API alpha; request a ReliefWeb appname; ask the Chief about tier-2 (NC) and tier-3 (no-license) sources.
+
+---
+
+## Follow-up sweep — 2026-08-17
+
+Fresh look for open sources worth adding, on the owner's request. Test applied:
+$0, licence safe for a public repo, automatable, per-country (or per-language),
+credible in a UN room.
+
+| Candidate | What it adds | Licence | Verdict |
+|---|---|---|---|
+| **ITU DataHub** (datahub.itu.int) | Official UN telecom agency: internet use, mobile subscriptions, affordability, gender gap — ~200 economies | **CC BY 4.0 (fully open)** | **Adopt** — UN-internal credibility, easy annual automation; partially overlaps World Bank internet % but adds affordability + gender-gap depth |
+| **Ookla Open Data** (AWS registry) | Measured internet SPEED/quality per area, quarterly | CC BY-NC-SA 4.0 | **Adopt-able** under the existing non-profit ruling (same class as OONI, same removal-if-monetised obligation); needs tile→country aggregation work |
+| **M-Lab NDT** | Open alternative for internet speed | Fully open, via Google BigQuery | Viable but needs a (free) Google Cloud key + aggregation queries — more setup than Ookla for similar signal |
+| **Podcast Index** (podcastindex.org) | The missing PODCAST channel: open index, trending by language | Free open API (free key signup) | **Adopt-able** — trending is per-language not per-country, which actually matches the Atlas's language lens; needs a free key (owner signup) |
+| Wikimedia per-language content/editor stats | "Is there local-language content capacity?" signal | CC0 | Cheap add via existing Wikimedia plumbing — nice-to-have |
+| UN SDG indicators API | A few media-relevant SDG series (16.10, 17.8) with the UN stamp | Open | Duplicates WB/ITU mostly — only if a specific SDG framing is wanted |
+
+Still blocked on the owner (unchanged): YouTube Data API key (the biggest missing
+channel), Cloudflare Radar token, Latinobarómetro 2023 registration download.
+Re-declined (unchanged reasoning): SimilarWeb/DataReportal/news APIs (licence or
+cost), Netflix/Apple engagement reports (no redistribution licence).
