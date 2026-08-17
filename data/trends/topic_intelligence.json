@@ -10,7 +10,7 @@
   "topics_below_floor": 2,
   "series_quarantined": 2,
   "topics_quarantined": 0,
-  "topics_with_news_volume": 52,
+  "topics_with_news_volume": 47,
   "countries_without_profile": 0,
   "note": "Velocity windows are anchored to measured_as_of by calendar date. Series with no data in that 7-day window are excluded rather than contributing older figures. series_stale_excluded includes the dormant low-traffic tail that is refreshed only on Sundays by design and can never affect scores; series_stale_scoreable is the subset that represents real lost signal — THAT number climbing means the daily fetch is not completing (see docs/AUTOMATION.md). News volume is reported only for topics whose GDELT timeline covers the seven complete days before the run, so topics_with_news_volume is normally well below topics_scored. series_quarantined counts language series excluded by the access-method anomaly gate (non-organic traffic such as France's fr-'5G' mobile-web flood); their data stays stored in wiki_pageviews.json but contributes to no share, ranking, or trend line."
  },
@@ -461,9 +461,9 @@
      "weekly_daily_avg_views": 66.9,
      "velocity": -0.015
     },
-    "zh": {
-     "weekly_daily_avg_views": 51.6,
-     "velocity": 0.595
+    "ja": {
+     "weekly_daily_avg_views": 51.9,
+     "velocity": 0.011
     }
    },
    "news_articles_7d": null,
@@ -629,9 +629,9 @@
     2093,
     2087,
     2054,
-    1943,
-    1672,
-    1704
+    1997,
+    1726,
+    1755
    ],
    "as_of": "2026-08-16"
   },
@@ -1065,11 +1065,8 @@
      "velocity": -0.087
     }
    },
-   "news_articles_7d": 21948,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "PRK",
@@ -1651,8 +1648,11 @@
      "velocity": 0.159
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 73,
+   "news_articles_7d_window": {
+    "start": "2026-08-10",
+    "end": "2026-08-16"
+   },
    "media_intensity_by_country": [
     {
      "iso3": "GMB",
@@ -5246,48 +5246,51 @@
      "velocity": -0.037
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 150,
+   "news_articles_7d_window": {
+    "start": "2026-08-10",
+    "end": "2026-08-16"
+   },
    "media_intensity_by_country": [
     {
-     "iso3": "GTM",
-     "pct_of_country_news_volume": 0.5736
+     "iso3": "AGO",
+     "pct_of_country_news_volume": 1.1905
     },
     {
      "iso3": "CRI",
      "pct_of_country_news_volume": 0.5494
     },
     {
+     "iso3": "GTM",
+     "pct_of_country_news_volume": 0.4811
+    },
+    {
      "iso3": "BFA",
      "pct_of_country_news_volume": 0.4762
     },
     {
-     "iso3": "TUN",
-     "pct_of_country_news_volume": 0.3454
+     "iso3": "PAN",
+     "pct_of_country_news_volume": 0.4299
+    },
+    {
+     "iso3": "GIN",
+     "pct_of_country_news_volume": 0.2463
     },
     {
      "iso3": "ECU",
-     "pct_of_country_news_volume": 0.1948
-    },
-    {
-     "iso3": "PER",
-     "pct_of_country_news_volume": 0.1844
-    },
-    {
-     "iso3": "URY",
-     "pct_of_country_news_volume": 0.1716
-    },
-    {
-     "iso3": "HND",
-     "pct_of_country_news_volume": 0.1564
+     "pct_of_country_news_volume": 0.1791
     },
     {
      "iso3": "DOM",
-     "pct_of_country_news_volume": 0.1461
+     "pct_of_country_news_volume": 0.162
     },
     {
-     "iso3": "PRY",
-     "pct_of_country_news_volume": 0.1389
+     "iso3": "VEN",
+     "pct_of_country_news_volume": 0.1496
+    },
+    {
+     "iso3": "COL",
+     "pct_of_country_news_volume": 0.1373
     }
    ],
    "series_start": "2026-04-19",
@@ -7655,51 +7658,48 @@
      "velocity": 0.502
     }
    },
-   "news_articles_7d": 95,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
-     "iso3": "KGZ",
-     "pct_of_country_news_volume": 0.7143
+     "iso3": "KHM",
+     "pct_of_country_news_volume": 0.248
     },
     {
      "iso3": "ZWE",
-     "pct_of_country_news_volume": 0.1006
+     "pct_of_country_news_volume": 0.2421
     },
     {
-     "iso3": "LUX",
-     "pct_of_country_news_volume": 0.0904
+     "iso3": "KAZ",
+     "pct_of_country_news_volume": 0.1111
+    },
+    {
+     "iso3": "QAT",
+     "pct_of_country_news_volume": 0.1082
+    },
+    {
+     "iso3": "MWI",
+     "pct_of_country_news_volume": 0.102
     },
     {
      "iso3": "CHE",
-     "pct_of_country_news_volume": 0.0671
+     "pct_of_country_news_volume": 0.0954
     },
     {
-     "iso3": "DEU",
-     "pct_of_country_news_volume": 0.059
+     "iso3": "KWT",
+     "pct_of_country_news_volume": 0.094
     },
     {
-     "iso3": "LVA",
-     "pct_of_country_news_volume": 0.0576
+     "iso3": "JAM",
+     "pct_of_country_news_volume": 0.085
     },
     {
-     "iso3": "NGA",
-     "pct_of_country_news_volume": 0.0567
-    },
-    {
-     "iso3": "NPL",
-     "pct_of_country_news_volume": 0.055
+     "iso3": "LBN",
+     "pct_of_country_news_volume": 0.0714
     },
     {
      "iso3": "GRC",
-     "pct_of_country_news_volume": 0.0535
-    },
-    {
-     "iso3": "ZAF",
-     "pct_of_country_news_volume": 0.0455
+     "pct_of_country_news_volume": 0.0633
     }
    ],
    "series_start": "2026-04-19",
@@ -8069,44 +8069,44 @@
    "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
-     "iso3": "ETH",
-     "pct_of_country_news_volume": 2.3809
-    },
-    {
-     "iso3": "COD",
-     "pct_of_country_news_volume": 1.4286
-    },
-    {
-     "iso3": "PRK",
-     "pct_of_country_news_volume": 0.4202
+     "iso3": "GHA",
+     "pct_of_country_news_volume": 1.164
     },
     {
      "iso3": "CMR",
-     "pct_of_country_news_volume": 0.4202
+     "pct_of_country_news_volume": 1.0118
     },
     {
-     "iso3": "ZWE",
-     "pct_of_country_news_volume": 0.3136
+     "iso3": "CIV",
+     "pct_of_country_news_volume": 0.5494
     },
     {
-     "iso3": "MRT",
-     "pct_of_country_news_volume": 0.2976
+     "iso3": "COD",
+     "pct_of_country_news_volume": 0.2646
     },
     {
-     "iso3": "IRN",
-     "pct_of_country_news_volume": 0.2526
-    },
-    {
-     "iso3": "LKA",
+     "iso3": "MLI",
      "pct_of_country_news_volume": 0.2041
     },
     {
-     "iso3": "KEN",
-     "pct_of_country_news_volume": 0.1434
+     "iso3": "ZWE",
+     "pct_of_country_news_volume": 0.1152
     },
     {
-     "iso3": "GHA",
-     "pct_of_country_news_volume": 0.0882
+     "iso3": "KAZ",
+     "pct_of_country_news_volume": 0.0978
+    },
+    {
+     "iso3": "KEN",
+     "pct_of_country_news_volume": 0.0929
+    },
+    {
+     "iso3": "ZAF",
+     "pct_of_country_news_volume": 0.0913
+    },
+    {
+     "iso3": "NGA",
+     "pct_of_country_news_volume": 0.0795
     }
    ],
    "series_start": "2026-04-19",
@@ -8440,7 +8440,7 @@
     766,
     707,
     777,
-    616,
+    625,
     645
    ],
    "as_of": "2026-08-16"
@@ -8660,11 +8660,8 @@
      "velocity": -0.136
     }
    },
-   "news_articles_7d": 5267,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "IRQ",
@@ -9459,48 +9456,51 @@
      "velocity": -0.05
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 4314,
+   "news_articles_7d_window": {
+    "start": "2026-08-10",
+    "end": "2026-08-16"
+   },
    "media_intensity_by_country": [
     {
-     "iso3": "CIV",
-     "pct_of_country_news_volume": 9.5269
+     "iso3": "SUR",
+     "pct_of_country_news_volume": 4.0684
     },
     {
-     "iso3": "UZB",
-     "pct_of_country_news_volume": 7.1429
-    },
-    {
-     "iso3": "BDI",
-     "pct_of_country_news_volume": 7.1429
-    },
-    {
-     "iso3": "CPV",
-     "pct_of_country_news_volume": 7.1429
-    },
-    {
-     "iso3": "CAF",
+     "iso3": "MCO",
      "pct_of_country_news_volume": 3.5714
     },
     {
-     "iso3": "COG",
-     "pct_of_country_news_volume": 2.9762
+     "iso3": "BFA",
+     "pct_of_country_news_volume": 3.2082
     },
     {
-     "iso3": "GAB",
-     "pct_of_country_news_volume": 2.8718
+     "iso3": "VNM",
+     "pct_of_country_news_volume": 2.742
     },
     {
-     "iso3": "GUM",
-     "pct_of_country_news_volume": 2.8061
+     "iso3": "TUN",
+     "pct_of_country_news_volume": 2.4186
+    },
+    {
+     "iso3": "SLE",
+     "pct_of_country_news_volume": 2.3809
     },
     {
      "iso3": "NPL",
-     "pct_of_country_news_volume": 1.8822
+     "pct_of_country_news_volume": 2.1602
     },
     {
-     "iso3": "HRV",
-     "pct_of_country_news_volume": 1.7644
+     "iso3": "MMR",
+     "pct_of_country_news_volume": 2.0368
+    },
+    {
+     "iso3": "COD",
+     "pct_of_country_news_volume": 2.0229
+    },
+    {
+     "iso3": "GAB",
+     "pct_of_country_news_volume": 1.9527
     }
    ],
    "series_start": "2026-04-19",
@@ -9866,40 +9866,40 @@
      "pct_of_country_news_volume": 2.3809
     },
     {
-     "iso3": "JAM",
-     "pct_of_country_news_volume": 0.2947
+     "iso3": "MLT",
+     "pct_of_country_news_volume": 0.5102
+    },
+    {
+     "iso3": "ETH",
+     "pct_of_country_news_volume": 0.3571
+    },
+    {
+     "iso3": "NZL",
+     "pct_of_country_news_volume": 0.3131
     },
     {
      "iso3": "FJI",
      "pct_of_country_news_volume": 0.2646
     },
     {
-     "iso3": "NZL",
-     "pct_of_country_news_volume": 0.221
+     "iso3": "JAM",
+     "pct_of_country_news_volume": 0.2086
     },
     {
-     "iso3": "AUS",
-     "pct_of_country_news_volume": 0.1602
+     "iso3": "EST",
+     "pct_of_country_news_volume": 0.1701
+    },
+    {
+     "iso3": "MWI",
+     "pct_of_country_news_volume": 0.1701
+    },
+    {
+     "iso3": "GHA",
+     "pct_of_country_news_volume": 0.1677
     },
     {
      "iso3": "ZWE",
      "pct_of_country_news_volume": 0.1587
-    },
-    {
-     "iso3": "GHA",
-     "pct_of_country_news_volume": 0.1066
-    },
-    {
-     "iso3": "SGP",
-     "pct_of_country_news_volume": 0.0516
-    },
-    {
-     "iso3": "KEN",
-     "pct_of_country_news_volume": 0.0496
-    },
-    {
-     "iso3": "EGY",
-     "pct_of_country_news_volume": 0.0492
     }
    ],
    "series_start": "2026-04-19",
@@ -10058,8 +10058,8 @@
      "velocity": 0.418
     },
     "fr": {
-     "weekly_daily_avg_views": 219.6,
-     "velocity": 1.447
+     "weekly_daily_avg_views": 231.7,
+     "velocity": 1.582
     },
     "pt": {
      "weekly_daily_avg_views": 216.0,
@@ -10070,31 +10070,28 @@
      "velocity": -0.404
     }
    },
-   "news_articles_7d": 24446,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "COL",
-     "pct_of_country_news_volume": 31.2562
+     "pct_of_country_news_volume": 31.5471
     },
     {
      "iso3": "VEN",
-     "pct_of_country_news_volume": 20.6775
+     "pct_of_country_news_volume": 20.8797
     },
     {
      "iso3": "NIC",
      "pct_of_country_news_volume": 7.7997
     },
     {
-     "iso3": "PER",
-     "pct_of_country_news_volume": 7.7307
+     "iso3": "ECU",
+     "pct_of_country_news_volume": 7.7736
     },
     {
-     "iso3": "ECU",
-     "pct_of_country_news_volume": 7.6992
+     "iso3": "PER",
+     "pct_of_country_news_volume": 7.7307
     },
     {
      "iso3": "PAN",
@@ -10497,11 +10494,8 @@
      "velocity": -0.514
     }
    },
-   "news_articles_7d": 56438,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "BDI",
@@ -11080,51 +11074,48 @@
      "velocity": 0.018
     }
    },
-   "news_articles_7d": 376,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
+    {
+     "iso3": "COD",
+     "pct_of_country_news_volume": 0.974
+    },
     {
      "iso3": "MRT",
      "pct_of_country_news_volume": 0.8867
     },
     {
-     "iso3": "PER",
-     "pct_of_country_news_volume": 0.5092
-    },
-    {
-     "iso3": "DOM",
-     "pct_of_country_news_volume": 0.3407
+     "iso3": "NER",
+     "pct_of_country_news_volume": 0.5221
     },
     {
      "iso3": "CUB",
-     "pct_of_country_news_volume": 0.3346
+     "pct_of_country_news_volume": 0.4329
     },
     {
-     "iso3": "LKA",
-     "pct_of_country_news_volume": 0.2689
+     "iso3": "SDN",
+     "pct_of_country_news_volume": 0.3322
     },
     {
-     "iso3": "SLV",
-     "pct_of_country_news_volume": 0.2646
+     "iso3": "DOM",
+     "pct_of_country_news_volume": 0.1943
+    },
+    {
+     "iso3": "PRY",
+     "pct_of_country_news_volume": 0.1765
     },
     {
      "iso3": "COL",
-     "pct_of_country_news_volume": 0.2267
+     "pct_of_country_news_volume": 0.1741
     },
     {
-     "iso3": "ECU",
-     "pct_of_country_news_volume": 0.1962
+     "iso3": "PAN",
+     "pct_of_country_news_volume": 0.1556
     },
     {
      "iso3": "GTM",
-     "pct_of_country_news_volume": 0.1913
-    },
-    {
-     "iso3": "NGA",
-     "pct_of_country_news_volume": 0.1864
+     "pct_of_country_news_volume": 0.1535
     }
    ],
    "series_start": "2026-04-19",
@@ -12637,39 +12628,39 @@
     },
     {
      "iso3": "SLE",
-     "pct_of_country_news_volume": 1.1905
+     "pct_of_country_news_volume": 0.7937
     },
     {
      "iso3": "LBR",
-     "pct_of_country_news_volume": 0.5952
+     "pct_of_country_news_volume": 0.7883
+    },
+    {
+     "iso3": "GMB",
+     "pct_of_country_news_volume": 0.7143
+    },
+    {
+     "iso3": "SOM",
+     "pct_of_country_news_volume": 0.3247
+    },
+    {
+     "iso3": "TZA",
+     "pct_of_country_news_volume": 0.2041
     },
     {
      "iso3": "GHA",
-     "pct_of_country_news_volume": 0.0632
-    },
-    {
-     "iso3": "IRL",
-     "pct_of_country_news_volume": 0.0454
-    },
-    {
-     "iso3": "AUT",
-     "pct_of_country_news_volume": 0.0302
+     "pct_of_country_news_volume": 0.102
     },
     {
      "iso3": "NGA",
-     "pct_of_country_news_volume": 0.0214
+     "pct_of_country_news_volume": 0.0421
+    },
+    {
+     "iso3": "ZAF",
+     "pct_of_country_news_volume": 0.0284
     },
     {
      "iso3": "NZL",
      "pct_of_country_news_volume": 0.0194
-    },
-    {
-     "iso3": "ZAF",
-     "pct_of_country_news_volume": 0.0123
-    },
-    {
-     "iso3": "ESP",
-     "pct_of_country_news_volume": 0.0105
     }
    ],
    "series_start": "2026-04-19",
@@ -12812,11 +12803,8 @@
      "velocity": -0.04
     }
    },
-   "news_articles_7d": 222,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "RWA",
@@ -13618,11 +13606,8 @@
      "velocity": -0.476
     }
    },
-   "news_articles_7d": 411,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "MDG",
@@ -14721,7 +14706,7 @@
   "Q12199": {
    "label_en": "HIV/AIDS",
    "category": "health",
-   "global_velocity": -0.084,
+   "global_velocity": -0.081,
    "momentum": "steady",
    "top_edition": {
     "lang": "en",
@@ -14745,8 +14730,8 @@
      "velocity": -0.059
     },
     "zh": {
-     "weekly_daily_avg_views": 223.8,
-     "velocity": -0.155
+     "weekly_daily_avg_views": 232.9,
+     "velocity": -0.121
     },
     "ja": {
      "weekly_daily_avg_views": 210.7,
@@ -14883,9 +14868,9 @@
     3901,
     3532,
     3515,
-    3210,
-    3393,
-    3499
+    3424,
+    3589,
+    3721
    ],
    "as_of": "2026-08-16"
   },
@@ -15735,11 +15720,8 @@
      "velocity": -0.004
     }
    },
-   "news_articles_7d": 6020,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "MMR",
@@ -16530,44 +16512,44 @@
    "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
-     "iso3": "MAR",
-     "pct_of_country_news_volume": 9.5676
+     "iso3": "HTI",
+     "pct_of_country_news_volume": 9.7632
     },
     {
-     "iso3": "HTI",
-     "pct_of_country_news_volume": 7.5613
+     "iso3": "MAR",
+     "pct_of_country_news_volume": 7.9426
+    },
+    {
+     "iso3": "BLZ",
+     "pct_of_country_news_volume": 7.6923
     },
     {
      "iso3": "CUB",
-     "pct_of_country_news_volume": 5.7968
+     "pct_of_country_news_volume": 4.7931
     },
     {
      "iso3": "LBY",
-     "pct_of_country_news_volume": 4.8044
+     "pct_of_country_news_volume": 4.4556
     },
     {
-     "iso3": "SLE",
-     "pct_of_country_news_volume": 3.5788
+     "iso3": "PRK",
+     "pct_of_country_news_volume": 4.0816
+    },
+    {
+     "iso3": "LBR",
+     "pct_of_country_news_volume": 3.6851
     },
     {
      "iso3": "CPV",
      "pct_of_country_news_volume": 3.5714
     },
     {
-     "iso3": "IRQ",
-     "pct_of_country_news_volume": 2.8815
-    },
-    {
      "iso3": "JAM",
-     "pct_of_country_news_volume": 2.6295
+     "pct_of_country_news_volume": 3.015
     },
     {
-     "iso3": "GTM",
-     "pct_of_country_news_volume": 2.4066
-    },
-    {
-     "iso3": "ESP",
-     "pct_of_country_news_volume": 2.3823
+     "iso3": "MMR",
+     "pct_of_country_news_volume": 2.6938
     }
    ],
    "series_start": "2026-04-19",
@@ -17927,8 +17909,11 @@
      "velocity": 0.019
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 415,
+   "news_articles_7d_window": {
+    "start": "2026-08-10",
+    "end": "2026-08-16"
+   },
    "media_intensity_by_country": [
     {
      "iso3": "GUY",
@@ -21284,44 +21269,44 @@
    "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
-     "iso3": "SVN",
-     "pct_of_country_news_volume": 1.1157
+     "iso3": "HRV",
+     "pct_of_country_news_volume": 3.5161
     },
     {
-     "iso3": "SVK",
-     "pct_of_country_news_volume": 1.093
+     "iso3": "BRN",
+     "pct_of_country_news_volume": 2.3809
     },
     {
      "iso3": "HUN",
-     "pct_of_country_news_volume": 1.0529
+     "pct_of_country_news_volume": 1.9082
+    },
+    {
+     "iso3": "SVK",
+     "pct_of_country_news_volume": 1.6994
     },
     {
      "iso3": "SRB",
-     "pct_of_country_news_volume": 1.05
+     "pct_of_country_news_volume": 1.6607
     },
     {
-     "iso3": "SWE",
-     "pct_of_country_news_volume": 0.7992
+     "iso3": "SVN",
+     "pct_of_country_news_volume": 1.1691
     },
     {
-     "iso3": "FIN",
-     "pct_of_country_news_volume": 0.7916
+     "iso3": "GBR",
+     "pct_of_country_news_volume": 1.0781
     },
     {
      "iso3": "BGR",
-     "pct_of_country_news_volume": 0.7486
+     "pct_of_country_news_volume": 1.0449
     },
     {
-     "iso3": "CHN",
-     "pct_of_country_news_volume": 0.6919
+     "iso3": "PRK",
+     "pct_of_country_news_volume": 1.0248
     },
     {
-     "iso3": "HRV",
-     "pct_of_country_news_volume": 0.6771
-    },
-    {
-     "iso3": "MDG",
-     "pct_of_country_news_volume": 0.5641
+     "iso3": "FIN",
+     "pct_of_country_news_volume": 0.9573
     }
    ],
    "series_start": "2026-04-19",
@@ -22491,48 +22476,51 @@
      "velocity": 0.06
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 382,
+   "news_articles_7d_window": {
+    "start": "2026-08-10",
+    "end": "2026-08-16"
+   },
    "media_intensity_by_country": [
     {
-     "iso3": "LBR",
-     "pct_of_country_news_volume": 3.5714
-    },
-    {
-     "iso3": "DJI",
-     "pct_of_country_news_volume": 3.5714
+     "iso3": "RWA",
+     "pct_of_country_news_volume": 5.0
     },
     {
      "iso3": "ERI",
      "pct_of_country_news_volume": 1.7857
     },
     {
-     "iso3": "RWA",
-     "pct_of_country_news_volume": 1.4286
+     "iso3": "LBR",
+     "pct_of_country_news_volume": 1.6651
     },
     {
-     "iso3": "TJK",
-     "pct_of_country_news_volume": 1.3636
+     "iso3": "FJI",
+     "pct_of_country_news_volume": 1.0671
     },
     {
-     "iso3": "SOM",
-     "pct_of_country_news_volume": 1.0065
+     "iso3": "BHR",
+     "pct_of_country_news_volume": 0.9127
     },
     {
      "iso3": "KHM",
-     "pct_of_country_news_volume": 0.7842
+     "pct_of_country_news_volume": 0.7046
     },
     {
-     "iso3": "IRN",
-     "pct_of_country_news_volume": 0.7143
+     "iso3": "UGA",
+     "pct_of_country_news_volume": 0.6699
     },
     {
-     "iso3": "SAU",
-     "pct_of_country_news_volume": 0.6593
+     "iso3": "TJK",
+     "pct_of_country_news_volume": 0.6493
     },
     {
-     "iso3": "SYR",
-     "pct_of_country_news_volume": 0.65
+     "iso3": "SOM",
+     "pct_of_country_news_volume": 0.6493
+    },
+    {
+     "iso3": "CMR",
+     "pct_of_country_news_volume": 0.5952
     }
    ],
    "series_start": "2026-04-19",
@@ -23082,51 +23070,48 @@
      "velocity": 0.004
     }
    },
-   "news_articles_7d": 9,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "LKA",
      "pct_of_country_news_volume": 0.0554
     },
     {
-     "iso3": "NZL",
-     "pct_of_country_news_volume": 0.0439
+     "iso3": "IRL",
+     "pct_of_country_news_volume": 0.0279
     },
     {
      "iso3": "ZAF",
      "pct_of_country_news_volume": 0.0263
     },
     {
+     "iso3": "SGP",
+     "pct_of_country_news_volume": 0.025
+    },
+    {
      "iso3": "CYP",
      "pct_of_country_news_volume": 0.02
     },
     {
-     "iso3": "IRL",
-     "pct_of_country_news_volume": 0.0136
+     "iso3": "VNM",
+     "pct_of_country_news_volume": 0.0118
     },
     {
      "iso3": "AUS",
-     "pct_of_country_news_volume": 0.0086
+     "pct_of_country_news_volume": 0.0116
     },
     {
-     "iso3": "GBR",
-     "pct_of_country_news_volume": 0.0057
-    },
-    {
-     "iso3": "VNM",
-     "pct_of_country_news_volume": 0.0047
+     "iso3": "POL",
+     "pct_of_country_news_volume": 0.0074
     },
     {
      "iso3": "IND",
-     "pct_of_country_news_volume": 0.0037
+     "pct_of_country_news_volume": 0.0033
     },
     {
-     "iso3": "USA",
-     "pct_of_country_news_volume": 0.0013
+     "iso3": "GBR",
+     "pct_of_country_news_volume": 0.0032
     }
    ],
    "series_start": "2026-04-19",
@@ -23477,8 +23462,11 @@
      "velocity": 0.4
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 5896,
+   "news_articles_7d_window": {
+    "start": "2026-08-10",
+    "end": "2026-08-16"
+   },
    "media_intensity_by_country": [
     {
      "iso3": "LBR",
@@ -23685,11 +23673,8 @@
      "velocity": -0.187
     }
    },
-   "news_articles_7d": 2323,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "UZB",
@@ -23717,7 +23702,7 @@
     },
     {
      "iso3": "LVA",
-     "pct_of_country_news_volume": 1.2709
+     "pct_of_country_news_volume": 1.4589
     },
     {
      "iso3": "ZWE",
@@ -23728,7 +23713,7 @@
      "pct_of_country_news_volume": 0.8945
     },
     {
-     "iso3": "TZA",
+     "iso3": "NAM",
      "pct_of_country_news_volume": 0.8733
     }
    ],
@@ -24292,8 +24277,11 @@
      "velocity": -0.296
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 1725,
+   "news_articles_7d_window": {
+    "start": "2026-08-10",
+    "end": "2026-08-16"
+   },
    "media_intensity_by_country": [
     {
      "iso3": "GMB",
@@ -24660,8 +24648,11 @@
      "velocity": -0.067
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 640,
+   "news_articles_7d_window": {
+    "start": "2026-08-10",
+    "end": "2026-08-16"
+   },
    "media_intensity_by_country": [
     {
      "iso3": "TWN",
@@ -24684,12 +24675,12 @@
      "pct_of_country_news_volume": 0.8053
     },
     {
-     "iso3": "PHL",
-     "pct_of_country_news_volume": 0.6332
+     "iso3": "BGD",
+     "pct_of_country_news_volume": 0.6364
     },
     {
-     "iso3": "BGD",
-     "pct_of_country_news_volume": 0.6104
+     "iso3": "PHL",
+     "pct_of_country_news_volume": 0.6332
     },
     {
      "iso3": "QAT",
@@ -24872,8 +24863,11 @@
      "velocity": -0.234
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 3335,
+   "news_articles_7d_window": {
+    "start": "2026-08-10",
+    "end": "2026-08-16"
+   },
    "media_intensity_by_country": [
     {
      "iso3": "GMB",
@@ -26638,11 +26632,8 @@
      "velocity": 0.532
     }
    },
-   "news_articles_7d": 965,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "BTN",
@@ -28266,44 +28257,44 @@
    "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
-     "iso3": "COD",
-     "pct_of_country_news_volume": 7.1429
+     "iso3": "NIC",
+     "pct_of_country_news_volume": 1.3889
     },
     {
-     "iso3": "MYT",
-     "pct_of_country_news_volume": 1.4286
+     "iso3": "IDN",
+     "pct_of_country_news_volume": 1.3722
     },
     {
      "iso3": "VEN",
-     "pct_of_country_news_volume": 0.8328
-    },
-    {
-     "iso3": "SOM",
-     "pct_of_country_news_volume": 0.7958
-    },
-    {
-     "iso3": "MDG",
-     "pct_of_country_news_volume": 0.727
-    },
-    {
-     "iso3": "MUS",
-     "pct_of_country_news_volume": 0.6259
+     "pct_of_country_news_volume": 1.2915
     },
     {
      "iso3": "DOM",
-     "pct_of_country_news_volume": 0.5935
+     "pct_of_country_news_volume": 1.1576
     },
     {
-     "iso3": "SSD",
-     "pct_of_country_news_volume": 0.5494
+     "iso3": "BHR",
+     "pct_of_country_news_volume": 1.04
     },
     {
-     "iso3": "LKA",
-     "pct_of_country_news_volume": 0.4865
+     "iso3": "MMR",
+     "pct_of_country_news_volume": 1.0204
     },
     {
-     "iso3": "KWT",
-     "pct_of_country_news_volume": 0.4647
+     "iso3": "AFG",
+     "pct_of_country_news_volume": 0.9072
+    },
+    {
+     "iso3": "MLT",
+     "pct_of_country_news_volume": 0.8929
+    },
+    {
+     "iso3": "COL",
+     "pct_of_country_news_volume": 0.8662
+    },
+    {
+     "iso3": "GTM",
+     "pct_of_country_news_volume": 0.845
     }
    ],
    "series_start": "2026-04-19",
@@ -29317,48 +29308,51 @@
      "velocity": 0.006
     }
    },
-   "news_articles_7d": null,
-   "news_articles_7d_window": null,
+   "news_articles_7d": 5487,
+   "news_articles_7d_window": {
+    "start": "2026-08-10",
+    "end": "2026-08-16"
+   },
    "media_intensity_by_country": [
     {
-     "iso3": "LBR",
-     "pct_of_country_news_volume": 14.1038
-    },
-    {
      "iso3": "SDN",
-     "pct_of_country_news_volume": 11.499
+     "pct_of_country_news_volume": 12.8281
     },
     {
      "iso3": "ETH",
-     "pct_of_country_news_volume": 11.3636
+     "pct_of_country_news_volume": 10.9014
     },
     {
-     "iso3": "SSD",
-     "pct_of_country_news_volume": 8.6735
-    },
-    {
-     "iso3": "BTN",
-     "pct_of_country_news_volume": 8.5714
+     "iso3": "LBR",
+     "pct_of_country_news_volume": 10.1447
     },
     {
      "iso3": "AFG",
-     "pct_of_country_news_volume": 8.4088
+     "pct_of_country_news_volume": 9.6258
     },
     {
      "iso3": "TKM",
-     "pct_of_country_news_volume": 8.2952
+     "pct_of_country_news_volume": 8.3333
     },
     {
-     "iso3": "BLZ",
-     "pct_of_country_news_volume": 7.7922
+     "iso3": "SSD",
+     "pct_of_country_news_volume": 8.3233
     },
     {
-     "iso3": "DJI",
+     "iso3": "BTN",
      "pct_of_country_news_volume": 7.1429
     },
     {
+     "iso3": "LBY",
+     "pct_of_country_news_volume": 6.0531
+    },
+    {
+     "iso3": "BHR",
+     "pct_of_country_news_volume": 5.7623
+    },
+    {
      "iso3": "SYR",
-     "pct_of_country_news_volume": 7.0174
+     "pct_of_country_news_volume": 5.4487
     }
    ],
    "series_start": "2026-04-19",
@@ -30495,43 +30489,43 @@
    },
    "media_intensity_by_country": [
     {
-     "iso3": "LSO",
-     "pct_of_country_news_volume": 7.1429
-    },
-    {
      "iso3": "MDG",
-     "pct_of_country_news_volume": 1.614
-    },
-    {
-     "iso3": "PAN",
-     "pct_of_country_news_volume": 1.4472
-    },
-    {
-     "iso3": "BOL",
-     "pct_of_country_news_volume": 1.3193
+     "pct_of_country_news_volume": 2.5584
     },
     {
      "iso3": "PRY",
-     "pct_of_country_news_volume": 1.261
+     "pct_of_country_news_volume": 1.2678
     },
     {
-     "iso3": "YEM",
-     "pct_of_country_news_volume": 1.0811
+     "iso3": "PAN",
+     "pct_of_country_news_volume": 1.1699
+    },
+    {
+     "iso3": "NIC",
+     "pct_of_country_news_volume": 1.1676
+    },
+    {
+     "iso3": "GHA",
+     "pct_of_country_news_volume": 1.166
     },
     {
      "iso3": "TWN",
-     "pct_of_country_news_volume": 1.0807
-    },
-    {
-     "iso3": "OMN",
-     "pct_of_country_news_volume": 1.0714
+     "pct_of_country_news_volume": 1.1071
     },
     {
      "iso3": "CRI",
      "pct_of_country_news_volume": 1.0317
     },
     {
+     "iso3": "SDN",
+     "pct_of_country_news_volume": 1.0051
+    },
+    {
      "iso3": "TZA",
+     "pct_of_country_news_volume": 0.9304
+    },
+    {
+     "iso3": "HND",
      "pct_of_country_news_volume": 0.9304
     }
    ],
@@ -31297,44 +31291,44 @@
    "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
-     "iso3": "IRN",
-     "pct_of_country_news_volume": 30.2915
-    },
-    {
      "iso3": "SDN",
-     "pct_of_country_news_volume": 26.6324
+     "pct_of_country_news_volume": 50.438
     },
     {
-     "iso3": "UKR",
-     "pct_of_country_news_volume": 25.5135
+     "iso3": "IRN",
+     "pct_of_country_news_volume": 32.6263
+    },
+    {
+     "iso3": "GEO",
+     "pct_of_country_news_volume": 28.9282
     },
     {
      "iso3": "SYR",
-     "pct_of_country_news_volume": 25.1885
+     "pct_of_country_news_volume": 27.3271
+    },
+    {
+     "iso3": "UKR",
+     "pct_of_country_news_volume": 25.8112
+    },
+    {
+     "iso3": "BDI",
+     "pct_of_country_news_volume": 25.0
     },
     {
      "iso3": "IRQ",
-     "pct_of_country_news_volume": 24.402
-    },
-    {
-     "iso3": "ISR",
-     "pct_of_country_news_volume": 22.831
-    },
-    {
-     "iso3": "SOM",
-     "pct_of_country_news_volume": 21.3928
+     "pct_of_country_news_volume": 24.5154
     },
     {
      "iso3": "YEM",
-     "pct_of_country_news_volume": 19.7481
+     "pct_of_country_news_volume": 22.2797
     },
     {
-     "iso3": "BEN",
-     "pct_of_country_news_volume": 19.7421
+     "iso3": "ISR",
+     "pct_of_country_news_volume": 21.9406
     },
     {
      "iso3": "LBN",
-     "pct_of_country_news_volume": 19.0877
+     "pct_of_country_news_volume": 19.5716
     }
    ],
    "series_start": "2026-04-19",
@@ -31913,43 +31907,43 @@
    "media_intensity_by_country": [
     {
      "iso3": "CAN",
-     "pct_of_country_news_volume": 11.1579
+     "pct_of_country_news_volume": 9.8732
     },
     {
      "iso3": "GBR",
-     "pct_of_country_news_volume": 3.5147
+     "pct_of_country_news_volume": 3.5169
+    },
+    {
+     "iso3": "MCO",
+     "pct_of_country_news_volume": 3.0303
     },
     {
      "iso3": "ESP",
-     "pct_of_country_news_volume": 2.1018
+     "pct_of_country_news_volume": 3.0188
     },
     {
-     "iso3": "USA",
-     "pct_of_country_news_volume": 1.4747
+     "iso3": "SOM",
+     "pct_of_country_news_volume": 2.5327
     },
     {
-     "iso3": "COL",
-     "pct_of_country_news_volume": 1.2719
-    },
-    {
-     "iso3": "BWA",
-     "pct_of_country_news_volume": 1.0204
+     "iso3": "BRN",
+     "pct_of_country_news_volume": 2.4351
     },
     {
      "iso3": "BOL",
-     "pct_of_country_news_volume": 0.9829
+     "pct_of_country_news_volume": 2.0698
     },
     {
-     "iso3": "ECU",
-     "pct_of_country_news_volume": 0.9352
+     "iso3": "QAT",
+     "pct_of_country_news_volume": 2.0678
     },
     {
-     "iso3": "SGP",
-     "pct_of_country_news_volume": 0.9194
+     "iso3": "MLT",
+     "pct_of_country_news_volume": 1.7857
     },
     {
-     "iso3": "OMN",
-     "pct_of_country_news_volume": 0.8208
+     "iso3": "USA",
+     "pct_of_country_news_volume": 1.6849
     }
    ],
    "series_start": "2026-04-19",
@@ -32312,44 +32306,44 @@
    "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
-     "iso3": "HTI",
-     "pct_of_country_news_volume": 2.4495
-    },
-    {
-     "iso3": "CIV",
-     "pct_of_country_news_volume": 0.9437
-    },
-    {
-     "iso3": "SEN",
-     "pct_of_country_news_volume": 0.4373
+     "iso3": "KWT",
+     "pct_of_country_news_volume": 1.0204
     },
     {
      "iso3": "TUN",
-     "pct_of_country_news_volume": 0.368
+     "pct_of_country_news_volume": 0.9294
+    },
+    {
+     "iso3": "BFA",
+     "pct_of_country_news_volume": 0.7937
+    },
+    {
+     "iso3": "HTI",
+     "pct_of_country_news_volume": 0.7937
+    },
+    {
+     "iso3": "MLI",
+     "pct_of_country_news_volume": 0.5952
+    },
+    {
+     "iso3": "MUS",
+     "pct_of_country_news_volume": 0.3968
     },
     {
      "iso3": "NER",
-     "pct_of_country_news_volume": 0.3237
+     "pct_of_country_news_volume": 0.2995
     },
     {
-     "iso3": "MRT",
-     "pct_of_country_news_volume": 0.2824
+     "iso3": "BHR",
+     "pct_of_country_news_volume": 0.2857
     },
     {
-     "iso3": "IRQ",
-     "pct_of_country_news_volume": 0.1534
+     "iso3": "SEN",
+     "pct_of_country_news_volume": 0.233
     },
     {
-     "iso3": "ARM",
-     "pct_of_country_news_volume": 0.1249
-    },
-    {
-     "iso3": "LBY",
-     "pct_of_country_news_volume": 0.0904
-    },
-    {
-     "iso3": "NGA",
-     "pct_of_country_news_volume": 0.0769
+     "iso3": "AFG",
+     "pct_of_country_news_volume": 0.188
     }
    ],
    "series_start": "2026-04-19",
@@ -32508,11 +32502,8 @@
      "velocity": 1.088
     }
    },
-   "news_articles_7d": 957,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "CAF",
@@ -32907,51 +32898,48 @@
      "velocity": -0.09
     }
    },
-   "news_articles_7d": 1396,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
-     "iso3": "KWT",
-     "pct_of_country_news_volume": 3.5714
-    },
-    {
-     "iso3": "SLE",
-     "pct_of_country_news_volume": 3.1343
+     "iso3": "MWI",
+     "pct_of_country_news_volume": 2.1812
     },
     {
      "iso3": "LBR",
-     "pct_of_country_news_volume": 3.0639
+     "pct_of_country_news_volume": 1.978
     },
     {
-     "iso3": "UGA",
-     "pct_of_country_news_volume": 1.0265
+     "iso3": "ZWE",
+     "pct_of_country_news_volume": 0.8757
+    },
+    {
+     "iso3": "GHA",
+     "pct_of_country_news_volume": 0.8345
+    },
+    {
+     "iso3": "NIC",
+     "pct_of_country_news_volume": 0.8314
+    },
+    {
+     "iso3": "GUM",
+     "pct_of_country_news_volume": 0.7937
+    },
+    {
+     "iso3": "SLE",
+     "pct_of_country_news_volume": 0.7937
     },
     {
      "iso3": "SYR",
-     "pct_of_country_news_volume": 0.9349
-    },
-    {
-     "iso3": "HTI",
-     "pct_of_country_news_volume": 0.8929
-    },
-    {
-     "iso3": "BHR",
-     "pct_of_country_news_volume": 0.8876
-    },
-    {
-     "iso3": "MWI",
-     "pct_of_country_news_volume": 0.8531
-    },
-    {
-     "iso3": "SUR",
-     "pct_of_country_news_volume": 0.8519
+     "pct_of_country_news_volume": 0.7926
     },
     {
      "iso3": "BLZ",
-     "pct_of_country_news_volume": 0.8403
+     "pct_of_country_news_volume": 0.7509
+    },
+    {
+     "iso3": "ZAF",
+     "pct_of_country_news_volume": 0.7048
     }
    ],
    "series_start": "2026-04-19",
@@ -33098,44 +33086,44 @@
    "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
-     "iso3": "ZAF",
-     "pct_of_country_news_volume": 1.0127
-    },
-    {
-     "iso3": "GHA",
-     "pct_of_country_news_volume": 0.9505
-    },
-    {
      "iso3": "ETH",
-     "pct_of_country_news_volume": 0.8009
+     "pct_of_country_news_volume": 3.5714
     },
     {
      "iso3": "NAM",
-     "pct_of_country_news_volume": 0.5312
+     "pct_of_country_news_volume": 1.1265
     },
     {
-     "iso3": "SSD",
-     "pct_of_country_news_volume": 0.4762
+     "iso3": "ZAF",
+     "pct_of_country_news_volume": 1.0307
     },
     {
-     "iso3": "KEN",
-     "pct_of_country_news_volume": 0.3785
+     "iso3": "MWI",
+     "pct_of_country_news_volume": 0.6349
     },
     {
-     "iso3": "GMB",
-     "pct_of_country_news_volume": 0.3106
+     "iso3": "GHA",
+     "pct_of_country_news_volume": 0.5417
     },
     {
-     "iso3": "BGD",
-     "pct_of_country_news_volume": 0.2357
-    },
-    {
-     "iso3": "MDG",
-     "pct_of_country_news_volume": 0.2334
+     "iso3": "NER",
+     "pct_of_country_news_volume": 0.3224
     },
     {
      "iso3": "NGA",
-     "pct_of_country_news_volume": 0.2237
+     "pct_of_country_news_volume": 0.3063
+    },
+    {
+     "iso3": "SWE",
+     "pct_of_country_news_volume": 0.2874
+    },
+    {
+     "iso3": "TJK",
+     "pct_of_country_news_volume": 0.2857
+    },
+    {
+     "iso3": "NZL",
+     "pct_of_country_news_volume": 0.2354
     }
    ],
    "series_start": "2026-04-19",
@@ -33650,11 +33638,8 @@
      "velocity": -0.205
     }
    },
-   "news_articles_7d": 138,
-   "news_articles_7d_window": {
-    "start": "2026-08-10",
-    "end": "2026-08-16"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "BFA",
@@ -36840,7 +36825,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "velocity": 1.447,
+     "velocity": 1.582,
      "via_language": "fr",
      "weight": 0.06
     },
@@ -42444,7 +42429,7 @@
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
-     "attention_share_pct": 5.5
+     "attention_share_pct": 5.6
     },
     {
      "qid": "Q223050",
@@ -42514,7 +42499,7 @@
      "qid": "Q7283",
      "label_en": "Terrorism",
      "attention_share_pct": 5.6,
-     "vs_global_avg": 8.0
+     "vs_global_avg": 8.1
     },
     {
      "qid": "Q186228",
@@ -42537,7 +42522,7 @@
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
-     "attention_share_pct": 5.5,
+     "attention_share_pct": 5.6,
      "vs_global_avg": 2.8
     },
     {
@@ -42594,7 +42579,7 @@
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
-     "attention_share_pct": 5.5
+     "attention_share_pct": 5.6
     },
     {
      "qid": "Q223050",
@@ -42664,7 +42649,7 @@
      "qid": "Q7283",
      "label_en": "Terrorism",
      "attention_share_pct": 5.6,
-     "vs_global_avg": 8.0
+     "vs_global_avg": 8.1
     },
     {
      "qid": "Q186228",
@@ -42687,7 +42672,7 @@
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
-     "attention_share_pct": 5.5,
+     "attention_share_pct": 5.6,
      "vs_global_avg": 2.8
     },
     {
@@ -42721,7 +42706,7 @@
     {
      "qid": "Q115564437",
      "label_en": "ChatGPT",
-     "attention_share_pct": 9.3
+     "attention_share_pct": 9.2
     },
     {
      "qid": "Q11660",
@@ -42746,7 +42731,7 @@
     {
      "qid": "Q12199",
      "label_en": "HIV/AIDS",
-     "attention_share_pct": 2.7
+     "attention_share_pct": 2.8
     },
     {
      "qid": "Q1065",
@@ -42835,7 +42820,7 @@
     {
      "qid": "Q12199",
      "label_en": "HIV/AIDS",
-     "attention_share_pct": 2.7,
+     "attention_share_pct": 2.8,
      "vs_global_avg": 2.0
     },
     {
@@ -42879,7 +42864,7 @@
     {
      "qid": "Q115564437",
      "label_en": "ChatGPT",
-     "attention_share_pct": 9.3
+     "attention_share_pct": 9.2
     },
     {
      "qid": "Q11660",
@@ -42904,7 +42889,7 @@
     {
      "qid": "Q12199",
      "label_en": "HIV/AIDS",
-     "attention_share_pct": 2.7
+     "attention_share_pct": 2.8
     },
     {
      "qid": "Q1065",
@@ -42993,7 +42978,7 @@
     {
      "qid": "Q12199",
      "label_en": "HIV/AIDS",
-     "attention_share_pct": 2.7,
+     "attention_share_pct": 2.8,
      "vs_global_avg": 2.0
     },
     {
@@ -43015,7 +43000,7 @@
     {
      "qid": "Q115564437",
      "label_en": "ChatGPT",
-     "attention_share_pct": 9.3
+     "attention_share_pct": 9.2
     },
     {
      "qid": "Q11660",
@@ -43040,7 +43025,7 @@
     {
      "qid": "Q12199",
      "label_en": "HIV/AIDS",
-     "attention_share_pct": 2.7
+     "attention_share_pct": 2.8
     },
     {
      "qid": "Q1065",
@@ -43129,7 +43114,7 @@
     {
      "qid": "Q12199",
      "label_en": "HIV/AIDS",
-     "attention_share_pct": 2.7,
+     "attention_share_pct": 2.8,
      "vs_global_avg": 2.0
     },
     {
@@ -43434,7 +43419,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 2.6
+     "attention_share_pct": 2.7
     },
     {
      "qid": "Q8454",
@@ -43524,7 +43509,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "velocity": 1.447,
+     "velocity": 1.582,
      "via_language": "fr",
      "weight": 0.08
     },
@@ -43862,7 +43847,7 @@
     {
      "qid": "Q12204",
      "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9
+     "attention_share_pct": 3.8
     },
     {
      "qid": "Q1065",
@@ -43872,7 +43857,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 2.5
+     "attention_share_pct": 2.6
     },
     {
      "qid": "Q8454",
@@ -43954,7 +43939,7 @@
     {
      "qid": "Q12204",
      "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "attention_share_pct": 3.8,
      "vs_global_avg": 1.5
     }
    ],
@@ -43962,7 +43947,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "velocity": 1.447,
+     "velocity": 1.582,
      "via_language": "fr",
      "weight": 0.07
     },
@@ -46760,7 +46745,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 1.6
+     "attention_share_pct": 1.7
     },
     {
      "qid": "Q12195",
@@ -46854,7 +46839,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "velocity": 1.447,
+     "velocity": 1.582,
      "via_language": "fr",
      "weight": 0.35
     },
@@ -46938,7 +46923,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 1.6
+     "attention_share_pct": 1.7
     },
     {
      "qid": "Q12195",
@@ -47032,7 +47017,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "velocity": 1.447,
+     "velocity": 1.582,
      "via_language": "fr",
      "weight": 0.12
     },
@@ -47116,7 +47101,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 1.6
+     "attention_share_pct": 1.7
     },
     {
      "qid": "Q12195",
@@ -47210,7 +47195,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "velocity": 1.447,
+     "velocity": 1.582,
      "via_language": "fr",
      "weight": 0.05
     },
@@ -47294,7 +47279,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 1.6
+     "attention_share_pct": 1.7
     },
     {
      "qid": "Q12195",
@@ -47388,7 +47373,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "velocity": 1.447,
+     "velocity": 1.582,
      "via_language": "fr",
      "weight": 0.05
     },
@@ -47472,7 +47457,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 1.6
+     "attention_share_pct": 1.7
     },
     {
      "qid": "Q12195",
@@ -47614,7 +47599,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 1.6
+     "attention_share_pct": 1.7
     },
     {
      "qid": "Q12195",
@@ -47756,7 +47741,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 1.6
+     "attention_share_pct": 1.7
     },
     {
      "qid": "Q12195",
@@ -47898,7 +47883,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 1.6
+     "attention_share_pct": 1.7
     },
     {
      "qid": "Q12195",
@@ -48040,7 +48025,7 @@
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 1.6
+     "attention_share_pct": 1.7
     },
     {
      "qid": "Q12195",
@@ -48187,7 +48172,7 @@
     {
      "qid": "Q12204",
      "label_en": "Tuberculosis",
-     "attention_share_pct": 6.6
+     "attention_share_pct": 6.7
     },
     {
      "qid": "Q79793",
@@ -48247,7 +48232,7 @@
     {
      "qid": "Q12204",
      "label_en": "Tuberculosis",
-     "attention_share_pct": 6.6,
+     "attention_share_pct": 6.7,
      "vs_global_avg": 2.6
     }
    ],
@@ -48258,12 +48243,12 @@
     {
      "qid": "Q115564437",
      "label_en": "ChatGPT",
-     "attention_share_pct": 26.2
+     "attention_share_pct": 26.1
     },
     {
      "qid": "Q11660",
      "label_en": "Artificial intelligence",
-     "attention_share_pct": 15.0
+     "attention_share_pct": 14.9
     },
     {
      "qid": "Q49473179",
@@ -48273,7 +48258,7 @@
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
-     "attention_share_pct": 8.8
+     "attention_share_pct": 8.7
     },
     {
      "qid": "Q1065",
@@ -48298,12 +48283,17 @@
     {
      "qid": "Q7174",
      "label_en": "Democracy",
-     "attention_share_pct": 4.4
+     "attention_share_pct": 4.3
     },
     {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 4.2
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.0
     },
     {
      "qid": "Q84263196",
@@ -48314,11 +48304,6 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 3.5
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.5
     }
    ],
    "distinctive_topics": [
@@ -48326,13 +48311,13 @@
      "qid": "Q49473179",
      "label_en": "Deepfake",
      "attention_share_pct": 11.8,
-     "vs_global_avg": 31.9
+     "vs_global_avg": 31.8
     },
     {
      "qid": "Q174876",
      "label_en": "Breastfeeding",
      "attention_share_pct": 4.4,
-     "vs_global_avg": 18.5
+     "vs_global_avg": 18.4
     },
     {
      "qid": "Q20514253",
@@ -48349,7 +48334,7 @@
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
-     "attention_share_pct": 8.8,
+     "attention_share_pct": 8.7,
      "vs_global_avg": 4.4
     },
     {
@@ -48361,7 +48346,7 @@
     {
      "qid": "Q7174",
      "label_en": "Democracy",
-     "attention_share_pct": 4.4,
+     "attention_share_pct": 4.3,
      "vs_global_avg": 2.7
     },
     {
@@ -48373,8 +48358,14 @@
     {
      "qid": "Q11660",
      "label_en": "Artificial intelligence",
-     "attention_share_pct": 15.0,
+     "attention_share_pct": 14.9,
      "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.0,
+     "vs_global_avg": 1.6
     }
    ],
    "rising_topics": []
