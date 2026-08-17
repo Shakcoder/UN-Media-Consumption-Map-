@@ -224,6 +224,8 @@ function renderList(filter) {
     for (const u of unscored) {
       const why = u.reason === "stale"
         ? "no current data today"
+        : u.reason === "quarantined"
+        ? "its traffic is currently flagged as non-organic"
         : "too little traffic to measure today";
       html += `<div class="topic-row unscored" aria-label="${esc(u.label_en)} — tracked, ${esc(why)}"
         title="Tracked daily, but ${esc(why)} — it returns to the list when its data does.">
@@ -277,7 +279,8 @@ function renderGlobalMovers() {
   // is the series' own, not the day the file happened to be written.
   const cov = DATA.coverage || {};
   const scored = Object.keys(DATA.topics).length;
-  const unscorable = (cov.topics_stale_excluded || 0) + (cov.topics_below_floor || 0);
+  const unscorable = (cov.topics_stale_excluded || 0) + (cov.topics_below_floor || 0)
+    + (cov.topics_quarantined || 0);
   const asOf = DATA.measured_as_of || DATA.generated;
   const coverageNote = unscorable
     ? ` · ${unscorable} more tracked ${unscorable === 1 ? "topic is" : "topics are"} not scored today (no current data, or too little traffic to measure) — shown dimmed in the list`

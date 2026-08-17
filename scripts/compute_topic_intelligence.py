@@ -305,6 +305,20 @@ def main() -> None:
     unmapped_media: dict[str, int] = {}                # GDELT name -> topics seen in
     run_day = date.today()
 
+    # ACCESS-METHOD QUARANTINE (2026-08-17). The pageview fetcher's anomaly
+    # gate flags series whose "user" traffic is non-organic (the France-5G
+    # class: fr "5G" read 5x the en article, 99% mobile-web against the fr
+    # edition's ~33%-desktop norm, and the language weights spilled that one
+    # series into 14 countries' profiles as a fake #1 "distinctive" topic).
+    # Quarantined series stay stored in wiki_pageviews.json — the exclusion
+    # happens HERE, so their data keeps accumulating as evidence while
+    # contributing nothing to attention shares, distinctive topics, rising
+    # lists, or the plotted global series. See the GATE_* block in
+    # fetch_trends_wikipedia.py for calibration and rejected designs.
+    quarantine: dict = wiki.get("quarantine") or {}
+    n_series_quarantined = 0
+    quarantined_detail: list[dict] = []
+
     # How long a history the demand file keeps; the composite attention line
     # below covers exactly this window so the Topic Explorer's "last N days"
     # heading stays true if the window is ever changed.
@@ -322,6 +336,7 @@ def main() -> None:
     n_series_fresh = n_series_stale = n_stale_scoreable = 0
     stale_topics: list[str] = []
     floor_topics: list[str] = []   # tracked, fresh, but under the volume floor
+    quarantined_topics: list[str] = []   # every series quarantined (rare)
 
     def _overall_mean(s: dict) -> float:
         """Whole-window mean, independent of freshness — used only to decide
@@ -334,8 +349,24 @@ def main() -> None:
         if not meta:
             continue
 
+        # Quarantined series are set aside before ANY use — scoring, stale
+        # accounting, and the plotted global line alike all see only `active`.
+        q_langs = quarantine.get(qid) or {}
+        active = {l: s for l, s in langs.items() if l not in q_langs}
+        for lang in langs:
+            if lang in q_langs:
+                n_series_quarantined += 1
+                quarantined_detail.append({
+                    "qid": qid, "label_en": meta["label_en"], "lang": lang,
+                    "reason": q_langs[lang].get("reason", "anomalous"),
+                    "desktop_share": q_langs[lang].get("desktop_share"),
+                    "edition_desktop_share":
+                        q_langs[lang].get("edition_desktop_share"),
+                    "since": q_langs[lang].get("since"),
+                })
+
         lang_stats: dict[str, dict] = {}
-        for lang, s in langs.items():
+        for lang, s in active.items():
             st = series_stats(s, as_of)
             if st is None:
                 n_series_stale += 1
@@ -354,12 +385,14 @@ def main() -> None:
             if st["mean_7d"] >= INCLUDE_FLOOR:
                 lang_stats[lang] = st
         if not lang_stats:
-            # Either genuinely low-traffic everywhere, or every series for
-            # this topic is stale. BOTH are recorded so no tracked topic can
+            # Low-traffic everywhere, every series stale, or (rare) every
+            # series quarantined. ALL are recorded so no tracked topic can
             # vanish from the UI without an accounting (2026-08-11 audit:
             # three below-floor topics simply disappeared, and the coverage
             # arithmetic 164 + 0 != 167 had no bucket explaining the gap).
-            if all(series_stats(s, as_of) is None for s in langs.values()):
+            if q_langs and not active:
+                quarantined_topics.append(qid)
+            elif all(series_stats(s, as_of) is None for s in active.values()):
                 stale_topics.append(qid)
             else:
                 floor_topics.append(qid)
@@ -421,11 +454,11 @@ def main() -> None:
         # level, then a cliff upwards. Days below the floor are emitted as
         # null, which the sparkline draws as a break in the line, not a fall.
         typical = {l: (_mean(list(_date_map(s).values())) or 0.0)
-                   for l, s in langs.items()}
+                   for l, s in active.items()}
         total_typical = sum(typical.values())
         by_date: dict[date, int] = {}
         reported_typical: dict[date, float] = {}
-        for l, s in langs.items():
+        for l, s in active.items():
             for d, v in _date_map(s).items():
                 by_date[d] = by_date.get(d, 0) + v
                 reported_typical[d] = reported_typical.get(d, 0.0) + typical[l]
@@ -585,10 +618,16 @@ def main() -> None:
                 "topics_scored": len(topic_out),
                 "topics_stale_excluded": len(stale_topics),
                 # Tracked topics whose fresh series all sit under the
-                # 25-views/day floor. scored + stale + below_floor must equal
-                # the registry count — no tracked topic may vanish without a
-                # bucket (2026-08-11 audit).
+                # 25-views/day floor. scored + stale + below_floor (+
+                # quarantined) must equal the registry count — no tracked
+                # topic may vanish without a bucket (2026-08-11 audit).
                 "topics_below_floor": len(floor_topics),
+                # Series the access-method anomaly gate excluded as
+                # non-organic traffic (stored in wiki_pageviews.json under
+                # "quarantine", with the measured evidence per series), and
+                # the topics — normally zero — with NO series left after it.
+                "series_quarantined": n_series_quarantined,
+                "topics_quarantined": len(quarantined_topics),
                 "topics_with_news_volume": sum(
                     1 for t in topic_out.values() if t["news_articles_7d"] is not None),
                 "countries_without_profile": n_thin_profiles,
@@ -602,7 +641,10 @@ def main() -> None:
                     "daily fetch is not completing (see docs/AUTOMATION.md). "
                     "News volume is reported only for topics whose GDELT timeline covers "
                     "the seven complete days before the run, so topics_with_news_volume is "
-                    "normally well below topics_scored."
+                    "normally well below topics_scored. series_quarantined counts language "
+                    "series excluded by the access-method anomaly gate (non-organic traffic "
+                    "such as France's fr-'5G' mobile-web flood); their data stays stored in "
+                    "wiki_pageviews.json but contributes to no share, ranking, or trend line."
                 ),
             },
             "method_notes": {
@@ -612,6 +654,7 @@ def main() -> None:
                 "media_intensity_by_country": "pct_of_country_news_volume is GDELT 'Volume Intensity': the percentage of THAT COUNTRY'S OWN monitored news output matching the topic — NOT its share of world coverage. A small media market that covers the topic intensively outranks a large one publishing far more articles on it; read it as editorial focus, never as volume or concentration.",
                 "news_articles_7d": "GDELT article count over the 7 complete days before the run date (see news_articles_7d_window); null for topics whose timeline could not be refreshed, rather than reporting an older week as this one",
                 "global_series": "daily sum of tracked Wikipedia language editions across the demand window ending measured_as_of; a day is null when the editions reporting it carry less than half the topic's usual traffic, i.e. the data is missing rather than the attention",
+                "anomaly_gate": "language series whose 'user' traffic fails the access-method anomaly gate (desktop share under one-third of the SAME edition's own aggregate desktop share, screened by cross-edition ratio or edition dominance) are quarantined: stored and listed in quarantined_series with the measured evidence, but excluded from every share, ranking, rising list and trend line. Calibrated 2026-08-17 on live artifacts (fr 5G, tr Yapay zekâ) vs live organic events (es Terremoto quake week, ja 風力発電 burst) — see fetch_trends_wikipedia.py",
                 "include_floor_daily_views": INCLUDE_FLOOR,
                 "rising_floor_daily_views": RISING_FLOOR,
                 "rising_threshold": RISING_THRESHOLD,
@@ -622,9 +665,15 @@ def main() -> None:
             "topics_unscored": [
                 {"qid": q, "label_en": topics[q]["label_en"],
                  "category": topics[q]["category"],
-                 "reason": ("stale" if q in stale_topics else "below_floor")}
-                for q in [*stale_topics, *floor_topics]
+                 "reason": ("stale" if q in stale_topics
+                            else "quarantined" if q in quarantined_topics
+                            else "below_floor")}
+                for q in [*stale_topics, *floor_topics, *quarantined_topics]
             ],
+            # Series under access-method quarantine, with the measured
+            # evidence — visible accounting for every excluded series (the
+            # full records live in wiki_pageviews.json > quarantine).
+            "quarantined_series": quarantined_detail,
             "countries": country_out,
         }, indent=1, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -637,6 +686,10 @@ def main() -> None:
           f"{n_series_stale} stale excluded (of which {n_stale_scoreable} scoreable — "
           f"the rest are the Sunday-refreshed dormant tail), "
           f"{len(stale_topics)} topics unscorable today.")
+    if n_series_quarantined:
+        names = ", ".join(f"{d['lang']} {d['label_en']}" for d in quarantined_detail)
+        print(f"  access-method quarantine: {n_series_quarantined} series excluded "
+              f"from all shares and rankings ({names}).")
     n_news = sum(1 for t in topic_out.values() if t["news_articles_7d"] is not None)
     print(f"  news volume reported for {n_news}/{len(topic_out)} topics "
           f"(the rest could not be refreshed from GDELT in time for a complete week); "

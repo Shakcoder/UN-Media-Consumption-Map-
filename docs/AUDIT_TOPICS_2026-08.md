@@ -48,7 +48,7 @@ place. Four verified causes:
 | **Bot flood published as reading**: on 2026-08-10 the en "Roblox" article took 4.78M "user" views (683× baseline) with automated views in lockstep (4.75M) — a flood that half-evaded Wikimedia's classifier and ranked #1–2 in the published most-read lists of India, the Philippines, Indonesia, Colombia and others. Morocco's list was topped by fr "Cookie (informatique)" whose Moroccan views equalled ~100% of the article's worldwide user traffic. | New flood gate in fetch_trends_wiki_countries.py: large entries are checked against their own global per-article series and dropped on automated-lockstep, or on whipsaw + single-country concentration ≥80%. Fail-open on API errors. |
 | **Ecuador's quake-day reading lost as "withheld"**: the day loop broke on the first HTTP-200 even when nothing survived filtering, never trying the fallback day; the fetch window would have slid past Aug 10 permanently. | Fallback day now also tried after an empty day-1; Ecuador re-fetched same day (two quake articles now publish). |
 | **Same-day reruns erased the search archives**: both snapshot fetchers replaced `history[today]` instead of merging — 807 queries were destroyed by reruns on audit day alone, on an archive the docstrings correctly call unrebuildable. | Union-merge in both fetchers (also what makes the intraday pulse workflow safe). |
-| **France's #1 topic ("5G", 30% attention share, 7×"distinctive") is non-organic traffic**: fr "5G" out-reads en 5:1 absolute, is 99.4% mobile-web (healthy control: ~40/60 desktop/mobile), flat-high for 120 days, no French 5G news event exists — and the fr language weights spill it into 13 more countries. | Not yet auto-gated (needs an access-method anomaly gate in the pageview fetcher — recommended below). Documented here; treat France's current "distinctive: 5G" as an artifact. |
+| **France's #1 topic ("5G", 30% attention share, 7×"distinctive") is non-organic traffic**: fr "5G" out-reads en 5:1 absolute, is 99.4% mobile-web (healthy control: ~40/60 desktop/mobile), flat-high for 120 days, no French 5G news event exists — and the fr language weights spill it into 13 more countries. | *2026-08-17: auto-gated.* The access-method anomaly gate (recommendation 1 below) now quarantines the series — stored but excluded from attention shares; France's panel no longer headlines 5G. See the GATE_* block in fetch_trends_wikipedia.py for the calibration. |
 
 ### Medium severity — fixed
 
@@ -99,7 +99,9 @@ place. Four verified causes:
   carries 71.7% of Turkey's attention share; its "user" surge moves in
   lockstep with an equal automated surge (likely misclassified automation).
   The weight guard + concentration cue reduce the blast radius; the
-  access-method gate (below) is the real fix.
+  access-method gate (below) is the real fix. *2026-08-17: shipped — the
+  series trips the gate (4.3% desktop vs the tr edition's 25.3% norm) and
+  is quarantined from Turkey's profile.*
 
 ### Structural limitations now documented (not bugs)
 
@@ -148,6 +150,16 @@ Assembly; UNRWA. Each needs title curation across 22 languages via the
 1. **Access-method anomaly gate** for pageview series (the France-5G class):
    flag non-en series exceeding a sane multiple of the en series with a
    degenerate desktop/mobile split; quarantine from attention shares.
+   *Shipped 2026-08-17.* Screens: ≥1.5× the topic's en series, or ≥50% of
+   the edition's tracked attention; verdict: desktop share under ⅓ of the
+   SAME edition's aggregate desktop norm (a fixed cutoff false-positives
+   mobile-first editions — healthy hi series run 4–9% desktop). Calibrated
+   live: fr 5G (0.02×) and tr Yapay zekâ (0.17×) trip; es Terremoto
+   (quake week, 0.80×), ja 風力発電 (0.97 desktop-heavy tail, 3.08×) and
+   every mobile-first control (≥0.48×) pass. Quarantine, never delete;
+   fail-open on API errors; design + rejected alternatives (incl. why
+   automated-lockstep does NOT transfer to per-series gating) documented
+   at the GATE_* block in fetch_trends_wikipedia.py.
 2. **GDELT query-quality overhaul** (sense-disambiguation for terms like
    "surveillance"; per-topic query review).
 3. **Event-article linkage**: surface each country's measured reading list

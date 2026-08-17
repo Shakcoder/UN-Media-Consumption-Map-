@@ -1,16 +1,18 @@
 {
- "generated": "2026-08-16",
+ "generated": "2026-08-17",
  "measured_as_of": "2026-08-15",
  "coverage": {
-  "series_current": 2515,
+  "series_current": 2513,
   "series_stale_excluded": 869,
   "series_stale_scoreable": 22,
   "topics_scored": 180,
   "topics_stale_excluded": 0,
   "topics_below_floor": 3,
-  "topics_with_news_volume": 66,
+  "series_quarantined": 2,
+  "topics_quarantined": 0,
+  "topics_with_news_volume": 29,
   "countries_without_profile": 0,
-  "note": "Velocity windows are anchored to measured_as_of by calendar date. Series with no data in that 7-day window are excluded rather than contributing older figures. series_stale_excluded includes the dormant low-traffic tail that is refreshed only on Sundays by design and can never affect scores; series_stale_scoreable is the subset that represents real lost signal — THAT number climbing means the daily fetch is not completing (see docs/AUTOMATION.md). News volume is reported only for topics whose GDELT timeline covers the seven complete days before the run, so topics_with_news_volume is normally well below topics_scored."
+  "note": "Velocity windows are anchored to measured_as_of by calendar date. Series with no data in that 7-day window are excluded rather than contributing older figures. series_stale_excluded includes the dormant low-traffic tail that is refreshed only on Sundays by design and can never affect scores; series_stale_scoreable is the subset that represents real lost signal — THAT number climbing means the daily fetch is not completing (see docs/AUTOMATION.md). News volume is reported only for topics whose GDELT timeline covers the seven complete days before the run, so topics_with_news_volume is normally well below topics_scored. series_quarantined counts language series excluded by the access-method anomaly gate (non-organic traffic such as France's fr-'5G' mobile-web flood); their data stays stored in wiki_pageviews.json but contributes to no share, ranking, or trend line."
  },
  "method_notes": {
   "velocity": "(mean last 7d − mean prior 30d) / prior mean, per language series, volume-weighted globally; windows are calendar-dated against measured_as_of. The weighting basis admits a series when EITHER window's mean clears the rising floor and weights it by the larger mean, so a collapsing edition keeps the influence its baseline earned (an asymmetric basis systematically over-reported rises)",
@@ -19,6 +21,7 @@
   "media_intensity_by_country": "pct_of_country_news_volume is GDELT 'Volume Intensity': the percentage of THAT COUNTRY'S OWN monitored news output matching the topic — NOT its share of world coverage. A small media market that covers the topic intensively outranks a large one publishing far more articles on it; read it as editorial focus, never as volume or concentration.",
   "news_articles_7d": "GDELT article count over the 7 complete days before the run date (see news_articles_7d_window); null for topics whose timeline could not be refreshed, rather than reporting an older week as this one",
   "global_series": "daily sum of tracked Wikipedia language editions across the demand window ending measured_as_of; a day is null when the editions reporting it carry less than half the topic's usual traffic, i.e. the data is missing rather than the attention",
+  "anomaly_gate": "language series whose 'user' traffic fails the access-method anomaly gate (desktop share under one-third of the SAME edition's own aggregate desktop share, screened by cross-edition ratio or edition dominance) are quarantined: stored and listed in quarantined_series with the measured evidence, but excluded from every share, ranking, rising list and trend line. Calibrated 2026-08-17 on live artifacts (fr 5G, tr Yapay zekâ) vs live organic events (es Terremoto quake week, ja 風力発電 burst) — see fetch_trends_wikipedia.py",
   "include_floor_daily_views": 25,
   "rising_floor_daily_views": 150,
   "rising_threshold": 0.3
@@ -27,17 +30,13 @@
   "Q1363408": {
    "label_en": "5G",
    "category": "technology",
-   "global_velocity": 0.115,
-   "momentum": "steady",
+   "global_velocity": 0.461,
+   "momentum": "rising",
    "top_edition": {
-    "lang": "fr",
+    "lang": "en",
     "share": 0.8
    },
    "demand_by_language": {
-    "fr": {
-     "weekly_daily_avg_views": 4930.4,
-     "velocity": 0.031
-    },
     "en": {
      "weekly_daily_avg_views": 951.8,
      "velocity": 0.074
@@ -65,6 +64,10 @@
     "vi": {
      "weekly_daily_avg_views": 51.8,
      "velocity": 0.158
+    },
+    "pt": {
+     "weekly_daily_avg_views": 42.0,
+     "velocity": -0.095
     }
    },
    "news_articles_7d": null,
@@ -113,124 +116,124 @@
    ],
    "series_start": "2026-04-18",
    "global_series": [
-    5010,
-    3749,
-    4233,
-    5007,
-    5426,
-    5716,
-    4835,
-    4700,
-    4671,
-    5328,
-    5437,
-    5684,
-    5529,
-    4814,
-    4905,
-    4777,
-    5882,
-    7014,
-    6819,
-    6448,
-    6343,
-    6255,
-    6049,
-    6877,
-    6914,
-    6807,
-    6357,
-    6515,
-    5993,
-    6032,
-    6955,
-    7036,
-    6933,
-    6668,
-    6731,
-    5984,
-    5887,
-    6500,
-    6758,
-    7450,
-    7007,
-    7135,
-    6012,
-    6169,
-    6971,
-    7325,
-    7074,
-    6980,
-    6782,
-    6033,
-    5982,
-    6915,
-    7112,
-    7075,
-    7211,
-    6765,
-    6092,
-    6050,
-    6885,
-    7028,
-    6876,
-    6689,
-    6584,
-    5936,
-    5901,
-    6521,
-    7011,
-    6938,
-    6519,
-    6439,
-    5542,
-    5460,
-    5954,
-    6520,
-    6992,
-    7013,
-    6367,
-    5494,
-    5431,
-    6569,
-    6579,
-    6683,
-    6631,
-    6045,
-    5438,
-    5431,
-    6038,
-    6108,
-    6718,
-    6914,
-    6290,
-    5460,
-    5373,
-    6530,
-    6967,
-    7386,
-    7011,
-    6320,
-    5507,
-    5544,
-    6648,
-    6734,
-    6751,
-    6556,
-    6259,
-    5232,
-    5340,
-    6999,
-    7179,
-    7232,
-    7093,
-    6712,
-    5921,
-    5997,
-    6487,
-    6456,
-    6797,
-    7822,
+    1630,
+    1687,
+    1928,
+    2007,
+    1935,
+    2157,
+    1855,
+    1788,
+    1648,
+    2009,
+    1799,
+    1803,
+    1730,
+    1595,
+    1667,
+    1603,
+    1860,
+    1800,
+    1906,
+    1671,
+    1731,
+    1679,
+    1509,
+    1803,
+    1793,
+    1933,
+    1860,
+    1851,
+    1597,
+    1613,
+    2018,
+    1966,
+    1927,
+    1854,
+    1926,
+    1531,
+    1482,
+    1842,
+    2050,
+    2225,
+    2050,
+    2374,
+    1577,
+    1718,
+    1956,
+    2224,
+    1873,
+    1812,
+    1797,
+    1409,
+    1540,
+    1850,
+    1777,
+    1644,
+    1614,
+    1556,
+    1410,
+    1384,
+    1725,
+    1646,
+    1653,
+    1561,
+    1511,
+    1460,
+    1467,
+    1563,
+    1585,
+    1889,
+    1475,
+    1671,
+    1348,
+    1369,
+    1557,
+    1481,
+    1497,
+    1481,
+    1438,
+    1434,
+    1404,
+    1526,
+    1618,
+    1581,
+    1663,
+    1445,
+    1571,
+    1569,
+    1528,
+    1468,
+    1572,
+    1461,
+    1485,
+    1308,
+    1364,
+    1491,
+    1737,
+    2113,
+    1645,
+    1454,
+    1346,
+    1409,
+    1574,
+    1734,
+    1614,
+    1519,
+    1622,
+    1410,
+    1333,
+    1704,
+    1646,
+    1648,
+    1537,
+    1585,
+    1442,
+    1515,
+    1641,
+    1548,
+    1595,
+    2608,
     null,
     null
    ],
@@ -655,10 +658,10 @@
      "velocity": 0.168
     }
    },
-   "news_articles_7d": 766,
+   "news_articles_7d": 743,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -1018,20 +1021,16 @@
   "Q11660": {
    "label_en": "Artificial intelligence",
    "category": "technology",
-   "global_velocity": 0.312,
-   "momentum": "rising",
+   "global_velocity": 0.164,
+   "momentum": "steady",
    "top_edition": {
     "lang": "en",
-    "share": 0.54
+    "share": 0.63
    },
    "demand_by_language": {
     "en": {
      "weekly_daily_avg_views": 13013.4,
      "velocity": 0.25
-    },
-    "tr": {
-     "weekly_daily_avg_views": 3384.4,
-     "velocity": 1.224
     },
     "es": {
      "weekly_daily_avg_views": 1304.6,
@@ -1056,6 +1055,10 @@
     "ja": {
      "weekly_daily_avg_views": 567.0,
      "velocity": -0.038
+    },
+    "pt": {
+     "weekly_daily_avg_views": 495.8,
+     "velocity": 0.085
     }
    },
    "news_articles_7d": null,
@@ -1104,124 +1107,124 @@
    ],
    "series_start": "2026-04-18",
    "global_series": [
-    17429,
-    17588,
-    22314,
-    21855,
-    21908,
-    20916,
-    19638,
-    18731,
-    16417,
-    23032,
-    22883,
-    21492,
-    20513,
-    16959,
-    16992,
-    17555,
-    23312,
-    24415,
-    26924,
-    23293,
-    20050,
-    15423,
-    16605,
-    22625,
-    23700,
-    27104,
-    24534,
-    21243,
-    18547,
-    17579,
-    24923,
-    25653,
-    24854,
-    23717,
-    21901,
-    16223,
+    16899,
+    16951,
+    21480,
+    21085,
+    21030,
+    20245,
+    19138,
+    18185,
+    15886,
+    22126,
+    22201,
+    20972,
+    20049,
+    16435,
     16335,
-    20090,
-    22281,
-    23498,
-    23651,
-    22353,
-    19596,
-    20219,
-    25071,
-    23504,
-    22287,
-    21367,
-    21503,
-    18415,
-    17726,
-    21244,
-    21881,
-    21845,
-    19730,
-    18361,
+    16611,
+    22731,
+    23752,
+    26330,
+    22727,
+    19509,
+    14958,
+    16064,
+    21952,
+    23035,
+    26422,
+    23958,
+    20700,
+    17897,
+    16987,
+    24405,
+    25048,
+    24236,
+    23119,
+    21363,
+    15754,
+    15936,
+    19713,
+    21863,
+    23108,
+    23240,
+    21950,
+    19113,
+    19668,
+    24540,
+    22915,
+    21726,
+    20891,
+    21122,
     17989,
-    17111,
-    20996,
-    20303,
-    20009,
-    20006,
-    17631,
-    15774,
-    15559,
-    22010,
-    21716,
-    19093,
-    18819,
-    18030,
-    15577,
-    15729,
-    18806,
-    19170,
-    20159,
-    18738,
-    16621,
-    14203,
-    15073,
-    17682,
-    18637,
-    19050,
-    20435,
-    17372,
-    15084,
-    14651,
-    18844,
-    18807,
-    19792,
-    18279,
-    18317,
-    16354,
-    15404,
-    19280,
-    19089,
-    19765,
-    19876,
-    18251,
-    15612,
-    16175,
-    19422,
-    20302,
-    19107,
-    22561,
-    23068,
-    20433,
-    22234,
-    23491,
-    24716,
-    23472,
-    24212,
-    22802,
-    20936,
-    21381,
-    24253,
-    25543,
-    24048,
-    24687,
+    17311,
+    20702,
+    21341,
+    21164,
+    19205,
+    17946,
+    17216,
+    16510,
+    20563,
+    19884,
+    19514,
+    19382,
+    17132,
+    15333,
+    15086,
+    21573,
+    21295,
+    18661,
+    18349,
+    17672,
+    15190,
+    15415,
+    18393,
+    18682,
+    19703,
+    18357,
+    16256,
+    13841,
+    14700,
+    17246,
+    18186,
+    18623,
+    19994,
+    16960,
+    14684,
+    14292,
+    18432,
+    18346,
+    19438,
+    17895,
+    17916,
+    15977,
+    14939,
+    18928,
+    18700,
+    19342,
+    19482,
+    17865,
+    15086,
+    15716,
+    18958,
+    19827,
+    18388,
+    19920,
+    19354,
+    15864,
+    17065,
+    19100,
+    21238,
+    19750,
+    20734,
+    19749,
+    18120,
+    18609,
+    21880,
+    21517,
+    19828,
+    21156,
     null,
     null
    ],
@@ -1242,11 +1245,8 @@
      "velocity": -0.048
     }
    },
-   "news_articles_7d": 139,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "BLZ",
@@ -1457,10 +1457,10 @@
      "velocity": 0.916
     }
    },
-   "news_articles_7d": 2904,
+   "news_articles_7d": 2846,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -2451,11 +2451,8 @@
      "velocity": -0.117
     }
    },
-   "news_articles_7d": 11431,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "ZMB",
@@ -2666,10 +2663,10 @@
      "velocity": -0.081
     }
    },
-   "news_articles_7d": 646,
+   "news_articles_7d": 656,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -3057,10 +3054,10 @@
      "velocity": 0.491
     }
    },
-   "news_articles_7d": 1412,
+   "news_articles_7d": 1398,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -3476,10 +3473,10 @@
      "velocity": -0.083
     }
    },
-   "news_articles_7d": 1475,
+   "news_articles_7d": 1437,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -3867,11 +3864,8 @@
      "velocity": -0.208
     }
    },
-   "news_articles_7d": 142,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "SSD",
@@ -4058,11 +4052,8 @@
      "velocity": 0.544
     }
    },
-   "news_articles_7d": 2,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "NZL",
@@ -4449,11 +4440,8 @@
      "velocity": 0.249
     }
    },
-   "news_articles_7d": 2423,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "ETH",
@@ -4664,10 +4652,10 @@
      "velocity": -0.2
     }
    },
-   "news_articles_7d": 9805,
+   "news_articles_7d": 9672,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -4851,11 +4839,8 @@
      "velocity": -0.155
     }
    },
-   "news_articles_7d": 363,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "TKM",
@@ -5450,11 +5435,8 @@
      "velocity": 0.056
     }
    },
-   "news_articles_7d": 188,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "ETH",
@@ -5665,11 +5647,8 @@
      "velocity": -0.023
     }
    },
-   "news_articles_7d": 8634,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "LBR",
@@ -5856,10 +5835,10 @@
      "velocity": 0.125
     }
    },
-   "news_articles_7d": 4317,
+   "news_articles_7d": 4208,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -6071,11 +6050,8 @@
      "velocity": -0.098
     }
    },
-   "news_articles_7d": 1776,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "PRK",
@@ -6454,10 +6430,10 @@
      "velocity": 2.8
     }
    },
-   "news_articles_7d": 67,
+   "news_articles_7d": 62,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -6861,10 +6837,10 @@
      "velocity": 0.237
     }
    },
-   "news_articles_7d": 516,
+   "news_articles_7d": 494,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -7868,10 +7844,10 @@
      "velocity": -0.092
     }
    },
-   "news_articles_7d": 3664,
+   "news_articles_7d": 3522,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -9027,11 +9003,8 @@
      "velocity": -0.189
     }
    },
-   "news_articles_7d": 85,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "TUR",
@@ -9242,11 +9215,8 @@
      "velocity": 0.106
     }
    },
-   "news_articles_7d": 2112,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "MLT",
@@ -9649,11 +9619,8 @@
      "velocity": 0.407
     }
    },
-   "news_articles_7d": 14642,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "CHE",
@@ -10264,11 +10231,8 @@
      "velocity": -0.163
     }
    },
-   "news_articles_7d": 1173,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "COD",
@@ -11607,11 +11571,8 @@
      "velocity": -0.126
     }
    },
-   "news_articles_7d": 170,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "KOR",
@@ -12006,11 +11967,8 @@
      "velocity": -0.119
     }
    },
-   "news_articles_7d": 282,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "NAM",
@@ -12209,10 +12167,10 @@
      "velocity": 0.118
     }
    },
-   "news_articles_7d": 586,
+   "news_articles_7d": 566,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -12396,10 +12354,10 @@
      "velocity": -0.092
     }
    },
-   "news_articles_7d": 14,
+   "news_articles_7d": 13,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -13003,11 +12961,8 @@
      "velocity": -0.016
     }
    },
-   "news_articles_7d": 7869,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "PHL",
@@ -13386,10 +13341,10 @@
      "velocity": 0.105
     }
    },
-   "news_articles_7d": 943,
+   "news_articles_7d": 925,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -13785,11 +13740,8 @@
      "velocity": -0.165
     }
    },
-   "news_articles_7d": 359,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "CRI",
@@ -13980,11 +13932,8 @@
      "velocity": -0.21
     }
    },
-   "news_articles_7d": 384,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "LBR",
@@ -14167,11 +14116,8 @@
      "velocity": -0.092
     }
    },
-   "news_articles_7d": 17,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "ZAF",
@@ -14917,11 +14863,8 @@
      "velocity": -0.562
     }
    },
-   "news_articles_7d": 4743,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "KOR",
@@ -15116,10 +15059,10 @@
      "velocity": -0.137
     }
    },
-   "news_articles_7d": 3129,
+   "news_articles_7d": 3006,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -15315,11 +15258,8 @@
      "velocity": -0.405
     }
    },
-   "news_articles_7d": 1490,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "GUM",
@@ -15514,11 +15454,8 @@
      "velocity": -0.134
     }
    },
-   "news_articles_7d": 12,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "LBY",
@@ -15941,11 +15878,8 @@
      "velocity": 0.066
     }
    },
-   "news_articles_7d": 1042,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "BOL",
@@ -16944,10 +16878,10 @@
      "velocity": -0.333
     }
    },
-   "news_articles_7d": 20551,
+   "news_articles_7d": 19633,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -17511,11 +17445,8 @@
      "velocity": 0.588
     }
    },
-   "news_articles_7d": 75,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "UKR",
@@ -17706,10 +17637,10 @@
      "velocity": -0.416
     }
    },
-   "news_articles_7d": 314,
+   "news_articles_7d": 328,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -19073,10 +19004,10 @@
      "velocity": -0.306
     }
    },
-   "news_articles_7d": 1003,
+   "news_articles_7d": 989,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -19288,11 +19219,8 @@
      "velocity": -0.078
     }
    },
-   "news_articles_7d": 546,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "BFA",
@@ -19479,11 +19407,8 @@
      "velocity": -0.04
     }
    },
-   "news_articles_7d": 620,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "GTM",
@@ -19886,10 +19811,10 @@
      "velocity": -0.129
     }
    },
-   "news_articles_7d": 9140,
+   "news_articles_7d": 9184,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -20665,11 +20590,8 @@
      "velocity": -0.552
     }
    },
-   "news_articles_7d": 13,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "CMR",
@@ -20872,10 +20794,10 @@
      "velocity": -0.112
     }
    },
-   "news_articles_7d": 1156,
+   "news_articles_7d": 1193,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -22107,10 +22029,10 @@
      "velocity": 0.211
     }
    },
-   "news_articles_7d": 144,
+   "news_articles_7d": 151,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -23698,11 +23620,8 @@
      "velocity": -0.222
     }
    },
-   "news_articles_7d": 1949,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "GUM",
@@ -25417,10 +25336,10 @@
      "velocity": 0.112
     }
    },
-   "news_articles_7d": 2744,
+   "news_articles_7d": 2753,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -26228,11 +26147,8 @@
      "velocity": -0.028
     }
    },
-   "news_articles_7d": 31974,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "CUB",
@@ -26603,11 +26519,8 @@
      "velocity": 0.013
     }
    },
-   "news_articles_7d": 201,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "KOR",
@@ -26790,10 +26703,10 @@
      "velocity": 0.023
     }
    },
-   "news_articles_7d": 11968,
+   "news_articles_7d": 11631,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -27189,11 +27102,8 @@
      "velocity": -0.053
     }
    },
-   "news_articles_7d": 184,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "SLE",
@@ -27616,10 +27526,10 @@
      "velocity": -0.011
     }
    },
-   "news_articles_7d": 3913,
+   "news_articles_7d": 3795,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -27827,10 +27737,10 @@
      "velocity": 0.005
     }
    },
-   "news_articles_7d": 305,
+   "news_articles_7d": 263,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -28466,11 +28376,8 @@
      "velocity": -0.136
     }
    },
-   "news_articles_7d": 3617,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "ITA",
@@ -28681,10 +28588,10 @@
      "velocity": -0.59
     }
    },
-   "news_articles_7d": 551,
+   "news_articles_7d": 524,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -29286,8 +29193,8 @@
    },
    "news_articles_7d": 13,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -29463,11 +29370,8 @@
      "velocity": -0.154
     }
    },
-   "news_articles_7d": 29,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "MMR",
@@ -29882,11 +29786,8 @@
      "velocity": -0.221
     }
    },
-   "news_articles_7d": 16,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "NAM",
@@ -30081,11 +29982,8 @@
      "velocity": 0.46
     }
    },
-   "news_articles_7d": 1058,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "TCD",
@@ -30684,10 +30582,10 @@
      "velocity": -0.174
     }
    },
-   "news_articles_7d": 530,
+   "news_articles_7d": 465,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -30871,10 +30769,10 @@
      "velocity": 0.014
     }
    },
-   "news_articles_7d": 394,
+   "news_articles_7d": 379,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -33458,11 +33356,8 @@
      "velocity": 0.095
     }
    },
-   "news_articles_7d": 610,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "OMN",
@@ -33673,11 +33568,8 @@
      "velocity": -0.43
     }
    },
-   "news_articles_7d": 148,
-   "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
-   },
+   "news_articles_7d": null,
+   "news_articles_7d_window": null,
    "media_intensity_by_country": [
     {
      "iso3": "ISR",
@@ -35133,10 +35025,10 @@
      "velocity": -0.157
     }
    },
-   "news_articles_7d": 118,
+   "news_articles_7d": 112,
    "news_articles_7d_window": {
-    "start": "2026-08-09",
-    "end": "2026-08-15"
+    "start": "2026-08-10",
+    "end": "2026-08-16"
    },
    "media_intensity_by_country": [
     {
@@ -35714,6 +35606,26 @@
    "reason": "below_floor"
   }
  ],
+ "quarantined_series": [
+  {
+   "qid": "Q1363408",
+   "label_en": "5G",
+   "lang": "fr",
+   "reason": "access-split",
+   "desktop_share": 0.0069,
+   "edition_desktop_share": 0.3265,
+   "since": "2026-08-15"
+  },
+  {
+   "qid": "Q11660",
+   "label_en": "Artificial intelligence",
+   "lang": "tr",
+   "reason": "access-split",
+   "desktop_share": 0.0427,
+   "edition_desktop_share": 0.2532,
+   "since": "2026-08-15"
+  }
+ ],
  "countries": {
   "USA": {
    "top_topics": [
@@ -35943,7 +35855,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.0,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     }
    ],
    "rising_topics": [
@@ -36060,7 +35972,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     }
    ],
    "rising_topics": [
@@ -36170,7 +36082,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     }
    ],
    "rising_topics": [
@@ -36280,7 +36192,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     }
    ],
    "rising_topics": [
@@ -36390,7 +36302,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     }
    ],
    "rising_topics": [
@@ -36422,37 +36334,32 @@
     {
      "qid": "Q115564437",
      "label_en": "ChatGPT",
-     "attention_share_pct": 31.4
+     "attention_share_pct": 32.7
     },
     {
      "qid": "Q11660",
      "label_en": "Artificial intelligence",
-     "attention_share_pct": 7.0
-    },
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 4.4
+     "attention_share_pct": 7.3
     },
     {
      "qid": "Q12204",
      "label_en": "Tuberculosis",
-     "attention_share_pct": 2.5
+     "attention_share_pct": 2.6
     },
     {
      "qid": "Q1065",
      "label_en": "United Nations",
-     "attention_share_pct": 2.2
+     "attention_share_pct": 2.3
     },
     {
      "qid": "Q84263196",
      "label_en": "COVID-19",
-     "attention_share_pct": 1.6
+     "attention_share_pct": 1.7
     },
     {
      "qid": "Q8454",
      "label_en": "Capital punishment",
-     "attention_share_pct": 1.6
+     "attention_share_pct": 1.7
     },
     {
      "qid": "Q7944",
@@ -36462,7 +36369,7 @@
     {
      "qid": "Q125928",
      "label_en": "Climate change",
-     "attention_share_pct": 1.3
+     "attention_share_pct": 1.4
     },
     {
      "qid": "Q51993",
@@ -36477,21 +36384,26 @@
     {
      "qid": "Q12199",
      "label_en": "HIV/AIDS",
-     "attention_share_pct": 1.0
+     "attention_share_pct": 1.1
     },
     {
      "qid": "Q2539",
      "label_en": "Machine learning",
-     "attention_share_pct": 1.0
+     "attention_share_pct": 1.1
     },
     {
      "qid": "Q215864",
      "label_en": "Heat wave",
-     "attention_share_pct": 0.9
+     "attention_share_pct": 1.0
     },
     {
      "qid": "Q12156",
      "label_en": "Malaria",
+     "attention_share_pct": 1.0
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
      "attention_share_pct": 0.9
     }
    ],
@@ -36499,14 +36411,8 @@
     {
      "qid": "Q2539",
      "label_en": "Machine learning",
-     "attention_share_pct": 1.0,
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 1.3,
-     "vs_global_avg": 1.5
     }
    ],
    "rising_topics": [
@@ -36630,7 +36536,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     }
    ],
    "rising_topics": []
@@ -36718,7 +36624,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     }
    ],
    "rising_topics": []
@@ -36806,7 +36712,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     }
    ],
    "rising_topics": []
@@ -36894,7 +36800,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     }
    ],
    "rising_topics": []
@@ -36982,7 +36888,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     }
    ],
    "rising_topics": []
@@ -37070,7 +36976,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     }
    ],
    "rising_topics": []
@@ -37158,7 +37064,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     }
    ],
    "rising_topics": []
@@ -37246,7 +37152,7 @@
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     }
    ],
    "rising_topics": []
@@ -37334,7 +37240,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -37471,7 +37377,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -37608,7 +37514,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -37745,7 +37651,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -37882,7 +37788,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -38019,7 +37925,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -38156,7 +38062,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -38250,7 +38156,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -38344,7 +38250,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -38438,7 +38344,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -38532,7 +38438,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -38626,7 +38532,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -38720,7 +38626,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -38814,7 +38720,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -38908,7 +38814,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -39002,7 +38908,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -39096,7 +39002,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -39190,7 +39096,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -39284,7 +39190,7 @@
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 17.5,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8070",
@@ -39378,43 +39284,31 @@
      "qid": "Q12174",
      "label_en": "Obesity",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 4.1
+     "vs_global_avg": 3.9
     },
     {
      "qid": "Q51993",
      "label_en": "Ebola",
      "attention_share_pct": 4.4,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 3.6
     },
     {
      "qid": "Q43059",
      "label_en": "Drought",
      "attention_share_pct": 1.4,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q30953",
      "label_en": "Dengue fever",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 2.5
+     "vs_global_avg": 2.3
     },
     {
      "qid": "Q12195",
      "label_en": "Polio",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
      "vs_global_avg": 1.6
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.4,
-     "vs_global_avg": 1.5
     }
    ],
    "rising_topics": [
@@ -39524,43 +39418,31 @@
      "qid": "Q12174",
      "label_en": "Obesity",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 4.1
+     "vs_global_avg": 3.9
     },
     {
      "qid": "Q51993",
      "label_en": "Ebola",
      "attention_share_pct": 4.4,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 3.6
     },
     {
      "qid": "Q43059",
      "label_en": "Drought",
      "attention_share_pct": 1.4,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q30953",
      "label_en": "Dengue fever",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 2.5
+     "vs_global_avg": 2.3
     },
     {
      "qid": "Q12195",
      "label_en": "Polio",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
      "vs_global_avg": 1.6
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.4,
-     "vs_global_avg": 1.5
     }
    ],
    "rising_topics": [
@@ -39592,52 +39474,47 @@
     {
      "qid": "Q115564437",
      "label_en": "ChatGPT",
-     "attention_share_pct": 28.6
-    },
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 4.7
+     "attention_share_pct": 29.8
     },
     {
      "qid": "Q11660",
      "label_en": "Artificial intelligence",
-     "attention_share_pct": 4.2
+     "attention_share_pct": 4.4
     },
     {
      "qid": "Q51993",
      "label_en": "Ebola",
-     "attention_share_pct": 3.9
+     "attention_share_pct": 4.1
     },
     {
      "qid": "Q12204",
      "label_en": "Tuberculosis",
-     "attention_share_pct": 3.8
+     "attention_share_pct": 3.9
     },
     {
      "qid": "Q8454",
      "label_en": "Capital punishment",
-     "attention_share_pct": 2.4
+     "attention_share_pct": 2.5
     },
     {
      "qid": "Q1065",
      "label_en": "United Nations",
-     "attention_share_pct": 2.2
+     "attention_share_pct": 2.3
     },
     {
      "qid": "Q12199",
      "label_en": "HIV/AIDS",
-     "attention_share_pct": 1.8
+     "attention_share_pct": 1.9
     },
     {
      "qid": "Q12078",
      "label_en": "Cancer",
-     "attention_share_pct": 1.5
+     "attention_share_pct": 1.6
     },
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 1.4
+     "attention_share_pct": 1.5
     },
     {
      "qid": "Q12156",
@@ -39647,12 +39524,12 @@
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.3
+     "attention_share_pct": 1.4
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
-     "attention_share_pct": 1.3
+     "attention_share_pct": 1.4
     },
     {
      "qid": "Q12206",
@@ -39662,26 +39539,31 @@
     {
      "qid": "Q7174",
      "label_en": "Democracy",
-     "attention_share_pct": 1.2
+     "attention_share_pct": 1.3
+    },
+    {
+     "qid": "Q43059",
+     "label_en": "Drought",
+     "attention_share_pct": 1.3
     }
    ],
    "distinctive_topics": [
     {
      "qid": "Q12174",
      "label_en": "Obesity",
-     "attention_share_pct": 1.0,
+     "attention_share_pct": 1.1,
      "vs_global_avg": 3.6
     },
     {
      "qid": "Q51993",
      "label_en": "Ebola",
-     "attention_share_pct": 3.9,
-     "vs_global_avg": 3.4
+     "attention_share_pct": 4.1,
+     "vs_global_avg": 3.3
     },
     {
      "qid": "Q43059",
      "label_en": "Drought",
-     "attention_share_pct": 1.2,
+     "attention_share_pct": 1.3,
      "vs_global_avg": 2.7
     },
     {
@@ -39700,12 +39582,6 @@
      "qid": "Q12156",
      "label_en": "Malaria",
      "attention_share_pct": 1.4,
-     "vs_global_avg": 1.6
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.8,
      "vs_global_avg": 1.5
     }
    ],
@@ -39816,55 +39692,55 @@
      "qid": "Q178795",
      "label_en": "Land mine",
      "attention_share_pct": 1.0,
-     "vs_global_avg": 26.3
+     "vs_global_avg": 26.2
     },
     {
      "qid": "Q43302",
      "label_en": "Wind power",
      "attention_share_pct": 3.5,
-     "vs_global_avg": 10.9
+     "vs_global_avg": 10.6
     },
     {
      "qid": "Q43059",
      "label_en": "Drought",
      "attention_share_pct": 1.8,
-     "vs_global_avg": 4.0
+     "vs_global_avg": 3.9
     },
     {
      "qid": "Q47488",
      "label_en": "International Criminal Court",
      "attention_share_pct": 2.3,
-     "vs_global_avg": 3.6
-    },
-    {
-     "qid": "Q132781",
-     "label_en": "Torture",
-     "attention_share_pct": 2.0,
-     "vs_global_avg": 3.6
-    },
-    {
-     "qid": "Q12090",
-     "label_en": "Cholera",
-     "attention_share_pct": 2.1,
-     "vs_global_avg": 3.6
+     "vs_global_avg": 3.4
     },
     {
      "qid": "Q198",
      "label_en": "War",
      "attention_share_pct": 2.3,
-     "vs_global_avg": 3.4
+     "vs_global_avg": 3.3
     },
     {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 3.6,
-     "vs_global_avg": 3.1
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 3.3
+    },
+    {
+     "qid": "Q132781",
+     "label_en": "Torture",
+     "attention_share_pct": 2.0,
+     "vs_global_avg": 3.2
     },
     {
      "qid": "Q135010",
      "label_en": "War crime",
      "attention_share_pct": 1.0,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 3.6,
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q7649586",
@@ -39973,7 +39849,7 @@
      "qid": "Q41171",
      "label_en": "Unemployment",
      "attention_share_pct": 12.3,
-     "vs_global_avg": 42.8
+     "vs_global_avg": 41.7
     },
     {
      "qid": "Q8068",
@@ -39985,19 +39861,19 @@
      "qid": "Q366",
      "label_en": "Corruption",
      "attention_share_pct": 4.1,
-     "vs_global_avg": 13.5
-    },
-    {
-     "qid": "Q169950",
-     "label_en": "Wildfire",
-     "attention_share_pct": 3.6,
-     "vs_global_avg": 13.0
+     "vs_global_avg": 12.8
     },
     {
      "qid": "Q10294",
      "label_en": "Poverty",
      "attention_share_pct": 3.2,
      "vs_global_avg": 12.7
+    },
+    {
+     "qid": "Q169950",
+     "label_en": "Wildfire",
+     "attention_share_pct": 3.6,
+     "vs_global_avg": 12.0
     },
     {
      "qid": "Q8065",
@@ -40009,25 +39885,25 @@
      "qid": "Q47041",
      "label_en": "Biodiversity",
      "attention_share_pct": 4.7,
-     "vs_global_avg": 10.4
+     "vs_global_avg": 10.1
     },
     {
      "qid": "Q7649586",
      "label_en": "Sustainable Development Goals",
      "attention_share_pct": 3.7,
-     "vs_global_avg": 9.5
+     "vs_global_avg": 9.3
     },
     {
      "qid": "Q8434",
      "label_en": "Education",
      "attention_share_pct": 6.5,
-     "vs_global_avg": 7.5
+     "vs_global_avg": 7.4
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 7.3,
-     "vs_global_avg": 7.4
+     "vs_global_avg": 7.0
     }
    ],
    "rising_topics": []
@@ -40115,7 +39991,7 @@
      "qid": "Q41171",
      "label_en": "Unemployment",
      "attention_share_pct": 5.3,
-     "vs_global_avg": 18.5
+     "vs_global_avg": 18.1
     },
     {
      "qid": "Q8068",
@@ -40133,25 +40009,25 @@
      "qid": "Q366",
      "label_en": "Corruption",
      "attention_share_pct": 2.1,
-     "vs_global_avg": 6.9
-    },
-    {
-     "qid": "Q169950",
-     "label_en": "Wildfire",
-     "attention_share_pct": 1.6,
-     "vs_global_avg": 5.6
+     "vs_global_avg": 6.6
     },
     {
      "qid": "Q47041",
      "label_en": "Biodiversity",
      "attention_share_pct": 2.4,
-     "vs_global_avg": 5.4
+     "vs_global_avg": 5.2
+    },
+    {
+     "qid": "Q169950",
+     "label_en": "Wildfire",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 5.2
     },
     {
      "qid": "Q7649586",
      "label_en": "Sustainable Development Goals",
      "attention_share_pct": 1.9,
-     "vs_global_avg": 5.1
+     "vs_global_avg": 4.9
     },
     {
      "qid": "Q8065",
@@ -40163,1555 +40039,13 @@
      "qid": "Q8434",
      "label_en": "Education",
      "attention_share_pct": 3.7,
-     "vs_global_avg": 4.3
+     "vs_global_avg": 4.2
     },
     {
      "qid": "Q28549308",
      "label_en": "Fake news",
      "attention_share_pct": 1.4,
-     "vs_global_avg": 4.1
-    }
-   ],
-   "rising_topics": []
-  },
-  "FRA": {
-   "top_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1
-    },
-    {
-     "qid": "Q115564437",
-     "label_en": "ChatGPT",
-     "attention_share_pct": 19.7
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.3
-    },
-    {
-     "qid": "Q1065",
-     "label_en": "United Nations",
-     "attention_share_pct": 2.3
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 1.3
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q12199",
-     "label_en": "HIV/AIDS",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q7809",
-     "label_en": "UNESCO",
-     "attention_share_pct": 1.1
-    }
-   ],
-   "distinctive_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1,
-     "vs_global_avg": 7.1
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9,
-     "vs_global_avg": 5.4
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1,
-     "vs_global_avg": 2.5
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2,
-     "vs_global_avg": 1.8
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5,
-     "vs_global_avg": 1.7
-    }
-   ],
-   "rising_topics": [
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "velocity": 1.776,
-     "via_language": "fr",
-     "weight": 0.35
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "velocity": 0.92,
-     "via_language": "fr",
-     "weight": 0.35
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "velocity": 0.868,
-     "via_language": "fr",
-     "weight": 0.35
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "velocity": 0.598,
-     "via_language": "fr",
-     "weight": 0.35
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "velocity": 0.507,
-     "via_language": "fr",
-     "weight": 0.35
-    }
-   ]
-  },
-  "COD": {
-   "top_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1
-    },
-    {
-     "qid": "Q115564437",
-     "label_en": "ChatGPT",
-     "attention_share_pct": 19.7
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.3
-    },
-    {
-     "qid": "Q1065",
-     "label_en": "United Nations",
-     "attention_share_pct": 2.3
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 1.3
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q12199",
-     "label_en": "HIV/AIDS",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q7809",
-     "label_en": "UNESCO",
-     "attention_share_pct": 1.1
-    }
-   ],
-   "distinctive_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1,
-     "vs_global_avg": 7.1
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9,
-     "vs_global_avg": 5.4
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1,
-     "vs_global_avg": 2.5
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2,
-     "vs_global_avg": 1.8
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5,
-     "vs_global_avg": 1.7
-    }
-   ],
-   "rising_topics": [
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "velocity": 1.776,
-     "via_language": "fr",
-     "weight": 0.12
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "velocity": 0.92,
-     "via_language": "fr",
-     "weight": 0.12
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "velocity": 0.868,
-     "via_language": "fr",
-     "weight": 0.12
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "velocity": 0.598,
-     "via_language": "fr",
-     "weight": 0.12
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "velocity": 0.507,
-     "via_language": "fr",
-     "weight": 0.12
-    }
-   ]
-  },
-  "DZA": {
-   "top_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 22.9
-    },
-    {
-     "qid": "Q115564437",
-     "label_en": "ChatGPT",
-     "attention_share_pct": 21.0
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.1
-    },
-    {
-     "qid": "Q11660",
-     "label_en": "Artificial intelligence",
-     "attention_share_pct": 3.5
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.4
-    },
-    {
-     "qid": "Q1065",
-     "label_en": "United Nations",
-     "attention_share_pct": 2.6
-    },
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "attention_share_pct": 2.2
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 1.7
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.7
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "attention_share_pct": 1.7
-    },
-    {
-     "qid": "Q17422",
-     "label_en": "Same-sex marriage",
-     "attention_share_pct": 1.5
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 1.5
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12802",
-     "label_en": "Nuclear weapon",
-     "attention_share_pct": 1.3
-    }
-   ],
-   "distinctive_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 22.9,
-     "vs_global_avg": 5.8
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.1,
-     "vs_global_avg": 4.6
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 1.7,
-     "vs_global_avg": 2.0
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.4,
-     "vs_global_avg": 1.5
-    }
-   ],
-   "rising_topics": [
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "velocity": 1.776,
-     "via_language": "fr",
-     "weight": 0.08
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "velocity": 0.92,
-     "via_language": "fr",
-     "weight": 0.08
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "velocity": 0.868,
-     "via_language": "fr",
-     "weight": 0.08
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "velocity": 0.598,
-     "via_language": "fr",
-     "weight": 0.08
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "velocity": 0.507,
-     "via_language": "fr",
-     "weight": 0.08
-    }
-   ]
-  },
-  "MAR": {
-   "top_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 23.2
-    },
-    {
-     "qid": "Q115564437",
-     "label_en": "ChatGPT",
-     "attention_share_pct": 20.9
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.2
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.4
-    },
-    {
-     "qid": "Q11660",
-     "label_en": "Artificial intelligence",
-     "attention_share_pct": 3.3
-    },
-    {
-     "qid": "Q1065",
-     "label_en": "United Nations",
-     "attention_share_pct": 2.6
-    },
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "attention_share_pct": 2.1
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 1.7
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.7
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "attention_share_pct": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q17422",
-     "label_en": "Same-sex marriage",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12802",
-     "label_en": "Nuclear weapon",
-     "attention_share_pct": 1.2
-    }
-   ],
-   "distinctive_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 23.2,
-     "vs_global_avg": 5.9
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.2,
-     "vs_global_avg": 4.6
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 1.7,
-     "vs_global_avg": 2.1
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.4,
-     "vs_global_avg": 1.6
-    }
-   ],
-   "rising_topics": [
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "velocity": 1.776,
-     "via_language": "fr",
-     "weight": 0.07
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "velocity": 0.92,
-     "via_language": "fr",
-     "weight": 0.07
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "velocity": 0.868,
-     "via_language": "fr",
-     "weight": 0.07
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "velocity": 0.598,
-     "via_language": "fr",
-     "weight": 0.07
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "velocity": 0.507,
-     "via_language": "fr",
-     "weight": 0.07
-    }
-   ]
-  },
-  "CMR": {
-   "top_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1
-    },
-    {
-     "qid": "Q115564437",
-     "label_en": "ChatGPT",
-     "attention_share_pct": 19.7
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.3
-    },
-    {
-     "qid": "Q1065",
-     "label_en": "United Nations",
-     "attention_share_pct": 2.3
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 1.3
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q12199",
-     "label_en": "HIV/AIDS",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q7809",
-     "label_en": "UNESCO",
-     "attention_share_pct": 1.1
-    }
-   ],
-   "distinctive_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1,
-     "vs_global_avg": 7.1
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9,
-     "vs_global_avg": 5.4
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1,
-     "vs_global_avg": 2.5
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2,
-     "vs_global_avg": 1.8
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5,
-     "vs_global_avg": 1.7
-    }
-   ],
-   "rising_topics": [
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "velocity": 1.776,
-     "via_language": "fr",
-     "weight": 0.05
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "velocity": 0.92,
-     "via_language": "fr",
-     "weight": 0.05
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "velocity": 0.868,
-     "via_language": "fr",
-     "weight": 0.05
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "velocity": 0.598,
-     "via_language": "fr",
-     "weight": 0.05
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "velocity": 0.507,
-     "via_language": "fr",
-     "weight": 0.05
-    }
-   ]
-  },
-  "CIV": {
-   "top_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1
-    },
-    {
-     "qid": "Q115564437",
-     "label_en": "ChatGPT",
-     "attention_share_pct": 19.7
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.3
-    },
-    {
-     "qid": "Q1065",
-     "label_en": "United Nations",
-     "attention_share_pct": 2.3
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 1.3
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q12199",
-     "label_en": "HIV/AIDS",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q7809",
-     "label_en": "UNESCO",
-     "attention_share_pct": 1.1
-    }
-   ],
-   "distinctive_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1,
-     "vs_global_avg": 7.1
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9,
-     "vs_global_avg": 5.4
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1,
-     "vs_global_avg": 2.5
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2,
-     "vs_global_avg": 1.8
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5,
-     "vs_global_avg": 1.7
-    }
-   ],
-   "rising_topics": [
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "velocity": 1.776,
-     "via_language": "fr",
-     "weight": 0.05
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "velocity": 0.92,
-     "via_language": "fr",
-     "weight": 0.05
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "velocity": 0.868,
-     "via_language": "fr",
-     "weight": 0.05
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "velocity": 0.598,
-     "via_language": "fr",
-     "weight": 0.05
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "velocity": 0.507,
-     "via_language": "fr",
-     "weight": 0.05
-    }
-   ]
-  },
-  "TUN": {
-   "top_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 23.8
-    },
-    {
-     "qid": "Q115564437",
-     "label_en": "ChatGPT",
-     "attention_share_pct": 20.8
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.2
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.4
-    },
-    {
-     "qid": "Q11660",
-     "label_en": "Artificial intelligence",
-     "attention_share_pct": 3.0
-    },
-    {
-     "qid": "Q1065",
-     "label_en": "United Nations",
-     "attention_share_pct": 2.5
-    },
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "attention_share_pct": 2.1
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 1.8
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "attention_share_pct": 1.6
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.6
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q17422",
-     "label_en": "Same-sex marriage",
-     "attention_share_pct": 1.3
-    },
-    {
-     "qid": "Q12802",
-     "label_en": "Nuclear weapon",
-     "attention_share_pct": 1.2
-    }
-   ],
-   "distinctive_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 23.8,
-     "vs_global_avg": 6.0
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.2,
-     "vs_global_avg": 4.7
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 1.8,
-     "vs_global_avg": 2.1
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.4,
-     "vs_global_avg": 1.6
-    }
-   ],
-   "rising_topics": []
-  },
-  "SEN": {
-   "top_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1
-    },
-    {
-     "qid": "Q115564437",
-     "label_en": "ChatGPT",
-     "attention_share_pct": 19.7
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.3
-    },
-    {
-     "qid": "Q1065",
-     "label_en": "United Nations",
-     "attention_share_pct": 2.3
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 1.3
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q12199",
-     "label_en": "HIV/AIDS",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q7809",
-     "label_en": "UNESCO",
-     "attention_share_pct": 1.1
-    }
-   ],
-   "distinctive_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1,
-     "vs_global_avg": 7.1
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9,
-     "vs_global_avg": 5.4
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1,
-     "vs_global_avg": 2.5
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2,
-     "vs_global_avg": 1.8
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5,
-     "vs_global_avg": 1.7
-    }
-   ],
-   "rising_topics": []
-  },
-  "BEL": {
-   "top_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1
-    },
-    {
-     "qid": "Q115564437",
-     "label_en": "ChatGPT",
-     "attention_share_pct": 19.7
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.3
-    },
-    {
-     "qid": "Q1065",
-     "label_en": "United Nations",
-     "attention_share_pct": 2.3
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 1.3
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q12199",
-     "label_en": "HIV/AIDS",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q7809",
-     "label_en": "UNESCO",
-     "attention_share_pct": 1.1
-    }
-   ],
-   "distinctive_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1,
-     "vs_global_avg": 7.1
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9,
-     "vs_global_avg": 5.4
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1,
-     "vs_global_avg": 2.5
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2,
-     "vs_global_avg": 1.8
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5,
-     "vs_global_avg": 1.7
-    }
-   ],
-   "rising_topics": []
-  },
-  "MLI": {
-   "top_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1
-    },
-    {
-     "qid": "Q115564437",
-     "label_en": "ChatGPT",
-     "attention_share_pct": 19.7
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.3
-    },
-    {
-     "qid": "Q1065",
-     "label_en": "United Nations",
-     "attention_share_pct": 2.3
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 1.3
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q12199",
-     "label_en": "HIV/AIDS",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q7809",
-     "label_en": "UNESCO",
-     "attention_share_pct": 1.1
-    }
-   ],
-   "distinctive_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1,
-     "vs_global_avg": 7.1
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9,
-     "vs_global_avg": 5.4
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1,
-     "vs_global_avg": 2.5
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2,
-     "vs_global_avg": 1.8
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5,
-     "vs_global_avg": 1.7
-    }
-   ],
-   "rising_topics": []
-  },
-  "BFA": {
-   "top_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1
-    },
-    {
-     "qid": "Q115564437",
-     "label_en": "ChatGPT",
-     "attention_share_pct": 19.7
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.3
-    },
-    {
-     "qid": "Q1065",
-     "label_en": "United Nations",
-     "attention_share_pct": 2.3
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 1.3
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q12199",
-     "label_en": "HIV/AIDS",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q7809",
-     "label_en": "UNESCO",
-     "attention_share_pct": 1.1
-    }
-   ],
-   "distinctive_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1,
-     "vs_global_avg": 7.1
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9,
-     "vs_global_avg": 5.4
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1,
-     "vs_global_avg": 2.5
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2,
-     "vs_global_avg": 1.8
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5,
-     "vs_global_avg": 1.7
-    }
-   ],
-   "rising_topics": []
-  },
-  "HTI": {
-   "top_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1
-    },
-    {
-     "qid": "Q115564437",
-     "label_en": "ChatGPT",
-     "attention_share_pct": 19.7
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.3
-    },
-    {
-     "qid": "Q1065",
-     "label_en": "United Nations",
-     "attention_share_pct": 2.3
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5
-    },
-    {
-     "qid": "Q8454",
-     "label_en": "Capital punishment",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q7944",
-     "label_en": "Earthquake",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q51993",
-     "label_en": "Ebola",
-     "attention_share_pct": 1.4
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 1.3
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2
-    },
-    {
-     "qid": "Q208373",
-     "label_en": "Female genital mutilation",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q12199",
-     "label_en": "HIV/AIDS",
-     "attention_share_pct": 1.1
-    },
-    {
-     "qid": "Q7809",
-     "label_en": "UNESCO",
-     "attention_share_pct": 1.1
-    }
-   ],
-   "distinctive_topics": [
-    {
-     "qid": "Q1363408",
-     "label_en": "5G",
-     "attention_share_pct": 28.1,
-     "vs_global_avg": 7.1
-    },
-    {
-     "qid": "Q215864",
-     "label_en": "Heat wave",
-     "attention_share_pct": 4.9,
-     "vs_global_avg": 5.4
-    },
-    {
-     "qid": "Q125928",
-     "label_en": "Climate change",
-     "attention_share_pct": 2.1,
-     "vs_global_avg": 2.5
-    },
-    {
-     "qid": "Q12195",
-     "label_en": "Polio",
-     "attention_share_pct": 1.2,
-     "vs_global_avg": 1.8
-    },
-    {
-     "qid": "Q12156",
-     "label_en": "Malaria",
-     "attention_share_pct": 1.5,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 4.0
     }
    ],
    "rising_topics": []
@@ -41799,55 +40133,55 @@
      "qid": "Q28549308",
      "label_en": "Fake news",
      "attention_share_pct": 2.5,
-     "vs_global_avg": 7.3
+     "vs_global_avg": 7.1
     },
     {
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 4.6
+     "vs_global_avg": 4.3
     },
     {
      "qid": "Q7813",
      "label_en": "Universal Declaration of Human Rights",
      "attention_share_pct": 2.2,
-     "vs_global_avg": 4.2
-    },
-    {
-     "qid": "Q8458",
-     "label_en": "Human rights",
-     "attention_share_pct": 1.7,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q8092",
      "label_en": "Tropical cyclone",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 3.7
+     "vs_global_avg": 3.6
+    },
+    {
+     "qid": "Q8458",
+     "label_en": "Human rights",
+     "attention_share_pct": 1.7,
+     "vs_global_avg": 3.4
     },
     {
      "qid": "Q79793",
      "label_en": "Measles",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 3.2
+     "vs_global_avg": 3.0
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.8,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.8
     },
     {
      "qid": "Q103817",
      "label_en": "Indigenous peoples",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.1
     },
     {
      "qid": "Q47488",
      "label_en": "International Criminal Court",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 1.9
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q8434",
@@ -41949,55 +40283,55 @@
      "qid": "Q28549308",
      "label_en": "Fake news",
      "attention_share_pct": 2.5,
-     "vs_global_avg": 7.3
+     "vs_global_avg": 7.1
     },
     {
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 4.6
+     "vs_global_avg": 4.3
     },
     {
      "qid": "Q7813",
      "label_en": "Universal Declaration of Human Rights",
      "attention_share_pct": 2.2,
-     "vs_global_avg": 4.2
-    },
-    {
-     "qid": "Q8458",
-     "label_en": "Human rights",
-     "attention_share_pct": 1.7,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q8092",
      "label_en": "Tropical cyclone",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 3.7
+     "vs_global_avg": 3.6
+    },
+    {
+     "qid": "Q8458",
+     "label_en": "Human rights",
+     "attention_share_pct": 1.7,
+     "vs_global_avg": 3.4
     },
     {
      "qid": "Q79793",
      "label_en": "Measles",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 3.2
+     "vs_global_avg": 3.0
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.8,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.8
     },
     {
      "qid": "Q103817",
      "label_en": "Indigenous peoples",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.1
     },
     {
      "qid": "Q47488",
      "label_en": "International Criminal Court",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 1.9
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q8434",
@@ -42099,55 +40433,55 @@
      "qid": "Q28549308",
      "label_en": "Fake news",
      "attention_share_pct": 2.5,
-     "vs_global_avg": 7.3
+     "vs_global_avg": 7.1
     },
     {
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 4.6
+     "vs_global_avg": 4.3
     },
     {
      "qid": "Q7813",
      "label_en": "Universal Declaration of Human Rights",
      "attention_share_pct": 2.2,
-     "vs_global_avg": 4.2
-    },
-    {
-     "qid": "Q8458",
-     "label_en": "Human rights",
-     "attention_share_pct": 1.7,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q8092",
      "label_en": "Tropical cyclone",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 3.7
+     "vs_global_avg": 3.6
+    },
+    {
+     "qid": "Q8458",
+     "label_en": "Human rights",
+     "attention_share_pct": 1.7,
+     "vs_global_avg": 3.4
     },
     {
      "qid": "Q79793",
      "label_en": "Measles",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 3.2
+     "vs_global_avg": 3.0
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.8,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.8
     },
     {
      "qid": "Q103817",
      "label_en": "Indigenous peoples",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.1
     },
     {
      "qid": "Q47488",
      "label_en": "International Criminal Court",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 1.9
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q8434",
@@ -42249,55 +40583,55 @@
      "qid": "Q28549308",
      "label_en": "Fake news",
      "attention_share_pct": 2.5,
-     "vs_global_avg": 7.3
+     "vs_global_avg": 7.1
     },
     {
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 4.6
+     "vs_global_avg": 4.3
     },
     {
      "qid": "Q7813",
      "label_en": "Universal Declaration of Human Rights",
      "attention_share_pct": 2.2,
-     "vs_global_avg": 4.2
-    },
-    {
-     "qid": "Q8458",
-     "label_en": "Human rights",
-     "attention_share_pct": 1.7,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q8092",
      "label_en": "Tropical cyclone",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 3.7
+     "vs_global_avg": 3.6
+    },
+    {
+     "qid": "Q8458",
+     "label_en": "Human rights",
+     "attention_share_pct": 1.7,
+     "vs_global_avg": 3.4
     },
     {
      "qid": "Q79793",
      "label_en": "Measles",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 3.2
+     "vs_global_avg": 3.0
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.8,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.8
     },
     {
      "qid": "Q103817",
      "label_en": "Indigenous peoples",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.1
     },
     {
      "qid": "Q47488",
      "label_en": "International Criminal Court",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 1.9
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q8434",
@@ -42399,55 +40733,55 @@
      "qid": "Q28549308",
      "label_en": "Fake news",
      "attention_share_pct": 2.5,
-     "vs_global_avg": 7.3
+     "vs_global_avg": 7.1
     },
     {
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 4.6
+     "vs_global_avg": 4.3
     },
     {
      "qid": "Q7813",
      "label_en": "Universal Declaration of Human Rights",
      "attention_share_pct": 2.2,
-     "vs_global_avg": 4.2
-    },
-    {
-     "qid": "Q8458",
-     "label_en": "Human rights",
-     "attention_share_pct": 1.7,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q8092",
      "label_en": "Tropical cyclone",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 3.7
+     "vs_global_avg": 3.6
+    },
+    {
+     "qid": "Q8458",
+     "label_en": "Human rights",
+     "attention_share_pct": 1.7,
+     "vs_global_avg": 3.4
     },
     {
      "qid": "Q79793",
      "label_en": "Measles",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 3.2
+     "vs_global_avg": 3.0
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.8,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.8
     },
     {
      "qid": "Q103817",
      "label_en": "Indigenous peoples",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.1
     },
     {
      "qid": "Q47488",
      "label_en": "International Criminal Court",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 1.9
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q8434",
@@ -42541,55 +40875,55 @@
      "qid": "Q28549308",
      "label_en": "Fake news",
      "attention_share_pct": 2.5,
-     "vs_global_avg": 7.3
+     "vs_global_avg": 7.1
     },
     {
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 4.6
+     "vs_global_avg": 4.3
     },
     {
      "qid": "Q7813",
      "label_en": "Universal Declaration of Human Rights",
      "attention_share_pct": 2.2,
-     "vs_global_avg": 4.2
-    },
-    {
-     "qid": "Q8458",
-     "label_en": "Human rights",
-     "attention_share_pct": 1.7,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q8092",
      "label_en": "Tropical cyclone",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 3.7
+     "vs_global_avg": 3.6
+    },
+    {
+     "qid": "Q8458",
+     "label_en": "Human rights",
+     "attention_share_pct": 1.7,
+     "vs_global_avg": 3.4
     },
     {
      "qid": "Q79793",
      "label_en": "Measles",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 3.2
+     "vs_global_avg": 3.0
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.8,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.8
     },
     {
      "qid": "Q103817",
      "label_en": "Indigenous peoples",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.1
     },
     {
      "qid": "Q47488",
      "label_en": "International Criminal Court",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 1.9
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q8434",
@@ -42683,55 +41017,55 @@
      "qid": "Q28549308",
      "label_en": "Fake news",
      "attention_share_pct": 2.5,
-     "vs_global_avg": 7.3
+     "vs_global_avg": 7.1
     },
     {
      "qid": "Q2539",
      "label_en": "Machine learning",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 4.6
+     "vs_global_avg": 4.3
     },
     {
      "qid": "Q7813",
      "label_en": "Universal Declaration of Human Rights",
      "attention_share_pct": 2.2,
-     "vs_global_avg": 4.2
-    },
-    {
-     "qid": "Q8458",
-     "label_en": "Human rights",
-     "attention_share_pct": 1.7,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q8092",
      "label_en": "Tropical cyclone",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 3.7
+     "vs_global_avg": 3.6
+    },
+    {
+     "qid": "Q8458",
+     "label_en": "Human rights",
+     "attention_share_pct": 1.7,
+     "vs_global_avg": 3.4
     },
     {
      "qid": "Q79793",
      "label_en": "Measles",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 3.2
+     "vs_global_avg": 3.0
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.8,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 2.8
     },
     {
      "qid": "Q103817",
      "label_en": "Indigenous peoples",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.1
     },
     {
      "qid": "Q47488",
      "label_en": "International Criminal Court",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 1.9
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q8434",
@@ -42831,55 +41165,55 @@
      "qid": "Q223050",
      "label_en": "Statelessness",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 4.7
-    },
-    {
-     "qid": "Q7283",
-     "label_en": "Terrorism",
-     "attention_share_pct": 1.6,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 3.5
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.9
+     "vs_global_avg": 2.8
+    },
+    {
+     "qid": "Q7283",
+     "label_en": "Terrorism",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.5
     },
     {
      "qid": "Q12090",
      "label_en": "Cholera",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.5
+     "vs_global_avg": 2.3
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.7,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q41397",
      "label_en": "Genocide",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.9
     },
     {
      "qid": "Q7809",
      "label_en": "UNESCO",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q13479982",
      "label_en": "Cryptocurrency",
      "attention_share_pct": 1.3,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q35865",
      "label_en": "Inflation",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     }
    ],
    "rising_topics": []
@@ -42967,60 +41301,48 @@
      "qid": "Q41397",
      "label_en": "Genocide",
      "attention_share_pct": 3.0,
-     "vs_global_avg": 5.3
+     "vs_global_avg": 5.0
     },
     {
      "qid": "Q223050",
      "label_en": "Statelessness",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 3.8
-    },
-    {
-     "qid": "Q7283",
-     "label_en": "Terrorism",
-     "attention_share_pct": 1.3,
-     "vs_global_avg": 2.4
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.4,
-     "vs_global_avg": 2.4
+     "vs_global_avg": 2.3
+    },
+    {
+     "qid": "Q7283",
+     "label_en": "Terrorism",
+     "attention_share_pct": 1.3,
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12090",
      "label_en": "Cholera",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.9
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.2,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q8454",
      "label_en": "Capital punishment",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q12199",
      "label_en": "HIV/AIDS",
      "attention_share_pct": 2.4,
-     "vs_global_avg": 1.6
-    },
-    {
-     "qid": "Q7809",
-     "label_en": "UNESCO",
-     "attention_share_pct": 1.4,
-     "vs_global_avg": 1.6
-    },
-    {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.8,
      "vs_global_avg": 1.5
     }
    ],
@@ -43115,55 +41437,55 @@
      "qid": "Q223050",
      "label_en": "Statelessness",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 4.7
-    },
-    {
-     "qid": "Q7283",
-     "label_en": "Terrorism",
-     "attention_share_pct": 1.6,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 3.5
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.9
+     "vs_global_avg": 2.8
+    },
+    {
+     "qid": "Q7283",
+     "label_en": "Terrorism",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.5
     },
     {
      "qid": "Q12090",
      "label_en": "Cholera",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.5
+     "vs_global_avg": 2.3
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.7,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q41397",
      "label_en": "Genocide",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.9
     },
     {
      "qid": "Q7809",
      "label_en": "UNESCO",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q13479982",
      "label_en": "Cryptocurrency",
      "attention_share_pct": 1.3,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q35865",
      "label_en": "Inflation",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     }
    ],
    "rising_topics": []
@@ -43257,55 +41579,55 @@
      "qid": "Q223050",
      "label_en": "Statelessness",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 4.7
-    },
-    {
-     "qid": "Q7283",
-     "label_en": "Terrorism",
-     "attention_share_pct": 1.6,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 3.5
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.9
+     "vs_global_avg": 2.8
+    },
+    {
+     "qid": "Q7283",
+     "label_en": "Terrorism",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.5
     },
     {
      "qid": "Q12090",
      "label_en": "Cholera",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.5
+     "vs_global_avg": 2.3
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.7,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q41397",
      "label_en": "Genocide",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.9
     },
     {
      "qid": "Q7809",
      "label_en": "UNESCO",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q13479982",
      "label_en": "Cryptocurrency",
      "attention_share_pct": 1.3,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q35865",
      "label_en": "Inflation",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     }
    ],
    "rising_topics": []
@@ -43399,55 +41721,55 @@
      "qid": "Q223050",
      "label_en": "Statelessness",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 4.7
-    },
-    {
-     "qid": "Q7283",
-     "label_en": "Terrorism",
-     "attention_share_pct": 1.6,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 3.5
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.9
+     "vs_global_avg": 2.8
+    },
+    {
+     "qid": "Q7283",
+     "label_en": "Terrorism",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.5
     },
     {
      "qid": "Q12090",
      "label_en": "Cholera",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.5
+     "vs_global_avg": 2.3
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.7,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q41397",
      "label_en": "Genocide",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.9
     },
     {
      "qid": "Q7809",
      "label_en": "UNESCO",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q13479982",
      "label_en": "Cryptocurrency",
      "attention_share_pct": 1.3,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q35865",
      "label_en": "Inflation",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     }
    ],
    "rising_topics": []
@@ -43541,55 +41863,55 @@
      "qid": "Q223050",
      "label_en": "Statelessness",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 4.7
-    },
-    {
-     "qid": "Q7283",
-     "label_en": "Terrorism",
-     "attention_share_pct": 1.6,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 3.5
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.9
+     "vs_global_avg": 2.8
+    },
+    {
+     "qid": "Q7283",
+     "label_en": "Terrorism",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.5
     },
     {
      "qid": "Q12090",
      "label_en": "Cholera",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.5
+     "vs_global_avg": 2.3
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.7,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q41397",
      "label_en": "Genocide",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.9
     },
     {
      "qid": "Q7809",
      "label_en": "UNESCO",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q13479982",
      "label_en": "Cryptocurrency",
      "attention_share_pct": 1.3,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q35865",
      "label_en": "Inflation",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     }
    ],
    "rising_topics": []
@@ -43683,55 +42005,55 @@
      "qid": "Q223050",
      "label_en": "Statelessness",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 4.7
-    },
-    {
-     "qid": "Q7283",
-     "label_en": "Terrorism",
-     "attention_share_pct": 1.6,
-     "vs_global_avg": 3.0
+     "vs_global_avg": 3.5
     },
     {
      "qid": "Q8461",
      "label_en": "Racism",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.9
+     "vs_global_avg": 2.8
+    },
+    {
+     "qid": "Q7283",
+     "label_en": "Terrorism",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.5
     },
     {
      "qid": "Q12090",
      "label_en": "Cholera",
      "attention_share_pct": 1.5,
-     "vs_global_avg": 2.5
+     "vs_global_avg": 2.3
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.7,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q41397",
      "label_en": "Genocide",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.9
     },
     {
      "qid": "Q7809",
      "label_en": "UNESCO",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.0
+     "vs_global_avg": 1.8
     },
     {
      "qid": "Q13479982",
      "label_en": "Cryptocurrency",
      "attention_share_pct": 1.3,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q35865",
      "label_en": "Inflation",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     }
    ],
    "rising_topics": []
@@ -43739,219 +42061,283 @@
   "TUR": {
    "top_topics": [
     {
-     "qid": "Q11660",
-     "label_en": "Artificial intelligence",
-     "attention_share_pct": 71.1
-    },
-    {
      "qid": "Q1065",
      "label_en": "United Nations",
-     "attention_share_pct": 3.5
+     "attention_share_pct": 12.0
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
-     "attention_share_pct": 2.5
+     "attention_share_pct": 8.7
     },
     {
      "qid": "Q223050",
      "label_en": "Statelessness",
-     "attention_share_pct": 2.2
+     "attention_share_pct": 7.7
     },
     {
      "qid": "Q115564437",
      "label_en": "ChatGPT",
-     "attention_share_pct": 2.2
+     "attention_share_pct": 7.6
     },
     {
      "qid": "Q7283",
      "label_en": "Terrorism",
-     "attention_share_pct": 2.1
+     "attention_share_pct": 7.2
     },
     {
      "qid": "Q7817",
      "label_en": "World Health Organization",
-     "attention_share_pct": 1.9
+     "attention_share_pct": 6.4
     },
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 1.8
+     "attention_share_pct": 6.1
     },
     {
      "qid": "Q8454",
      "label_en": "Capital punishment",
-     "attention_share_pct": 1.3
+     "attention_share_pct": 4.6
     },
     {
      "qid": "Q84263196",
      "label_en": "COVID-19",
-     "attention_share_pct": 1.3
+     "attention_share_pct": 4.4
     },
     {
      "qid": "Q12078",
      "label_en": "Cancer",
-     "attention_share_pct": 0.9
+     "attention_share_pct": 3.2
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
-     "attention_share_pct": 0.9
+     "attention_share_pct": 3.1
     },
     {
      "qid": "Q7174",
      "label_en": "Democracy",
-     "attention_share_pct": 0.8
+     "attention_share_pct": 2.7
     },
     {
      "qid": "Q7809",
      "label_en": "UNESCO",
-     "attention_share_pct": 0.7
+     "attention_share_pct": 2.5
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
-     "attention_share_pct": 0.7
+     "attention_share_pct": 2.5
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 2.5
     }
    ],
    "distinctive_topics": [
     {
-     "qid": "Q11660",
-     "label_en": "Artificial intelligence",
-     "attention_share_pct": 71.1,
-     "vs_global_avg": 7.2
-    },
-    {
      "qid": "Q223050",
      "label_en": "Statelessness",
-     "attention_share_pct": 2.2,
-     "vs_global_avg": 5.3
+     "attention_share_pct": 7.7,
+     "vs_global_avg": 13.6
     },
     {
      "qid": "Q7283",
      "label_en": "Terrorism",
+     "attention_share_pct": 7.2,
+     "vs_global_avg": 11.1
+    },
+    {
+     "qid": "Q186228",
+     "label_en": "Minimum wage",
      "attention_share_pct": 2.1,
-     "vs_global_avg": 3.9
+     "vs_global_avg": 9.1
+    },
+    {
+     "qid": "Q17898",
+     "label_en": "LGBTQ rights",
+     "attention_share_pct": 2.4,
+     "vs_global_avg": 7.8
     },
     {
      "qid": "Q7817",
      "label_en": "World Health Organization",
+     "attention_share_pct": 6.4,
+     "vs_global_avg": 6.7
+    },
+    {
+     "qid": "Q12739",
+     "label_en": "Nuclear power",
      "attention_share_pct": 1.9,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 6.3
+    },
+    {
+     "qid": "Q8458",
+     "label_en": "Human rights",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 4.3
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 8.7,
+     "vs_global_avg": 4.2
+    },
+    {
+     "qid": "Q1363408",
+     "label_en": "5G",
+     "attention_share_pct": 2.0,
+     "vs_global_avg": 3.8
+    },
+    {
+     "qid": "Q132781",
+     "label_en": "Torture",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 3.4
     }
    ],
-   "rising_topics": [
-    {
-     "qid": "Q11660",
-     "label_en": "Artificial intelligence",
-     "velocity": 1.224,
-     "via_language": "tr",
-     "weight": 0.97
-    }
-   ]
+   "rising_topics": []
   },
   "CYP": {
    "top_topics": [
     {
-     "qid": "Q11660",
-     "label_en": "Artificial intelligence",
-     "attention_share_pct": 71.1
-    },
-    {
      "qid": "Q1065",
      "label_en": "United Nations",
-     "attention_share_pct": 3.5
+     "attention_share_pct": 12.0
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
-     "attention_share_pct": 2.5
+     "attention_share_pct": 8.7
     },
     {
      "qid": "Q223050",
      "label_en": "Statelessness",
-     "attention_share_pct": 2.2
+     "attention_share_pct": 7.7
     },
     {
      "qid": "Q115564437",
      "label_en": "ChatGPT",
-     "attention_share_pct": 2.2
+     "attention_share_pct": 7.6
     },
     {
      "qid": "Q7283",
      "label_en": "Terrorism",
-     "attention_share_pct": 2.1
+     "attention_share_pct": 7.2
     },
     {
      "qid": "Q7817",
      "label_en": "World Health Organization",
-     "attention_share_pct": 1.9
+     "attention_share_pct": 6.4
     },
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
-     "attention_share_pct": 1.8
+     "attention_share_pct": 6.1
     },
     {
      "qid": "Q8454",
      "label_en": "Capital punishment",
-     "attention_share_pct": 1.3
+     "attention_share_pct": 4.6
     },
     {
      "qid": "Q84263196",
      "label_en": "COVID-19",
-     "attention_share_pct": 1.3
+     "attention_share_pct": 4.4
     },
     {
      "qid": "Q12078",
      "label_en": "Cancer",
-     "attention_share_pct": 0.9
+     "attention_share_pct": 3.2
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
-     "attention_share_pct": 0.9
+     "attention_share_pct": 3.1
     },
     {
      "qid": "Q7174",
      "label_en": "Democracy",
-     "attention_share_pct": 0.8
+     "attention_share_pct": 2.7
     },
     {
      "qid": "Q7809",
      "label_en": "UNESCO",
-     "attention_share_pct": 0.7
+     "attention_share_pct": 2.5
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
-     "attention_share_pct": 0.7
+     "attention_share_pct": 2.5
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 2.5
     }
    ],
    "distinctive_topics": [
     {
-     "qid": "Q11660",
-     "label_en": "Artificial intelligence",
-     "attention_share_pct": 71.1,
-     "vs_global_avg": 7.2
-    },
-    {
      "qid": "Q223050",
      "label_en": "Statelessness",
-     "attention_share_pct": 2.2,
-     "vs_global_avg": 5.3
+     "attention_share_pct": 7.7,
+     "vs_global_avg": 13.6
     },
     {
      "qid": "Q7283",
      "label_en": "Terrorism",
+     "attention_share_pct": 7.2,
+     "vs_global_avg": 11.1
+    },
+    {
+     "qid": "Q186228",
+     "label_en": "Minimum wage",
      "attention_share_pct": 2.1,
-     "vs_global_avg": 3.9
+     "vs_global_avg": 9.1
+    },
+    {
+     "qid": "Q17898",
+     "label_en": "LGBTQ rights",
+     "attention_share_pct": 2.4,
+     "vs_global_avg": 7.8
     },
     {
      "qid": "Q7817",
      "label_en": "World Health Organization",
+     "attention_share_pct": 6.4,
+     "vs_global_avg": 6.7
+    },
+    {
+     "qid": "Q12739",
+     "label_en": "Nuclear power",
      "attention_share_pct": 1.9,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 6.3
+    },
+    {
+     "qid": "Q8458",
+     "label_en": "Human rights",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 4.3
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 8.7,
+     "vs_global_avg": 4.2
+    },
+    {
+     "qid": "Q1363408",
+     "label_en": "5G",
+     "attention_share_pct": 2.0,
+     "vs_global_avg": 3.8
+    },
+    {
+     "qid": "Q132781",
+     "label_en": "Torture",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 3.4
     }
    ],
    "rising_topics": []
@@ -44036,40 +42422,46 @@
    ],
    "distinctive_topics": [
     {
+     "qid": "Q1363408",
+     "label_en": "5G",
+     "attention_share_pct": 3.6,
+     "vs_global_avg": 6.7
+    },
+    {
      "qid": "Q13479982",
      "label_en": "Cryptocurrency",
      "attention_share_pct": 4.9,
-     "vs_global_avg": 6.8
+     "vs_global_avg": 6.5
     },
     {
      "qid": "Q8092",
      "label_en": "Tropical cyclone",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 3.6
     },
     {
      "qid": "Q2840",
      "label_en": "Influenza",
      "attention_share_pct": 1.0,
-     "vs_global_avg": 3.6
+     "vs_global_avg": 3.5
     },
     {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 2.9
+     "vs_global_avg": 2.8
     },
     {
      "qid": "Q12195",
      "label_en": "Polio",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.6
+     "vs_global_avg": 2.4
     },
     {
      "qid": "Q30953",
      "label_en": "Dengue fever",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 2.6
+     "vs_global_avg": 2.4
     },
     {
      "qid": "Q20514253",
@@ -44081,19 +42473,13 @@
      "qid": "Q84263196",
      "label_en": "COVID-19",
      "attention_share_pct": 3.7,
-     "vs_global_avg": 2.3
+     "vs_global_avg": 2.2
     },
     {
      "qid": "Q12199",
      "label_en": "HIV/AIDS",
      "attention_share_pct": 3.2,
-     "vs_global_avg": 2.1
-    },
-    {
-     "qid": "Q2539",
-     "label_en": "Machine learning",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 2.0
     }
    ],
    "rising_topics": [
@@ -44193,40 +42579,46 @@
    ],
    "distinctive_topics": [
     {
+     "qid": "Q1363408",
+     "label_en": "5G",
+     "attention_share_pct": 3.6,
+     "vs_global_avg": 6.7
+    },
+    {
      "qid": "Q13479982",
      "label_en": "Cryptocurrency",
      "attention_share_pct": 4.9,
-     "vs_global_avg": 6.8
+     "vs_global_avg": 6.5
     },
     {
      "qid": "Q8092",
      "label_en": "Tropical cyclone",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 3.6
     },
     {
      "qid": "Q2840",
      "label_en": "Influenza",
      "attention_share_pct": 1.0,
-     "vs_global_avg": 3.6
+     "vs_global_avg": 3.5
     },
     {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 2.9
+     "vs_global_avg": 2.8
     },
     {
      "qid": "Q12195",
      "label_en": "Polio",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.6
+     "vs_global_avg": 2.4
     },
     {
      "qid": "Q30953",
      "label_en": "Dengue fever",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 2.6
+     "vs_global_avg": 2.4
     },
     {
      "qid": "Q20514253",
@@ -44238,19 +42630,13 @@
      "qid": "Q84263196",
      "label_en": "COVID-19",
      "attention_share_pct": 3.7,
-     "vs_global_avg": 2.3
+     "vs_global_avg": 2.2
     },
     {
      "qid": "Q12199",
      "label_en": "HIV/AIDS",
      "attention_share_pct": 3.2,
-     "vs_global_avg": 2.1
-    },
-    {
-     "qid": "Q2539",
-     "label_en": "Machine learning",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 2.0
     }
    ],
    "rising_topics": []
@@ -44335,40 +42721,46 @@
    ],
    "distinctive_topics": [
     {
+     "qid": "Q1363408",
+     "label_en": "5G",
+     "attention_share_pct": 3.6,
+     "vs_global_avg": 6.7
+    },
+    {
      "qid": "Q13479982",
      "label_en": "Cryptocurrency",
      "attention_share_pct": 4.9,
-     "vs_global_avg": 6.8
+     "vs_global_avg": 6.5
     },
     {
      "qid": "Q8092",
      "label_en": "Tropical cyclone",
      "attention_share_pct": 2.0,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 3.6
     },
     {
      "qid": "Q2840",
      "label_en": "Influenza",
      "attention_share_pct": 1.0,
-     "vs_global_avg": 3.6
+     "vs_global_avg": 3.5
     },
     {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 2.8,
-     "vs_global_avg": 2.9
+     "vs_global_avg": 2.8
     },
     {
      "qid": "Q12195",
      "label_en": "Polio",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 2.6
+     "vs_global_avg": 2.4
     },
     {
      "qid": "Q30953",
      "label_en": "Dengue fever",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 2.6
+     "vs_global_avg": 2.4
     },
     {
      "qid": "Q20514253",
@@ -44380,19 +42772,13 @@
      "qid": "Q84263196",
      "label_en": "COVID-19",
      "attention_share_pct": 3.7,
-     "vs_global_avg": 2.3
+     "vs_global_avg": 2.2
     },
     {
      "qid": "Q12199",
      "label_en": "HIV/AIDS",
      "attention_share_pct": 3.2,
-     "vs_global_avg": 2.1
-    },
-    {
-     "qid": "Q2539",
-     "label_en": "Machine learning",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.8
+     "vs_global_avg": 2.0
     }
    ],
    "rising_topics": []
@@ -44457,46 +42843,52 @@
    ],
    "distinctive_topics": [
     {
+     "qid": "Q1363408",
+     "label_en": "5G",
+     "attention_share_pct": 4.9,
+     "vs_global_avg": 9.3
+    },
+    {
      "qid": "Q125928",
      "label_en": "Climate change",
      "attention_share_pct": 8.7,
-     "vs_global_avg": 10.2
+     "vs_global_avg": 9.2
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 5.1,
-     "vs_global_avg": 4.0
+     "vs_global_avg": 3.7
     },
     {
      "qid": "Q35865",
      "label_en": "Inflation",
      "attention_share_pct": 2.5,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 3.6
     },
     {
      "qid": "Q12078",
      "label_en": "Cancer",
      "attention_share_pct": 5.5,
-     "vs_global_avg": 3.8
+     "vs_global_avg": 3.5
     },
     {
      "qid": "Q11660",
      "label_en": "Artificial intelligence",
      "attention_share_pct": 28.3,
-     "vs_global_avg": 2.9
+     "vs_global_avg": 3.3
     },
     {
      "qid": "Q8454",
      "label_en": "Capital punishment",
      "attention_share_pct": 5.1,
-     "vs_global_avg": 2.8
+     "vs_global_avg": 2.6
     },
     {
      "qid": "Q1065",
      "label_en": "United Nations",
      "attention_share_pct": 8.5,
-     "vs_global_avg": 2.3
+     "vs_global_avg": 2.1
     },
     {
      "qid": "Q8070",
@@ -44590,25 +42982,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -44617,37 +43015,191 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
    "rising_topics": []
+  },
+  "DZA": {
+   "top_topics": [
+    {
+     "qid": "Q115564437",
+     "label_en": "ChatGPT",
+     "attention_share_pct": 27.3
+    },
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 5.3
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 4.5
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.5
+    },
+    {
+     "qid": "Q1065",
+     "label_en": "United Nations",
+     "attention_share_pct": 3.4
+    },
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "attention_share_pct": 2.9
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.2
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 2.2
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "attention_share_pct": 2.2
+    },
+    {
+     "qid": "Q17422",
+     "label_en": "Same-sex marriage",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q12078",
+     "label_en": "Cancer",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q12802",
+     "label_en": "Nuclear weapon",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 1.6
+    }
+   ],
+   "distinctive_topics": [
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 5.3,
+     "vs_global_avg": 4.8
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.2,
+     "vs_global_avg": 2.4
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 1.8,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.2,
+     "vs_global_avg": 1.8
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.5,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.0,
+     "vs_global_avg": 1.6
+    },
+    {
+     "qid": "Q47488",
+     "label_en": "International Criminal Court",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.6
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9,
+     "vs_global_avg": 1.5
+    }
+   ],
+   "rising_topics": [
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "velocity": 1.776,
+     "via_language": "fr",
+     "weight": 0.08
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "velocity": 0.92,
+     "via_language": "fr",
+     "weight": 0.08
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "velocity": 0.868,
+     "via_language": "fr",
+     "weight": 0.08
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "velocity": 0.598,
+     "via_language": "fr",
+     "weight": 0.08
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "velocity": 0.507,
+     "via_language": "fr",
+     "weight": 0.08
+    }
+   ]
   },
   "SAU": {
    "top_topics": [
@@ -44732,25 +43284,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -44759,33 +43317,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -44874,25 +43420,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -44901,37 +43453,191 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
    "rising_topics": []
+  },
+  "MAR": {
+   "top_topics": [
+    {
+     "qid": "Q115564437",
+     "label_en": "ChatGPT",
+     "attention_share_pct": 27.3
+    },
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 5.4
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.5
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 4.3
+    },
+    {
+     "qid": "Q1065",
+     "label_en": "United Nations",
+     "attention_share_pct": 3.4
+    },
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "attention_share_pct": 2.8
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.3
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 2.2
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "attention_share_pct": 2.2
+    },
+    {
+     "qid": "Q12078",
+     "label_en": "Cancer",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q17422",
+     "label_en": "Same-sex marriage",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q12802",
+     "label_en": "Nuclear weapon",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 1.6
+    }
+   ],
+   "distinctive_topics": [
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 5.4,
+     "vs_global_avg": 4.9
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.3,
+     "vs_global_avg": 2.4
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 1.8,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.3,
+     "vs_global_avg": 1.8
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.5,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.0,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q47488",
+     "label_en": "International Criminal Court",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.6
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9,
+     "vs_global_avg": 1.5
+    }
+   ],
+   "rising_topics": [
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "velocity": 1.776,
+     "via_language": "fr",
+     "weight": 0.07
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "velocity": 0.92,
+     "via_language": "fr",
+     "weight": 0.07
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "velocity": 0.868,
+     "via_language": "fr",
+     "weight": 0.07
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "velocity": 0.598,
+     "via_language": "fr",
+     "weight": 0.07
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "velocity": 0.507,
+     "via_language": "fr",
+     "weight": 0.07
+    }
+   ]
   },
   "SDN": {
    "top_topics": [
@@ -45016,25 +43722,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -45043,33 +43755,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -45158,25 +43858,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -45185,33 +43891,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -45300,25 +43994,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -45327,34 +44027,152 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
+    }
+   ],
+   "rising_topics": []
+  },
+  "TUN": {
+   "top_topics": [
+    {
+     "qid": "Q115564437",
+     "label_en": "ChatGPT",
+     "attention_share_pct": 27.3
+    },
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 5.6
     },
     {
      "qid": "Q12204",
      "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "attention_share_pct": 4.5
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 4.0
+    },
+    {
+     "qid": "Q1065",
+     "label_en": "United Nations",
+     "attention_share_pct": 3.3
+    },
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "attention_share_pct": 2.7
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.3
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "attention_share_pct": 2.1
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 2.1
+    },
+    {
+     "qid": "Q12078",
+     "label_en": "Cancer",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q17422",
+     "label_en": "Same-sex marriage",
+     "attention_share_pct": 1.7
+    },
+    {
+     "qid": "Q12802",
+     "label_en": "Nuclear weapon",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 1.6
+    }
+   ],
+   "distinctive_topics": [
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 5.6,
+     "vs_global_avg": 5.0
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.3,
+     "vs_global_avg": 2.5
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 1.8,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.3,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.5,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q47488",
+     "label_en": "International Criminal Court",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9,
+     "vs_global_avg": 1.5
     }
    ],
    "rising_topics": []
@@ -45442,25 +44260,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -45469,33 +44293,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -45584,25 +44396,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -45611,33 +44429,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -45726,25 +44532,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -45753,33 +44565,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -45868,25 +44668,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -45895,33 +44701,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -46010,25 +44804,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -46037,33 +44837,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -46152,25 +44940,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -46179,33 +44973,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -46294,25 +45076,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -46321,33 +45109,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -46436,25 +45212,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -46463,33 +45245,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -46578,25 +45348,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -46605,33 +45381,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -46720,25 +45484,31 @@
      "qid": "Q17422",
      "label_en": "Same-sex marriage",
      "attention_share_pct": 6.4,
-     "vs_global_avg": 4.2
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q202833",
      "label_en": "Social media",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.9
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 4.2,
-     "vs_global_avg": 2.2
+     "vs_global_avg": 2.0
     },
     {
      "qid": "Q12802",
      "label_en": "Nuclear weapon",
      "attention_share_pct": 2.6,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 14.5,
+     "vs_global_avg": 1.7
     },
     {
      "qid": "Q37470",
@@ -46747,33 +45517,21 @@
      "vs_global_avg": 1.7
     },
     {
-     "qid": "Q35865",
-     "label_en": "Inflation",
-     "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 1.6,
-     "vs_global_avg": 1.7
+     "vs_global_avg": 1.6
     },
     {
      "qid": "Q7804",
      "label_en": "International Monetary Fund",
      "attention_share_pct": 1.1,
-     "vs_global_avg": 1.7
-    },
-    {
-     "qid": "Q12078",
-     "label_en": "Cancer",
-     "attention_share_pct": 2.3,
      "vs_global_avg": 1.6
     },
     {
-     "qid": "Q12204",
-     "label_en": "Tuberculosis",
-     "attention_share_pct": 3.9,
+     "qid": "Q35865",
+     "label_en": "Inflation",
+     "attention_share_pct": 1.1,
      "vs_global_avg": 1.6
     }
    ],
@@ -46862,13 +45620,13 @@
      "qid": "Q40231",
      "label_en": "Election",
      "attention_share_pct": 14.5,
-     "vs_global_avg": 28.8
+     "vs_global_avg": 28.5
     },
     {
      "qid": "Q43059",
      "label_en": "Drought",
      "attention_share_pct": 11.2,
-     "vs_global_avg": 25.1
+     "vs_global_avg": 24.3
     },
     {
      "qid": "Q131123",
@@ -46880,43 +45638,43 @@
      "qid": "Q103817",
      "label_en": "Indigenous peoples",
      "attention_share_pct": 5.7,
-     "vs_global_avg": 8.6
+     "vs_global_avg": 8.3
     },
     {
      "qid": "Q11451",
      "label_en": "Agriculture",
      "attention_share_pct": 6.5,
-     "vs_global_avg": 7.1
+     "vs_global_avg": 6.9
     },
     {
      "qid": "Q47041",
      "label_en": "Biodiversity",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 6.9
-    },
-    {
-     "qid": "Q7283",
-     "label_en": "Terrorism",
-     "attention_share_pct": 3.2,
-     "vs_global_avg": 5.9
+     "vs_global_avg": 6.7
     },
     {
      "qid": "Q7174",
      "label_en": "Democracy",
      "attention_share_pct": 9.3,
-     "vs_global_avg": 5.9
+     "vs_global_avg": 5.6
+    },
+    {
+     "qid": "Q7283",
+     "label_en": "Terrorism",
+     "attention_share_pct": 3.2,
+     "vs_global_avg": 5.0
     },
     {
      "qid": "Q1065",
      "label_en": "United Nations",
      "attention_share_pct": 17.4,
-     "vs_global_avg": 4.7
+     "vs_global_avg": 4.4
     },
     {
      "qid": "Q7817",
      "label_en": "World Health Organization",
      "attention_share_pct": 3.4,
-     "vs_global_avg": 4.1
+     "vs_global_avg": 3.6
     }
    ],
    "rising_topics": []
@@ -47004,13 +45762,13 @@
      "qid": "Q40231",
      "label_en": "Election",
      "attention_share_pct": 14.5,
-     "vs_global_avg": 28.8
+     "vs_global_avg": 28.5
     },
     {
      "qid": "Q43059",
      "label_en": "Drought",
      "attention_share_pct": 11.2,
-     "vs_global_avg": 25.1
+     "vs_global_avg": 24.3
     },
     {
      "qid": "Q131123",
@@ -47022,43 +45780,1465 @@
      "qid": "Q103817",
      "label_en": "Indigenous peoples",
      "attention_share_pct": 5.7,
-     "vs_global_avg": 8.6
+     "vs_global_avg": 8.3
     },
     {
      "qid": "Q11451",
      "label_en": "Agriculture",
      "attention_share_pct": 6.5,
-     "vs_global_avg": 7.1
+     "vs_global_avg": 6.9
     },
     {
      "qid": "Q47041",
      "label_en": "Biodiversity",
      "attention_share_pct": 3.1,
-     "vs_global_avg": 6.9
-    },
-    {
-     "qid": "Q7283",
-     "label_en": "Terrorism",
-     "attention_share_pct": 3.2,
-     "vs_global_avg": 5.9
+     "vs_global_avg": 6.7
     },
     {
      "qid": "Q7174",
      "label_en": "Democracy",
      "attention_share_pct": 9.3,
-     "vs_global_avg": 5.9
+     "vs_global_avg": 5.6
+    },
+    {
+     "qid": "Q7283",
+     "label_en": "Terrorism",
+     "attention_share_pct": 3.2,
+     "vs_global_avg": 5.0
     },
     {
      "qid": "Q1065",
      "label_en": "United Nations",
      "attention_share_pct": 17.4,
-     "vs_global_avg": 4.7
+     "vs_global_avg": 4.4
     },
     {
      "qid": "Q7817",
      "label_en": "World Health Organization",
      "attention_share_pct": 3.4,
-     "vs_global_avg": 4.1
+     "vs_global_avg": 3.6
+    }
+   ],
+   "rising_topics": []
+  },
+  "FRA": {
+   "top_topics": [
+    {
+     "qid": "Q115564437",
+     "label_en": "ChatGPT",
+     "attention_share_pct": 27.5
+    },
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6
+    },
+    {
+     "qid": "Q1065",
+     "label_en": "United Nations",
+     "attention_share_pct": 3.3
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q12078",
+     "label_en": "Cancer",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q7809",
+     "label_en": "UNESCO",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3
+    }
+   ],
+   "distinctive_topics": [
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8,
+     "vs_global_avg": 6.1
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9,
+     "vs_global_avg": 3.1
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.4
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 2.2
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3,
+     "vs_global_avg": 2.1
+    },
+    {
+     "qid": "Q41397",
+     "label_en": "Genocide",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q8461",
+     "label_en": "Racism",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q47488",
+     "label_en": "International Criminal Court",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9,
+     "vs_global_avg": 1.5
+    }
+   ],
+   "rising_topics": [
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "velocity": 1.776,
+     "via_language": "fr",
+     "weight": 0.35
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "velocity": 0.92,
+     "via_language": "fr",
+     "weight": 0.35
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "velocity": 0.868,
+     "via_language": "fr",
+     "weight": 0.35
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "velocity": 0.598,
+     "via_language": "fr",
+     "weight": 0.35
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "velocity": 0.507,
+     "via_language": "fr",
+     "weight": 0.35
+    }
+   ]
+  },
+  "COD": {
+   "top_topics": [
+    {
+     "qid": "Q115564437",
+     "label_en": "ChatGPT",
+     "attention_share_pct": 27.5
+    },
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6
+    },
+    {
+     "qid": "Q1065",
+     "label_en": "United Nations",
+     "attention_share_pct": 3.3
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q12078",
+     "label_en": "Cancer",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q7809",
+     "label_en": "UNESCO",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3
+    }
+   ],
+   "distinctive_topics": [
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8,
+     "vs_global_avg": 6.1
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9,
+     "vs_global_avg": 3.1
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.4
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 2.2
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3,
+     "vs_global_avg": 2.1
+    },
+    {
+     "qid": "Q41397",
+     "label_en": "Genocide",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q8461",
+     "label_en": "Racism",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q47488",
+     "label_en": "International Criminal Court",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9,
+     "vs_global_avg": 1.5
+    }
+   ],
+   "rising_topics": [
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "velocity": 1.776,
+     "via_language": "fr",
+     "weight": 0.12
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "velocity": 0.92,
+     "via_language": "fr",
+     "weight": 0.12
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "velocity": 0.868,
+     "via_language": "fr",
+     "weight": 0.12
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "velocity": 0.598,
+     "via_language": "fr",
+     "weight": 0.12
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "velocity": 0.507,
+     "via_language": "fr",
+     "weight": 0.12
+    }
+   ]
+  },
+  "CMR": {
+   "top_topics": [
+    {
+     "qid": "Q115564437",
+     "label_en": "ChatGPT",
+     "attention_share_pct": 27.5
+    },
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6
+    },
+    {
+     "qid": "Q1065",
+     "label_en": "United Nations",
+     "attention_share_pct": 3.3
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q12078",
+     "label_en": "Cancer",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q7809",
+     "label_en": "UNESCO",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3
+    }
+   ],
+   "distinctive_topics": [
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8,
+     "vs_global_avg": 6.1
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9,
+     "vs_global_avg": 3.1
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.4
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 2.2
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3,
+     "vs_global_avg": 2.1
+    },
+    {
+     "qid": "Q41397",
+     "label_en": "Genocide",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q8461",
+     "label_en": "Racism",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q47488",
+     "label_en": "International Criminal Court",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9,
+     "vs_global_avg": 1.5
+    }
+   ],
+   "rising_topics": [
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "velocity": 1.776,
+     "via_language": "fr",
+     "weight": 0.05
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "velocity": 0.92,
+     "via_language": "fr",
+     "weight": 0.05
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "velocity": 0.868,
+     "via_language": "fr",
+     "weight": 0.05
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "velocity": 0.598,
+     "via_language": "fr",
+     "weight": 0.05
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "velocity": 0.507,
+     "via_language": "fr",
+     "weight": 0.05
+    }
+   ]
+  },
+  "CIV": {
+   "top_topics": [
+    {
+     "qid": "Q115564437",
+     "label_en": "ChatGPT",
+     "attention_share_pct": 27.5
+    },
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6
+    },
+    {
+     "qid": "Q1065",
+     "label_en": "United Nations",
+     "attention_share_pct": 3.3
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q12078",
+     "label_en": "Cancer",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q7809",
+     "label_en": "UNESCO",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3
+    }
+   ],
+   "distinctive_topics": [
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8,
+     "vs_global_avg": 6.1
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9,
+     "vs_global_avg": 3.1
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.4
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 2.2
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3,
+     "vs_global_avg": 2.1
+    },
+    {
+     "qid": "Q41397",
+     "label_en": "Genocide",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q8461",
+     "label_en": "Racism",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q47488",
+     "label_en": "International Criminal Court",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9,
+     "vs_global_avg": 1.5
+    }
+   ],
+   "rising_topics": [
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "velocity": 1.776,
+     "via_language": "fr",
+     "weight": 0.05
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "velocity": 0.92,
+     "via_language": "fr",
+     "weight": 0.05
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "velocity": 0.868,
+     "via_language": "fr",
+     "weight": 0.05
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "velocity": 0.598,
+     "via_language": "fr",
+     "weight": 0.05
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "velocity": 0.507,
+     "via_language": "fr",
+     "weight": 0.05
+    }
+   ]
+  },
+  "SEN": {
+   "top_topics": [
+    {
+     "qid": "Q115564437",
+     "label_en": "ChatGPT",
+     "attention_share_pct": 27.5
+    },
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6
+    },
+    {
+     "qid": "Q1065",
+     "label_en": "United Nations",
+     "attention_share_pct": 3.3
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q12078",
+     "label_en": "Cancer",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q7809",
+     "label_en": "UNESCO",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3
+    }
+   ],
+   "distinctive_topics": [
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8,
+     "vs_global_avg": 6.1
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9,
+     "vs_global_avg": 3.1
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.4
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 2.2
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3,
+     "vs_global_avg": 2.1
+    },
+    {
+     "qid": "Q41397",
+     "label_en": "Genocide",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q8461",
+     "label_en": "Racism",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q47488",
+     "label_en": "International Criminal Court",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9,
+     "vs_global_avg": 1.5
+    }
+   ],
+   "rising_topics": []
+  },
+  "BEL": {
+   "top_topics": [
+    {
+     "qid": "Q115564437",
+     "label_en": "ChatGPT",
+     "attention_share_pct": 27.5
+    },
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6
+    },
+    {
+     "qid": "Q1065",
+     "label_en": "United Nations",
+     "attention_share_pct": 3.3
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q12078",
+     "label_en": "Cancer",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q7809",
+     "label_en": "UNESCO",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3
+    }
+   ],
+   "distinctive_topics": [
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8,
+     "vs_global_avg": 6.1
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9,
+     "vs_global_avg": 3.1
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.4
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 2.2
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3,
+     "vs_global_avg": 2.1
+    },
+    {
+     "qid": "Q41397",
+     "label_en": "Genocide",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q8461",
+     "label_en": "Racism",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q47488",
+     "label_en": "International Criminal Court",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9,
+     "vs_global_avg": 1.5
+    }
+   ],
+   "rising_topics": []
+  },
+  "MLI": {
+   "top_topics": [
+    {
+     "qid": "Q115564437",
+     "label_en": "ChatGPT",
+     "attention_share_pct": 27.5
+    },
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6
+    },
+    {
+     "qid": "Q1065",
+     "label_en": "United Nations",
+     "attention_share_pct": 3.3
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q12078",
+     "label_en": "Cancer",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q7809",
+     "label_en": "UNESCO",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3
+    }
+   ],
+   "distinctive_topics": [
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8,
+     "vs_global_avg": 6.1
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9,
+     "vs_global_avg": 3.1
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.4
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 2.2
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3,
+     "vs_global_avg": 2.1
+    },
+    {
+     "qid": "Q41397",
+     "label_en": "Genocide",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q8461",
+     "label_en": "Racism",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q47488",
+     "label_en": "International Criminal Court",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9,
+     "vs_global_avg": 1.5
+    }
+   ],
+   "rising_topics": []
+  },
+  "BFA": {
+   "top_topics": [
+    {
+     "qid": "Q115564437",
+     "label_en": "ChatGPT",
+     "attention_share_pct": 27.5
+    },
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6
+    },
+    {
+     "qid": "Q1065",
+     "label_en": "United Nations",
+     "attention_share_pct": 3.3
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q12078",
+     "label_en": "Cancer",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q7809",
+     "label_en": "UNESCO",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3
+    }
+   ],
+   "distinctive_topics": [
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8,
+     "vs_global_avg": 6.1
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9,
+     "vs_global_avg": 3.1
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.4
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 2.2
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3,
+     "vs_global_avg": 2.1
+    },
+    {
+     "qid": "Q41397",
+     "label_en": "Genocide",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q8461",
+     "label_en": "Racism",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q47488",
+     "label_en": "International Criminal Court",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9,
+     "vs_global_avg": 1.5
+    }
+   ],
+   "rising_topics": []
+  },
+  "HTI": {
+   "top_topics": [
+    {
+     "qid": "Q115564437",
+     "label_en": "ChatGPT",
+     "attention_share_pct": 27.5
+    },
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6
+    },
+    {
+     "qid": "Q1065",
+     "label_en": "United Nations",
+     "attention_share_pct": 3.3
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1
+    },
+    {
+     "qid": "Q8454",
+     "label_en": "Capital punishment",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q7944",
+     "label_en": "Earthquake",
+     "attention_share_pct": 2.0
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9
+    },
+    {
+     "qid": "Q12078",
+     "label_en": "Cancer",
+     "attention_share_pct": 1.8
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q208373",
+     "label_en": "Female genital mutilation",
+     "attention_share_pct": 1.6
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q7809",
+     "label_en": "UNESCO",
+     "attention_share_pct": 1.5
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3
+    }
+   ],
+   "distinctive_topics": [
+    {
+     "qid": "Q215864",
+     "label_en": "Heat wave",
+     "attention_share_pct": 6.8,
+     "vs_global_avg": 6.1
+    },
+    {
+     "qid": "Q125928",
+     "label_en": "Climate change",
+     "attention_share_pct": 2.9,
+     "vs_global_avg": 3.1
+    },
+    {
+     "qid": "Q12195",
+     "label_en": "Polio",
+     "attention_share_pct": 1.6,
+     "vs_global_avg": 2.4
+    },
+    {
+     "qid": "Q12156",
+     "label_en": "Malaria",
+     "attention_share_pct": 2.1,
+     "vs_global_avg": 2.2
+    },
+    {
+     "qid": "Q12090",
+     "label_en": "Cholera",
+     "attention_share_pct": 1.3,
+     "vs_global_avg": 2.1
+    },
+    {
+     "qid": "Q41397",
+     "label_en": "Genocide",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.9
+    },
+    {
+     "qid": "Q12204",
+     "label_en": "Tuberculosis",
+     "attention_share_pct": 4.6,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q8461",
+     "label_en": "Racism",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q47488",
+     "label_en": "International Criminal Court",
+     "attention_share_pct": 1.1,
+     "vs_global_avg": 1.7
+    },
+    {
+     "qid": "Q51993",
+     "label_en": "Ebola",
+     "attention_share_pct": 1.9,
+     "vs_global_avg": 1.5
     }
    ],
    "rising_topics": []
@@ -47116,43 +47296,49 @@
      "qid": "Q7649586",
      "label_en": "Sustainable Development Goals",
      "attention_share_pct": 10.4,
-     "vs_global_avg": 27.1
+     "vs_global_avg": 26.4
     },
     {
      "qid": "Q103817",
      "label_en": "Indigenous peoples",
      "attention_share_pct": 15.3,
-     "vs_global_avg": 23.3
+     "vs_global_avg": 22.4
     },
     {
      "qid": "Q47041",
      "label_en": "Biodiversity",
      "attention_share_pct": 9.5,
-     "vs_global_avg": 21.0
+     "vs_global_avg": 20.4
     },
     {
      "qid": "Q8434",
      "label_en": "Education",
      "attention_share_pct": 9.3,
-     "vs_global_avg": 10.9
+     "vs_global_avg": 10.7
     },
     {
      "qid": "Q79793",
      "label_en": "Measles",
      "attention_share_pct": 8.0,
-     "vs_global_avg": 8.9
+     "vs_global_avg": 8.5
     },
     {
      "qid": "Q7174",
      "label_en": "Democracy",
      "attention_share_pct": 8.1,
-     "vs_global_avg": 5.1
+     "vs_global_avg": 4.9
     },
     {
      "qid": "Q1065",
      "label_en": "United Nations",
      "attention_share_pct": 14.7,
-     "vs_global_avg": 4.0
+     "vs_global_avg": 3.7
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 13.9,
+     "vs_global_avg": 1.6
     }
    ],
    "rising_topics": []
@@ -47246,7 +47432,7 @@
      "qid": "Q1546421",
      "label_en": "Child marriage",
      "attention_share_pct": 1.9,
-     "vs_global_avg": 13.9
+     "vs_global_avg": 13.0
     },
     {
      "qid": "Q1800556",
@@ -47258,31 +47444,31 @@
      "qid": "Q167191",
      "label_en": "Child abuse",
      "attention_share_pct": 2.3,
-     "vs_global_avg": 10.7
+     "vs_global_avg": 10.3
     },
     {
      "qid": "Q2408310",
      "label_en": "Wartime sexual violence",
      "attention_share_pct": 1.8,
-     "vs_global_avg": 9.9
+     "vs_global_avg": 9.5
     },
     {
      "qid": "Q122224",
      "label_en": "Contraception",
      "attention_share_pct": 1.4,
-     "vs_global_avg": 7.0
+     "vs_global_avg": 6.8
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 12.4,
-     "vs_global_avg": 6.5
+     "vs_global_avg": 5.9
     },
     {
      "qid": "Q174876",
      "label_en": "Breastfeeding",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 5.1
+     "vs_global_avg": 5.0
     },
     {
      "qid": "Q156537",
@@ -47294,7 +47480,7 @@
      "qid": "Q132781",
      "label_en": "Torture",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.8
     }
    ],
    "rising_topics": [
@@ -47403,7 +47589,7 @@
      "qid": "Q1546421",
      "label_en": "Child marriage",
      "attention_share_pct": 1.9,
-     "vs_global_avg": 13.9
+     "vs_global_avg": 13.0
     },
     {
      "qid": "Q1800556",
@@ -47415,31 +47601,31 @@
      "qid": "Q167191",
      "label_en": "Child abuse",
      "attention_share_pct": 2.3,
-     "vs_global_avg": 10.7
+     "vs_global_avg": 10.3
     },
     {
      "qid": "Q2408310",
      "label_en": "Wartime sexual violence",
      "attention_share_pct": 1.8,
-     "vs_global_avg": 9.9
+     "vs_global_avg": 9.5
     },
     {
      "qid": "Q122224",
      "label_en": "Contraception",
      "attention_share_pct": 1.4,
-     "vs_global_avg": 7.0
+     "vs_global_avg": 6.8
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 12.4,
-     "vs_global_avg": 6.5
+     "vs_global_avg": 5.9
     },
     {
      "qid": "Q174876",
      "label_en": "Breastfeeding",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 5.1
+     "vs_global_avg": 5.0
     },
     {
      "qid": "Q156537",
@@ -47451,7 +47637,7 @@
      "qid": "Q132781",
      "label_en": "Torture",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.8
     }
    ],
    "rising_topics": [
@@ -47560,7 +47746,7 @@
      "qid": "Q1546421",
      "label_en": "Child marriage",
      "attention_share_pct": 1.9,
-     "vs_global_avg": 13.9
+     "vs_global_avg": 13.0
     },
     {
      "qid": "Q1800556",
@@ -47572,31 +47758,31 @@
      "qid": "Q167191",
      "label_en": "Child abuse",
      "attention_share_pct": 2.3,
-     "vs_global_avg": 10.7
+     "vs_global_avg": 10.3
     },
     {
      "qid": "Q2408310",
      "label_en": "Wartime sexual violence",
      "attention_share_pct": 1.8,
-     "vs_global_avg": 9.9
+     "vs_global_avg": 9.5
     },
     {
      "qid": "Q122224",
      "label_en": "Contraception",
      "attention_share_pct": 1.4,
-     "vs_global_avg": 7.0
+     "vs_global_avg": 6.8
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 12.4,
-     "vs_global_avg": 6.5
+     "vs_global_avg": 5.9
     },
     {
      "qid": "Q174876",
      "label_en": "Breastfeeding",
      "attention_share_pct": 1.2,
-     "vs_global_avg": 5.1
+     "vs_global_avg": 5.0
     },
     {
      "qid": "Q156537",
@@ -47608,7 +47794,7 @@
      "qid": "Q132781",
      "label_en": "Torture",
      "attention_share_pct": 1.7,
-     "vs_global_avg": 3.1
+     "vs_global_avg": 2.8
     }
    ],
    "rising_topics": []
@@ -47691,61 +47877,61 @@
      "qid": "Q49473179",
      "label_en": "Deepfake",
      "attention_share_pct": 11.7,
-     "vs_global_avg": 32.3
-    },
-    {
-     "qid": "Q186228",
-     "label_en": "Minimum wage",
-     "attention_share_pct": 4.2,
-     "vs_global_avg": 20.6
+     "vs_global_avg": 31.2
     },
     {
      "qid": "Q174876",
      "label_en": "Breastfeeding",
      "attention_share_pct": 4.3,
-     "vs_global_avg": 18.3
+     "vs_global_avg": 17.8
+    },
+    {
+     "qid": "Q186228",
+     "label_en": "Minimum wage",
+     "attention_share_pct": 4.2,
+     "vs_global_avg": 17.8
     },
     {
      "qid": "Q20514253",
      "label_en": "Blockchain",
      "attention_share_pct": 4.5,
-     "vs_global_avg": 10.4
+     "vs_global_avg": 9.9
     },
     {
      "qid": "Q13479982",
      "label_en": "Cryptocurrency",
      "attention_share_pct": 4.3,
-     "vs_global_avg": 5.9
+     "vs_global_avg": 5.7
     },
     {
      "qid": "Q208373",
      "label_en": "Female genital mutilation",
      "attention_share_pct": 8.6,
-     "vs_global_avg": 4.5
+     "vs_global_avg": 4.1
     },
     {
      "qid": "Q12206",
      "label_en": "Diabetes",
      "attention_share_pct": 3.9,
-     "vs_global_avg": 4.1
-    },
-    {
-     "qid": "Q12199",
-     "label_en": "HIV/AIDS",
-     "attention_share_pct": 3.6,
-     "vs_global_avg": 2.4
+     "vs_global_avg": 4.0
     },
     {
      "qid": "Q7174",
      "label_en": "Democracy",
      "attention_share_pct": 3.9,
-     "vs_global_avg": 2.4
+     "vs_global_avg": 2.3
+    },
+    {
+     "qid": "Q12199",
+     "label_en": "HIV/AIDS",
+     "attention_share_pct": 3.6,
+     "vs_global_avg": 2.3
     },
     {
      "qid": "Q84263196",
      "label_en": "COVID-19",
      "attention_share_pct": 3.4,
-     "vs_global_avg": 2.1
+     "vs_global_avg": 2.0
     }
    ],
    "rising_topics": []
@@ -47788,31 +47974,31 @@
      "qid": "Q8070",
      "label_en": "Tsunami",
      "attention_share_pct": 19.1,
-     "vs_global_avg": 14.1
+     "vs_global_avg": 14.0
     },
     {
      "qid": "Q7174",
      "label_en": "Democracy",
      "attention_share_pct": 11.0,
-     "vs_global_avg": 6.9
+     "vs_global_avg": 6.6
     },
     {
      "qid": "Q1065",
      "label_en": "United Nations",
      "attention_share_pct": 22.3,
-     "vs_global_avg": 6.1
+     "vs_global_avg": 5.6
+    },
+    {
+     "qid": "Q11660",
+     "label_en": "Artificial intelligence",
+     "attention_share_pct": 21.2,
+     "vs_global_avg": 2.5
     },
     {
      "qid": "Q7944",
      "label_en": "Earthquake",
      "attention_share_pct": 13.6,
      "vs_global_avg": 2.3
-    },
-    {
-     "qid": "Q11660",
-     "label_en": "Artificial intelligence",
-     "attention_share_pct": 21.2,
-     "vs_global_avg": 2.1
     }
    ],
    "rising_topics": []

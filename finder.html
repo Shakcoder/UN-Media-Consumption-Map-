@@ -635,6 +635,8 @@ function renderLens(D, qid) {
   } else {
     const why = unscored && unscored.reason === "stale"
       ? "tracked, but its series hold no current data today"
+      : unscored && unscored.reason === "quarantined"
+      ? "tracked, but its traffic is currently flagged as non-organic and excluded"
       : "tracked, but below the 25-views/day measurement floor today";
     head = `<h2>${esc(meta.label_en)}<span class="tl-badge steady">not scored</span></h2>
       <div class="tl-sub">${esc(why)} — the sections below show what the Atlas can still say.</div>`;
