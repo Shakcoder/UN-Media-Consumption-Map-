@@ -3,63 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Screen every country with verified media-survey data to shortlist the best-fit markets for a UN campaign — with the weights, the reasoning, and every excluded country shown.">
+<meta name="description" content="Screen every country with verified media-survey data to shortlist the best-fit markets for a UN campaign, with the weights, the reasoning, and every excluded country shown.">
 <link rel="icon" href="assets/un_emblem.png" type="image/png">
-<title>Market Finder — Audience Intelligence Atlas</title>
+<link rel="stylesheet" href="assets/atlas.css">
+<title>Market Finder · Audience Intelligence Atlas</title>
 <style>
-  :root {
-    --un-blue: #009EDB; --un-blue-dark: #0072BC; --ink: #1A2733; --bg: #F7FAFC;
-    --card: #FFFFFF; --border: #E2E8F0; --border-soft: #EDF2F7; --muted: #5C6B7E;
-    /* --muted-2 was #94A3B2: 2.6:1 on this page's background, so every form
-       label, the weights caption and the footer failed WCAG AA (4.5:1 for
-       text under 18.66px). Matched to the other three pages' secondary text,
-       which measures 5.2:1 here. Hierarchy comes from size and weight. */
-    --muted-2: #5C6B7E; --accent-soft: #EAF6FD; --warn: #B45309; --positive: #15803D;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-         background: var(--bg); color: var(--ink); }
-  :focus-visible { outline: 2px solid var(--un-blue); outline-offset: 2px; }
-  .skip-link { position: absolute; left: -9999px; top: 0; background: var(--un-blue-dark); color: #fff;
-    padding: 8px 14px; z-index: 3000; border-radius: 0 0 8px 0; font-size: 13px; }
-  .skip-link:focus { left: 0; }
-  header.site { display: flex; align-items: center; gap: 12px; padding: 10px 20px;
-    background: #fff; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; }
-  header.site .brand { display: flex; align-items: center; gap: 12px; }
-  header.site .logo { width: 40px; height: auto; flex-shrink: 0; }
-  header.site .un { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
-    font-weight: 600; color: var(--muted); }
-  header.site .title { font-size: 15px; font-weight: 700; margin: 0; }
-  header.site .spacer { flex: 1; }
-  header.site nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
-  header.site nav a { color: var(--muted); text-decoration: none; font-size: 13.5px;
-    padding: 6px 10px; border-radius: 8px; }
-  header.site nav a:hover, header.site nav a:focus-visible { background: var(--accent-soft); color: var(--un-blue-dark); }
-  header.site nav a[aria-current="page"] { background: var(--accent-soft); color: var(--un-blue-dark); font-weight: 600; }
 
   main { max-width: 1060px; margin: 0 auto; padding: 22px 18px 60px; }
   .lead { color: var(--muted); margin: 4px 0 18px; max-width: 70ch; }
 
-  form.finder { background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  form.finder { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     gap: 14px 16px; }
   form.finder label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.06em; color: var(--muted-2); margin-bottom: 5px; }
   form.finder select, form.finder input {
-    width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: 9px;
+    width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: var(--r-sm);
     font: inherit; background: #fff; color: var(--ink); }
   form.finder .actions { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; }
   form.finder button { background: var(--un-blue-dark); border: 0; color: #fff; font: inherit;
-    font-weight: 600; padding: 10px 22px; border-radius: 999px; cursor: pointer; }
+    font-weight: 600; padding: 10px 22px; border-radius: var(--r-pill); cursor: pointer; }
   form.finder button:hover, form.finder button:focus-visible { background: var(--un-blue); }
   .hint { font-size: 12px; color: var(--muted-2); }
 
   #status { margin: 16px 2px; color: var(--muted); }
   .results { margin-top: 18px; display: none; }
-  .method { background: var(--accent-soft); border: 1px solid #CBE8F8; border-radius: 10px;
-    padding: 10px 14px; font-size: 12.5px; color: var(--ink); margin-bottom: 14px; }
-  table.rank { width: 100%; border-collapse: collapse; background: var(--card);
-    border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .method { background: var(--accent-soft); border: 1px solid #CBE8F8; border-radius: var(--radius);
+    padding: 10px 14px; font-size: 12px; color: var(--ink); margin-bottom: 14px; }
+  table.rank { width: 100%; border-collapse: collapse; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
   table.rank th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
     color: var(--muted-2); padding: 10px 12px; border-bottom: 1px solid var(--border); background: #FBFDFE; }
   table.rank td { padding: 10px 12px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
@@ -73,41 +45,34 @@
   a.profile { font-size: 12px; color: var(--un-blue-dark); text-decoration: none; white-space: nowrap; }
   a.profile:hover, a.profile:focus-visible { text-decoration: underline; }
 
-  .sources { margin-top: 18px; border-top: 1px solid var(--border-soft); padding-top: 12px;
-    font-size: 12px; color: var(--muted); }
-  .sources .fn-label { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--muted-2); margin-bottom: 6px; }
-  .sources ol { margin: 0; padding-left: 20px; }
-  .sources li { margin-bottom: 4px; line-height: 1.5; }
-  .sources a { color: var(--un-blue-dark); }
   .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-  .toolbar .tool { border: 1px solid var(--border); background: var(--card); color: var(--muted);
-    font: inherit; font-size: 12px; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+  .toolbar .tool { border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    font: inherit; font-size: 12px; padding: 5px 12px; border-radius: var(--r-pill); cursor: pointer; }
   .toolbar .tool:hover { color: var(--un-blue-dark); border-color: var(--un-blue); }
   /* Topic lens — shown when the typed topic is one the Atlas tracks */
-  .topiclens { margin-top: 16px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 16px 18px; }
+  .topiclens { margin-top: 16px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px; }
   .topiclens h2 { font-size: 16px; margin: 0 0 2px; }
-  .topiclens .tl-sub { color: var(--muted); font-size: 12.5px; margin-bottom: 10px; }
-  .topiclens .tl-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 99px; font-weight: 600;
+  .topiclens .tl-sub { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+  .topiclens .tl-badge { font-size: 11px; padding: 2px 8px; border-radius: var(--r-pill); font-weight: 600;
     vertical-align: 1px; margin-left: 6px; }
   .topiclens .tl-badge.rising { background: #E8F7EE; color: #15803D; }
   .topiclens .tl-badge.falling { background: #FDEBEA; color: #C81E1E; }
   .topiclens .tl-badge.steady { background: var(--border-soft); color: var(--muted); }
   .topiclens h3 { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; color: var(--muted);
     text-transform: uppercase; margin: 14px 0 6px; }
-  .topiclens table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .topiclens table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .topiclens td, .topiclens th { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border-soft); }
   .topiclens td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .topiclens .tl-note { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
   .topiclens .tl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; }
   @media (max-width: 760px) { .topiclens .tl-grid { grid-template-columns: 1fr; } }
-  .checker { margin-top: 16px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 12px 14px; }
+  .checker { margin-top: 16px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px; }
   .checker label { display: block; font-size: 12px; font-weight: 600; color: var(--muted);
     margin-bottom: 6px; }
   .checker input { width: 100%; max-width: 420px; padding: 8px 10px; font: inherit;
-    border: 1px solid var(--border); border-radius: 8px; }
+    border: 1px solid var(--border); border-radius: var(--r-sm); }
   #check-answer { margin-top: 8px; font-size: 13px; line-height: 1.55; }
   #check-answer .why-row { color: var(--ink); }
   #check-answer .risk { color: var(--warn); }
@@ -119,20 +84,16 @@
     details.excluded { display: block; }
     details.excluded[open] summary { font-weight: 700; }
     .method::before {
-      content: "Audience Intelligence Atlas — United Nations · market screening";
-      display: block; font-size: 10px; color: #555; border-bottom: 1px solid #ccc;
+      content: "Audience Intelligence Atlas · United Nations · market screening";
+      display: block; font-size: 11px; color: #555; border-bottom: 1px solid #ccc;
       padding-bottom: 6px; margin-bottom: 8px; }
     a.profile { display: none; }
-    .sources a::after { content: " (" attr(href) ")"; font-size: 9px; color: #555; }
+    .sources a::after { content: " (" attr(href) ")"; font-size: 11px; color: #555; }
   }
   details.excluded { margin-top: 14px; font-size: 13px; color: var(--muted); }
   details.excluded summary { cursor: pointer; font-weight: 600; color: var(--un-blue-dark); }
   details.excluded ul { columns: 3; margin: 8px 0 0; padding-left: 18px; }
   @media (max-width: 700px) { details.excluded ul { columns: 1; } }
-  footer.site { border-top: 1px solid var(--border); color: var(--muted-2); font-size: 12px;
-    padding: 14px 20px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; }
-  footer.site a { color: var(--un-blue-dark); text-decoration: none; }
-  footer.site a:hover, footer.site a:focus-visible { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -140,7 +101,7 @@
 <a class="skip-link" href="#finder-form">Skip to the campaign form</a>
 <header class="site">
   <div class="brand">
-    <a href="index.html" aria-label="United Nations emblem — back to the map" style="display:block; line-height:0;">
+    <a href="index.html" aria-label="United Nations emblem, back to the map" style="display:block; line-height:0;">
       <img class="logo" src="assets/un_emblem.png" alt="United Nations emblem" width="40" height="33">
     </a>
     <div>
@@ -158,7 +119,7 @@
 </header>
 
 <main>
-  <p class="lead">Describe the campaign — the Finder screens every country with verified media data and
+  <p class="lead">Describe the campaign. The Finder screens every country with verified media data and
   ranks the best-fit markets, with the reasoning and every excluded country shown. It is a shortlisting
   tool: validate top candidates with a full country brief in the <a href="ask.html">AI Analyst</a>.</p>
 
@@ -217,14 +178,14 @@
       </select>
     </div>
     <div>
-      <label for="f-topic">Topic (optional — adds live-trend boost)</label>
+      <label for="f-topic">Topic (optional, adds live-trend boost)</label>
       <input id="f-topic" list="topic-list" placeholder="e.g. Climate change">
       <datalist id="topic-list"></datalist>
     </div>
     <div class="actions">
       <button type="submit" id="find-btn" disabled>Find markets</button>
       <span class="hint">Every weight is disclosed with the results. Countries without the needed
-      survey data are listed as excluded — never silently ranked low.</span>
+      survey data are listed as excluded, never silently ranked low.</span>
     </div>
   </form>
 
@@ -243,8 +204,8 @@
 
   <section class="results" id="results">
     <div class="toolbar" id="toolbar">
-      <button type="button" class="tool" id="copy-screen" title="Copy a link that re-runs this exact screening — the recipient's browser computes it from the same published data">Copy link to this screening</button>
-      <button type="button" class="tool" id="export-csv" title="Download the full result — every ranked country with its score components, and every excluded country with its reason">Download CSV</button>
+      <button type="button" class="tool" id="copy-screen" title="Copy a link that re-runs this exact screening; the recipient's browser computes it from the same published data">Copy link to this screening</button>
+      <button type="button" class="tool" id="export-csv" title="Download the full result: every ranked country with its score components, and every excluded country with its reason">Download CSV</button>
       <button type="button" class="tool" id="print-screen" title="Prints the ranking with its method line and sources">Print / save PDF</button>
     </div>
     <div class="method" id="method"></div>
@@ -254,7 +215,7 @@
     </table>
     <details class="excluded" id="excluded"></details>
     <div class="checker" id="checker">
-      <label for="check-country">Why is a country ranked where it is — or not ranked at all?</label>
+      <label for="check-country">Why is a country ranked where it is, or not ranked at all?</label>
       <input id="check-country" type="text" list="check-list" placeholder="Type a country from this screening…" autocomplete="off">
       <datalist id="check-list"></datalist>
       <div id="check-answer" role="status" aria-live="polite"></div>
@@ -265,7 +226,7 @@
 
 <footer class="site">
   <div>© 2026 · United Nations · Audience Intelligence Atlas</div>
-  <div>Screening is decision support, not a final market selection — validate with local teams.</div>
+  <div>Screening is decision support, not a final market selection; validate with local teams.</div>
   <div><a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-/issues/new" target="_blank" rel="noopener">Report an error</a></div>
 </footer>
 
@@ -303,7 +264,7 @@ let TOPIC_INDEX = [];   // [label, qid]
       // fields were filled, so it saw an empty topic box)
       maybeRenderLens();
     } else {
-      $("status").textContent = "Ready — describe the campaign above and press “Find markets”.";
+      $("status").textContent = "Ready. Describe the campaign above and press “Find markets”.";
     }
   } catch (e) {
     $("status").textContent = "The Atlas's data could not be loaded (" + e.message + "). If you opened this page from a file, use the published site.";
@@ -365,7 +326,7 @@ $("finder-form").addEventListener("submit", (e) => {
     console.error("Market Finder failed:", err);
     $("results").style.display = "none";
     $("status").textContent = "Something went wrong running that screening (" + err.message +
-      "). Try a different combination, or reload the page — and if it keeps happening, use “Report an error” at the bottom.";
+      "). Try a different combination, or reload the page. If it keeps happening, use “Report an error” at the bottom.";
   }
 });
 
@@ -399,7 +360,7 @@ function runScreening() {
   $("method").innerHTML =
     `<strong>How this ranking works:</strong> ${Object.entries(res.weights)
       .map(([k, w]) => `${k} ${w}%`).join(" · ")}. ${esc(res.methodNote)}` +
-    (topicLabel && !topic ? ` <span class="risk">Topic “${esc($("f-topic").value)}” is not in the tracked registry — no trend boost applied.</span>` : "") +
+    (topicLabel && !topic ? ` <span class="risk">Topic “${esc($("f-topic").value)}” is not in the tracked registry, so no trend boost is applied.</span>` : "") +
     (trendInert ? ` <span class="risk">No country in this search has rising attention for “${esc(topic[0])}” this week, so the momentum weight scored zero everywhere and did not change the order.</span>` : "");
 
   $("rank-head").innerHTML =
@@ -423,7 +384,7 @@ function runScreening() {
   const byReason = {};
   res.excluded.forEach(x => { (byReason[x.reason] = byReason[x.reason] || []).push(x.name); });
   $("excluded").innerHTML = res.excluded.length
-    ? `<summary>Excluded — missing the required survey data (${res.excluded.length} countries; not ranked low)</summary>` +
+    ? `<summary>Excluded: missing the required survey data (${res.excluded.length} countries; not ranked low)</summary>` +
       Object.entries(byReason).map(([reason, names]) =>
         `<p><strong>${esc(reason)} (${names.length}):</strong></p><ul>${names.map(n => `<li>${esc(n)}</li>`).join("")}</ul>`).join("")
     : "";
@@ -440,21 +401,21 @@ function runScreening() {
     .map(x => x.replace(/,?\s*weighted microdata\s*\(n=[\d,]+\)/i, "")
                .replace(/\s*\(n=[\d,]+\)/i, "").trim()))].sort();
   const notes = [
-    `Channel reach — the survey named under each country: ${surveysUsed.length ? surveysUsed.join("; ") : "none in this result set"}. Constructs differ between surveys and are not directly comparable; each row states its own.`,
-    `Internet penetration (used to cap digital reach) — World Bank, data originally compiled by the ITU. <a href="https://data.worldbank.org/indicator/IT.NET.USER.ZS" target="_blank" rel="noopener noreferrer">Series ↗</a>`,
-    `Population (used for "est. people reachable") — World Bank. <a href="https://data.worldbank.org/indicator/SP.POP.TOTL" target="_blank" rel="noopener noreferrer">Series ↗</a>`,
-    `Language shares — Unicode CLDR territory data (speaker capability, not first language). <a href="https://cldr.unicode.org/" target="_blank" rel="noopener noreferrer">CLDR ↗</a>`,
-    `Press freedom and political status — Reporters Without Borders World Press Freedom Index and Freedom House Freedom in the World. <a href="https://rsf.org/en/index" target="_blank" rel="noopener noreferrer">RSF ↗</a> · <a href="https://freedomhouse.org/countries/freedom-world/scores" target="_blank" rel="noopener noreferrer">Freedom House ↗</a>`,
+    `Channel reach: the survey named under each country, ${surveysUsed.length ? surveysUsed.join("; ") : "none in this result set"}. Constructs differ between surveys and are not directly comparable; each row states its own.`,
+    `Internet penetration (used to cap digital reach): World Bank, data originally compiled by the ITU. <a href="https://data.worldbank.org/indicator/IT.NET.USER.ZS" target="_blank" rel="noopener noreferrer">Series ↗</a>`,
+    `Population (used for "est. people reachable"): World Bank. <a href="https://data.worldbank.org/indicator/SP.POP.TOTL" target="_blank" rel="noopener noreferrer">Series ↗</a>`,
+    `Language shares: Unicode CLDR territory data (speaker capability, not first language). <a href="https://cldr.unicode.org/" target="_blank" rel="noopener noreferrer">CLDR ↗</a>`,
+    `Press freedom and political status: Reporters Without Borders World Press Freedom Index and Freedom House Freedom in the World. <a href="https://rsf.org/en/index" target="_blank" rel="noopener noreferrer">RSF ↗</a> · <a href="https://freedomhouse.org/countries/freedom-world/scores" target="_blank" rel="noopener noreferrer">Freedom House ↗</a>`,
   ];
   if (res.weights && res.weights.momentum)
-    notes.push(`Topic momentum — Wikimedia Pageviews API, measured over the window stated in the Topic Explorer. <a href="topics.html">Topic Explorer</a>`);
-  notes.push(`Every figure above also appears, with its own citation and retrieval date, on that country's profile — open "Profile ↗" on any row.`);
+    notes.push(`Topic momentum: Wikimedia Pageviews API, measured over the window stated in the Topic Explorer. <a href="topics.html">Topic Explorer</a>`);
+  notes.push(`Every figure above also appears, with its own citation and retrieval date, on that country's profile; open "Profile ↗" on any row.`);
   $("sources").innerHTML = `<span class="fn-label">Sources</span><ol>${notes.map(n => `<li>${n}</li>`).join("")}</ol>`;
 
   $("results").style.display = "block";
   $("status").textContent = res.top.length
-    ? `Top ${res.top.length} of ${res.ranked.length} rankable countries — scores are comparative within this search only.`
-    : "No countries in this scope have the required survey data for that combination — try removing the channel or language filter.";
+    ? `Top ${res.top.length} of ${res.ranked.length} rankable countries. Scores are comparative within this search only.`
+    : "No countries in this scope have the required survey data for that combination. Try removing the channel or language filter.";
 }
 
 /* ---------- Toolbar: copy link, CSV export, print ---------- */
@@ -477,7 +438,7 @@ $("export-csv").addEventListener("click", () => {
   if (!LAST_RES) return;               // toolbar is inside #results, but never trust that alone
   const { res, language, langLabel } = LAST_RES;
   const rows = [];
-  rows.push(["Audience Intelligence Atlas — market screening (decision support, not a final market selection)"]);
+  rows.push(["Audience Intelligence Atlas · market screening (decision support, not a final market selection)"]);
   rows.push(["Weights", Object.entries(res.weights).map(([k, w]) => `${k} ${w}%`).join(" · ")]);
   rows.push(["Method", res.methodNote]);
   rows.push([]);
@@ -495,7 +456,7 @@ $("export-csv").addEventListener("click", () => {
   // The exclusions travel WITH the ranking — a spreadsheet missing them
   // would silently look like a ranking of every country.
   rows.push([]);
-  rows.push(["Excluded — missing the required survey data (not ranked low)"]);
+  rows.push(["Excluded: missing the required survey data (not ranked low)"]);
   rows.push(["country", "iso3", "reason"]);
   res.excluded.forEach(x => rows.push([x.name, x.iso, x.reason]));
   const csv = rows.map(r => r.map(csvCell).join(",")).join("\r\n");
@@ -538,7 +499,7 @@ function renderCheck() {
     const c = r.components || {};
     const bits = [];
     if (c.reach != null) bits.push(`${r.lead.name} reaches ${r.lead.effective}%${r.lead.capped ? " (capped at internet access)" : ""}`);
-    if (language && c.language != null) bits.push(`${esc(langLabel)} ${r.langPct != null ? Math.round(r.langPct) + "%" : "no data — scored 0, not excluded"}`);
+    if (language && c.language != null) bits.push(`${esc(langLabel)} ${r.langPct != null ? Math.round(r.langPct) + "%" : "no data (scored 0, not excluded)"}`);
     if (c.audience != null) bits.push(`audience-structure score ${Math.round(c.audience)}/100`);
     if (c.momentum != null) bits.push(r.risingHit ? "topic currently rising here" : "no current rise in this topic here (momentum scored 0)");
     if (c.openness != null) bits.push(`press-freedom openness ${Math.round(c.openness)}/100`);
@@ -551,10 +512,10 @@ function renderCheck() {
   const ex = res.excluded.find(x => x.name.toLowerCase() === q || x.iso.toLowerCase() === q);
   if (ex) {
     out.innerHTML = `<strong>${esc(ex.name)}</strong> is <strong>not ranked</strong>: ${esc(ex.reason)}. ` +
-      `A country with no data is not a country that scored badly — it is excluded by name so the gap stays visible.`;
+      `A country with no data is not a country that scored badly; it is excluded by name so the gap stays visible.`;
     return;
   }
-  out.innerHTML = `<span class="hint">Not part of this screening — it may be outside the selected region. Try the exact name from the lists above.</span>`;
+  out.innerHTML = `<span class="hint">Not part of this screening; it may be outside the selected region. Try the exact name from the lists above.</span>`;
 }
 $("check-country").addEventListener("input", renderCheck);
 $("check-country").addEventListener("change", renderCheck);
@@ -639,7 +600,7 @@ function renderLens(D, qid) {
       ? "tracked, but its traffic is currently flagged as non-organic and excluded"
       : "tracked, but below the 25-views/day measurement floor today";
     head = `<h2>${esc(meta.label_en)}<span class="tl-badge steady">not scored</span></h2>
-      <div class="tl-sub">${esc(why)} — the sections below show what the Atlas can still say.</div>`;
+      <div class="tl-sub">${esc(why)}. The sections below show what the Atlas can still say.</div>`;
   }
 
   const reading = readingPresence(D, qid);
@@ -654,10 +615,10 @@ function renderLens(D, qid) {
        ${readingRows}</table>
        <div class="tl-note">Directly measured: this topic's own article appears in these countries'
        most-read Wikipedia pages. Presence in a top list, not a share; view counts are privacy
-       ceilings. Coverage is partial — Wikimedia withholds many countries.</div>`
+       ceilings. Coverage is partial: Wikimedia withholds many countries.</div>`
     : `<h3>Measurably among the most-read (Wikimedia, per country)</h3>
-       <div class="tl-note">Not currently in any published country's measured most-read list —
-       normal for all but headline topics; the language-demand table is the steadier signal.</div>`;
+       <div class="tl-note">Not currently in any published country's measured most-read list.
+       Normal for all but headline topics; the language-demand table is the steadier signal.</div>`;
 
   let mediaBlock = "";
   if (t && (t.media_intensity_by_country || []).length) {
@@ -693,7 +654,7 @@ function renderLens(D, qid) {
        <div class="tl-note" style="margin-top:0">${risingIn.slice(0, 12).map(r =>
          `${esc(r.name)} (+${Math.round(r.v * 100)}% via ${esc(LENS_LANG_NAMES[r.lang] || r.lang)})`).join(" · ")}</div>
        <div class="tl-note">Heuristic: language-edition demand mapped to countries by
-       speaker-population weights — an approximation, not a measurement.</div>`
+       speaker-population weights: an approximation, not a measurement.</div>`
     : "";
 
   const have = Object.keys(meta.titles || {});
@@ -701,7 +662,7 @@ function renderLens(D, qid) {
   const coverageBlock = `<h3>Local-article availability</h3>
     <div class="tl-note" style="margin-top:0">A dedicated article exists in
     ${have.length} of ${(D.languages || []).length || 22} tracked language editions${missing.length
-      ? ` — none in: ${missing.map(l => esc(LENS_LANG_NAMES[l] || l)).join(", ")}`
+      ? `; none in: ${missing.map(l => esc(LENS_LANG_NAMES[l] || l)).join(", ")}`
       : ""}.
     A missing edition means there is no local-language article to point that audience at.</div>`;
 
@@ -711,8 +672,8 @@ function renderLens(D, qid) {
       <div>${demandBlock}${mediaBlock}</div>
     </div>
     ${coverageBlock}
-    <div class="tl-note">Sources: Wikimedia Pageviews API (CC0) — per-language demand and
-    per-country most-read lists; GDELT 2.0 — news coverage. All figures come from the same
+    <div class="tl-note">Sources: Wikimedia Pageviews API (CC0) for per-language demand and
+    per-country most-read lists; GDELT 2.0 for news coverage. All figures come from the same
     published files the rest of the Atlas reads; nothing is fetched live.</div>`;
   el.hidden = false;
 }

@@ -1,0 +1,179 @@
+/* ==========================================================================
+   Atlas design system (2026-08-17)
+   One source of truth for tokens and the components every page shares.
+   Pages load this FIRST, then their own <style> for page-specific layout.
+   Page styles may reference these tokens; they must not redefine them.
+
+   The system, in brief:
+   - Type scale (px): 11 micro-labels and captions, 12 secondary, 13 body,
+     14 emphasized body and nav, 16 card titles, 18 panel titles,
+     22 page titles, larger sizes reserved for headline statistics.
+     Nothing below 11px: the smallest text on the site stays readable.
+   - Spacing rides a 4px grid: 4, 8, 12, 16, 20, 24, 32.
+   - Radii: --r-sm 6px small controls, --radius 10px cards, panels and
+     buttons, --r-pill for chips, 50% for dots. No other values.
+   - Shadows: --shadow for cards, --shadow-lg for overlays. No others.
+   - Color: UN blue family for identity and links, AA-verified status
+     colors, one ink, two muted grays. Color never carries meaning alone.
+   ========================================================================== */
+
+:root {
+  --un-blue: #009EDB;
+  --un-blue-dark: #0072BC;
+  --un-blue-ink: #003D6B;
+  --accent-soft: #E6F4FB;
+  --ink: #0F1A2B;
+  --muted: #5C6B7E;
+  /* Secondary text. #64748B clears 4.5:1 on pure white but only 4.33:1 on
+     the tinted card surfaces where it is actually used at 11px, so it
+     failed WCAG AA there. #5C6B7E measures at least 5.1:1 on every surface
+     on this site. */
+  --muted-2: #5C6B7E;
+  --bg: #F7FAFC;
+  --surface: #FFFFFF;
+  --border: #E3EBF1;
+  --border-soft: #EEF3F7;
+  /* AA-compliant status colors for text on light surfaces */
+  --positive: #15803D;
+  --warn: #B45309;
+  --danger: #C81E1E;
+  --shadow: 0 1px 2px rgba(15,26,43,0.04), 0 4px 14px rgba(15,26,43,0.06);
+  --shadow-lg: 0 8px 32px rgba(15,26,43,0.12);
+  --radius: 10px;
+  --r-sm: 6px;
+  --r-pill: 999px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", "Noto Sans Arabic",
+          "Noto Sans SC", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.55;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+:focus-visible { outline: 2px solid var(--un-blue); outline-offset: 2px; }
+
+.skip-link {
+  position: absolute; left: -9999px; top: 0;
+  background: var(--un-blue-ink); color: #fff;
+  padding: 8px 14px; z-index: 3000;
+  border-radius: 0 0 var(--r-sm) 0; font-size: 13px;
+}
+.skip-link:focus { left: 0; }
+
+/* --------------------------------------------------------------------------
+   Site header and navigation, identical on every page.
+   -------------------------------------------------------------------------- */
+header.site {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 12px 20px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+header.site .brand { display: flex; align-items: center; gap: 12px; }
+header.site .logo { width: 40px; height: auto; display: block; flex-shrink: 0; }
+header.site .title { font-weight: 600; font-size: 15px; letter-spacing: 0.1px; }
+header.site .subtitle { font-size: 12px; color: var(--muted); margin-top: 1px; }
+header.site .un {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+  font-weight: 600; color: var(--muted);
+}
+header.site h1.title { margin: 0; }
+header.site .spacer { flex: 1; }
+header.site nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+header.site nav a, header.site nav button {
+  padding: 6px 12px; font-size: 13px; color: var(--muted);
+  text-decoration: none; border-radius: var(--r-sm); white-space: nowrap;
+  background: none; border: 0; font-family: inherit; cursor: pointer;
+}
+header.site nav a:hover, header.site nav button:hover,
+header.site nav a:focus-visible,
+header.site nav button:focus-visible { background: var(--border-soft); color: var(--ink); }
+header.site nav a[aria-current="page"] {
+  color: var(--un-blue-dark); font-weight: 600; background: var(--accent-soft);
+}
+
+/* --------------------------------------------------------------------------
+   Site footer, identical on every page.
+   -------------------------------------------------------------------------- */
+footer.site {
+  border-top: 1px solid var(--border); color: var(--muted-2); font-size: 12px;
+  padding: 14px 20px; display: flex; gap: 14px; flex-wrap: wrap;
+  justify-content: space-between; background: var(--surface);
+}
+footer.site a { color: var(--un-blue-dark); text-decoration: none; }
+footer.site a:hover, footer.site a:focus-visible { text-decoration: underline; }
+
+/* --------------------------------------------------------------------------
+   Shared primitives.
+   -------------------------------------------------------------------------- */
+
+/* Section heading: small caps over content blocks, used on every page */
+.sect, h3.sect {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
+  color: var(--muted-2); text-transform: uppercase; margin: 18px 0 8px;
+}
+
+/* Primary action button */
+.btn-primary {
+  background: var(--un-blue-dark); border: 0; color: #fff;
+  font: inherit; font-weight: 600; padding: 10px 22px;
+  border-radius: var(--r-pill); cursor: pointer;
+}
+.btn-primary:hover, .btn-primary:focus-visible { background: var(--un-blue); }
+.btn-primary:disabled { opacity: 0.55; cursor: default; }
+
+/* Quiet toolbar button */
+.btn-quiet {
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--muted); font: inherit; font-size: 12px;
+  padding: 5px 12px; border-radius: var(--r-pill); cursor: pointer;
+}
+.btn-quiet:hover, .btn-quiet:focus-visible {
+  color: var(--un-blue-dark); border-color: var(--un-blue);
+}
+
+/* Momentum and status chips */
+.badge {
+  font-size: 10px; padding: 2px 7px; border-radius: var(--r-pill);
+  font-weight: 600;
+}
+.badge.rising  { background: #E8F7EE; color: var(--positive); }
+.badge.falling { background: #FDEBEA; color: var(--danger); }
+.badge.steady  { background: var(--border-soft); color: var(--muted); }
+
+/* Source and methodology block: identical treatment site-wide, so citations
+   read as one quiet, consistent register and never dominate the page */
+.sources {
+  margin-top: 16px; border-top: 1px solid var(--border-soft);
+  padding-top: 12px; font-size: 11px; color: var(--muted-2); line-height: 1.55;
+}
+.sources .fn-label {
+  display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.sources ol { margin: 0; padding-left: 18px; }
+.sources li { margin-bottom: 4px; }
+.sources a { color: var(--un-blue-dark); }
+
+/* Data tables: one look everywhere */
+table.data, .data-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+}
+table.data th, .data-table th {
+  text-align: left; font-size: 11px; color: var(--muted-2);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 6px 8px; border-bottom: 1px solid var(--border);
+}
+table.data td, .data-table td {
+  padding: 6px 8px; border-bottom: 1px solid var(--border-soft);
+}
+table.data td.num, .data-table td.num {
+  text-align: right; font-variant-numeric: tabular-nums;
+}

@@ -4,49 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="An interactive, source-cited global map of media consumption patterns. A public research resource prepared for the United Nations.">
-<title>Audience Intelligence Atlas — United Nations</title>
+<title>Audience Intelligence Atlas · United Nations</title>
+<link rel="stylesheet" href="assets/atlas.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='42' fill='%23009EDB'/><circle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='5'/><path d='M20 50h60M50 20c12 10 12 50 0 60M50 20c-12 10-12 50 0 60' stroke='white' stroke-width='5' fill='none'/></svg>">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <style>
-  :root {
-    --un-blue: #009EDB;
-    --un-blue-dark: #0072BC;
-    --un-blue-ink: #003D6B;
-    --accent-soft: #E6F4FB;
-    --ink: #0F1A2B;
-    --muted: #5C6B7E;
-    /* Secondary text. #64748B clears 4.5:1 on pure white but only reaches
-       4.33:1 over the tinted card backgrounds where it is actually used at
-       10–11px, so it failed WCAG AA there. #5C6B7E measures ≥5.1:1 on every
-       surface on this site and is the shared value across all four pages. */
-    --muted-2: #5C6B7E;
-    --bg: #F7FAFC;
-    --surface: #FFFFFF;
-    --border: #E3EBF1;
-    --border-soft: #EEF3F7;
-    /* AA-compliant status colors for text — were #16A34A (3.3:1) / #F59E0B (2.15:1) */
-    --positive: #15803D;
-    --warn: #B45309;
-    --danger: #C81E1E;   /* was #DC2626 — 4.2:1 on the .badge.falling chip, below AA */
-    --shadow: 0 1px 2px rgba(15,26,43,0.04), 0 4px 14px rgba(15,26,43,0.06);
-    --shadow-lg: 0 8px 32px rgba(15,26,43,0.12);
-    --radius: 10px;
-  }
 
-  * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; }
-  :focus-visible { outline: 2px solid var(--un-blue); outline-offset: 2px; }
-  .skip-link { position: absolute; left: -9999px; top: 0; background: var(--un-blue-ink); color: #fff;
-    padding: 8px 14px; z-index: 3000; border-radius: 0 0 8px 0; font-size: 13px; text-decoration: none; }
-  .skip-link:focus { left: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Noto Sans Arabic", "Noto Sans SC", sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
     /* One vertical column: header, optional error banner, stats strip, then
@@ -60,27 +28,12 @@
     padding-bottom: 37px;   /* = footer.site height */
   }
 
-  header.site {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 12px 22px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    height: 60px;
-    flex-shrink: 0;
-  }
-  header.site .brand { display: flex; align-items: center; gap: 12px; }
-  header.site .logo { width: 40px; height: auto; display: block; flex-shrink: 0; }
-  header.site .title { font-weight: 600; font-size: 15px; letter-spacing: 0.1px; }
-  header.site .subtitle { font-size: 12px; color: var(--muted); margin-top: 1px; }
-  header.site .spacer { flex: 1; }
   header.site .badge {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 6px 12px;
     background: var(--accent-soft);
     color: var(--un-blue-ink);
-    border-radius: 999px;
+    border-radius: var(--r-pill);
     font-size: 12px; font-weight: 600;
   }
   header.site .badge::before {
@@ -88,16 +41,6 @@
     background: var(--un-blue);
     box-shadow: 0 0 0 3px rgba(0,158,219,0.18);
   }
-  header.site nav { display: flex; gap: 4px; align-items: center; }
-  header.site nav a, header.site nav button {
-    padding: 6px 12px; font-size: 13px; color: var(--muted);
-    text-decoration: none; border-radius: 6px;
-    background: none; border: none; cursor: pointer; font-family: inherit;
-    white-space: nowrap;
-  }
-  header.site nav { flex-wrap: wrap; }
-  header.site nav a:hover, header.site nav button:hover { background: var(--border-soft); color: var(--ink); }
-  header.site nav a[aria-current="page"] { color: var(--un-blue-dark); font-weight: 600; background: var(--accent-soft); }
 
   /* Language selector */
   .lang-select {
@@ -110,7 +53,7 @@
     color: var(--un-blue-dark);
     background: var(--accent-soft);
     border: 1px solid rgba(0,158,219,0.2);
-    border-radius: 999px;
+    border-radius: var(--r-pill);
     cursor: pointer;
     font-family: inherit;
     transition: all 0.15s;
@@ -126,7 +69,7 @@
     transform: translate(-50%, -50%);
     display: inline-block;
   }
-  .country-label.minor { font-weight: 500; font-size: 10px; color: #5C6B7E; }
+  .country-label.minor { font-weight: 500; font-size: 11px; color: #5C6B7E; }
 
   .lang-menu {
     position: absolute;
@@ -147,7 +90,7 @@
     padding: 10px 12px;
     font-size: 13px;
     background: none; border: none; cursor: pointer;
-    border-radius: 6px;
+    border-radius: var(--r-sm);
     color: var(--ink);
     text-align: start;
     font-family: inherit;
@@ -184,7 +127,7 @@
   }
   .stat { background: var(--surface); padding: 12px 18px; min-width: 0; }
   .stat .label {
-    font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
     color: var(--muted); font-weight: 600;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
@@ -216,7 +159,7 @@
     width: 100%;
     padding: 10px 12px;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--r-sm);
     font-size: 13px;
     outline: none;
     background: var(--bg);
@@ -235,7 +178,7 @@
   }
   .chip {
     padding: 5px 10px; font-size: 11px; font-weight: 600;
-    border: 1px solid var(--border); border-radius: 999px;
+    border: 1px solid var(--border); border-radius: var(--r-pill);
     background: #fff; color: var(--muted);
     cursor: pointer; transition: all 0.12s;
     font-family: inherit;
@@ -251,7 +194,7 @@
   }
   .country-card {
     display: flex; align-items: center; gap: 10px;
-    padding: 10px; border-radius: 8px;
+    padding: 10px; border-radius: var(--r-sm);
     cursor: pointer; transition: background 0.12s;
     border: 1px solid transparent;
   }
@@ -268,7 +211,7 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .country-card .tag {
-    font-size: 10px; font-weight: 700;
+    font-size: 11px; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.5px;
     padding: 2px 6px; border-radius: 4px;
     background: var(--accent-soft); color: var(--un-blue-dark);
@@ -281,20 +224,20 @@
     bottom: 16px; inset-inline-start: 16px;
     background: rgba(255,255,255,0.96);
     padding: 10px 14px;
-    border-radius: 8px;
+    border-radius: var(--r-sm);
     box-shadow: var(--shadow);
     font-size: 12px;
     z-index: 400;
     border: 1px solid var(--border);
   }
   .map-legend .legend-title {
-    font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
     color: var(--muted); font-weight: 700;
     margin-bottom: 6px;
   }
   .map-legend .row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
   .map-legend .swatch {
-    width: 14px; height: 14px; border-radius: 3px;
+    width: 14px; height: 14px; border-radius: 4px;
     border: 1px solid rgba(0,0,0,0.08);
   }
   .map-hint {
@@ -302,7 +245,7 @@
     top: 16px; inset-inline-start: 16px;
     background: rgba(255,255,255,0.96);
     padding: 8px 14px;
-    border-radius: 999px;
+    border-radius: var(--r-pill);
     font-size: 12px; color: var(--muted);
     box-shadow: var(--shadow);
     z-index: 400;
@@ -395,7 +338,7 @@
   .translation-notice {
     background: #F0F7FB;
     border: 1px solid rgba(0,158,219,0.2);
-    border-radius: 8px;
+    border-radius: var(--r-sm);
     padding: 8px 12px;
     font-size: 11px;
     color: var(--un-blue-ink);
@@ -416,7 +359,7 @@
   }
   .kv { background: #fff; padding: 12px 14px; }
   .kv .label {
-    font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
     color: var(--muted); font-weight: 600;
   }
   .kv .value { font-size: 15px; font-weight: 600; color: var(--ink); margin-top: 3px; }
@@ -424,7 +367,7 @@
   .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
   .pill {
     background: var(--accent-soft); color: var(--un-blue-ink);
-    padding: 5px 10px; border-radius: 999px;
+    padding: 5px 10px; border-radius: var(--r-pill);
     font-size: 12px; font-weight: 500;
   }
   .pill.neutral { background: var(--border-soft); color: var(--ink); }
@@ -455,7 +398,7 @@
   .confidence-banner {
     background: #FFF4E5;
     border: 1px solid #FFE0B2;
-    border-radius: 8px;
+    border-radius: var(--r-sm);
     padding: 10px 14px;
     font-size: 12px;
     color: #8B5A14;
@@ -488,7 +431,7 @@
   .modal-backdrop.open { display: flex; }
   .modal {
     background: #fff;
-    border-radius: 14px;
+    border-radius: var(--radius);
     max-width: 640px; width: 100%;
     max-height: 85vh; overflow-y: auto;
     box-shadow: var(--shadow-lg);
@@ -512,7 +455,7 @@
   }
   .modal-body .mini-stats .stat { background: #fff; padding: 14px 16px; }
   .modal-body .mini-stats .label {
-    font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
     color: var(--muted); font-weight: 600;
   }
   .modal-body .mini-stats .value { font-size: 18px; font-weight: 700; color: var(--ink); margin-top: 2px; }
@@ -524,22 +467,6 @@
     font-family: inherit;
   }
 
-  footer.site {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    padding: 10px 22px;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    font-size: 11px;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 37px;
-    z-index: 500;
-  }
-  footer.site a { color: var(--un-blue-dark); text-decoration: none; cursor: pointer; }
-  footer.site a:hover { text-decoration: underline; }
 
   /* Beyond the world's edge the container shows through — a designed soft
      fade instead of a flat grey void. Tiles cover everything inside the
@@ -549,10 +476,10 @@
   .leaflet-interactive:focus { outline: none; }
   /* Modernised zoom control — same affordance, crisper instrument feel */
   .leaflet-control-zoom { border: none !important;
-    box-shadow: 0 2px 10px rgba(15,26,43,0.14) !important; border-radius: 10px !important;
+    box-shadow: 0 2px 10px rgba(15,26,43,0.14) !important; border-radius: var(--radius) !important;
     overflow: hidden; }
   .leaflet-control-zoom a { width: 34px !important; height: 34px !important;
-    line-height: 34px !important; font-size: 17px !important; color: #0F1A2B !important;
+    line-height: 34px !important; font-size: 16px !important; color: #0F1A2B !important;
     background: rgba(255,255,255,0.92) !important; backdrop-filter: blur(6px);
     border-bottom: 1px solid #EDF2F7 !important; transition: background .15s, color .15s; }
   .leaflet-control-zoom a:last-child { border-bottom: none !important; }
@@ -583,12 +510,9 @@
     .stats-strip .stat:last-child { grid-column: 1 / -1; }
     .detail-panel { width: 100vw; }
     header.site { flex-wrap: wrap; height: auto; padding: 10px 14px; gap: 8px; }
-    header.site .subtitle { display: none; }
-    header.site .badge { display: none; }
-    header.site .title { font-size: 14px; }
-    header.site nav { gap: 2px; }
-    header.site nav a, header.site nav button { padding: 6px 8px; font-size: 12px; }
-    /* comfortable touch targets on phones */
+      header.site .badge { display: none; }
+      header.site nav { gap: 2px; }
+      /* comfortable touch targets on phones */
     .chip { padding: 9px 14px; font-size: 12px; }
     .detail-header .close, .modal .close { width: 40px; height: 40px; }
   }
@@ -601,7 +525,7 @@
   <div class="brand">
     <!-- Official United Nations emblem (public domain UN document artwork).
          Linked home from every page (Shakti's request, 2026-08-10). -->
-    <a href="index.html" aria-label="United Nations emblem — back to the map" style="display:block; line-height:0;">
+    <a href="index.html" aria-label="United Nations emblem, back to the map" style="display:block; line-height:0;">
       <img class="logo" src="assets/un_emblem.png" alt="United Nations emblem" width="40" height="33">
     </a>
     <div>
@@ -645,9 +569,9 @@
          set: create the privacy-preserving form (no names, no identifying data,
          non-identifying attributes only), get supervisor sign-off, then paste
          its URL into the SURVEY_URL constant in the script below. -->
-    <div id="survey-banner" hidden style="margin:8px 12px 0; padding:8px 10px; background:var(--un-blue-pale, #EAF6FD); border:1px solid var(--border); border-radius:8px; font-size:12px; line-height:1.4;">
+    <div id="survey-banner" hidden style="margin:8px 12px 0; padding:8px 10px; background:var(--accent-soft); border:1px solid var(--border); border-radius:8px; font-size:12px; line-height:1.4;">
       📋 <a id="survey-link" href="#" target="_blank" rel="noopener" style="color:var(--un-blue-dark); font-weight:600; text-decoration:none;">Take the 2-minute audience survey ↗</a>
-      <div style="font-size:10px; color:var(--muted-2); margin-top:2px;">Anonymous — no names or identifying details collected.</div>
+      <div style="font-size:10px; color:var(--muted-2); margin-top:2px;">Anonymous: no names or identifying details collected.</div>
     </div>
     <div class="filter-chips">
       <button class="chip active" data-filter="all" data-i18n="chip_all">All regions</button>
@@ -666,7 +590,7 @@
     <div class="map-legend">
       <div class="legend-title" data-i18n="legend_title">Data status</div>
       <div class="row"><div class="swatch" style="background:#009EDB"></div><span data-i18n="legend_profiled">Media data verified (survey-backed)</span></div>
-      <div class="row"><div class="swatch" style="background:#F2A9A9"></div><span data-i18n="legend_limited">Profile only — no media survey yet</span></div>
+      <div class="row"><div class="swatch" style="background:#F2A9A9"></div><span data-i18n="legend_limited">Profile only, no media survey yet</span></div>
       <div class="row"><div class="swatch" style="background:#8FCBEA"></div><span data-i18n="legend_territory">Territory (see sovereign state)</span></div>
       <div class="row"><div class="swatch" style="background:#E4D9BE"></div><span data-i18n="legend_not_profiled">Non-sovereign area (no data)</span></div>
     </div>
@@ -725,7 +649,7 @@
       </div>
 
       <h3 style="font-size: 14px; color: var(--ink); margin: 8px 0 6px;" data-i18n="modal_refresh_cadence">Refresh cadence</h3>
-      <p style="color: var(--muted);" data-i18n="modal_refresh_body">Topic trends refresh daily (Wikimedia + GDELT + Google Trends + Bluesky + Media Cloud). Country indicators refresh weekly via the World Bank API. Annual flagship reports (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobarometer) are integrated once a year — a monthly watchdog opens a reminder automatically when a new edition is published.</p>
+      <p style="color: var(--muted);" data-i18n="modal_refresh_body">Topic trends refresh daily (Wikimedia + GDELT + Google Trends + Bluesky + Media Cloud). Country indicators refresh weekly via the World Bank API. Annual flagship reports (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobarometer) are integrated once a year; a monthly watchdog opens a reminder automatically when a new edition is published.</p>
 
       <h3 style="font-size: 14px; color: var(--ink); margin: 18px 0 6px;" data-i18n="modal_sources_heading">Integrated data sources</h3>
       <div class="sources-registry">
@@ -742,8 +666,8 @@
           <h4>Media freedom</h4>
           <a href="https://rsf.org/en/index" target="_blank" rel="noopener">RSF World Press Freedom Index</a>
           <a href="https://ooni.org/" target="_blank" rel="noopener">OONI (measured news-site censorship)</a>
-          <a href="https://freedomhouse.org/report/freedom-world" target="_blank" rel="noopener">Freedom House — Freedom in the World</a>
-          <a href="https://freedomhouse.org/report/freedom-net" target="_blank" rel="noopener">Freedom House — Freedom on the Net</a>
+          <a href="https://freedomhouse.org/report/freedom-world" target="_blank" rel="noopener">Freedom House: Freedom in the World</a>
+          <a href="https://freedomhouse.org/report/freedom-net" target="_blank" rel="noopener">Freedom House: Freedom on the Net</a>
         </div>
         <div class="src-group">
           <h4>News &amp; media surveys</h4>
@@ -766,14 +690,14 @@
           <a href="https://wikimedia.org/api/rest_v1/" target="_blank" rel="noopener">Wikimedia Pageviews API</a>
           <a href="https://doc.wikimedia.org/analytics-api/" target="_blank" rel="noopener">Wikimedia per-country reading lists (top-per-country)</a>
           <a href="https://www.gdeltproject.org" target="_blank" rel="noopener">GDELT 2.0</a>
-          <a href="https://trends.google.com/trending" target="_blank" rel="noopener">Google Trends — Trending Now (per-country searches)</a>
+          <a href="https://trends.google.com/trending" target="_blank" rel="noopener">Google Trends: Trending Now (per-country searches)</a>
           <a href="https://docs.bsky.app/" target="_blank" rel="noopener">Bluesky public API (global social pulse)</a>
           <a href="https://www.mediacloud.org/" target="_blank" rel="noopener">Media Cloud (national-press collections)</a>
         </div>
         <div class="src-group">
           <h4>Ad market (industry estimates)</h4>
-          <a href="https://www.wppmedia.com/" target="_blank" rel="noopener">WPP Media — This Year, Next Year</a>
-          <a href="https://www.dentsu.com/" target="_blank" rel="noopener">Dentsu — Global Ad Spend Forecasts</a>
+          <a href="https://www.wppmedia.com/" target="_blank" rel="noopener">WPP Media: This Year, Next Year</a>
+          <a href="https://www.dentsu.com/" target="_blank" rel="noopener">Dentsu: Global Ad Spend Forecasts</a>
         </div>
         <div class="src-group">
           <h4>Reference tools (linked, not ingested)</h4>
@@ -789,12 +713,12 @@
       </p>
 
       <h3 style="font-size: 14px; color: var(--ink); margin: 18px 0 6px;" data-i18n="modal_licences_heading">Licences &amp; attribution</h3>
-      <p style="color: var(--muted); font-size: 12.5px; line-height: 1.6;" data-i18n="modal_licences_body">The Atlas redistributes figures from sources with their own terms. World Bank Open Data (including the ITU, UNESCO&nbsp;UIS and Global&nbsp;Findex series it republishes) is used under CC&nbsp;BY&nbsp;4.0. Unicode CLDR language data is used under the Unicode&nbsp;License&nbsp;v3. Wikimedia Pageviews data is CC0. The CIA World Factbook is in the public domain. RSF, Freedom House, the Reuters Institute and the barometer programmes (Afrobarometer, Arab&nbsp;Barometer, World&nbsp;Values&nbsp;Survey, Eurobarometer&nbsp;/&nbsp;GESIS, Latinobarómetro, Asian&nbsp;Barometer) permit non-commercial research reuse with attribution; each figure names its programme and edition wherever it appears. Statcounter and GDELT are used under their published terms with attribution. DataReportal and the WPP&nbsp;Media / Dentsu ad forecasts are cited as industry estimates and are never redistributed in bulk. Google Trends data is reused with attribution (“Data source: Google Trends”). Bluesky and Media Cloud material is stored as aggregate topics and counts only — never posts, handles or story text — in line with their terms. OONI censorship measurements are CC BY-NC-SA (non-commercial) — suitable for this non-profit Atlas, to be removed if it ever becomes a paid product. Where a source's terms do not permit redistribution, the Atlas links to it rather than copying it.</p>
+      <p style="color: var(--muted); font-size: 12.5px; line-height: 1.6;" data-i18n="modal_licences_body">The Atlas redistributes figures from sources with their own terms. World Bank Open Data (including the ITU, UNESCO&nbsp;UIS and Global&nbsp;Findex series it republishes) is used under CC&nbsp;BY&nbsp;4.0. Unicode CLDR language data is used under the Unicode&nbsp;License&nbsp;v3. Wikimedia Pageviews data is CC0. The CIA World Factbook is in the public domain. RSF, Freedom House, the Reuters Institute and the barometer programmes (Afrobarometer, Arab&nbsp;Barometer, World&nbsp;Values&nbsp;Survey, Eurobarometer&nbsp;/&nbsp;GESIS, Latinobarómetro, Asian&nbsp;Barometer) permit non-commercial research reuse with attribution; each figure names its programme and edition wherever it appears. Statcounter and GDELT are used under their published terms with attribution. DataReportal and the WPP&nbsp;Media / Dentsu ad forecasts are cited as industry estimates and are never redistributed in bulk. Google Trends data is reused with attribution (“Data source: Google Trends”). Bluesky and Media Cloud material is stored as aggregate topics and counts only (never posts, handles or story text), in line with their terms. OONI censorship measurements are CC BY-NC-SA (non-commercial), suitable for this non-profit Atlas, to be removed if it ever becomes a paid product. Where a source's terms do not permit redistribution, the Atlas links to it rather than copying it.</p>
 
       <p style="color: var(--muted); font-size: 12.5px; line-height: 1.6; font-style: italic;" data-i18n="modal_boundaries_note">The boundaries and names shown and the designations used on the map do not imply official endorsement or acceptance by the United Nations. Country outlines are generalized for display; where the underlying dataset diverges from United Nations cartographic practice and the geometry permits, the presentation follows the United Nations position.</p>
 
       <h3 style="font-size: 14px; color: var(--ink); margin: 18px 0 6px;" data-i18n="modal_confidence_flags">Confidence flags</h3>
-      <p style="color: var(--muted);" data-i18n="modal_confidence_body">Each country carries a derived confidence level. High: the record is verified against its primary sources and a measured news-consumption survey covers the country. Medium: verified, but news figures rest on structural indicators or on a survey that carries a methodological caveat (sample or question construct). Low: not yet verified — must not be cited publicly. Individual figures always name their source in the Sources tab.</p>
+      <p style="color: var(--muted);" data-i18n="modal_confidence_body">Each country carries a derived confidence level. High: the record is verified against its primary sources and a measured news-consumption survey covers the country. Medium: verified, but news figures rest on structural indicators or on a survey that carries a methodological caveat (sample or question construct). Low: not yet verified; must not be cited publicly. Individual figures always name their source in the Sources tab.</p>
     </div>
   </div>
 </div>
@@ -838,10 +762,10 @@ window.COUNTRY_DATA = {
     },
     topics_of_interest: ["Politics", "Business", "Sports", "Entertainment", "Technology"],
     sources: {
-      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=US",
-      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=US",
-      internet: "ITU — https://datahub.itu.int/",
-      press_freedom: "RSF — https://rsf.org/en/country/united-states"
+      population: "World Bank | https://data.worldbank.org/indicator/SP.POP.TOTL?locations=US",
+      gdp: "World Bank | https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=US",
+      internet: "ITU | https://datahub.itu.int/",
+      press_freedom: "RSF | https://rsf.org/en/country/united-states"
     },
     confidence: "preliminary"
   },
@@ -869,10 +793,10 @@ window.COUNTRY_DATA = {
     },
     topics_of_interest: ["Politics", "International news", "Sports", "Business", "Climate"],
     sources: {
-      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=GB",
-      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=GB",
-      internet: "ITU — https://datahub.itu.int/",
-      press_freedom: "RSF — https://rsf.org/en/country/united-kingdom"
+      population: "World Bank | https://data.worldbank.org/indicator/SP.POP.TOTL?locations=GB",
+      gdp: "World Bank | https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=GB",
+      internet: "ITU | https://datahub.itu.int/",
+      press_freedom: "RSF | https://rsf.org/en/country/united-kingdom"
     },
     confidence: "preliminary"
   },
@@ -900,10 +824,10 @@ window.COUNTRY_DATA = {
     },
     topics_of_interest: ["Politics", "Sports (football)", "Entertainment", "Local news", "Religion"],
     sources: {
-      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=BR",
-      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=BR",
-      internet: "ITU — https://datahub.itu.int/",
-      press_freedom: "RSF — https://rsf.org/en/country/brazil"
+      population: "World Bank | https://data.worldbank.org/indicator/SP.POP.TOTL?locations=BR",
+      gdp: "World Bank | https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=BR",
+      internet: "ITU | https://datahub.itu.int/",
+      press_freedom: "RSF | https://rsf.org/en/country/brazil"
     },
     confidence: "preliminary"
   },
@@ -931,10 +855,10 @@ window.COUNTRY_DATA = {
     },
     topics_of_interest: ["Politics", "Religion", "Entertainment (Afrobeats/Nollywood)", "Sports (football)", "Business"],
     sources: {
-      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=NG",
-      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=NG",
-      internet: "ITU — https://datahub.itu.int/",
-      press_freedom: "RSF — https://rsf.org/en/country/nigeria"
+      population: "World Bank | https://data.worldbank.org/indicator/SP.POP.TOTL?locations=NG",
+      gdp: "World Bank | https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=NG",
+      internet: "ITU | https://datahub.itu.int/",
+      press_freedom: "RSF | https://rsf.org/en/country/nigeria"
     },
     confidence: "preliminary"
   },
@@ -962,10 +886,10 @@ window.COUNTRY_DATA = {
     },
     topics_of_interest: ["Politics", "Sports (athletics, football)", "Religion", "Business", "Local news"],
     sources: {
-      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=KE",
-      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=KE",
-      internet: "ITU — https://datahub.itu.int/",
-      press_freedom: "RSF — https://rsf.org/en/country/kenya"
+      population: "World Bank | https://data.worldbank.org/indicator/SP.POP.TOTL?locations=KE",
+      gdp: "World Bank | https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=KE",
+      internet: "ITU | https://datahub.itu.int/",
+      press_freedom: "RSF | https://rsf.org/en/country/kenya"
     },
     confidence: "preliminary"
   },
@@ -993,10 +917,10 @@ window.COUNTRY_DATA = {
     },
     topics_of_interest: ["Politics", "Cricket", "Bollywood & regional cinema", "Religion", "Business"],
     sources: {
-      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=IN",
-      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=IN",
-      internet: "ITU — https://datahub.itu.int/",
-      press_freedom: "RSF — https://rsf.org/en/country/india"
+      population: "World Bank | https://data.worldbank.org/indicator/SP.POP.TOTL?locations=IN",
+      gdp: "World Bank | https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=IN",
+      internet: "ITU | https://datahub.itu.int/",
+      press_freedom: "RSF | https://rsf.org/en/country/india"
     },
     confidence: "preliminary"
   },
@@ -1024,10 +948,10 @@ window.COUNTRY_DATA = {
     },
     topics_of_interest: ["National news", "Economy", "Entertainment (drama, variety)", "Sports", "Technology"],
     sources: {
-      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=CN",
-      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=CN",
-      internet: "ITU — https://datahub.itu.int/",
-      press_freedom: "RSF — https://rsf.org/en/country/china"
+      population: "World Bank | https://data.worldbank.org/indicator/SP.POP.TOTL?locations=CN",
+      gdp: "World Bank | https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=CN",
+      internet: "ITU | https://datahub.itu.int/",
+      press_freedom: "RSF | https://rsf.org/en/country/china"
     },
     confidence: "preliminary"
   },
@@ -1055,10 +979,10 @@ window.COUNTRY_DATA = {
     },
     topics_of_interest: ["Politics", "Entertainment", "Religion (Islam)", "Sports (football, badminton)", "Lifestyle"],
     sources: {
-      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=ID",
-      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=ID",
-      internet: "ITU — https://datahub.itu.int/",
-      press_freedom: "RSF — https://rsf.org/en/country/indonesia"
+      population: "World Bank | https://data.worldbank.org/indicator/SP.POP.TOTL?locations=ID",
+      gdp: "World Bank | https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=ID",
+      internet: "ITU | https://datahub.itu.int/",
+      press_freedom: "RSF | https://rsf.org/en/country/indonesia"
     },
     confidence: "preliminary"
   },
@@ -1086,10 +1010,10 @@ window.COUNTRY_DATA = {
     },
     topics_of_interest: ["Politics", "Business", "Sports (football)", "Climate", "International news"],
     sources: {
-      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=DE",
-      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=DE",
-      internet: "ITU — https://datahub.itu.int/",
-      press_freedom: "RSF — https://rsf.org/en/country/germany"
+      population: "World Bank | https://data.worldbank.org/indicator/SP.POP.TOTL?locations=DE",
+      gdp: "World Bank | https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=DE",
+      internet: "ITU | https://datahub.itu.int/",
+      press_freedom: "RSF | https://rsf.org/en/country/germany"
     },
     confidence: "preliminary"
   },
@@ -1117,10 +1041,10 @@ window.COUNTRY_DATA = {
     },
     topics_of_interest: ["Politics", "Sports (football)", "Entertainment (telenovelas)", "Local news", "Crime"],
     sources: {
-      population: "World Bank — https://data.worldbank.org/indicator/SP.POP.TOTL?locations=MX",
-      gdp: "World Bank — https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=MX",
-      internet: "ITU — https://datahub.itu.int/",
-      press_freedom: "RSF — https://rsf.org/en/country/mexico"
+      population: "World Bank | https://data.worldbank.org/indicator/SP.POP.TOTL?locations=MX",
+      gdp: "World Bank | https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=MX",
+      internet: "ITU | https://datahub.itu.int/",
+      press_freedom: "RSF | https://rsf.org/en/country/mexico"
     },
     confidence: "preliminary"
   }
@@ -1146,7 +1070,7 @@ window.TRANSLATIONS = {
     chip_all: "All regions", chip_africa: "Africa", chip_americas: "Americas",
     chip_asia: "Asia", chip_europe: "Europe", chip_oceania: "Oceania",
     map_hint: "Click any country to open its profile →",
-    legend_title: "Data status", legend_profiled: "Media data verified (survey-backed)", legend_limited: "Profile only — no media survey yet", legend_territory: "Territory (see sovereign state)",
+    legend_title: "Data status", legend_profiled: "Media data verified (survey-backed)", legend_limited: "Profile only, no media survey yet", legend_territory: "Territory (see sovereign state)",
     legend_not_profiled: "Non-sovereign area (no data)",
     stat_pilot_countries: "Countries covered",
     stat_across_continents: "across {n} continents",
@@ -1175,7 +1099,7 @@ window.TRANSLATIONS = {
     section_strategic_focus: "Strategic focus areas",
     section_connectivity: "Connectivity", section_leading_outlets: "Leading outlets",
     section_press_freedom: "Press freedom", section_topics: "Topics of interest",
-    section_trending: "Trending this week (live)", section_distinctive: "Distinctive interests", label_pr_cl: "Political rights · Civil liberties", label_electoral: "Electoral democracy", map_territory_note: "territory · data shown under {c}", map_not_covered: "not covered (non-member territory)", label_trust_news: "Trust in news", label_use_tv: "Use TV for news", label_use_radio: "Use radio for news", label_use_online: "Use online sources for news", label_use_social: "Use social media for news", label_median_age: "Median age", label_mci: "Mobile connectivity index (GSMA)", trending_unavailable: "Live trend data is not yet available for this country — the survey-based topics below still apply.",
+    section_trending: "Trending this week (live)", section_distinctive: "Distinctive interests", label_pr_cl: "Political rights · Civil liberties", label_electoral: "Electoral democracy", map_territory_note: "territory · data shown under {c}", map_not_covered: "not covered (non-member territory)", label_trust_news: "Trust in news", label_use_tv: "Use TV for news", label_use_radio: "Use radio for news", label_use_online: "Use online sources for news", label_use_social: "Use social media for news", label_median_age: "Median age", label_mci: "Mobile connectivity index (GSMA)", trending_unavailable: "Live trend data is not yet available for this country; the survey-based topics below still apply.",
     section_age_structure: "Age structure", section_where_live: "Where people live",
     section_education: "Education", section_primary_sources: "Primary sources",
     section_confidence_level: "Confidence level",
@@ -1195,10 +1119,10 @@ window.TRANSLATIONS = {
     confidence_banner_title: "Preliminary data.",
     confidence_banner_body: "These figures are placeholder values being verified against primary sources. Do not cite publicly until the Sources tab shows verified timestamps.",
     no_data_title: "No profile yet",
-    no_data_body: "This area has no separate profile (it is shown under its sovereign state, or is a non-sovereign territory). All 195 countries — the 193 UN member states plus the two observer states — are covered.",
+    no_data_body: "This area has no separate profile (it is shown under its sovereign state, or is a non-sovereign territory). All 195 countries: the 193 UN member states plus the two observer states — are covered.",
     no_data_subline: "Country profile not yet available",
     sources_intro: "Every figure on this page names its source below. Most are primary sources; where a figure is an Atlas editorial compilation rather than a measurement, the entry says so.",
-    sources_confidence_note: "Confidence is derived from the record itself. High: verified against primary sources and covered by a measured news-consumption survey. Medium: verified, but news figures rest on structural indicators or a survey that carries a methodological caveat (sample or question construct). Low: not yet verified against primary sources — never cite publicly. Every figure names its own source and edition above.",
+    sources_confidence_note: "Confidence is derived from the record itself. High: verified against primary sources and covered by a measured news-consumption survey. Medium: verified, but news figures rest on structural indicators or a survey that carries a methodological caveat (sample or question construct). Low: not yet verified against primary sources; never cite publicly. Every figure names its own source and edition above.",
     confidence_high: "High", confidence_medium: "Medium", confidence_low: "Low",
     translation_notice: "Country overviews and industry descriptions remain in English while translations are being finalised.",
     subline_capital: "Capital",
@@ -1210,12 +1134,12 @@ window.TRANSLATIONS = {
     modal_data_status_label: "Data status", modal_data_status_value: "Verified",
     modal_data_status_delta: "primary sources, cited per field", modal_sources_heading: "Integrated data sources", modal_sources_note: "Reference tools (linked, not ingested): UNESCO World Trends, Pew Research, Edison Research, OECD, Meta Ad Library, Google Ads Transparency. Full registry & conflict-resolution rules:", modal_sources_note2: "Full registry & conflict-resolution rules:",
     modal_refresh_cadence: "Refresh cadence",
-    modal_refresh_body: "Topic trends refresh daily (Wikimedia + GDELT + Google Trends + Bluesky + Media Cloud). Country indicators refresh weekly via the World Bank API. Annual flagship reports (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobarometer) are integrated once a year — a monthly watchdog opens a reminder automatically when a new edition appears.",
+    modal_refresh_body: "Topic trends refresh daily (Wikimedia + GDELT + Google Trends + Bluesky + Media Cloud). Country indicators refresh weekly via the World Bank API. Annual flagship reports (Reuters Institute DNR, RSF, Freedom House, GSMA, Afrobarometer) are integrated once a year; a monthly watchdog opens a reminder automatically when a new edition appears.",
     modal_licences_heading: "Licences & attribution",
-    modal_licences_body: "The Atlas redistributes figures from sources with their own terms. World Bank Open Data (including the ITU, UNESCO UIS and Global Findex series it republishes) is used under CC BY 4.0. Unicode CLDR language data is used under the Unicode License v3. Wikimedia Pageviews data is CC0. The CIA World Factbook is in the public domain. RSF, Freedom House, the Reuters Institute and the barometer programmes (Afrobarometer, Arab Barometer, World Values Survey, Eurobarometer / GESIS, Latinobarómetro, Asian Barometer, LAPOP AmericasBarometer) permit non-commercial research reuse with attribution; each figure names its programme and edition wherever it appears. Statcounter and GDELT are used under their published terms with attribution. DataReportal and the WPP Media / Dentsu ad forecasts are cited as industry estimates and are never redistributed in bulk. Google Trends data is reused with attribution (“Data source: Google Trends”). Bluesky and Media Cloud material is stored as aggregate topics and counts only — never posts, handles or story text — in line with their terms. OONI censorship measurements are CC BY-NC-SA (non-commercial) — suitable for this non-profit Atlas, to be removed if it ever becomes a paid product. Where a source's terms do not permit redistribution, the Atlas links to it rather than copying it.",
+    modal_licences_body: "The Atlas redistributes figures from sources with their own terms. World Bank Open Data (including the ITU, UNESCO UIS and Global Findex series it republishes) is used under CC BY 4.0. Unicode CLDR language data is used under the Unicode License v3. Wikimedia Pageviews data is CC0. The CIA World Factbook is in the public domain. RSF, Freedom House, the Reuters Institute and the barometer programmes (Afrobarometer, Arab Barometer, World Values Survey, Eurobarometer / GESIS, Latinobarómetro, Asian Barometer, LAPOP AmericasBarometer) permit non-commercial research reuse with attribution; each figure names its programme and edition wherever it appears. Statcounter and GDELT are used under their published terms with attribution. DataReportal and the WPP Media / Dentsu ad forecasts are cited as industry estimates and are never redistributed in bulk. Google Trends data is reused with attribution (“Data source: Google Trends”). Bluesky and Media Cloud material is stored as aggregate topics and counts only (never posts, handles or story text), in line with their terms. OONI censorship measurements are CC BY-NC-SA (non-commercial), suitable for this non-profit Atlas, to be removed if it ever becomes a paid product. Where a source's terms do not permit redistribution, the Atlas links to it rather than copying it.",
     modal_boundaries_note: "The boundaries and names shown and the designations used on the map do not imply official endorsement or acceptance by the United Nations. Country outlines are generalized for display; where the underlying dataset diverges from United Nations cartographic practice and the geometry permits, the presentation follows the United Nations position.",
     modal_confidence_flags: "Confidence flags",
-    modal_confidence_body: "Each country carries a derived confidence level. High: the record is verified against its primary sources and a measured news-consumption survey covers the country. Medium: verified, but news figures rest on structural indicators or on a survey that carries a methodological caveat (sample or question construct). Low: not yet verified — must not be cited publicly. Individual figures always name their source in the Sources tab.",
+    modal_confidence_body: "Each country carries a derived confidence level. High: the record is verified against its primary sources and a measured news-consumption survey covers the country. Medium: verified, but news figures rest on structural indicators or on a survey that carries a methodological caveat (sample or question construct). Low: not yet verified; must not be cited publicly. Individual figures always name their source in the Sources tab.",
     footer_copyright: "© 2026 · United Nations · Audience Intelligence Atlas · Data last checked",
     footer_methodology: "Methodology", footer_github: "GitHub", footer_report: "Report an error"
   },
@@ -1756,7 +1680,7 @@ const COUNTRY_BOUNDARIES_URL = "data/boundaries/countries.geojson";
    Chinese). We render our own English country labels instead. */
 const BASE_TILES = "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png";
 const BASE_TILES_ATTRIB =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> · Boundaries: <a href="https://www.naturalearthdata.com/">Natural Earth</a>, generalized for display — boundaries and names shown do not imply official endorsement or acceptance by the United Nations';
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> · Boundaries: <a href="https://www.naturalearthdata.com/">Natural Earth</a>, generalized for display; boundaries and names shown do not imply official endorsement or acceptance by the United Nations';
 
 /* If the Leaflet CDN is unreachable (offline, blocked network), the map is
    lost but the sidebar, stats, panel, and search must keep working. */
@@ -1877,9 +1801,9 @@ function featureTooltip(feature) {
   if (kind === "territory") {
     const sov = TERRITORY_OF[iso];
     const sovName = ((window.COUNTRY_DATA || {})[sov] || {}).name || sov;
-    return `${name} — ${t("map_territory_note", { c: esc(sovName) })}`;
+    return `${name}: ${t("map_territory_note", { c: esc(sovName) })}`;
   }
-  if (kind === "none") return `${name} — ${t("map_not_covered")}`;
+  if (kind === "none") return `${name}: ${t("map_not_covered")}`;
   return name;
 }
 
@@ -2212,7 +2136,7 @@ function renderList() {
       : "";
     return `
     <div class="country-card" data-iso="${esc(iso)}" role="button" tabindex="0"
-         aria-label="${esc(d.name)} — ${t("tag_profile")}">
+         aria-label="${esc(d.name)}, ${t("tag_profile")}">
       <div class="flag" aria-hidden="true">${esc(d.flag) || "🌐"}</div>
       <div class="meta">
         <div class="name">${esc(d.name)}</div>
@@ -2420,7 +2344,7 @@ function tabOverview(d) {
       <div class="kv"><div class="label">${t("label_region")}</div><div class="value">${esc(d.subregion || "—")}</div></div>
       <div class="kv"><div class="label">${t("label_currency")}</div><div class="value">${esc(d.currency || "—")}</div></div>
     </div>
-    ${(d.languages_detail || []).length ? `<h3>${t("section_languages")} <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Unicode CLDR — share of population</span></h3>
+    ${(d.languages_detail || []).length ? `<h3>${t("section_languages")} <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Unicode CLDR: share of population</span></h3>
     <div class="pills">${d.languages_detail.map(l => `<div class="pill">${esc(l.language)} · ${l.pct}%${l.official ? " · official" : ""}</div>`).join("")}</div>`
     : (d.languages || []).length ? `<h3>${t("section_languages")}</h3>
     <div class="pills">${d.languages.map(l => `<div class="pill">${esc(l)}</div>`).join("")}</div>` : ""}
@@ -2484,7 +2408,7 @@ function tabMedia(d) {
             `<span class="value">${esc(String(na.daily_pct))}%</span></div>`;
     html += `<div class="data-row"><span class="label">At least a few times a week</span>` +
             `<span class="value">${esc(String(na.weekly_plus_pct))}%</span></div>`;
-    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:2px;">AmericasBarometer ${esc(String(na.year || "2023"))} (LAPOP Lab, Vanderbilt), weighted, n=${esc(Number(na.n || 0).toLocaleString())}. Overall news attention across TV, radio, print and internet combined — a different question from the per-channel figures above, never comparable with them.</div>`;
+    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:2px;">AmericasBarometer ${esc(String(na.year || "2023"))} (LAPOP Lab, Vanderbilt), weighted, n=${esc(Number(na.n || 0).toLocaleString())}. Overall news attention across TV, radio, print and internet combined, a different question from the per-channel figures above, never comparable with them.</div>`;
   }
 
   // connectivity rows render only when the indicator exists — "null%" is
@@ -2504,7 +2428,7 @@ function tabMedia(d) {
   // Affordability: LOWER is better, so no progress bar — a long bar here
   // would read as "good" for the most expensive markets.
   if (c.mobile_data_price_pct_income != null) {
-    html += `<div class="data-row"><span class="label">Mobile data price <span style="font-size:10px;color:var(--muted-2);">ITU basket, % of monthly income — lower is better</span></span><span class="value">${c.mobile_data_price_pct_income}%</span></div>`;
+    html += `<div class="data-row"><span class="label">Mobile data price <span style="font-size:10px;color:var(--muted-2);">ITU basket, % of monthly income, lower is better</span></span><span class="value">${c.mobile_data_price_pct_income}%</span></div>`;
   }
   if (c.mobile_connectivity_index != null) {
     html += `<div class="data-row"><span class="label">${t("label_mci")}</span><span class="value">${c.mobile_connectivity_index}/100</span></div>`;
@@ -2517,7 +2441,7 @@ function tabMedia(d) {
   // the first measured "how many homes can this channel even reach" figures
   // in the Atlas — they ground the Finder's radio/TV channel logic.
   if (m.tv_households_pct != null || m.radio_households_pct != null) {
-    html += `<h3>Broadcast reach <span style="font-size:10px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted-2);">ITU — share of households owning the receiver</span></h3>`;
+    html += `<h3>Broadcast reach <span style="font-size:10px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted-2);">ITU: share of households owning the receiver</span></h3>`;
     html += connRow("TV in households", m.tv_households_pct == null ? null : Math.round(m.tv_households_pct) + "%", m.tv_households_pct);
     html += connRow("Radio in households", m.radio_households_pct == null ? null : Math.round(m.radio_households_pct) + "%", m.radio_households_pct);
   }
@@ -2564,9 +2488,9 @@ function tabMedia(d) {
   if (iso2) {
     html += `<h3>Live ad-market activity <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">external transparency tools</span></h3>`;
     html += `<div style="font-size:12px;line-height:1.6;margin:2px 0 10px;">
-      <a href="https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=${iso2}" target="_blank" rel="noopener">Meta Ad Library — ads running in this market ↗</a><br>
+      <a href="https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=${iso2}" target="_blank" rel="noopener">Meta Ad Library: ads running in this market ↗</a><br>
       <a href="https://adstransparency.google.com/?region=${iso2}" target="_blank" rel="noopener">Google Ads Transparency Center ↗</a>
-      <div style="font-size:10px;color:var(--muted-2);margin-top:2px;">Free official tools showing which advertisers are active here — a live commercial-activity signal. Activity only, not spend.</div>
+      <div style="font-size:10px;color:var(--muted-2);margin-top:2px;">Free official tools showing which advertisers are active here: a live commercial-activity signal. Activity only, not spend.</div>
     </div>`;
   }
 
@@ -2599,7 +2523,7 @@ function tabMedia(d) {
       html += `<div class="data-row"><span class="label">${esc(name)}</span><span class="value">${share}%</span></div>`;
       html += `<div class="bar"><div class="bar-fill" style="width:${Math.min(share, 100)}%"></div></div>`;
     }
-    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:4px;">Referral share of web traffic only — app-first platforms (WhatsApp, TikTok, Telegram) are mostly invisible to this measure. Not a usage ranking.</div>`;
+    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:4px;">Referral share of web traffic only; app-first platforms (WhatsApp, TikTok, Telegram) are mostly invisible to this measure. Not a usage ranking.</div>`;
   }
 
   // Information freedom (RSF + Freedom House FOTN + Freedom House FITW)
@@ -2652,7 +2576,7 @@ function tabMedia(d) {
   } else if (oo && oo.no_measurements) {
     html += `<div class="data-row"><span class="label">Confirmed news-site blocking <span style="font-size:10px;color:var(--muted-2);">OONI · 28 days</span></span>` +
             `<span class="value" style="color:var(--muted-2);">no measurements</span></div>`;
-    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:2px;">${esc(oo.note || "No OONI volunteer measurements from this country in the window — unknown, not evidence of an open internet.")}</div>`;
+    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:2px;">${esc(oo.note || "No OONI volunteer measurements from this country in the window: unknown, not evidence of an open internet.")}</div>`;
   }
 
   // ---- Live trending topics (daily trend engine: Wikipedia demand signal) ----
@@ -2684,9 +2608,9 @@ function tabMedia(d) {
     let staleNote = "";
     if (gen) {
       const ageDays = Math.floor((Date.now() - new Date(gen + "T00:00:00Z").getTime()) / 86400000);
-      if (ageDays > 3) staleNote = `<span style="color:var(--warn);"> ⚠ Last updated ${ageDays} days ago — the daily engine may need attention.</span>`;
+      if (ageDays > 3) staleNote = `<span style="color:var(--warn);"> ⚠ Last updated ${ageDays} days ago; the daily engine may need attention.</span>`;
     }
-    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:6px;">Source: Wikipedia reading patterns (Wikimedia Pageviews API), updated ${esc(gen)}.${staleNote} Country attribution via language-population weights — an approximation, not a measurement.</div>`;
+    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:6px;">Source: Wikipedia reading patterns (Wikimedia Pageviews API), updated ${esc(gen)}.${staleNote} Country attribution via language-population weights: an approximation, not a measurement.</div>`;
   } else {
     html += `<div style="font-size:11px;color:var(--muted-2);">${t("trending_unavailable")}</div>`;
   }
@@ -2727,12 +2651,12 @@ function tabMedia(d) {
     html += `<h3>Trending searches <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Google Trends · ${esc(cs.date)}</span></h3>`;
     cs.queries.slice(0, 8).forEach(q => {
       const badge = q.new
-        ? ` <span style="font-size:10px;color:var(--accent);">new</span>`
+        ? ` <span style="font-size:10px;color:var(--un-blue-dark);">new</span>`
         : (q.days_seen > 1 ? ` <span style="font-size:10px;color:var(--muted-2);">${esc(String(q.days_seen))}d</span>` : "");
       html += `<div class="data-row"><span class="label">${esc(q.query)}${badge}</span>` +
               `<span class="value">${esc(q.traffic || "")}</span></div>`;
     });
-    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:4px;">Searches trending in this country on ${esc(cs.date)}. Data source: Google Trends. Traffic figures are Google's buckets — floors, not measured volumes. Search interest of any kind, not news interest specifically; "new" = not seen in the previous 7 days' snapshots.</div>`;
+    html += `<div style="font-size:10px;color:var(--muted-2);margin-top:4px;">Searches trending in this country on ${esc(cs.date)}. Data source: Google Trends. Traffic figures are Google's buckets: floors, not measured volumes. Search interest of any kind, not news interest specifically; "new" = not seen in the previous 7 days' snapshots.</div>`;
   }
 
   // ---- UN in the national press (Media Cloud, weekly window, daily) ----
@@ -2960,7 +2884,7 @@ function openDeepLinkedCountry() {
       banner.classList.add("show");
       banner.textContent = "⚠ Live country data could not be loaded, so this page is showing a small "
         + "built-in sample (10 countries, older figures) instead of all 195. Check your connection and "
-        + "refresh — if it persists, the data file may not have published.";
+        + "refresh. If it persists, the data file may not have published.";
     }
     // A shared ?country= link must still open whatever profile the fallback
     // holds; leaving this inside the try meant such a link did nothing at all

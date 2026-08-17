@@ -3,41 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="The Atlas's AI Analyst — evidence-backed answers about media landscapes, platforms, and trends in 195 countries, computed in your browser from verified, cited data.">
-<title>AI Analyst — Audience Intelligence Atlas</title>
+<meta name="description" content="The Atlas's AI Analyst: evidence-backed answers about media landscapes, platforms, and trends in 195 countries, computed in your browser from verified, cited data.">
+<title>AI Analyst · Audience Intelligence Atlas</title>
+<link rel="stylesheet" href="assets/atlas.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='42' fill='%23009EDB'/><circle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='5'/><path d='M20 50h60M50 20c12 10 12 50 0 60M50 20c-12 10-12 50 0 60' stroke='white' stroke-width='5' fill='none'/></svg>">
 <style>
-  :root {
-    --un-blue: #009EDB; --un-blue-dark: #0072BC; --un-blue-ink: #003D6B;
-    --accent-soft: #E6F4FB; --ink: #0F1A2B; --muted: #5C6B7E; --muted-2: #5C6B7E;
-    --bg: #F7FAFC; --surface: #FFFFFF; --border: #E3EBF1; --border-soft: #EEF3F7;
-    --positive: #15803D; --warn: #B45309; --danger: #C81E1E;   /* was #DC2626 — 4.2:1 on the .badge.falling chip, below AA */
-    --shadow: 0 1px 2px rgba(15,26,43,0.04), 0 4px 14px rgba(15,26,43,0.06);
-    --radius: 10px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
          background: var(--bg); color: var(--ink); display: flex; flex-direction: column; min-height: 100vh; }
-  :focus-visible { outline: 2px solid var(--un-blue); outline-offset: 2px; }
-  .skip-link { position: absolute; left: -9999px; top: 0; background: var(--un-blue-ink); color: #fff;
-    padding: 8px 14px; z-index: 3000; border-radius: 0 0 8px 0; font-size: 13px; }
-  .skip-link:focus { left: 0; }
-  header.site { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
-  header.site .brand { display: flex; align-items: center; gap: 12px; }
-  header.site .logo { width: 40px; height: auto; flex-shrink: 0; }
-  header.site .title { font-weight: 600; font-size: 15px; }
-  header.site .subtitle { font-size: 12px; color: var(--muted); }
-  header.site nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
-  header.site nav a { padding: 6px 12px; font-size: 13px; color: var(--muted);
-    text-decoration: none; border-radius: 6px; white-space: nowrap; }
-  header.site nav a:hover, header.site nav a:focus-visible { background: var(--border-soft); color: var(--ink); }
-  header.site nav a[aria-current="page"] { color: var(--un-blue-dark); font-weight: 600; background: var(--accent-soft); }
-
-  .banner { max-width: 860px; margin: 14px auto 0; padding: 10px 16px; width: calc(100% - 32px);
-    border-radius: var(--radius); font-size: 12.5px; line-height: 1.5; }
-  .banner.live { background: #E8F7EE; border: 1px solid #BFE8CE; color: #14532D; }
 
   .chat { flex: 1; max-width: 860px; margin: 0 auto; width: 100%; padding: 16px; display: flex;
           flex-direction: column; gap: 14px; }
@@ -60,7 +33,7 @@
 
   /* Footnote-style sources — always visible beneath each answer */
   .footnotes { margin-top: 10px; border-top: 1px solid var(--border-soft); padding-top: 7px; }
-  .footnotes .fn-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+  .footnotes .fn-label { font-size: 11px; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.07em; color: var(--muted-2); }
   .footnotes ol { margin: 4px 0 0; padding-left: 18px; }
   .footnotes li { font-size: 12px; color: var(--muted); padding: 1.5px 0; }
@@ -77,26 +50,26 @@
   @media (prefers-reduced-motion: reduce) { .thinking span { animation: none; } }
 
   .suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-  .chip { background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
-    font-size: 12.5px; padding: 7px 14px; cursor: pointer; color: var(--un-blue-ink);
+  .chip { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-pill);
+    font-size: 12px; padding: 7px 14px; cursor: pointer; color: var(--un-blue-ink);
     font-family: inherit; text-align: left; }
   .chip:hover, .chip:focus-visible { background: var(--accent-soft); border-color: var(--un-blue); }
 
   form.askbar { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 30%);
     padding: 10px 16px 18px; }
   .askbar .inner { max-width: 860px; margin: 0 auto; display: flex; gap: 8px; }
-  .askbar input { flex: 1; padding: 13px 16px; border: 1px solid var(--border); border-radius: 999px;
+  .askbar input { flex: 1; padding: 13px 16px; border: 1px solid var(--border); border-radius: var(--r-pill);
     font-size: 16px; background: var(--surface); box-shadow: var(--shadow); outline: none; min-width: 0; }
   .askbar input:focus { border-color: var(--un-blue); box-shadow: 0 0 0 3px var(--accent-soft); }
   .askbar button { border: 0; background: var(--un-blue-dark); color: #fff; font-weight: 600;
-    border-radius: 999px; padding: 0 22px; font-size: 14px; cursor: pointer; font-family: inherit; }
+    border-radius: var(--r-pill); padding: 0 22px; font-size: 14px; cursor: pointer; font-family: inherit; }
   .askbar button:hover, .askbar button:focus-visible { background: var(--un-blue-ink); }
   .askbar button:disabled { background: var(--muted-2); cursor: default; }
   .reasoning { margin-top: 10px; border-top: 1px solid var(--border-soft); padding-top: 8px; }
-  .reasoning summary { cursor: pointer; font-size: 11.5px; color: var(--muted-2);
+  .reasoning summary { cursor: pointer; font-size: 12px; color: var(--muted-2);
     list-style: none; display: inline-flex; align-items: center; gap: 5px; }
   .reasoning summary::-webkit-details-marker { display: none; }
-  .reasoning summary::before { content: "▸"; font-size: 9px; }
+  .reasoning summary::before { content: "▸"; font-size: 11px; }
   .reasoning[open] summary::before { content: "▾"; }
   .reasoning summary:hover { color: var(--un-blue-dark); }
   .reasoning ol { margin: 8px 0 0; padding-left: 20px; font-size: 12px; color: var(--muted);
@@ -108,7 +81,7 @@
      Copy/Print buttons appear on error messages that have nothing to share. */
   .answer-tools[hidden] { display: none; }
   .answer-tools .tool { border: 1px solid var(--border); background: #fff; color: var(--muted);
-    font: inherit; font-size: 11.5px; padding: 3px 10px; border-radius: 999px; cursor: pointer; }
+    font: inherit; font-size: 12px; padding: 3px 10px; border-radius: var(--r-pill); cursor: pointer; }
   .answer-tools .tool:hover { color: var(--un-blue-dark); border-color: var(--un-blue); }
 
   /* Print: one clean, cited page. Only the chosen answer (.print-target)
@@ -131,11 +104,11 @@
     body.printing-one #chat .msg.analyst { display: none; }
     body.printing-one #chat .msg.analyst.print-target { display: block; }
     #chat .msg.analyst::before {
-      content: "Audience Intelligence Atlas — United Nations · generated answer, sources below";
-      display: block; font-size: 10px; color: #555; border-bottom: 1px solid #ccc;
+      content: "Audience Intelligence Atlas · United Nations · generated answer, sources below";
+      display: block; font-size: 11px; color: #555; border-bottom: 1px solid #ccc;
       padding-bottom: 6px; margin-bottom: 12px; }
     a { color: #000; text-decoration: none; }
-    .footnotes a::after { content: " (" attr(href) ")"; font-size: 9px; color: #555; }
+    .footnotes a::after { content: " (" attr(href) ")"; font-size: 11px; color: #555; }
   }
   .footer-note { text-align: center; font-size: 11px; color: var(--muted-2); padding: 0 16px 14px; }
   /* the answer shown when something goes wrong tells the reader to use
@@ -157,7 +130,7 @@
 <a class="skip-link" href="#chat">Skip to the conversation</a>
 <header class="site">
   <div class="brand">
-    <a href="index.html" aria-label="United Nations emblem — back to the map" style="display:block; line-height:0;">
+    <a href="index.html" aria-label="United Nations emblem, back to the map" style="display:block; line-height:0;">
       <img class="logo" src="assets/un_emblem.png" alt="United Nations emblem" width="40" height="33">
     </a>
     <div>
@@ -178,8 +151,8 @@
 <main class="chat" id="chat" aria-live="polite">
   <div class="msg analyst">
     <div class="body">
-      <p>Hello — I answer questions about <b>where and how to communicate</b>, using only the Atlas's verified data: platform usage and trust per country (Reuters Institute DNR 2026, Afrobarometer), press and political freedom (RSF 2026, official Freedom House 2026 files), connectivity (World Bank), and live topic trends updated daily.</p>
-      <p>Ask in your own words — I understand typos, comparisons, rankings, and follow-ups. When the data can't support an answer, I say so. Try one of these:</p>
+      <p>Hello. I answer questions about <b>where and how to communicate</b>, using only the Atlas's verified data: platform usage and trust per country (Reuters Institute DNR 2026, Afrobarometer), press and political freedom (RSF 2026, official Freedom House 2026 files), connectivity (World Bank), and live topic trends updated daily.</p>
+      <p>Ask in your own words; I understand typos, comparisons, rankings, and follow-ups. When the data can't support an answer, I say so. Try one of these:</p>
     </div>
     <div class="suggest" id="suggestions" role="group" aria-label="Example questions"></div>
   </div>
@@ -194,7 +167,7 @@
 </form>
 <footer class="footer-note">The analyst only cites the Atlas's own sources and refuses to guess. Answers are decision support, not policy positions.
   <span id="qlog-ui" hidden> · Questions are remembered <em>only in this browser</em> (never uploaded) so coverage gaps can be reviewed:
-    <a href="#" id="qlog-download" title="Download every question asked in this browser as a CSV (opens in Excel) — timestamp, question, and whether the analyst answered, asked to clarify, or missed">download log (<span id="qlog-count">0</span>)</a> ·
+    <a href="#" id="qlog-download" title="Download every question asked in this browser as a CSV (opens in Excel): timestamp, question, and whether the analyst answered, asked to clarify, or missed">download log (<span id="qlog-count">0</span>)</a> ·
     <a href="#" id="qlog-clear" title="Erase the local question log">clear</a>
   </span>
   <div class="footer-legal">© 2026 · United Nations · Audience Intelligence Atlas ·
@@ -242,7 +215,7 @@ initEngine().then(() => { engineReady = true; })
 
 banner.hidden = false;
 banner.className = "banner live";
-banner.innerHTML = "<b>Live.</b> The analyst runs entirely in your browser on the Atlas's published data — free-text questions, no account, nothing sent anywhere." +
+banner.innerHTML = "<b>Live.</b> The analyst runs entirely in your browser on the Atlas's published data: free-text questions, no account, nothing sent anywhere." +
   (WORKER_URL ? " An experimental AI prose layer is configured; every figure still comes from the same verified data." : "");
 
 const sugg = document.getElementById("suggestions");
@@ -362,7 +335,7 @@ function addAnalyst(answer, evidence, note, followups, forQuestion, reasoning) {
   if (!forQuestion) tools.hidden = true;   // status notices have nothing to share
   const copy = document.createElement("button");
   copy.type = "button"; copy.className = "tool"; copy.textContent = "Copy link";
-  copy.title = "Copy a link that re-asks this question — the recipient's browser computes the same answer from the same published data";
+  copy.title = "Copy a link that re-asks this question; the recipient's browser computes the same answer from the same published data";
   // The link is built from THIS answer's own question, captured when the
   // answer was created. Reading the address bar instead would hand out a link
   // to whatever was asked most recently — so copying from an earlier answer in
@@ -448,11 +421,11 @@ async function askLocal(question) {
     for (let i = 0; i < 40 && !engineReady && !engineError; i++) await new Promise(r => setTimeout(r, 250));
   }
   if (engineError) {
-    addAnalyst("I couldn't load the Atlas's data files (" + escapeHtml(engineError.message) + "). If you're opening this page directly from a file, use the published site instead — the data loads from the same address as the page.", [], "", []);
+    addAnalyst("I couldn't load the Atlas's data files (" + escapeHtml(engineError.message) + "). If you're opening this page directly from a file, use the published site instead; the data loads from the same address as the page.", [], "", []);
     return;
   }
   if (!engineReady) {
-    addAnalyst("The Atlas's data is still loading (slow connection) — please try again in a few seconds.", [], "", []);
+    addAnalyst("The Atlas's data is still loading (slow connection). Please try again in a few seconds.", [], "", []);
     return;
   }
   const r = answerQuestion(question);
@@ -563,7 +536,7 @@ async function ask(question) {
   } catch (e) {
     // never leave the user with silence — surface the problem in the chat
     console.error("Analyst error:", e);
-    addAnalyst("Something went wrong while answering (" + e.message + "). Please try rephrasing the question — and if this keeps happening, use \"Report an error\" at the bottom of this page.", [], "", []);
+    addAnalyst("Something went wrong while answering (" + e.message + "). Please try rephrasing the question. If this keeps happening, use \"Report an error\" at the bottom of this page.", [], "", []);
   } finally {
     removeThinking();
     send.disabled = false;
@@ -618,8 +591,8 @@ async function runSharedQuestion() {
   // put the question in the box and say what happened, so they can retry.
   addUser(q);
   addAnalyst(engineError
-    ? "I couldn't load the Atlas's data files (" + engineError.message + "), so this shared question hasn't been answered. It's in the box below — press Ask to try again."
-    : "The Atlas's data is still loading (slow connection), so this shared question hasn't been answered yet. It's in the box below — press Ask to try again.",
+    ? "I couldn't load the Atlas's data files (" + engineError.message + "), so this shared question hasn't been answered. It's in the box below; press Ask to try again."
+    : "The Atlas's data is still loading (slow connection), so this shared question hasn't been answered yet. It's in the box below; press Ask to try again.",
     [], "", []);
 }
 runSharedQuestion();
