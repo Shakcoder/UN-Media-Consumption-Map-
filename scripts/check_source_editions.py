@@ -65,7 +65,13 @@ INTEGRATED = {
     "gsma": 2024,         # GSMA Mobile Connectivity Index
     "afrobarometer": 9,   # Afrobarometer survey round (not a year)
     "wpp": 2024,          # UN DESA World Population Prospects (biennial)
-    "ad_market": 2025,    # WPP Media TYNY / Dentsu year-end ad forecasts (December editions)
+    # YEAR CONVENTION (2026-08-17, closes the issue-#3 phantom): the number
+    # here is the FORECAST year in the publishers' own titles, not the
+    # publication year — the December-2025 editions are titled "2026". The
+    # integrated data (data/ad_market.json) IS those December-2025/"2026"
+    # editions, so 2026 is correct and the next genuine reminder fires when
+    # the December-2026 releases (titled "2027") appear.
+    "ad_market": 2026,    # WPP Media TYNY / Dentsu year-end ad forecasts (December editions)
 }
 
 SOURCES = [
