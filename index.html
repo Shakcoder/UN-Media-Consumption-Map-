@@ -1765,22 +1765,28 @@ if (window.L) {
   map = L.map("map", {
     center: [20, 10], zoom: 2, minZoom: 2, maxZoom: 6,
     zoomControl: true, attributionControl: true,
-    // ONE WORLD, BOUNDED (2026-08-16). The map used to wrap horizontally
-    // (worldCopyJump), but Leaflet only repeats TILES across the
-    // antimeridian — vector layers render on the primary copy alone. Any
-    // sideways pan therefore revealed a second world of grey continent
-    // ghosts with no country colouring ("half blue, half grey"). A UN
-    // choropleth needs no infinite scroll: hard-bound the world instead.
-    // Slight longitude slack (±200°) keeps the edge stop elastic rather
-    // than a wall; beyond-bounds space shows the container's sea colour.
-    maxBounds: [[-85, -200], [85, 200]], maxBoundsViscosity: 1.0
+    // CONTINUOUS SCROLL, PAINTED EVERYWHERE (2026-08-17). The map wraps
+    // around the world again (a bounded world shipped briefly on
+    // 2026-08-16 and was reverted by request). Leaflet repeats only TILES
+    // across the antimeridian — vector layers exist on one copy — so raw
+    // wrapping used to reveal ghost continents with no colouring ("half
+    // blue, half grey"). Two measures make wrapping seamless instead:
+    // Pacific-rim geometry is duplicated into the neighbouring world
+    // copies at load (see the boundary handler), and worldCopyJump
+    // re-centres the view onto the primary copy whenever a drag crosses
+    // half a world, so the duplicated band is all a user can ever reach.
+    worldCopyJump: true
   });
-  L.tileLayer(BASE_TILES, { attribution: BASE_TILES_ATTRIB, subdomains: "abcd", maxZoom: 19,
-    // noWrap stops tiles repeating past the antimeridian; bounds stops
-    // Leaflet even REQUESTING beyond-edge tiles (the CDN answers those
-    // with 400s that pollute the console when panning into the elastic
-    // slack around the bounded world).
-    noWrap: true, bounds: [[-85, -180], [85, 180]] }).addTo(map);
+  // worldCopyJump wraps DRAGS only — keyboard panning and programmatic
+  // moves can still walk beyond the painted band. Normalise on moveend:
+  // within the duplicated band the wrapped view is pixel-identical, so
+  // the hop is invisible.
+  map.on("moveend", () => {
+    const c = map.getCenter();
+    if (Math.abs(c.lng) > 180)
+      map.panTo([c.lat, c.lng - Math.sign(c.lng) * 360], { animate: false, noMoveStart: true });
+  });
+  L.tileLayer(BASE_TILES, { attribution: BASE_TILES_ATTRIB, subdomains: "abcd", maxZoom: 19 }).addTo(map);
   // A drag that starts over a country never delivers its mouseout, leaving
   // a stray hover highlight stuck on the map — clear it when panning starts.
   map.on("movestart", () => {
@@ -1906,6 +1912,50 @@ if (map) fetch(COUNTRY_BOUNDARIES_URL)
     const features = (geojson && geojson.features) || [];
     if (!features.length || features.filter(f => resolveIso(f)).length < features.length / 2)
       throw new Error("boundary file carries too few recognisable ISO country codes");
+
+    // WRAP BAND (2026-08-17). Vector layers do not repeat across the
+    // antimeridian, so continuous scrolling needs the geometry that can
+    // come into view beyond ±180° to exist as real (clickable, hoverable)
+    // features. worldCopyJump re-centres once a drag crosses half a world,
+    // so only features within 90° of the date line can ever be seen on a
+    // neighbouring copy — duplicating just that Pacific band costs ~25%
+    // extra points instead of 200% for full copies. Copies carry
+    // _worldCopy so selection flight targets the primary feature.
+    // Shift PER POLYGON-PART, never per feature: countries that span the
+    // date line (USA via the Aleutians, Russia via Chukotka, Chile via
+    // Easter Island) have parts on both sides, and whole-feature shifting
+    // turned their copies into 360°-wide monsters (a USA copy spanning
+    // lng 181→540 was the first symptom). Each part (outer ring + its
+    // holes) qualifies by its own outer ring and shifts alone.
+    const copies = [];
+    for (const f of features) {
+      const g = f.geometry || {};
+      if (!["Polygon", "MultiPolygon"].includes(g.type)) continue;
+      const units = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+      const shifted = { "-360": [], "360": [] };
+      for (const unit of units) {
+        const outerLngs = unit[0].map(([x]) => x);
+        // pole-encircling rings (Antarctica) span all longitudes — the
+        // primary copy already fills every view; shifted copies would be
+        // full-width duplicates
+        if (Math.max(...outerLngs) - Math.min(...outerLngs) > 350) continue;
+        for (const dx of [-360, 360]) {
+          const qualifies = dx < 0 ? outerLngs.some(x => x >= 90)
+                                   : outerLngs.some(x => x <= -90);
+          if (qualifies)
+            shifted[String(dx)].push(unit.map(r => r.map(([x, y]) => [x + dx, y])));
+        }
+      }
+      for (const dx of ["-360", "360"]) {
+        if (!shifted[dx].length) continue;
+        copies.push({
+          type: "Feature",
+          properties: { ...f.properties, _worldCopy: true },
+          geometry: { type: "MultiPolygon", coordinates: shifted[dx] },
+        });
+      }
+    }
+    geojson = { type: "FeatureCollection", features: [...features, ...copies] };
 
     countryLayer = L.geoJSON(geojson, {
       // CANVAS RENDERER (2026-08-17). Two eras of fixes led here: the
@@ -2264,11 +2314,16 @@ function openDetail(iso) {
         // flyTo instead of a hard jump — one smooth eased movement reads as
         // responsiveness, a teleport reads as a glitch. Honour the OS-level
         // reduced-motion preference with the old instant behaviour.
-        const b = layer.getBounds(), o = { maxZoom: 4, padding: [50, 50] };
-        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
-          map.fitBounds(b, o);
-        else
-          map.flyToBounds(b, { ...o, duration: 0.7, easeLinearity: 0.2 });
+        // Wrap-band copies get the highlight too, but only the PRIMARY
+        // feature steers the flight — flying to a ±360° copy would hurl
+        // the camera across the world.
+        if (!layer.feature.properties._worldCopy) {
+          const b = layer.getBounds(), o = { maxZoom: 4, padding: [50, 50] };
+          if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+            map.fitBounds(b, o);
+          else
+            map.flyToBounds(b, { ...o, duration: 0.7, easeLinearity: 0.2 });
+        }
       } else {
         try { countryLayer.resetStyle(layer); } catch(e) {}
       }
