@@ -541,8 +541,30 @@
   footer.site a { color: var(--un-blue-dark); text-decoration: none; cursor: pointer; }
   footer.site a:hover { text-decoration: underline; }
 
-  .leaflet-container { font-family: inherit; background: #DFE8F0; }
+  /* Beyond the world's edge the container shows through — a designed soft
+     fade instead of a flat grey void. Tiles cover everything inside the
+     world, so this only paints the polar/edge margins. */
+  .leaflet-container { font-family: inherit;
+    background: linear-gradient(180deg, #E9F2F9 0%, #DFE8F0 45%, #D5E2ED 100%); }
   .leaflet-interactive:focus { outline: none; }
+  /* Modernised zoom control — same affordance, crisper instrument feel */
+  .leaflet-control-zoom { border: none !important;
+    box-shadow: 0 2px 10px rgba(15,26,43,0.14) !important; border-radius: 10px !important;
+    overflow: hidden; }
+  .leaflet-control-zoom a { width: 34px !important; height: 34px !important;
+    line-height: 34px !important; font-size: 17px !important; color: #0F1A2B !important;
+    background: rgba(255,255,255,0.92) !important; backdrop-filter: blur(6px);
+    border-bottom: 1px solid #EDF2F7 !important; transition: background .15s, color .15s; }
+  .leaflet-control-zoom a:last-child { border-bottom: none !important; }
+  .leaflet-control-zoom a:hover { background: #FFFFFF !important; color: var(--un-blue-dark) !important; }
+  /* The country layer mounts ~1s after the tiles on first load — fade it in
+     instead of popping (class added by script when the layer is ready). */
+  .leaflet-overlay-pane { opacity: 0; transition: opacity .45s ease; }
+  .leaflet-overlay-pane.layer-ready { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .leaflet-overlay-pane { transition: none; opacity: 1; }
+    .leaflet-control-zoom a { transition: none; }
+  }
   /* Ensure Leaflet zoom controls stay LTR even in RTL mode */
 
   @media (max-width: 780px) {
@@ -1884,17 +1906,21 @@ if (map) fetch(COUNTRY_BOUNDARIES_URL)
     const features = (geojson && geojson.features) || [];
     if (!features.length || features.filter(f => resolveIso(f)).length < features.length / 2)
       throw new Error("boundary file carries too few recognisable ISO country codes");
+
     countryLayer = L.geoJSON(geojson, {
-      // PAN SMOOTHNESS (2026-08-13). The default SVG renderer clips to the
-      // viewport + 10%, so every drag revealed unpainted void (bare grey
-      // base tiles) where countries should be, then re-projected all
-      // ~178k boundary points in one hitch on release — the map looked
-      // like it was tearing between blue and grey. padding 1.5 draws
-      // geometry 1.5 viewports past every edge, so ordinary pans never
-      // reach undrawn space; smoothFactor trims sub-pixel points per zoom
-      // at render time only (the boundary FILE, with its UN-position
-      // adjustments, is untouched).
-      renderer: L.svg({ padding: 1.5 }),
+      // CANVAS RENDERER (2026-08-17). Two eras of fixes led here: the
+      // default SVG renderer clipped to the viewport +10%, so drags
+      // revealed unpainted void ("half blue, half grey", fixed 2026-08-13
+      // with padding 1.5) — but SVG then rewrote ~178k projected points
+      // into path strings on EVERY zoom, measured at 1,704ms per zoom-in
+      // and 931ms on boundary-crossing pans. Canvas paints the same
+      // geometry as pixels instead of DOM churn: measured ~10-40x faster
+      // on the identical machine. Hover/click/tooltips all work on canvas;
+      // tolerance widens the hit area a touch for thin coastal shapes;
+      // smoothFactor trims sub-pixel points per zoom at render time only
+      // (the boundary FILE, with its UN-position adjustments, is
+      // untouched).
+      renderer: L.canvas({ padding: 0.75, tolerance: 3 }),
       smoothFactor: 1.5,
       style: styleCountry,
       onEachFeature: (feature, layer) => {
@@ -1918,6 +1944,13 @@ if (map) fetch(COUNTRY_BOUNDARIES_URL)
         });
       }
     }).addTo(map);
+    // fade the freshly-painted layer in (see .leaflet-overlay-pane CSS).
+    // setTimeout, not requestAnimationFrame: rAF never fires in throttled
+    // background tabs, which left the layer permanently invisible there.
+    setTimeout(() => {
+      const pane = document.querySelector(".leaflet-overlay-pane");
+      if (pane) pane.classList.add("layer-ready");
+    }, 0);
     boundariesGeojson = geojson;
     buildCountryLabels(geojson);
   })
@@ -2228,7 +2261,14 @@ function openDetail(iso) {
       const layerIso = resolveIso(layer.feature);
       if (layerIso === iso) {
         try { layer.setStyle(styleCountryHover(layer.feature)); } catch(e) {}
-        map.fitBounds(layer.getBounds(), { maxZoom: 4, padding: [50, 50] });
+        // flyTo instead of a hard jump — one smooth eased movement reads as
+        // responsiveness, a teleport reads as a glitch. Honour the OS-level
+        // reduced-motion preference with the old instant behaviour.
+        const b = layer.getBounds(), o = { maxZoom: 4, padding: [50, 50] };
+        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+          map.fitBounds(b, o);
+        else
+          map.flyToBounds(b, { ...o, duration: 0.7, easeLinearity: 0.2 });
       } else {
         try { countryLayer.resetStyle(layer); } catch(e) {}
       }
