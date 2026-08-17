@@ -84,6 +84,24 @@
   .toolbar .tool { border: 1px solid var(--border); background: var(--card); color: var(--muted);
     font: inherit; font-size: 12px; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
   .toolbar .tool:hover { color: var(--un-blue-dark); border-color: var(--un-blue); }
+  /* Topic lens — shown when the typed topic is one the Atlas tracks */
+  .topiclens { margin-top: 16px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 18px; }
+  .topiclens h2 { font-size: 16px; margin: 0 0 2px; }
+  .topiclens .tl-sub { color: var(--muted); font-size: 12.5px; margin-bottom: 10px; }
+  .topiclens .tl-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 99px; font-weight: 600;
+    vertical-align: 1px; margin-left: 6px; }
+  .topiclens .tl-badge.rising { background: #E8F7EE; color: #15803D; }
+  .topiclens .tl-badge.falling { background: #FDEBEA; color: #C81E1E; }
+  .topiclens .tl-badge.steady { background: var(--border-soft); color: var(--muted); }
+  .topiclens h3 { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; color: var(--muted);
+    text-transform: uppercase; margin: 14px 0 6px; }
+  .topiclens table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .topiclens td, .topiclens th { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border-soft); }
+  .topiclens td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .topiclens .tl-note { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  .topiclens .tl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; }
+  @media (max-width: 760px) { .topiclens .tl-grid { grid-template-columns: 1fr; } }
   .checker { margin-top: 16px; background: var(--card); border: 1px solid var(--border);
     border-radius: 10px; padding: 12px 14px; }
   .checker label { display: block; font-size: 12px; font-weight: 600; color: var(--muted);
@@ -215,6 +233,14 @@
        search (loading, ready, how many countries ranked) is written here. -->
   <div id="status" role="status" aria-live="polite">Loading the Atlas's data…</div>
 
+  <!-- Topic lens: appears when the typed topic is one the Atlas tracks.
+       Everything here is a client-side join over files the site already
+       publishes daily — no extra sources, no server. Momentum and language
+       demand come from topic_intelligence.json; "measurably most-read"
+       joins the topic's own per-language article titles (data/topics.json)
+       against each country's measured reading list. -->
+  <section class="topiclens" id="topiclens" role="region" aria-label="Topic lens" hidden></section>
+
   <section class="results" id="results">
     <div class="toolbar" id="toolbar">
       <button type="button" class="tool" id="copy-screen" title="Copy a link that re-runs this exact screening — the recipient's browser computes it from the same published data">Copy link to this screening</button>
@@ -263,12 +289,19 @@ let TOPIC_INDEX = [];   // [label, qid]
         const reg = await r.json();
         TOPIC_INDEX = (reg.topics || []).map(t => [t.label_en, t.qid]);
         $("topic-list").innerHTML = TOPIC_INDEX.map(([l]) => `<option value="${esc(l)}">`).join("");
+        // a topic restored from a shared URL should get its lens without
+        // the user having to retype it
+        maybeRenderLens();
       }
     } catch (e) { /* topic boost simply unavailable */ }
     $("find-btn").disabled = false;
     if (restoreFormFromUrl()) {
       $("status").textContent = "Running the shared screening…";
       $("finder-form").requestSubmit();
+      // the restored form may carry a topic — the lens must appear for it
+      // (the earlier call in the topics.json branch ran before the form
+      // fields were filled, so it saw an empty topic box)
+      maybeRenderLens();
     } else {
       $("status").textContent = "Ready — describe the campaign above and press “Find markets”.";
     }
@@ -525,6 +558,180 @@ function renderCheck() {
 }
 $("check-country").addEventListener("input", renderCheck);
 $("check-country").addEventListener("change", renderCheck);
+
+/* ---------- Topic lens ----------
+ * A per-topic exploration card built entirely from files the site already
+ * publishes daily. Data loads lazily on the first tracked-topic match and is
+ * cached for the session; a fetch failure hides the lens and never touches
+ * the screening flow. Every string is escaped at interpolation (same policy
+ * as the rest of this page). */
+const LENS_LANG_NAMES = {en:"English", fr:"French", es:"Spanish", ar:"Arabic", pt:"Portuguese",
+  ru:"Russian", zh:"Chinese", hi:"Hindi", bn:"Bengali", id:"Indonesian", sw:"Swahili",
+  ha:"Hausa", am:"Amharic", ur:"Urdu", fa:"Persian", tr:"Turkish", vi:"Vietnamese",
+  th:"Thai", ja:"Japanese", de:"German", uk:"Ukrainian", ko:"Korean"};
+let LENS_DATA = null, LENS_LOADING = null;
+
+async function lensData() {
+  if (LENS_DATA) return LENS_DATA;
+  if (!LENS_LOADING) LENS_LOADING = (async () => {
+    const [ti, cr, cd, reg] = await Promise.all([
+      fetch("data/trends/topic_intelligence.json", { cache: "no-cache" }).then(r => r.json()),
+      fetch("data/trends/country_reading.json", { cache: "no-cache" }).then(r => r.json()),
+      fetch("data/countries.json", { cache: "no-cache" }).then(r => r.json()),
+      fetch("data/topics.json", { cache: "no-cache" }).then(r => r.json()),
+    ]);
+    const names = {};
+    for (const [iso3, rec] of Object.entries(cd || {}))
+      if (rec && rec.name) names[iso3] = rec.name;
+    LENS_DATA = {
+      ti,
+      reading: (cr && cr.countries) || {},
+      names,
+      topics: Object.fromEntries(((reg && reg.topics) || []).map(t => [t.qid, t])),
+      languages: (reg && reg.languages) || [],
+    };
+    return LENS_DATA;
+  })();
+  return LENS_LOADING;
+}
+
+/* Countries whose CURRENT measured most-read list contains one of this
+ * topic's own articles — presence in a top list, never a share. */
+function readingPresence(D, qid) {
+  const titles = (D.topics[qid] || {}).titles || {};
+  const hits = [];
+  for (const [iso3, rec] of Object.entries(D.reading)) {
+    if (!rec || rec.withheld) continue;
+    for (const a of rec.articles || []) {
+      const lang = String(a.project || "").split(".")[0];
+      if (titles[lang] && a.title === titles[lang])
+        hits.push({ iso3, name: D.names[iso3] || iso3, lang,
+                    views: a.views_ceil || 0, rank: a.rank, date: rec.date });
+    }
+  }
+  return hits.sort((a, b) => b.views - a.views);
+}
+
+function renderLens(D, qid) {
+  const el = $("topiclens");
+  const meta = D.topics[qid];
+  const t = (D.ti.topics || {})[qid];
+  const unscored = ((D.ti.topics_unscored || []).find(u => u.qid === qid));
+  if (!meta) { el.hidden = true; return; }
+
+  let head;
+  if (t) {
+    const pct = Math.round(t.global_velocity * 100);
+    const mom = t.momentum === "rising" || t.momentum === "falling" ? t.momentum : "steady";
+    const sym = mom === "rising" ? "▲" : mom === "falling" ? "▼" : "—";
+    const te = t.top_edition || {};
+    const drive = te.share >= 0.7 && LENS_LANG_NAMES[te.lang]
+      ? ` · driven ${Math.round(te.share * 100)}% by ${esc(LENS_LANG_NAMES[te.lang])} Wikipedia` : "";
+    const news = t.news_articles_7d != null
+      ? ` · ${t.news_articles_7d.toLocaleString()} news articles in 7 days (GDELT)` : "";
+    head = `<h2>${esc(meta.label_en)}<span class="tl-badge ${mom}">${sym} ${mom}</span></h2>
+      <div class="tl-sub">global attention ${pct >= 0 ? "+" : ""}${pct}% (7d vs prior 30d)${drive}${news}
+      · demand data through ${esc(t.as_of || D.ti.measured_as_of || "")}</div>`;
+  } else {
+    const why = unscored && unscored.reason === "stale"
+      ? "tracked, but its series hold no current data today"
+      : "tracked, but below the 25-views/day measurement floor today";
+    head = `<h2>${esc(meta.label_en)}<span class="tl-badge steady">not scored</span></h2>
+      <div class="tl-sub">${esc(why)} — the sections below show what the Atlas can still say.</div>`;
+  }
+
+  const reading = readingPresence(D, qid);
+  const readingRows = reading.slice(0, 8).map(h =>
+    `<tr><td>${esc(h.name)}</td><td>${esc(LENS_LANG_NAMES[h.lang] || h.lang)} article</td>
+     <td class="num">#${esc(h.rank)}</td><td class="num">≤${Number(h.views).toLocaleString()}</td>
+     <td class="num">${esc(h.date || "")}</td></tr>`).join("");
+  const readingBlock = readingRows
+    ? `<h3>Measurably among the most-read (Wikimedia, per country)</h3>
+       <table><tr><th>Country</th><th>Edition</th><th style="text-align:right">Rank</th>
+       <th style="text-align:right">Views (ceiling)</th><th style="text-align:right">List date</th></tr>
+       ${readingRows}</table>
+       <div class="tl-note">Directly measured: this topic's own article appears in these countries'
+       most-read Wikipedia pages. Presence in a top list, not a share; view counts are privacy
+       ceilings. Coverage is partial — Wikimedia withholds many countries.</div>`
+    : `<h3>Measurably among the most-read (Wikimedia, per country)</h3>
+       <div class="tl-note">Not currently in any published country's measured most-read list —
+       normal for all but headline topics; the language-demand table is the steadier signal.</div>`;
+
+  let mediaBlock = "";
+  if (t && (t.media_intensity_by_country || []).length) {
+    const rows = t.media_intensity_by_country.slice(0, 8).map(c =>
+      `<tr><td>${esc(D.names[c.iso3] || c.iso3)}</td>
+       <td class="num">${Number(c.pct_of_country_news_volume).toFixed(1)}%</td></tr>`).join("");
+    mediaBlock = `<h3>Where media cover it most intensively (GDELT, 14d)</h3>
+      <table><tr><th>Outlet country</th><th style="text-align:right">% of that country's own news output</th></tr>${rows}</table>
+      <div class="tl-note">Coverage intensity, not volume: a small market covering the topic
+      heavily outranks a large one publishing more articles about it.</div>`;
+  }
+
+  let demandBlock = "";
+  if (t && Object.keys(t.demand_by_language || {}).length) {
+    const rows = Object.entries(t.demand_by_language).map(([l, st]) =>
+      `<tr><td>${esc(LENS_LANG_NAMES[l] || l)}</td>
+       <td class="num">${Math.round(st.weekly_daily_avg_views).toLocaleString()}</td>
+       <td class="num">${st.velocity >= 0 ? "+" : ""}${Math.round(st.velocity * 100)}%</td></tr>`).join("");
+    demandBlock = `<h3>Reading demand by language (what people look up)</h3>
+      <table><tr><th>Language</th><th style="text-align:right">Views/day (7d)</th>
+      <th style="text-align:right">Velocity</th></tr>${rows}</table>`;
+  }
+
+  const risingIn = Object.entries(D.ti.countries || {})
+    .filter(([, p]) => (p.rising_topics || []).some(r => r.qid === qid))
+    .map(([iso3, p]) => {
+      const r = p.rising_topics.find(x => x.qid === qid);
+      return { name: D.names[iso3] || iso3, v: r.velocity, lang: r.via_language };
+    })
+    .sort((a, b) => b.v - a.v);
+  const risingBlock = risingIn.length
+    ? `<h3>Rising in (language-weight attribution)</h3>
+       <div class="tl-note" style="margin-top:0">${risingIn.slice(0, 12).map(r =>
+         `${esc(r.name)} (+${Math.round(r.v * 100)}% via ${esc(LENS_LANG_NAMES[r.lang] || r.lang)})`).join(" · ")}</div>
+       <div class="tl-note">Heuristic: language-edition demand mapped to countries by
+       speaker-population weights — an approximation, not a measurement.</div>`
+    : "";
+
+  const have = Object.keys(meta.titles || {});
+  const missing = (D.languages || []).filter(l => !have.includes(l));
+  const coverageBlock = `<h3>Local-article availability</h3>
+    <div class="tl-note" style="margin-top:0">A dedicated article exists in
+    ${have.length} of ${(D.languages || []).length || 22} tracked language editions${missing.length
+      ? ` — none in: ${missing.map(l => esc(LENS_LANG_NAMES[l] || l)).join(", ")}`
+      : ""}.
+    A missing edition means there is no local-language article to point that audience at.</div>`;
+
+  el.innerHTML = `${head}
+    <div class="tl-grid">
+      <div>${readingBlock}${risingBlock}</div>
+      <div>${demandBlock}${mediaBlock}</div>
+    </div>
+    ${coverageBlock}
+    <div class="tl-note">Sources: Wikimedia Pageviews API (CC0) — per-language demand and
+    per-country most-read lists; GDELT 2.0 — news coverage. All figures come from the same
+    published files the rest of the Atlas reads; nothing is fetched live.</div>`;
+  el.hidden = false;
+}
+
+async function maybeRenderLens() {
+  const raw = ($("f-topic").value || "").trim().toLowerCase();
+  const hit = raw && TOPIC_INDEX.find(([label]) => label.toLowerCase() === raw);
+  if (!hit) { $("topiclens").hidden = true; return; }
+  try {
+    const D = await lensData();
+    // the field may have changed while the data loaded — re-check before painting
+    const now = ($("f-topic").value || "").trim().toLowerCase();
+    const still = now && TOPIC_INDEX.find(([label]) => label.toLowerCase() === now);
+    if (still) renderLens(D, still[1]);
+  } catch (e) {
+    console.info("[finder] topic lens unavailable:", e.message);
+    $("topiclens").hidden = true;
+  }
+}
+$("f-topic").addEventListener("input", maybeRenderLens);
+$("f-topic").addEventListener("change", maybeRenderLens);
 
 function fmtPeople(v) {
   return v >= 1e9 ? (v / 1e9).toFixed(2) + "B" : v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : Math.round(v / 1000) + "k";

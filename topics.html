@@ -342,7 +342,7 @@ function renderDetail() {
 
   let mediaRows = "";
   for (const c of (t.media_intensity_by_country || []).slice(0, 8)) {
-    mediaRows += `<tr><td>${esc(c.iso3)}</td><td class="num">${c.pct_of_country_news_volume}%</td></tr>`;
+    mediaRows += `<tr><td>${esc(c.iso3)}</td><td class="num">${Number(c.pct_of_country_news_volume).toFixed(1)}%</td></tr>`;
   }
 
   el.innerHTML = `
