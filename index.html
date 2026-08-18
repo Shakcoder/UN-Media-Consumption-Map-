@@ -277,7 +277,8 @@
   body.rtl-text #stats-strip .stat,
   body.rtl-text #detail-name,
   body.rtl-text #detail-subline,
-  body.rtl-text #detail-csv {
+  body.rtl-text #detail-csv,
+  body.rtl-text #detail-pdf {
     direction: rtl;
     text-align: right;
   }
@@ -292,7 +293,32 @@
   .detail-header .flag-big { font-size: 44px; line-height: 1; margin-bottom: 10px; }
   .detail-header h2 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
   .detail-header .subline { font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .detail-header #detail-csv { margin-top: 10px; }
+  .detail-header #detail-csv, .detail-header #detail-pdf { margin-top: 10px; }
+
+  /* Print / save-as-PDF for a country profile (2026-08-18). Off screen the
+     surface is empty and hidden; while printing, it is the only thing shown.
+     print-color-adjust keeps the survey bars and pills visible on paper. */
+  #print-profile { display: none; }
+  #print-profile h1 { font-size: 24px; margin: 0 0 4px; }
+  #print-profile .print-subline { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  #print-profile h2 { font-size: 15px; margin: 20px 0 8px;
+    border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+  /* The five tab renderers each prepend the confidence banner and the
+     translation notice; concatenated into one document those would repeat
+     four times. The first of each prints; later siblings are hidden. */
+  #print-profile .confidence-banner ~ .confidence-banner,
+  #print-profile .translation-notice ~ .translation-notice { display: none; }
+  @media print {
+    body.print-profile-mode > :not(#print-profile) { display: none !important; }
+    body.print-profile-mode #print-profile { display: block; overflow: visible;
+      height: auto; padding: 0;
+      print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    /* fragmentation hygiene: a figure never separates from its bar, and a
+       section heading is never stranded at the foot of a page */
+    #print-profile .data-row { break-inside: avoid; break-after: avoid; }
+    #print-profile .bar, #print-profile .kv, #print-profile .pill { break-inside: avoid; }
+    #print-profile h2, #print-profile h3 { break-after: avoid; }
+  }
   .detail-header .close {
     position: absolute; top: 16px; inset-inline-end: 16px;
     background: #fff; border: 1px solid var(--border);
@@ -607,6 +633,7 @@
     <h2 id="detail-name"></h2>
     <div class="subline" id="detail-subline"></div>
     <button type="button" class="btn-quiet" id="detail-csv" data-i18n="download_csv" hidden>Download data (CSV)</button>
+    <button type="button" class="btn-quiet" id="detail-pdf" data-i18n="print_pdf" hidden>Print / save PDF</button>
   </div>
   <!-- One panel (#detail-body) is re-filled for whichever tab is selected, so
        every tab points at that same panel and the panel names the selected tab
@@ -624,6 +651,13 @@
        and scroll it without a mouse. -->
   <div class="detail-body" id="detail-body" role="tabpanel" aria-labelledby="tab-overview" tabindex="0"></div>
 </aside>
+
+<!-- Print / save-as-PDF surface for a country profile. Filled with ALL five
+     tabs' content when the profile's print button is pressed (the panel
+     itself shows one tab at a time), shown ONLY by the print stylesheet,
+     and emptied again after printing. Kept a direct child of <body> so the
+     print rules can hide everything else with one selector. -->
+<div id="print-profile" class="detail-body" aria-hidden="true"></div>
 
 <div class="modal-backdrop" id="methodology-modal">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="methodology-title">
@@ -1098,6 +1132,7 @@ window.TRANSLATIONS = {
     tab_overview: "Overview", tab_economy: "Economy", tab_media: "Media",
     tab_society: "Society", tab_sources: "Sources",
     download_csv: "Download data (CSV)",
+    print_pdf: "Print / save PDF",
     section_overview: "Overview", section_languages: "Languages",
     section_focus_areas: "Focus areas", section_at_a_glance: "At a glance",
     section_dominant_industries: "Dominant industries",
@@ -1184,6 +1219,7 @@ window.TRANSLATIONS = {
     tab_overview: "Aperçu", tab_economy: "Économie", tab_media: "Médias",
     tab_society: "Société", tab_sources: "Sources",
     download_csv: "Télécharger les données (CSV)",
+    print_pdf: "Imprimer / PDF",
     section_overview: "Aperçu", section_languages: "Langues",
     section_focus_areas: "Domaines prioritaires", section_at_a_glance: "En bref",
     section_dominant_industries: "Industries dominantes",
@@ -1269,6 +1305,7 @@ window.TRANSLATIONS = {
     tab_overview: "Resumen", tab_economy: "Economía", tab_media: "Medios",
     tab_society: "Sociedad", tab_sources: "Fuentes",
     download_csv: "Descargar datos (CSV)",
+    print_pdf: "Imprimir / PDF",
     section_overview: "Resumen", section_languages: "Idiomas",
     section_focus_areas: "Áreas de enfoque", section_at_a_glance: "De un vistazo",
     section_dominant_industries: "Industrias dominantes",
@@ -1354,6 +1391,7 @@ window.TRANSLATIONS = {
     tab_overview: "نظرة عامة", tab_economy: "الاقتصاد", tab_media: "الإعلام",
     tab_society: "المجتمع", tab_sources: "المصادر",
     download_csv: "تنزيل البيانات (CSV)",
+    print_pdf: "طباعة / PDF",
     section_overview: "نظرة عامة", section_languages: "اللغات",
     section_focus_areas: "محاور التركيز", section_at_a_glance: "لمحة سريعة",
     section_dominant_industries: "الصناعات المهيمنة",
@@ -1439,6 +1477,7 @@ window.TRANSLATIONS = {
     tab_overview: "概览", tab_economy: "经济", tab_media: "媒体",
     tab_society: "社会", tab_sources: "来源",
     download_csv: "下载数据 (CSV)",
+    print_pdf: "打印 / PDF",
     section_overview: "概览", section_languages: "语言",
     section_focus_areas: "关注领域", section_at_a_glance: "一览",
     section_dominant_industries: "主导行业",
@@ -1524,6 +1563,7 @@ window.TRANSLATIONS = {
     tab_overview: "Обзор", tab_economy: "Экономика", tab_media: "СМИ",
     tab_society: "Общество", tab_sources: "Источники",
     download_csv: "Скачать данные (CSV)",
+    print_pdf: "Печать / PDF",
     section_overview: "Обзор", section_languages: "Языки",
     section_focus_areas: "Приоритеты", section_at_a_glance: "Кратко",
     section_dominant_industries: "Доминирующие отрасли",
@@ -2279,6 +2319,46 @@ document.getElementById("detail-csv").addEventListener("click", () => {
   AtlasCSV.download("atlas-" + currentActiveIso + "-profile.csv", rows);
 });
 
+/* ---- Country-profile print / save-as-PDF (2026-08-18) ----
+ * Fills #print-profile with ALL five tabs of the open profile (the panel
+ * itself shows one tab at a time) and opens the browser's print window;
+ * "Save as PDF" there is the download. The browser's own rendering keeps
+ * every script (Arabic, Chinese, ...) exactly as on screen, which no
+ * zero-dependency PDF library would. */
+function buildPrintProfile() {
+  const d = currentActiveIso && window.COUNTRY_DATA[currentActiveIso];
+  if (!d) return false;
+  const el = document.getElementById("print-profile");
+  el.dir = (window.TRANSLATIONS[currentLang] || {})._rtl ? "rtl" : "ltr";
+  // provenance travels with the paper: header and footer do not print
+  const subline = [d.subregion,
+    d.capital ? t("subline_capital") + ": " + d.capital : null,
+    d.population != null ? t("subline_pop") + " " + formatPop(d.population) : null,
+    "Audience Intelligence Atlas · United Nations",
+  ].filter(Boolean).join(" · ");
+  el.innerHTML = `
+    <h1>${d.flag ? esc(d.flag) + " " : ""}${esc(d.name)}</h1>
+    <div class="print-subline">${esc(subline)}</div>
+    <h2>${t("tab_overview")}</h2>${tabOverview(d)}
+    <h2>${t("tab_economy")}</h2>${tabEconomy(d)}
+    <h2>${t("tab_media")}</h2>${tabMedia(d)}
+    <h2>${t("tab_society")}</h2>${tabSociety(d)}
+    <h2>${t("tab_sources")}</h2>${tabSources(d)}`;
+  return true;
+}
+
+document.getElementById("detail-pdf").addEventListener("click", () => {
+  if (!buildPrintProfile()) return;
+  document.body.classList.add("print-profile-mode");
+  window.print();
+});
+// Runs after printing AND after a cancelled print; also harmless for plain
+// browser prints that never set the mode class.
+window.addEventListener("afterprint", () => {
+  document.body.classList.remove("print-profile-mode");
+  document.getElementById("print-profile").innerHTML = "";
+});
+
 function openDetail(iso) {
   currentActiveIso = iso;
   selectTab("overview");
@@ -2320,8 +2400,9 @@ function openDetail(iso) {
     panelName.textContent = lookupName(iso);
     panelSubline.textContent = t("no_data_subline");
   }
-  // the export button only shows when there is a profile to export
+  // the export buttons only show when there is a profile to export
   document.getElementById("detail-csv").hidden = !d;
+  document.getElementById("detail-pdf").hidden = !d;
   renderDetail(iso);
   const wasOpen = panel.classList.contains("open");
   panel.classList.add("open");
