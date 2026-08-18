@@ -42,7 +42,7 @@ from __future__ import annotations
 import json
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
@@ -687,6 +687,109 @@ def main() -> int:
     else:
         WARNS.append("trends/bluesky_trends.json missing — open-social pulse "
                      "not built yet")
+
+    # Long-term attention archive (the Topic Explorer's pre-120-day windows).
+    # Its published guarantee, enforced as double-entry accounting with an
+    # implementation INDEPENDENT of the script that writes the file: on every
+    # day the archive and the live pageviews file both cover, the archive's
+    # value for a topic must equal the sum of that topic's non-quarantined
+    # series — cell for cell, null for null. Structure too: integer-or-null
+    # cells only, every array exactly the _meta span, topic set == live set,
+    # and the _meta honesty notes (current titles, unscreened history) must
+    # actually be there — an archive that stops explaining itself is wrong
+    # even when its numbers are right.
+    ar_path = ROOT / "data" / "trends" / "attention_archive.json"
+    wk_path = ROOT / "data" / "trends" / "wiki_pageviews.json"
+    if ar_path.exists() and wk_path.exists():
+        ar, wk = load_json(ar_path), load_json(wk_path)
+        meta = ar.get("_meta") or {}
+        lacking = [k for k in ("what", "source", "start", "end", "live_boundary",
+                               "sections", "caveats") if not meta.get(k)]
+        if lacking:
+            ERRORS.append(f"attention_archive: _meta lacks {lacking} — the file must "
+                          f"explain its own provenance and caveats")
+        try:
+            a_start = datetime.strptime(str(meta.get("start", "")), "%Y-%m-%d").date()
+            a_end = datetime.strptime(str(meta.get("end", "")), "%Y-%m-%d").date()
+            w_end = datetime.strptime(str(wk.get("updated", "")), "%Y-%m-%d").date()
+        except ValueError:
+            ERRORS.append("attention_archive: unusable _meta.start/_meta.end or live "
+                          "'updated' date — nothing else can be checked")
+        else:
+            span = (a_end - a_start).days + 1
+            topics_a = ar.get("topics") or {}
+            reg = load_json(ROOT / "data" / "topics.json")
+            reg_qids = {t.get("qid") for t in (reg.get("topics") or [])}
+            live_qids = {q for q in (wk.get("series") or {}) if q in reg_qids}
+            if set(topics_a) != live_qids:
+                only_a = sorted(set(topics_a) - live_qids)[:3]
+                only_l = sorted(live_qids - set(topics_a))[:3]
+                ERRORS.append(f"attention_archive: topic set differs from the live "
+                              f"file's registry topics (archive-only {only_a}, "
+                              f"live-only {only_l})")
+            bad_len = [q for q, arr in topics_a.items()
+                       if not isinstance(arr, list) or len(arr) != span]
+            if bad_len:
+                ERRORS.append(f"attention_archive: {len(bad_len)} topic array(s) are "
+                              f"not exactly {span} days long (e.g. {bad_len[:3]})")
+            bad_type = sum(1 for arr in topics_a.values() if isinstance(arr, list)
+                           for v in arr if v is not None and not isinstance(v, int))
+            if bad_type:
+                ERRORS.append(f"attention_archive: {bad_type} cell(s) are neither "
+                              f"integer nor null — no floats, no strings, no estimates")
+            # The golden overlap: recompute the live per-day sums from scratch.
+            w_start = w_end - timedelta(days=int(wk.get("window_days") or 120) - 1)
+            lo, hi = max(a_start, w_start), min(a_end, w_end)
+            quarantine = wk.get("quarantine") or {}
+            n_cells = n_mismatch = 0
+            example = None
+            for qid in sorted(live_qids & set(topics_a)):
+                arr = topics_a[qid]
+                if not isinstance(arr, list) or len(arr) != span:
+                    continue                    # already reported above
+                sums: dict[str, int] = {}
+                q_langs = quarantine.get(qid) or {}
+                for lang, entry in (wk["series"][qid] or {}).items():
+                    if lang in q_langs:
+                        continue
+                    try:
+                        s0 = datetime.strptime(str(entry.get("start")), "%Y-%m-%d").date()
+                    except ValueError:
+                        ERRORS.append(f"attention_archive: live series {qid}/{lang} "
+                                      f"has no usable start date")
+                        continue
+                    for i, v in enumerate(entry.get("values") or []):
+                        if v is not None:
+                            d = (s0 + timedelta(days=i)).isoformat()
+                            sums[d] = sums.get(d, 0) + v
+                for k in range((hi - lo).days + 1):
+                    day = lo + timedelta(days=k)
+                    n_cells += 1
+                    have = arr[(day - a_start).days]
+                    want = sums.get(day.isoformat())
+                    if have != want:
+                        n_mismatch += 1
+                        if example is None:
+                            example = f"{qid} {day}: archive {have!r} vs live sum {want!r}"
+            if n_mismatch:
+                ERRORS.append(f"attention_archive: {n_mismatch} of {n_cells} shared-day "
+                              f"cells disagree with wiki_pageviews.json minus its "
+                              f"quarantined series (first: {example}) — the golden "
+                              f"consistency guarantee is broken; rerun "
+                              f"scripts/update_attention_archive.py")
+            if a_end < w_end:
+                WARNS.append(f"attention_archive ends {a_end} but the live file is at "
+                             f"{w_end} — stale; the next trend-engine run appends it "
+                             f"(or run scripts/update_attention_archive.py by hand)")
+            elif a_end > w_end:
+                ERRORS.append(f"attention_archive ends {a_end}, AFTER the live file's "
+                              f"{w_end} — it claims days its own source does not hold")
+            INFOS.append(f"attention archive: {len(topics_a)} topics x {span} days "
+                         f"({meta.get('start')}..{meta.get('end')}); golden overlap: "
+                         f"{n_cells} cells checked, {n_mismatch} mismatches")
+    elif wk_path.exists():
+        WARNS.append("trends/attention_archive.json missing — Topic Explorer windows "
+                     "before the live 120 days fall back to the old clamp")
 
     # UN-in-the-national-press shares (Media Cloud) — optional layer. The
     # honesty floor is machine-enforced here: a share may exist ONLY when the

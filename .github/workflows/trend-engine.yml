@@ -255,6 +255,15 @@ jobs:
           # shard files are working files, never published
           rm -f data/trends/wiki_shard_*.json
 
+      - name: Extend the long-term attention archive
+        # Re-derives the archive's live-window section from the merged
+        # snapshot and appends the new day (no network — see
+        # scripts/update_attention_archive.py). continue-on-error because a
+        # failure here must never block the day's main publish; the
+        # freshness police below turns a silent failure into a red run.
+        continue-on-error: true
+        run: python scripts/update_attention_archive.py
+
       - name: Compute topic intelligence
         run: python scripts/compute_topic_intelligence.py
 
@@ -285,6 +294,9 @@ jobs:
           fi
           if [ -f data/trends/ooni_censorship.json ]; then
             git add data/trends/ooni_censorship.json
+          fi
+          if [ -f data/trends/attention_archive.json ]; then
+            git add data/trends/attention_archive.json
           fi
           if git diff --cached --quiet; then
             echo "No changes — trend data already up to date."
@@ -342,6 +354,31 @@ jobs:
           elif cur and scoreable_stale > cur * 0.10:
               print(f"::warning::{scoreable_stale} scoreable demand series are stale — "
                     f"watch this; if it keeps climbing the fetch needs more shards.")
+
+          # Long-term attention archive: rewritten in lockstep with the live
+          # file by update_attention_archive.py (its step is continue-on-error,
+          # so its exit code is swallowed too). If it stops keeping up, the
+          # Topic Explorer's pre-120-day windows quietly freeze — police it.
+          ar_p = Path("data/trends/attention_archive.json")
+          wk_p = Path("data/trends/wiki_pageviews.json")
+          if wk_p.exists():
+              w_upd = json.loads(wk_p.read_text()).get("updated")
+              if not ar_p.exists():
+                  # A warning, not an error: before the one-time backfill
+                  # workflow has ever run (or if the file is deliberately
+                  # retired) there is nothing to keep fresh. validate_atlas
+                  # warns on this too, so an accidental deletion still shows.
+                  print("::warning::attention_archive.json not present — the Topic "
+                        "Explorer's pre-120-day windows are dark; run the "
+                        "attention-archive-backfill workflow to (re)create it.")
+              else:
+                  a_end = (json.loads(ar_p.read_text()).get("_meta") or {}).get("end")
+                  print(f"Attention archive: ends {a_end} (live file: {w_upd})")
+                  if a_end != w_upd:
+                      print(f"::error::attention_archive.json ends {a_end} but the live file "
+                            f"is at {w_upd} — the archive append is failing; check the "
+                            f"'Extend the long-term attention archive' step logs.")
+                      rc = 1
 
           # Same idea for the per-country reading lists: their fetch step's
           # exit code is swallowed by continue-on-error, so freshness has to

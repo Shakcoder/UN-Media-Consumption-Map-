@@ -1,0 +1,154 @@
+name: Attention archive backfill (manual, rare)
+
+# One-time (and rare re-run) history fetch for the Topic Explorer's
+# long-term attention archive, data/trends/attention_archive.json — global
+# daily totals per topic back to 2024-01-01, from the Wikimedia per-article
+# pageviews API. See scripts/update_attention_archive.py for what the file
+# is; the daily trend engine keeps it current once this has run.
+#
+# WHY THIS IS A WORKFLOW AND NOT A LAPTOP SCRIPT (measured 2026-08-18):
+# Wikimedia's per-article endpoint gives one anonymous IP roughly 500
+# requests an hour before everything 429s, and the full backfill is ~3,400
+# requests — a 7-hour trickle from any single machine, no matter how
+# politely it paces itself. The daily pageviews fetch hit the same wall on
+# 2026-08-10 and the answer is the same one trend-engine.yml uses: several
+# runners in parallel, each with its own IP, each spending its own budget.
+# Eight shards of ~420 requests finish comfortably inside one bucket each.
+#
+# WHEN TO RUN IT: once at launch; again only if topics are added to the
+# registry (new topics otherwise archive from their live window on, with
+# null history) or if the file is ever lost. Idempotent: it rebuilds the
+# whole file from fresh fetches and the current registry titles.
+#
+# It shares the trend-engine concurrency group: the assemble job commits
+# the same data/trends/ directory the daily engine and the pulse commit to,
+# so the workflows must serialize, never interleave.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+concurrency:
+  group: trend-engine
+  cancel-in-progress: false
+
+jobs:
+  shard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false          # one starved shard must not cancel the rest
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch history (shard ${{ matrix.shard }} of 8)
+        # continue-on-error so a starved shard still uploads what it saved;
+        # the assemble job refuses to build from an incomplete pair set, so
+        # a red assemble (not a silent gap) is the worst case.
+        continue-on-error: true
+        run: >
+          python scripts/update_attention_archive.py
+          --backfill --fetch-only
+          --shard ${{ matrix.shard }} 8
+          --checkpoint ${{ runner.temp }}/backfill_ck_${{ matrix.shard }}.jsonl
+
+      - name: Upload shard checkpoint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backfill-ck-${{ matrix.shard }}
+          path: ${{ runner.temp }}/backfill_ck_${{ matrix.shard }}.jsonl
+          if-no-files-found: warn
+
+  assemble:
+    needs: [shard]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Download shard checkpoints
+        uses: actions/download-artifact@v4
+        with:
+          pattern: backfill-ck-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/cks/
+
+      - name: Assemble, golden-check and write the archive
+        # Aborts (red run, nothing written) unless every non-quarantined
+        # registry pair is present and the shared-window cells equal the
+        # live pageviews file — see backfill_assemble() for the contract.
+        run: |
+          python scripts/update_attention_archive.py --backfill \
+            --assemble-from ${{ runner.temp }}/cks/backfill_ck_*.jsonl
+
+      - name: Validate the whole Atlas (includes the archive golden check)
+        run: python scripts/validate_atlas.py
+
+      - name: Commit the archive
+        run: |
+          set -e
+          git config user.name "atlas-bot"
+          git config user.email "actions@github.com"
+          # Same discipline as the trend engine's assemble job: commit
+          # first, then rebase onto whatever landed while we fetched, then
+          # push. Only the archive may travel in this commit.
+          git add data/trends/attention_archive.json
+          if git diff --cached --quiet; then
+            echo "No changes — archive already up to date."
+          else
+            git commit -m "feat(trends): attention archive backfill $(date -u +%Y-%m-%d) — global daily totals to 2024-01-01"
+            # On conflict our archive wins (it was just built against the
+            # freshest data); during a rebase the replayed commit is
+            # "--theirs".
+            if ! git pull --rebase origin main; then
+              git checkout --theirs -- data/trends/attention_archive.json || true
+              git add data/trends/attention_archive.json
+              GIT_EDITOR=true git rebase --continue
+            fi
+            git push
+            echo "Pushed."
+          fi
+
+      - name: Open an issue if this run failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Attention-archive backfill failed on $(date -u +%Y-%m-%d)"
+          existing=$(gh issue list --state open --search "in:title \"Attention-archive backfill failed\"" --json number --jq 'length')
+          if [ "$existing" = "0" ]; then
+            body="The manual attention-archive backfill failed. Open the Actions tab, click the failed run, and check which job went red. A red shard usually means Wikimedia throttled that runner's IP — re-run the whole workflow (it is idempotent and cheap). A red assemble step names exactly which topic-language pairs are missing or which archive cells disagree with wiki_pageviews.json."
+            gh issue create --title "$title" --body "$body" --label "automation" \
+              || gh issue create --title "$title" --body "$body"
+          else
+            echo "An open failure issue already exists — not duplicating."
+          fi

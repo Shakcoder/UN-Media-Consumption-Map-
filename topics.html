@@ -150,6 +150,22 @@ const esc = (s) => String(s == null ? "" : s)
    __rangeGoldenTest() proves the port: it recomputes the pipeline's own
    7-day window and diffs every topic against the published velocity.
    Keep this block in lockstep with the Python when either changes.
+
+   ARCHIVE TIER (2026-08-18). A window whose start predates the live
+   120-day store is computed from data/trends/attention_archive.json:
+   one GLOBAL daily total per topic (tracked language editions summed),
+   back to 2024. Loaded only when such a window is actually requested.
+   Its own contract: per-language detail, the "driven by" cue and the
+   access-method quarantine screen exist ONLY inside the live window —
+   archive figures before August 2026 were never screened, and history
+   is attention to each topic's CURRENT article titles (the file's _meta
+   says the same). For every day both files cover, the archive equals
+   the live file's non-quarantined per-day sums cell for cell: the daily
+   engine re-derives that section (scripts/update_attention_archive.py),
+   validate_atlas.py enforces it, and __archiveGoldenTest() proves it
+   from the browser. Window scoring reuses seriesWindowStats() verbatim,
+   with the INCLUDE_FLOOR applied to the global total (the per-language
+   floors need per-language data, which the archive deliberately lacks).
    ========================================================================== */
 const RANGE_RULES = {
   INCLUDE_FLOOR: 25, RISING_FLOOR: 150, RISING: 0.30, FALLING: -0.25,
@@ -161,6 +177,11 @@ const RANGE_RULES = {
 let RANGE = null;        // {start:"YYYY-MM-DD", end:"YYYY-MM-DD"} | null = daily view
 let RANGE_VM = null;     // computed view-model for RANGE
 let RAW = null, GDELT_RAW = null, RAW_LOADING = null;
+let ARCH = null, ARCH_LOADING = null;   // long-term global archive, loaded on demand
+// The archive's axis starts 2024-01-01 (its _meta.start, checked when it
+// loads); the earliest selectable window start leaves the 30 baseline days
+// before it in-store — the same rule the live clamp applies.
+const ARCHIVE_MIN_START = "2024-01-31";
 
 const dAdd = (iso, days) => {
   const d = new Date(iso + "T00:00:00Z");
@@ -186,6 +207,19 @@ async function loadRaw() {
     fetch("data/trends/gdelt_coverage.json", { cache: "no-cache" }).then(r => r.json()).catch(() => null),
   ]).then(([w, g]) => { RAW = w; GDELT_RAW = g; });
   return RAW_LOADING;
+}
+
+/* The ~1 MB archive is fetched only when a pre-live-window range is actually
+   requested — the daily view and live-window ranges never pay for it. On any
+   failure ARCH stays null and setRange falls back to the live-window clamp. */
+async function loadArchive() {
+  if (ARCH) return;
+  if (!ARCH_LOADING) ARCH_LOADING =
+    fetch("data/trends/attention_archive.json", { cache: "no-cache" })
+      .then(r => r.ok ? r.json() : null)
+      .then(a => { ARCH = (a && a._meta && a._meta.start && a._meta.end && a.topics) ? a : null; })
+      .catch(() => { ARCH = null; });
+  return ARCH_LOADING;
 }
 
 /* Port of series_stats(): calendar-anchored window vs the preceding 30
@@ -253,6 +287,81 @@ function rangeCompute() {
   return { topics, excluded, measured: Object.keys(topics).length };
 }
 
+/* Archive windows: same window machinery (seriesWindowStats, so the same
+   minimum-day rules and banker's rounding), applied to the ONE global series
+   the archive stores per topic. No per-language floors, no symmetric basis,
+   no quarantine screen — none of those exist without per-language data, and
+   every archive banner says so instead of pretending otherwise. */
+function archiveCompute() {
+  const topics = {};
+  let excluded = 0;
+  const a0 = ARCH._meta.start;
+  for (const [qid, arr] of Object.entries(ARCH.topics)) {
+    const meta = DATA.topics[qid] || (DATA.topics_unscored || []).find(u => u.qid === qid);
+    if (!meta) continue;
+    const st = seriesWindowStats({ start: a0, values: arr }, RANGE.start, RANGE.end);
+    if (!st || st.m7 < RANGE_RULES.INCLUDE_FLOOR) { excluded++; continue; }
+    const gv = st.velocity;
+    topics[qid] = {
+      label_en: meta.label_en, category: meta.category,
+      global_velocity: gv,
+      momentum: gv > RANGE_RULES.RISING ? "rising" : gv < RANGE_RULES.FALLING ? "falling" : "steady",
+      window_mean: st.m7, days_measured: st.days,
+      demand: [],           // per-language detail exists only in the live file
+    };
+  }
+  return { topics, excluded, measured: Object.keys(topics).length, archive: true };
+}
+
+/* Chart for an archive window: the topic's global series across the window
+   plus its 30 baseline days, band on the window itself. */
+function archiveSpark(qid) {
+  const arr = ARCH && ARCH.topics[qid];
+  if (!arr) return "";
+  const a0 = ARCH._meta.start;
+  const from = dAdd(RANGE.start, -RANGE_RULES.BASE_DAYS);
+  const i0 = Math.max(0, dDiff(a0, from));
+  const h0 = dDiff(a0, RANGE.start) - i0;
+  return sparkline(arr.slice(i0, dDiff(a0, RANGE.end) + 1),
+    h0, h0 + dDiff(RANGE.start, RANGE.end),
+    `${dAdd(a0, i0)} to ${RANGE.end}, long-term archive`);
+}
+
+/* Proof of the archive contract, from the browser: for every day both files
+   cover, the archive cell must equal the live file's non-quarantined per-day
+   sum. Run __archiveGoldenTest() from the console; mismatches: [] = holds. */
+async function __archiveGoldenTest() {
+  await loadRaw(); await loadArchive();
+  if (!ARCH) return { error: "archive not loadable" };
+  const a0 = ARCH._meta.start;
+  const liveStart = dAdd(RAW.updated, -(RAW.window_days - 1));
+  const lo = a0 > liveStart ? a0 : liveStart;
+  const hi = ARCH._meta.end < RAW.updated ? ARCH._meta.end : RAW.updated;
+  let cells = 0;
+  const mismatches = [];
+  for (const [qid, arr] of Object.entries(ARCH.topics)) {
+    if (!RAW.series[qid]) { mismatches.push(`${qid}: in archive, not in live file`); continue; }
+    const q = (RAW.quarantine || {})[qid] || {};
+    const sums = {};
+    for (const [lang, s] of Object.entries(RAW.series[qid])) {
+      if (q[lang]) continue;
+      s.values.forEach((v, i) => {
+        if (v != null) { const d = dAdd(s.start, i); sums[d] = (sums[d] || 0) + v; }
+      });
+    }
+    for (let d = lo; d <= hi; d = dAdd(d, 1)) {
+      cells++;
+      const have = arr[dDiff(a0, d)] == null ? null : arr[dDiff(a0, d)];
+      const want = d in sums ? sums[d] : null;
+      if (have !== want) {
+        mismatches.push(`${qid} ${d}: archive ${have} != live sum ${want}`);
+        if (mismatches.length > 20) return { window: `${lo}..${hi}`, cells_compared: cells, mismatches };
+      }
+    }
+  }
+  return { window: `${lo}..${hi}`, cells_compared: cells, mismatches };
+}
+
 /* News-article count for the window — only when GDELT's timeline covers
    EVERY day of it (same discipline as the pipeline's news_articles_7d). */
 function rangeGdeltCount(qid) {
@@ -290,8 +399,28 @@ async function setRange(startISO, endISO) {
   el.setAttribute("aria-busy", "true");
   await loadRaw();
   const minStart = dAdd(RAW.updated, -(RAW.window_days - 1 - RANGE_RULES.BASE_DAYS));
-  if (startISO < minStart) startISO = minStart;   // baseline needs 30 prior days in-store
   if (endISO > RAW.updated) endISO = RAW.updated;
+  if (startISO < minStart) {
+    // A start before the live store reaches for the long-term archive
+    // instead of clamping (ARCHIVE TIER — see the block comment above).
+    await loadArchive();
+    if (ARCH) {
+      const aMin = dAdd(ARCH._meta.start, RANGE_RULES.BASE_DAYS);
+      if (startISO < aMin) startISO = aMin;       // baseline needs 30 prior archive days
+      if (endISO > ARCH._meta.end) endISO = ARCH._meta.end;
+      if (endISO < startISO) endISO = startISO;
+      if (startISO < minStart) {
+        RANGE = { start: startISO, end: endISO };
+        RANGE_VM = archiveCompute();
+        el.removeAttribute("aria-busy");
+        renderRangeBar(); renderList(document.getElementById("search").value); renderDetail();
+        return;
+      }
+      // (clamping pushed the start into the live store — fall through)
+    } else {
+      startISO = minStart;   // archive unavailable: the pre-archive clamp
+    }
+  }
   if (startISO > endISO) startISO = endISO;
   RANGE = { start: startISO, end: endISO };
   // CONSISTENCY SNAP: when the selected window IS the pipeline's own window
@@ -331,10 +460,13 @@ function renderRangeBar() {
     <label style="font-size:12px;color:var(--muted-2);">to
       <input type="date" id="rb-end" value="${RANGE ? esc(RANGE.end) : ""}"></label>
     <button type="button" class="rb-chip" id="rb-apply">Apply</button>
-    ${RANGE ? `<span class="rb-note">Window ${esc(RANGE.start)} to ${esc(RANGE.end)}, measured against the 30 days before it.
+    ${RANGE ? (RANGE_VM && RANGE_VM.archive
+      ? `<span class="rb-note">Window ${esc(RANGE.start)} to ${esc(RANGE.end)} from the long-term archive, measured against the 30 days before it.
+      Global daily totals only: per-language detail and the non-organic-traffic screen exist just for the last 120 days, and archive data before August 2026 was never screened.</span>`
+      : `<span class="rb-note">Window ${esc(RANGE.start)} to ${esc(RANGE.end)}, measured against the 30 days before it.
       Computed in your browser from the same daily series and rules as the daily engine; the daily view is unchanged.
-      Data available back to ${esc(dAdd(upd, -(119 - RANGE_RULES.BASE_DAYS)))}.</span>` : ""}`;
-  const min = dAdd(upd, -(119 - RANGE_RULES.BASE_DAYS)), max = upd;
+      Per-language data goes back to ${esc(dAdd(upd, -(119 - RANGE_RULES.BASE_DAYS)))}; earlier dates (back to ${esc(ARCHIVE_MIN_START)}) use the long-term archive, global totals only.</span>`) : ""}`;
+  const min = ARCHIVE_MIN_START, max = upd;
   for (const id of ["rb-start", "rb-end"]) {
     const inp = document.getElementById(id);
     inp.min = min; inp.max = max;
@@ -369,7 +501,7 @@ async function __rangeGoldenTest() {
   return { compared: n, max_abs_delta: worst, worst_topic: worstQ, missing_from_port: missing };
 }
 
-function sparkline(series, hi0, hi1) {
+function sparkline(series, hi0, hi1, spanLabel) {
   const w = 600, h = 130, pad = 4;
   const vals = series.filter(v => v != null);
   if (vals.length < 2 || series.length < 2) return "";
@@ -385,7 +517,7 @@ function sparkline(series, hi0, hi1) {
     return y == null ? null : `${x.toFixed(1)},${y.toFixed(1)}`;
   }).filter(Boolean);
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img"
-    aria-label="Line chart: global attention over the last 120 days, from ${Math.round(mn).toLocaleString()} to ${Math.round(mx).toLocaleString()} Wikipedia views per day${hi0 != null ? ", selected window shaded" : ""}">
+    aria-label="Line chart: global attention over ${esc(spanLabel || "the last 120 days")}, from ${Math.round(mn).toLocaleString()} to ${Math.round(mx).toLocaleString()} Wikipedia views per day${hi0 != null ? ", selected window shaded" : ""}">
     ${band}<polyline points="${pts.join(" ")}" fill="none" stroke="var(--un-blue)" stroke-width="2"/>
   </svg>`;
 }
@@ -487,19 +619,36 @@ function renderGlobalMovers() {
   if (RANGE_VM) {
     const n = dDiff(RANGE.start, RANGE.end) + 1;
     const bskyNames = bskyWindowNames();
-    return `<h1 tabindex="-1">Topic movers, ${esc(RANGE.start)} to ${esc(RANGE.end)}</h1>
-      <div class="range-banner"><b>Range view.</b>${RANGE_VM.published ? " This window is the daily engine's own; the published figures are shown verbatim." : ""} ${RANGE_VM.measured} topics measurable in this
-      ${n === 1 ? "1-day" : n + "-day"} window (${RANGE_VM.excluded} tracked topics had too little
+    const winWord = `${n === 1 ? "1-day" : n + "-day"} window`;
+    const banner = RANGE_VM.archive
+      ? `<b>Archive view.</b> This window reaches beyond the 120 days of per-language data the
+      Atlas keeps live, so it is computed from the long-term archive: one global daily total per
+      topic (all tracked language editions summed). ${RANGE_VM.measured} topics measurable in this
+      ${winWord} (${RANGE_VM.excluded} had too little data in it); attention in the window is
+      compared with the 30 days before it. Plainly: per-language detail, the "driven by" cue and
+      the non-organic-traffic screen exist only inside the live 120-day window. Archive figures
+      before August 2026 were never screened by that gate, and history is measured against each
+      topic's current article titles. Select "Daily view" to return to the published figures.`
+      : `<b>Range view.</b>${RANGE_VM.published ? " This window is the daily engine's own; the published figures are shown verbatim." : ""} ${RANGE_VM.measured} topics measurable in this
+      ${winWord} (${RANGE_VM.excluded} tracked topics had too little
       data in it); attention in the window is compared with the 30 days before it, under the same
-      floors and exclusions as the daily engine. Select "Daily view" to return to the published figures.</div>
+      floors and exclusions as the daily engine. Select "Daily view" to return to the published figures.`;
+    const method = RANGE_VM.archive
+      ? `Velocity = attention in the selected window vs. the 30 days before it, measured from the
+      archive's global daily totals (Wikipedia views per day, tracked language editions summed).
+      Topics averaging under ${RANGE_RULES.INCLUDE_FLOOR} global views per day in the window are
+      not scored. Select any topic on the left for detail.`
+      : `Velocity = attention in the selected window vs. the 30 days before it,
+      measured from Wikipedia reading patterns per language edition, volume-weighted, with the
+      daily engine's floors and quarantine exclusions. Select any topic on the left for detail.`;
+    return `<h1 tabindex="-1">Topic movers, ${esc(RANGE.start)} to ${esc(RANGE.end)}</h1>
+      <div class="range-banner">${banner}</div>
       <h3 class="sect">Rising in this window</h3><div class="movers">${sorted.filter(([, t]) => t.global_velocity > 0).slice(0, 5).map(row).join("") || '<div class="empty">Nothing rising sharply in this window.</div>'}</div>
       <h3 class="sect">Falling in this window</h3><div class="movers">${sorted.filter(([, t]) => t.global_velocity < 0).slice(-5).reverse().map(row).join("") || '<div class="empty">Nothing falling sharply in this window.</div>'}</div>
       ${bskyNames.length ? `<h3 class="sect">Open social web during this window (Bluesky, global)</h3>
       <div class="note" style="margin-top:0">${bskyNames.slice(0, 14).map(esc).join(" · ")}</div>
       <div class="note">Bluesky's archive holds the last 7 days only; days outside it are not shown rather than estimated.</div>` : ""}
-      <div class="note">Velocity = attention in the selected window vs. the 30 days before it,
-      measured from Wikipedia reading patterns per language edition, volume-weighted, with the
-      daily engine's floors and quarantine exclusions. Select any topic on the left for detail.</div>`;
+      <div class="note">${method}</div>`;
   }
   const cov = DATA.coverage || {};
   const scored = Object.keys(DATA.topics).length;
@@ -594,24 +743,43 @@ function renderDetail() {
     <div class="sub">${esc(CAT_LABELS[t.category] || t.category)} · ${momentumBadge(t.momentum)}</div>
     <div class="kpis">
       <div class="kpi"><div class="v ${velCls}">${pct >= 0 ? "+" : ""}${pct}%</div><div class="l">${RANGE_VM && !RANGE_VM.published ? `range velocity (${rangeDays}d vs prior 30d)` : "global velocity (7d vs 30d)"}</div></div>
+      ${RANGE_VM && RANGE_VM.archive && t.window_mean != null
+        ? `<div class="kpi"><div class="v">${Math.round(t.window_mean).toLocaleString()}</div><div class="l">global views/day in window (${t.days_measured} of ${rangeDays} days measured)</div></div>` : ""}
       ${RANGE_VM && !RANGE_VM.published
         ? (rangeNews != null ? `<div class="kpi"><div class="v">${rangeNews.toLocaleString()}</div><div class="l">news articles in window (GDELT)</div></div>` : "")
         : (t.news_articles_7d != null ? `<div class="kpi"><div class="v">${t.news_articles_7d.toLocaleString()}</div><div class="l">news articles, 7 days (GDELT)</div></div>` : "")}
     </div>
-    ${RANGE_VM ? `<div class="range-banner"><b>Range view</b> ${esc(RANGE.start)} to ${esc(RANGE.end)}:
+    ${RANGE_VM ? (RANGE_VM.archive
+      ? `<div class="range-banner"><b>Archive view</b> ${esc(RANGE.start)} to ${esc(RANGE.end)}:
+      computed in your browser from the long-term archive's global daily totals. Per-language
+      detail and the non-organic-traffic screen exist only inside the live 120-day window;
+      archive data before August 2026 was never screened, and history reflects this topic's
+      current article titles. The shaded band on the chart marks the window; the line starts
+      30 days earlier to show the baseline. Daily figures are unchanged.</div>`
+      : `<div class="range-banner"><b>Range view</b> ${esc(RANGE.start)} to ${esc(RANGE.end)}:
       figures computed in your browser from the same daily series and rules as the daily engine.
-      The shaded band on the chart marks the window. Daily figures are unchanged.</div>` : ""}
-    <h3 class="sect">Global attention: last ${RANGE_VM ? 120 : TE_RANGE_DAYS} days (Wikipedia views/day, all tracked languages)</h3>
+      The shaded band on the chart marks the window. Daily figures are unchanged.</div>`) : ""}
+    <h3 class="sect">${RANGE_VM && RANGE_VM.archive
+      ? `Global attention: ${esc(dAdd(RANGE.start, -RANGE_RULES.BASE_DAYS))} to ${esc(RANGE.end)} (Wikipedia views/day, tracked languages summed)`
+      : `Global attention: last ${RANGE_VM ? 120 : TE_RANGE_DAYS} days (Wikipedia views/day, all tracked languages)`}</h3>
     <div id="te-range-slot"></div>
-    ${RANGE_VM && daily
+    ${RANGE_VM && RANGE_VM.archive
+      ? archiveSpark(activeQid)
+      : RANGE_VM && daily
       ? sparkline(daily.global_series || [],
           dDiff(daily.series_start, RANGE.start), dDiff(daily.series_start, RANGE.end))
       : sparkline(((daily || t).global_series || []).slice(-TE_RANGE_DAYS))}
-    ${RANGE_VM && !daily ? `<div class="note">No daily chart: this topic is not scored in today's
+    ${RANGE_VM && !RANGE_VM.archive && !daily ? `<div class="note">No daily chart: this topic is not scored in today's
       daily view, so no published series exists to draw. The window figures above are computed
       from its raw per-language series.</div>` : ""}
-    <h3 class="sect">Demand by language (what people look up)</h3>
-    <table><tr><th>Language</th><th style="text-align:right">${RANGE_VM ? "Views/day (window)" : "Views/day (7d avg)"}</th><th style="text-align:right">Velocity</th></tr>${langRows}</table>
+    ${RANGE_VM && RANGE_VM.archive
+      ? `<h3 class="sect">Demand by language (what people look up)</h3>
+    <div class="note" style="margin-top:0">Not available for archive windows. The Atlas stores
+      per-language series only for the live 120-day window; this window's figures come from the
+      one global daily total the archive keeps per topic. Pick a start date within the last
+      120 days to see the per-language breakdown.</div>`
+      : `<h3 class="sect">Demand by language (what people look up)</h3>
+    <table><tr><th>Language</th><th style="text-align:right">${RANGE_VM ? "Views/day (window)" : "Views/day (7d avg)"}</th><th style="text-align:right">Velocity</th></tr>${langRows}</table>`}
     ${mediaRows ? `<h3 class="sect">Where this topic gets the most airtime (GDELT, 14d)</h3>
     <table><tr><th>Outlet country</th><th style="text-align:right">% of that country's news output</th></tr>${mediaRows}</table>
     <div class="note">This is coverage <em>intensity</em>, not a share of world coverage: it is how much of
@@ -628,10 +796,16 @@ function renderDetail() {
         <a href="https://www.gdeltproject.org" target="_blank" rel="noopener noreferrer">GDELT ↗</a></li>
       <li>Country attribution of demand is a documented approximation: language-edition traffic is
         mapped to countries by speaker-population weights, never measured per country.</li>
-      ${RANGE_VM ? `<li>Range figures are computed in the browser from the published raw series
+      ${RANGE_VM ? (RANGE_VM.archive
+        ? `<li>Archive windows are computed in the browser from the long-term archive
+        (data/trends/attention_archive.json): one global daily total per topic back to 2024,
+        fetched once from the Wikimedia per-article API with the current registry titles and
+        kept equal to the live file on every day both cover. Per-language detail, quarantine
+        screening and the media table exist only for windows inside the last 120 days.</li>`
+        : `<li>Range figures are computed in the browser from the published raw series
         (data/trends/wiki_pageviews.json) with the daily engine's formula, floors and
         quarantine exclusions; the media-coverage intensity table appears only in the daily
-        view because it is a fixed 14-day pipeline measure.</li>` : ""}
+        view because it is a fixed 14-day pipeline measure.</li>`) : ""}
     </ol></div>`;
 
   // Mount the shared range control after the innerHTML swap. The velocity
