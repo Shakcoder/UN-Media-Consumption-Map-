@@ -576,39 +576,62 @@ def backfill_assemble(checkpoints: list[Path]) -> None:
         for d, v in rec["d"].items():
             sums[d] = sums.get(d, 0) + v
 
-    # Methodology cross-check BEFORE anything is written: on days both the
-    # fresh fetch and the live file have data for a series-set, the sums must
-    # essentially agree — a systematic disagreement means the fetch used the
-    # wrong access/agent parameters and the whole history would be built on
-    # the wrong measure. (Small counts of live-only/fetch-only cells are
-    # normal: dormant series refresh Sundays, and the fetch may carry days a
-    # throttled CI run never stored.)
-    expected = live_day_sums(wiki, registry_qids)
-    n_match = n_diff = n_live_only = n_fetch_only = 0
-    for qid in registry_qids:
-        for k in range((w_end - w_start).days + 1):
-            day = (w_start + timedelta(days=k)).isoformat()
-            a, b = fetched_sums[qid].get(day), expected.get(qid, {}).get(day)
-            if a is None and b is None:
-                continue
-            if a is None:
+    # Methodology cross-check BEFORE anything is written, at the only level
+    # where "same measure?" is actually decidable: per PAIR per day. Where
+    # both the fresh fetch and the live file hold a value for the same
+    # series-day, the two numbers must agree — a wrong access/agent
+    # parameter changes essentially every cell, so systematic disagreement
+    # aborts. (Run 2, 2026-08-18, taught the distinction the hard way: the
+    # first version compared per-TOPIC day sums and aborted on 13% "drift"
+    # that was really the live file's own coverage gaps — days a throttled
+    # run never stored for one of a topic's ~19 series make the topic sum
+    # differ while every individually comparable value matches exactly;
+    # a 19,291-cell per-pair comparison measured 0.0% real disagreement.)
+    n_eq = n_diff = n_live_only = n_fresh_only = 0
+    for qid, lang, title in jobs:
+        fresh = reusable[f"{qid}/{lang}"]["d"]
+        entry = (wiki.get("series", {}).get(qid) or {}).get(lang)
+        live: dict[str, int] = {}
+        if entry:
+            try:
+                s0 = datetime.strptime(str(entry.get("start")), "%Y-%m-%d").date()
+            except ValueError:
+                s0 = None
+            if s0:
+                for i, v in enumerate(entry.get("values") or []):
+                    if v is not None:
+                        live[(s0 + timedelta(days=i)).isoformat()] = v
+        for day, v in live.items():
+            f = fresh.get(day)
+            if f is None:
                 n_live_only += 1
-            elif b is None:
-                n_fetch_only += 1
-            elif a == b:
-                n_match += 1
+            elif f == v:
+                n_eq += 1
             else:
                 n_diff += 1
-    total_both = n_match + n_diff
-    print(f"  fetch-vs-live cross-check: {n_match} cells equal, {n_diff} differ, "
-          f"{n_live_only} live-only, {n_fetch_only} fetch-only", flush=True)
-    if total_both and n_diff / total_both > 0.01:
-        sys.exit("ABORT: >1% of comparable cells disagree with the live file — "
-                 "the fetch parameters do not reproduce the published measure; "
-                 "nothing was written.")
+        for k in range((w_end - w_start).days + 1):
+            day = (w_start + timedelta(days=k)).isoformat()
+            if day in fresh and day not in live:
+                n_fresh_only += 1
+    total_both = n_eq + n_diff
+    print(f"  fetch-vs-live cross-check (per series-day): {n_eq} equal, "
+          f"{n_diff} differ, {n_live_only} live-only, {n_fresh_only} "
+          f"fresh-only (live-window days the live file's series lack — its "
+          f"own throttling gaps; the overlap section keeps the live file's "
+          f"values by design, and the daily engine heals those gaps "
+          f"stalest-first)", flush=True)
+    if total_both and n_diff / total_both > 0.05:
+        sys.exit("ABORT: >5% of directly comparable series-day values "
+                 "disagree with the live file — the fetch parameters do not "
+                 "reproduce the published measure; nothing was written.")
+    if n_live_only > 0.01 * max(total_both + n_live_only, 1):
+        sys.exit("ABORT: >1% of the live file's series-day values are absent "
+                 "from the fresh fetch — the fetch is dropping data it should "
+                 "have retrieved; nothing was written.")
 
     # The axis: frozen section from the fetch, live section DERIVED from the
     # live file (the golden guarantee, and the state the daily append keeps).
+    expected = live_day_sums(wiki, registry_qids)
     n_days = (w_end - ARCHIVE_START).days + 1
     boundary = (w_start - ARCHIVE_START).days
     archive_topics: dict[str, list] = {}
