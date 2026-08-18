@@ -49,6 +49,22 @@
   td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .up { color: var(--positive); } .down { color: var(--danger); }
   .note { font-size: 11px; color: var(--muted-2); margin-top: 14px; line-height: 1.5; }
+  .detail-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .range-bar { padding: 10px 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .range-bar .rb-label { font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
+    color: var(--muted-2); text-transform: uppercase; margin-right: 2px; }
+  .range-bar .rb-chip { border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); font: inherit; font-size: 12px; padding: 4px 12px;
+    border-radius: var(--r-pill); cursor: pointer; }
+  .range-bar .rb-chip:hover { color: var(--un-blue-dark); border-color: var(--un-blue); }
+  .range-bar .rb-chip[aria-pressed="true"] { background: var(--accent-soft);
+    color: var(--un-blue-dark); border-color: var(--un-blue); font-weight: 600; }
+  .range-bar input[type="date"] { font: inherit; font-size: 12px; padding: 3px 6px;
+    border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--ink);
+    background: var(--surface); }
+  .range-bar .rb-note { font-size: 11px; color: var(--muted-2); flex-basis: 100%; }
+  .range-banner { background: var(--accent-soft); border: 1px solid #CBE8F8;
+    border-radius: var(--r-sm); padding: 7px 10px; font-size: 12px; margin-bottom: 12px; }
   .movers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   @media (max-width: 600px) { .movers { grid-template-columns: 1fr; } }
   .movers .topic-row { border: 1px solid var(--border-soft); }
@@ -83,8 +99,11 @@
     <div id="list-body"><div class="empty">Loading topics…</div></div>
   </div>
 
-  <div class="card detail" id="detail">
-    <div class="empty">Loading…</div>
+  <div class="detail-col">
+    <div class="card range-bar" id="range-bar" role="group" aria-label="Trend window"></div>
+    <div class="card detail" id="detail">
+      <div class="empty">Loading…</div>
+    </div>
   </div>
 </div>
 
@@ -117,20 +136,257 @@ const esc = (s) => String(s == null ? "" : s)
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
   .replace(/"/g, "&quot;");
 
-function sparkline(series) {
+
+/* ==========================================================================
+   RANGE VIEW (2026-08-18). A custom trend window computed IN THE BROWSER
+   from the same raw daily series the pipeline reads, under the same rules.
+
+   Consistency contract (owner requirement): the DEFAULT view renders the
+   pipeline's published figures VERBATIM — selecting "Daily view" never
+   recomputes anything, so what you saw before this feature exists is what
+   you see now, bit for bit. Custom windows are computed by a line-for-line
+   port of scripts/compute_topic_intelligence.py (same floors, same
+   symmetric basis, same quarantine exclusions, SAME ROUNDING order), and
+   __rangeGoldenTest() proves the port: it recomputes the pipeline's own
+   7-day window and diffs every topic against the published velocity.
+   Keep this block in lockstep with the Python when either changes.
+   ========================================================================== */
+const RANGE_RULES = {
+  INCLUDE_FLOOR: 25, RISING_FLOOR: 150, RISING: 0.30, FALLING: -0.25,
+  BASE_DAYS: 30, MIN_BASE_DAYS: 15,
+  // the pipeline requires 4 of 7 recent days; shorter windows require the
+  // same fraction, and a 1-day window requires that day
+  minWindowDays: (n) => Math.max(1, Math.ceil(n * 4 / 7)),
+};
+let RANGE = null;        // {start:"YYYY-MM-DD", end:"YYYY-MM-DD"} | null = daily view
+let RANGE_VM = null;     // computed view-model for RANGE
+let RAW = null, GDELT_RAW = null, RAW_LOADING = null;
+
+const dAdd = (iso, days) => {
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+const dDiff = (a, b) => Math.round((new Date(b + "T00:00:00Z") - new Date(a + "T00:00:00Z")) / 86400000);
+// Python's round() is half-to-even; Math.round is half-up. The golden test
+// caught the difference at 0.002 on boundary values, so the port rounds the
+// way the pipeline does.
+const bankers = (x, dp) => {
+  const m = Math.pow(10, dp), y = x * m, f = Math.floor(y), diff = y - f;
+  const r = diff > 0.5 ? f + 1 : diff < 0.5 ? f : (f % 2 === 0 ? f : f + 1);
+  return r / m;
+};
+const r1 = (x) => bankers(x, 1);
+const r3 = (x) => bankers(x, 3);
+
+async function loadRaw() {
+  if (RAW && GDELT_RAW) return;
+  if (!RAW_LOADING) RAW_LOADING = Promise.all([
+    fetch("data/trends/wiki_pageviews.json", { cache: "no-cache" }).then(r => r.json()),
+    fetch("data/trends/gdelt_coverage.json", { cache: "no-cache" }).then(r => r.json()).catch(() => null),
+  ]).then(([w, g]) => { RAW = w; GDELT_RAW = g; });
+  return RAW_LOADING;
+}
+
+/* Port of series_stats(): calendar-anchored window vs the preceding 30
+   days, with the pipeline's exact minimum-day rules and rounding. */
+function seriesWindowStats(series, startISO, endISO) {
+  const sStart = series.start;
+  const vals = series.values;
+  const winDays = dDiff(startISO, endISO) + 1;
+  let recSum = 0, recN = 0, baseSum = 0, baseN = 0;
+  const i0 = dDiff(sStart, startISO);
+  for (let k = 0; k < winDays; k++) {
+    const v = vals[i0 + k];
+    if (v != null) { recSum += v; recN++; }
+  }
+  const b0 = dDiff(sStart, dAdd(startISO, -RANGE_RULES.BASE_DAYS));
+  for (let k = 0; k < RANGE_RULES.BASE_DAYS; k++) {
+    const v = vals[b0 + k];
+    if (v != null) { baseSum += v; baseN++; }
+  }
+  if (recN < RANGE_RULES.minWindowDays(winDays) || baseN < RANGE_RULES.MIN_BASE_DAYS) return null;
+  const recent = recSum / recN, base = baseSum / baseN;
+  if (!(base > 0)) return null;
+  return { m7: r1(recent), m30: r1(base), velocity: r3((recent - base) / base), days: recN };
+}
+
+/* Port of the per-topic aggregation: INCLUDE_FLOOR admission, symmetric
+   RISING_FLOOR basis weighted by the larger mean, quarantine exclusion. */
+function rangeCompute() {
+  const startISO = RANGE.start, endISO = RANGE.end;
+  const topics = {};
+  let excluded = 0;
+  const daily = DATA.topics;
+  const tracked = Object.keys(RAW.series);
+  for (const qid of tracked) {
+    const meta = daily[qid] || (DATA.topics_unscored || []).find(u => u.qid === qid);
+    if (!meta) continue;
+    const q = (RAW.quarantine || {})[qid] || {};
+    const langStats = {};
+    for (const [lang, s] of Object.entries(RAW.series[qid])) {
+      if (q[lang]) continue;                       // same exclusion as the pipeline
+      const st = seriesWindowStats(s, startISO, endISO);
+      if (st && st.m7 >= RANGE_RULES.INCLUDE_FLOOR) langStats[lang] = st;
+    }
+    const langs = Object.keys(langStats);
+    if (!langs.length) { excluded++; continue; }
+    const big = langs.filter(l => langStats[l].m7 >= RANGE_RULES.RISING_FLOOR
+                               || langStats[l].m30 >= RANGE_RULES.RISING_FLOOR);
+    const basis = big.length ? big : langs;
+    let wsum = 0, vsum = 0, topLang = basis[0], topW = 0;
+    for (const l of basis) {
+      const w = Math.max(langStats[l].m7, langStats[l].m30);
+      wsum += w; vsum += langStats[l].velocity * w;
+      if (w > topW) { topW = w; topLang = l; }
+    }
+    const gv = r3(vsum / wsum);
+    topics[qid] = {
+      label_en: meta.label_en, category: meta.category,
+      global_velocity: gv,
+      momentum: gv > RANGE_RULES.RISING ? "rising" : gv < RANGE_RULES.FALLING ? "falling" : "steady",
+      top_edition: { lang: topLang, share: Math.round((topW / wsum) * 100) / 100 },
+      demand: langs.sort((a, b) => langStats[b].m7 - langStats[a].m7).slice(0, 8)
+        .map(l => ({ lang: l, mean: langStats[l].m7, velocity: langStats[l].velocity })),
+    };
+  }
+  return { topics, excluded, measured: Object.keys(topics).length };
+}
+
+/* News-article count for the window — only when GDELT's timeline covers
+   EVERY day of it (same discipline as the pipeline's news_articles_7d). */
+function rangeGdeltCount(qid) {
+  const g = GDELT_RAW && GDELT_RAW.topics && GDELT_RAW.topics[qid];
+  if (!g || g.volume_stale) return null;
+  const byDay = {};
+  for (const p of g.volume_daily || []) byDay[p.date] = p.articles || 0;
+  const n = dDiff(RANGE.start, RANGE.end) + 1;
+  let sum = 0;
+  for (let k = 0; k < n; k++) {
+    const d = dAdd(RANGE.start, k);
+    if (!(d in byDay)) return null;
+    sum += byDay[d];
+  }
+  return sum;
+}
+
+/* Bluesky open-social names seen inside the window (its archive holds the
+   last 7 days only; days outside it are honestly absent). */
+function bskyWindowNames() {
+  const h = (BSKY && BSKY.history) || {};
+  const names = new Set();
+  const n = dDiff(RANGE.start, RANGE.end) + 1;
+  for (let k = 0; k < n; k++) (h[dAdd(RANGE.start, k)] || []).forEach(x => names.add(x));
+  return [...names];
+}
+
+async function setRange(startISO, endISO) {
+  if (!startISO) {
+    RANGE = null; RANGE_VM = null;
+    renderRangeBar(); renderList(document.getElementById("search").value); renderDetail();
+    return;
+  }
+  const el = document.getElementById("range-bar");
+  el.setAttribute("aria-busy", "true");
+  await loadRaw();
+  const minStart = dAdd(RAW.updated, -(RAW.window_days - 1 - RANGE_RULES.BASE_DAYS));
+  if (startISO < minStart) startISO = minStart;   // baseline needs 30 prior days in-store
+  if (endISO > RAW.updated) endISO = RAW.updated;
+  if (startISO > endISO) startISO = endISO;
+  RANGE = { start: startISO, end: endISO };
+  // CONSISTENCY SNAP: when the selected window IS the pipeline's own window
+  // (the last 7 days), the published figures are used verbatim; the port
+  // only ever computes windows for which no published figure exists, so the
+  // two can never disagree on the same question.
+  if (endISO === RAW.updated && dDiff(startISO, endISO) === 6) {
+    RANGE_VM = {
+      topics: DATA.topics,
+      excluded: (DATA.coverage || {}).topics_stale_excluded + (DATA.coverage || {}).topics_below_floor || 0,
+      measured: Object.keys(DATA.topics).length,
+      published: true,
+    };
+  } else {
+    RANGE_VM = rangeCompute();
+  }
+  el.removeAttribute("aria-busy");
+  renderRangeBar(); renderList(document.getElementById("search").value); renderDetail();
+}
+
+function viewTopics() { return RANGE_VM ? RANGE_VM.topics : DATA.topics; }
+
+function renderRangeBar() {
+  const el = document.getElementById("range-bar");
+  if (!DATA) { el.innerHTML = ""; return; }
+  const upd = DATA.measured_as_of || DATA.generated;
+  const chip = (label, pressed, title) =>
+    `<button type="button" class="rb-chip" aria-pressed="${pressed}" title="${esc(title)}" data-r="${esc(label)}">${esc(label)}</button>`;
+  const isPreset = (n) => RANGE && RANGE.end === upd && dDiff(RANGE.start, RANGE.end) + 1 === n;
+  el.innerHTML = `<span class="rb-label">Trend window</span>
+    ${chip("Daily view", !RANGE, "The pipeline's published figures, exactly as computed by the daily engine")}
+    ${chip("1 day", isPreset(1), "Yesterday's attention vs the prior 30 days")}
+    ${chip("7 days", isPreset(7), "The last week vs the prior 30 days, recomputed in your browser")}
+    ${chip("30 days", isPreset(30), "The last month vs the prior 30 days")}
+    <label style="font-size:12px;color:var(--muted-2);">from
+      <input type="date" id="rb-start" value="${RANGE ? esc(RANGE.start) : ""}"></label>
+    <label style="font-size:12px;color:var(--muted-2);">to
+      <input type="date" id="rb-end" value="${RANGE ? esc(RANGE.end) : ""}"></label>
+    <button type="button" class="rb-chip" id="rb-apply">Apply</button>
+    ${RANGE ? `<span class="rb-note">Window ${esc(RANGE.start)} to ${esc(RANGE.end)}, measured against the 30 days before it.
+      Computed in your browser from the same daily series and rules as the daily engine; the daily view is unchanged.
+      Data available back to ${esc(dAdd(upd, -(119 - RANGE_RULES.BASE_DAYS)))}.</span>` : ""}`;
+  const min = dAdd(upd, -(119 - RANGE_RULES.BASE_DAYS)), max = upd;
+  for (const id of ["rb-start", "rb-end"]) {
+    const inp = document.getElementById(id);
+    inp.min = min; inp.max = max;
+  }
+  el.querySelectorAll(".rb-chip[data-r]").forEach(b => b.addEventListener("click", () => {
+    const r = b.dataset.r;
+    if (r === "Daily view") return setRange(null);
+    const n = parseInt(r, 10);
+    setRange(dAdd(upd, -(n - 1)), upd);
+  }));
+  document.getElementById("rb-apply").addEventListener("click", () => {
+    const a = document.getElementById("rb-start").value, b = document.getElementById("rb-end").value;
+    if (a && b) setRange(a <= b ? a : b, a <= b ? b : a);
+  });
+}
+
+/* Proof of the port: recompute the pipeline's own window and diff every
+   scored topic against the published number. Run from the console. */
+async function __rangeGoldenTest() {
+  await loadRaw();
+  const upd = RAW.updated;
+  const saved = RANGE;
+  RANGE = { start: dAdd(upd, -6), end: upd };
+  const vm = rangeCompute();
+  RANGE = saved;
+  let worst = 0, worstQ = null, n = 0, missing = [];
+  for (const [qid, t] of Object.entries(DATA.topics)) {
+    if (!(qid in vm.topics)) { missing.push(t.label_en); continue; }
+    const d = Math.abs(vm.topics[qid].global_velocity - t.global_velocity);
+    n++; if (d > worst) { worst = d; worstQ = t.label_en; }
+  }
+  return { compared: n, max_abs_delta: worst, worst_topic: worstQ, missing_from_port: missing };
+}
+
+function sparkline(series, hi0, hi1) {
   const w = 600, h = 130, pad = 4;
   const vals = series.filter(v => v != null);
   if (vals.length < 2 || series.length < 2) return "";
   const mx = Math.max(...vals), mn = Math.min(...vals);
   const range = (mx - mn) || 1;
+  const px = (i) => pad + i * (w - 2 * pad) / (series.length - 1);
+  const band = (hi0 != null && hi1 != null && hi1 >= 0 && hi0 < series.length)
+    ? `<rect x="${px(Math.max(0, hi0)).toFixed(1)}" y="0" width="${Math.max(2, px(Math.min(series.length - 1, hi1)) - px(Math.max(0, hi0))).toFixed(1)}" height="${h}" fill="var(--accent-soft)"/>`
+    : "";
   const pts = series.map((v, i) => {
     const x = pad + i * (w - 2 * pad) / (series.length - 1);
     const y = v == null ? null : h - pad - ((v - mn) / range) * (h - 2 * pad);
     return y == null ? null : `${x.toFixed(1)},${y.toFixed(1)}`;
   }).filter(Boolean);
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img"
-    aria-label="Line chart: global attention over the last 120 days, from ${Math.round(mn).toLocaleString()} to ${Math.round(mx).toLocaleString()} Wikipedia views per day">
-    <polyline points="${pts.join(" ")}" fill="none" stroke="var(--un-blue)" stroke-width="2"/>
+    aria-label="Line chart: global attention over the last 120 days, from ${Math.round(mn).toLocaleString()} to ${Math.round(mx).toLocaleString()} Wikipedia views per day${hi0 != null ? ", selected window shaded" : ""}">
+    ${band}<polyline points="${pts.join(" ")}" fill="none" stroke="var(--un-blue)" stroke-width="2"/>
   </svg>`;
 }
 
@@ -148,14 +404,16 @@ function renderList(filter) {
   const body = document.getElementById("list-body");
   const q = (filter || "").toLowerCase();
   const byCat = {};
-  for (const [qid, t] of Object.entries(DATA.topics)) {
+  for (const [qid, t] of Object.entries(viewTopics())) {
     if (q && !t.label_en.toLowerCase().includes(q)) continue;
     (byCat[t.category] = byCat[t.category] || []).push([qid, t]);
   }
   // Tracked topics that could not be scored today still appear, dimmed with
   // the reason — a tracked topic must never silently vanish from this list.
   const unscoredByCat = {};
-  for (const u of DATA.topics_unscored || []) {
+  // range mode measures its own universe; the daily unscored list applies
+  // only to the daily view (the range banner carries the window's count)
+  for (const u of RANGE_VM ? [] : (DATA.topics_unscored || [])) {
     if (q && !u.label_en.toLowerCase().includes(q)) continue;
     (unscoredByCat[u.category] = unscoredByCat[u.category] || []).push(u);
   }
@@ -201,7 +459,7 @@ function renderList(filter) {
 }
 
 function renderGlobalMovers() {
-  const sorted = Object.entries(DATA.topics).sort((a, b) => b[1].global_velocity - a[1].global_velocity);
+  const sorted = Object.entries(viewTopics()).sort((a, b) => b[1].global_velocity - a[1].global_velocity);
   // only genuinely rising/falling topics qualify — in a quiet week the
   // bottom five might still be positive (and vice versa)
   const risers = sorted.filter(([, t]) => t.global_velocity > 0).slice(0, 5);
@@ -226,6 +484,23 @@ function renderGlobalMovers() {
   // only the scorable subset would overstate coverage on exactly the days
   // the fetch is behind, so both numbers are shown and the measurement date
   // is the series' own, not the day the file happened to be written.
+  if (RANGE_VM) {
+    const n = dDiff(RANGE.start, RANGE.end) + 1;
+    const bskyNames = bskyWindowNames();
+    return `<h1 tabindex="-1">Topic movers, ${esc(RANGE.start)} to ${esc(RANGE.end)}</h1>
+      <div class="range-banner"><b>Range view.</b>${RANGE_VM.published ? " This window is the daily engine's own; the published figures are shown verbatim." : ""} ${RANGE_VM.measured} topics measurable in this
+      ${n === 1 ? "1-day" : n + "-day"} window (${RANGE_VM.excluded} tracked topics had too little
+      data in it); attention in the window is compared with the 30 days before it, under the same
+      floors and exclusions as the daily engine. Select "Daily view" to return to the published figures.</div>
+      <h3 class="sect">Rising in this window</h3><div class="movers">${sorted.filter(([, t]) => t.global_velocity > 0).slice(0, 5).map(row).join("") || '<div class="empty">Nothing rising sharply in this window.</div>'}</div>
+      <h3 class="sect">Falling in this window</h3><div class="movers">${sorted.filter(([, t]) => t.global_velocity < 0).slice(-5).reverse().map(row).join("") || '<div class="empty">Nothing falling sharply in this window.</div>'}</div>
+      ${bskyNames.length ? `<h3 class="sect">Open social web during this window (Bluesky, global)</h3>
+      <div class="note" style="margin-top:0">${bskyNames.slice(0, 14).map(esc).join(" · ")}</div>
+      <div class="note">Bluesky's archive holds the last 7 days only; days outside it are not shown rather than estimated.</div>` : ""}
+      <div class="note">Velocity = attention in the selected window vs. the 30 days before it,
+      measured from Wikipedia reading patterns per language edition, volume-weighted, with the
+      daily engine's floors and quarantine exclusions. Select any topic on the left for detail.</div>`;
+  }
   const cov = DATA.coverage || {};
   const scored = Object.keys(DATA.topics).length;
   const unscorable = (cov.topics_stale_excluded || 0) + (cov.topics_below_floor || 0)
@@ -280,20 +555,37 @@ let TE_RANGE_DAYS = 120;
 function renderDetail() {
   const el = document.getElementById("detail");
   if (!activeQid) { el.innerHTML = renderGlobalMovers(); bindMoverClicks(el); return; }
-  const t = DATA.topics[activeQid];
+  const t = viewTopics()[activeQid];
+  if (!t && RANGE_VM) {
+    const meta = DATA.topics[activeQid] || (DATA.topics_unscored || []).find(u => u.qid === activeQid) || {};
+    el.innerHTML = `<h1 tabindex="-1">${esc(meta.label_en || "This topic")}</h1>
+      <div class="range-banner"><b>Range view.</b> This topic had too little data in the selected
+      window to measure (fewer than the required days above the traffic floor). Its daily figures
+      are unaffected; select "Daily view" to see them.</div>`;
+    return;
+  }
+  if (!t) { el.innerHTML = `<div class="empty">This topic is not scored today.</div>`; return; }
   const pct = Math.round(t.global_velocity * 100);
   const velCls = pct >= 0 ? "up" : "down";
 
+  // In range mode the demand rows come from the in-browser recompute; the
+  // daily view renders the pipeline's published rows untouched.
+  const demandRows = RANGE_VM && !RANGE_VM.published
+    ? (t.demand || []).map(d => [d.lang, d.mean, d.velocity])
+    : Object.entries(t.demand_by_language || {}).map(([l, st]) => [l, st.weekly_daily_avg_views, st.velocity]);
   let langRows = "";
-  for (const [lang, st] of Object.entries(t.demand_by_language || {})) {
-    const v = Math.round(st.velocity * 100);
+  for (const [lang, mean, vel] of demandRows) {
+    const v = Math.round(vel * 100);
     langRows += `<tr><td>${esc(LANG_NAMES[lang] || lang)}</td>
-      <td class="num">${Math.round(st.weekly_daily_avg_views).toLocaleString()}</td>
+      <td class="num">${Math.round(mean).toLocaleString()}</td>
       <td class="num ${v >= 0 ? "up" : "down"}">${v >= 0 ? "+" : ""}${v}%</td></tr>`;
   }
+  const daily = DATA.topics[activeQid];   // pipeline figures: series + media
+  const rangeDays = RANGE ? dDiff(RANGE.start, RANGE.end) + 1 : null;
+  const rangeNews = RANGE_VM && !RANGE_VM.published ? rangeGdeltCount(activeQid) : null;
 
   let mediaRows = "";
-  for (const c of (t.media_intensity_by_country || []).slice(0, 8)) {
+  for (const c of ((RANGE_VM && !RANGE_VM.published ? null : t.media_intensity_by_country) || []).slice(0, 8)) {
     mediaRows += `<tr><td>${esc(c.iso3)}</td><td class="num">${Number(c.pct_of_country_news_volume).toFixed(1)}%</td></tr>`;
   }
 
@@ -301,14 +593,25 @@ function renderDetail() {
     <h1 tabindex="-1">${esc(t.label_en)}</h1>
     <div class="sub">${esc(CAT_LABELS[t.category] || t.category)} · ${momentumBadge(t.momentum)}</div>
     <div class="kpis">
-      <div class="kpi"><div class="v ${velCls}">${pct >= 0 ? "+" : ""}${pct}%</div><div class="l">global velocity (7d vs 30d)</div></div>
-      ${t.news_articles_7d != null ? `<div class="kpi"><div class="v">${t.news_articles_7d.toLocaleString()}</div><div class="l">news articles, 7 days (GDELT)</div></div>` : ""}
+      <div class="kpi"><div class="v ${velCls}">${pct >= 0 ? "+" : ""}${pct}%</div><div class="l">${RANGE_VM && !RANGE_VM.published ? `range velocity (${rangeDays}d vs prior 30d)` : "global velocity (7d vs 30d)"}</div></div>
+      ${RANGE_VM && !RANGE_VM.published
+        ? (rangeNews != null ? `<div class="kpi"><div class="v">${rangeNews.toLocaleString()}</div><div class="l">news articles in window (GDELT)</div></div>` : "")
+        : (t.news_articles_7d != null ? `<div class="kpi"><div class="v">${t.news_articles_7d.toLocaleString()}</div><div class="l">news articles, 7 days (GDELT)</div></div>` : "")}
     </div>
-    <h3 class="sect">Global attention: last ${TE_RANGE_DAYS} days (Wikipedia views/day, all tracked languages)</h3>
+    ${RANGE_VM ? `<div class="range-banner"><b>Range view</b> ${esc(RANGE.start)} to ${esc(RANGE.end)}:
+      figures computed in your browser from the same daily series and rules as the daily engine.
+      The shaded band on the chart marks the window. Daily figures are unchanged.</div>` : ""}
+    <h3 class="sect">Global attention: last ${RANGE_VM ? 120 : TE_RANGE_DAYS} days (Wikipedia views/day, all tracked languages)</h3>
     <div id="te-range-slot"></div>
-    ${sparkline((t.global_series || []).slice(-TE_RANGE_DAYS))}
+    ${RANGE_VM && daily
+      ? sparkline(daily.global_series || [],
+          dDiff(daily.series_start, RANGE.start), dDiff(daily.series_start, RANGE.end))
+      : sparkline(((daily || t).global_series || []).slice(-TE_RANGE_DAYS))}
+    ${RANGE_VM && !daily ? `<div class="note">No daily chart: this topic is not scored in today's
+      daily view, so no published series exists to draw. The window figures above are computed
+      from its raw per-language series.</div>` : ""}
     <h3 class="sect">Demand by language (what people look up)</h3>
-    <table><tr><th>Language</th><th style="text-align:right">Views/day (7d avg)</th><th style="text-align:right">Velocity</th></tr>${langRows}</table>
+    <table><tr><th>Language</th><th style="text-align:right">${RANGE_VM ? "Views/day (window)" : "Views/day (7d avg)"}</th><th style="text-align:right">Velocity</th></tr>${langRows}</table>
     ${mediaRows ? `<h3 class="sect">Where this topic gets the most airtime (GDELT, 14d)</h3>
     <table><tr><th>Outlet country</th><th style="text-align:right">% of that country's news output</th></tr>${mediaRows}</table>
     <div class="note">This is coverage <em>intensity</em>, not a share of world coverage: it is how much of
@@ -325,12 +628,18 @@ function renderDetail() {
         <a href="https://www.gdeltproject.org" target="_blank" rel="noopener noreferrer">GDELT ↗</a></li>
       <li>Country attribution of demand is a documented approximation: language-edition traffic is
         mapped to countries by speaker-population weights, never measured per country.</li>
+      ${RANGE_VM ? `<li>Range figures are computed in the browser from the published raw series
+        (data/trends/wiki_pageviews.json) with the daily engine's formula, floors and
+        quarantine exclusions; the media-coverage intensity table appears only in the daily
+        view because it is a fixed 14-day pipeline measure.</li>` : ""}
     </ol></div>`;
 
   // Mount the shared range control after the innerHTML swap. The velocity
   // badge and KPIs keep their fixed 7d-vs-30d definition at every range.
+  // In range mode the custom window IS the range control, so the chart
+  // chips are not mounted and the full 120-day series is always shown.
   const slot = document.getElementById("te-range-slot");
-  if (slot && window.AtlasDateRange) {
+  if (slot && !RANGE_VM && window.AtlasDateRange) {
     window.AtlasDateRange(slot, {
       ariaLabel: "Attention chart range",
       active: String(TE_RANGE_DAYS),
@@ -370,6 +679,7 @@ let BSKY = null;   // global Bluesky pulse — optional layer, see bskyPulse()
     ]);
     DATA = await r.json();
     BSKY = (bskyRes && bskyRes.ok) ? await bskyRes.json().catch(() => null) : null;
+    renderRangeBar();
     renderList("");
     renderDetail();
   } catch (err) {
