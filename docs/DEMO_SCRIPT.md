@@ -1,6 +1,6 @@
 # Supervisor demo script — Audience Intelligence Atlas
 
-*A 7-minute walkthrough. Every question below is copy-paste ready and was re-run, step by step, against the live deployed site on 2026-07-28 — including every quoted number. Read the **Say** lines in your own words — they're the point you're making, not a script to recite.*
+*A 9-minute walkthrough (drop the Topic Explorer stop, §3b, to keep it at 7). Every question below is copy-paste ready and was re-run, step by step, against the live deployed site on 2026-07-28; the quoted figures and the new §3b were re-checked against the live data on 2026-08-18. Read the **Say** lines in your own words — they're the point you're making, not a script to recite.*
 
 **Before you start:** open the site in a private/incognito window (avoids cached versions), have this page open on your phone or a second screen, and know that the analyst runs entirely in the browser — there's nothing to log into and nothing that can fail to connect.
 
@@ -16,7 +16,9 @@
 
 **Say:** "Every figure has a named source with a link. Nothing here is estimated by us."
 
-**Do:** Click the **Sources** tab so they see the citation list.
+**Do:** Click the **Sources** tab so they see the citation list. Then point at the two buttons under the country's name — **Download data (CSV)** and **Print / save PDF**.
+
+**Say:** "And the whole profile travels: one click downloads every cited field as a spreadsheet, or prints all five tabs as a single document — in any of the six interface languages."
 
 ---
 
@@ -100,6 +102,30 @@ It answers: **"The Atlas holds no campaign archive."** — then explains what it
 
 ---
 
+## 3b. What is the world paying attention to? — Topic Explorer (1.5 minutes)
+
+*This stop is new (August 2026). Drop it if the room only cares about country strategy; keep it for anyone who plans content calendars.*
+
+**Do:** Click **Topic Explorer** in the top navigation. You land on the global movers pane.
+
+**Say:** "This tracks 183 UN-relevant topics — climate, health, migration, technology — across 22 language editions of Wikipedia, refreshed every day. Not what media publish: what people actually look up."
+
+**Point at three things on this pane:**
+
+- **Rising / Falling this week** — "each topic against its own usual level, so a spike stands out even for a small topic. See the note on some rows — *driven by Japanese Wikipedia* — when one language community carries a 'global' wave, it says so instead of letting it read as worldwide."
+- **Changed since last week** — "a deliberately different question: not 'is it above its usual level' but 'did it move since last week'. The same topic can honestly be both rising and down — the notes say which question each list answers."
+- **Subscribe (RSS)** — "colleagues can paste this into Outlook or Teams and get the day's movers delivered every morning without visiting the page."
+
+**Do:** Click the top rising topic. On its page, open the **Compare with…** dropdown, add a second topic (any one), press **Add**.
+
+**Say:** "Two topics on one chart, and the scale is honest: each line is indexed to that topic's own average, so you compare *shapes* — and the legend keeps each one's real numbers so a small topic can never masquerade as a big one."
+
+**Do:** In the **Trend window** bar at the top, click **30 days**, then type a date range from 2024 or 2025 and press **Apply**.
+
+**Say:** "Any window back to January 2024 — two and a half years of daily history, and the page tells you exactly how a historical window differs from the live one rather than pretending they're the same. Every table here downloads as a spreadsheet, and every view prints to PDF with its sources and caveats on the page."
+
+---
+
 ## 4. Speed round — the range (1.5 minutes)
 
 *Back in the **AI Analyst**. Type these back to back. Don't over-explain; the pace is the point.*
@@ -130,7 +156,7 @@ Which countries have state-controlled media environments?
 
 **Do:** With any answer or screening on screen, click **Copy link**, then **Print / save PDF**.
 
-**Say:** "Anything you see here travels. The link re-runs the question on your own machine — nothing is stored or sent anywhere — so you can paste it into an email or a chat and the recipient gets the same answer computed from the same published data. Or print it: you get a one-page brief with its sources on it. And a screening downloads as a spreadsheet that carries the excluded countries and their reasons in the same file, so it can never be mistaken for a ranking of every country."
+**Say:** "Anything you see here travels. The link re-runs the question on your own machine — nothing is stored or sent anywhere — so you can paste it into an email or a chat and the recipient gets the same answer computed from the same published data. Or print it: you get a one-page brief with its sources on it. And a screening downloads as a spreadsheet that carries the excluded countries and their reasons in the same file, so it can never be mistaken for a ranking of every country. As of August, that's true site-wide: every data table on the Atlas — movers lists, attention charts, language tables, country profiles — has a **Download CSV** and a **Print / save PDF** beside it, and every export carries its caveats inside the file."
 
 ---
 
@@ -168,6 +194,9 @@ Which countries have state-controlled media environments?
 
 **"Can we add more countries / topics?"**
 > All 195 UN countries are already covered. Topics are a tracked list of 183 — adding more is a small, documented change.
+
+**"How far back does the trend data go?"**
+> Daily attention history reaches back to January 2024 for every tracked topic — a one-time archived backfill from the same public Wikimedia source, cross-checked cell-for-cell against the live data before it was published. Full per-language detail exists for the most recent 120 days; older windows carry one global figure per topic per day, and the page says exactly what a historical window can and can't tell you.
 
 ---
 
