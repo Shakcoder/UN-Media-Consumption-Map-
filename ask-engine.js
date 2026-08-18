@@ -160,6 +160,16 @@ const DEMONYMS = {
   "panamanian": "PAN", "dominican": "DOM", "jamaican": "JAM",
 };
 
+// Noun-plural demonyms the +s rule in buildNameIndex can't derive ("Swedes").
+// Kept OUT of DEMONYMS and indexed exact-match-only: "danes" is one edit
+// from "dates", so these must never become fuzzy targets. Deliberately
+// absent: "poles" ("the poles" is climate vocabulary) and "turks" ("Turks
+// and Caicos" questions would be served Türkiye's data — the wrong place).
+const IRREGULAR_PLURAL_DEMONYMS = {
+  "swedes": "SWE", "danes": "DNK", "finns": "FIN",
+  "spaniards": "ESP", "brits": "GBR", "britons": "GBR", "scots": "GBR",
+};
+
 // Words that must never fuzzy-match to a country/topic (too common).
 const FUZZY_STOPWORDS = new Set(("about media radio trust trends trend where which what should could would there their world " +
   "global country countries region regions people online social news best most least top how when who why whom " +
@@ -174,7 +184,10 @@ const FUZZY_STOPWORDS = new Set(("about media radio trust trends trend where whi
   // resolve to a place: the Maldives' capital normalises to "male", which made
   // "how do we reach male audiences in Brazil?" pull the Maldives into the
   // answer alongside Brazil. The Maldives stays reachable by name.
-  "male female males females boy boys girl girls").split(/\s+/));
+  "male female males females boy boys girl girls " +
+  // "begin" is one edit from Benin — "where do we even begin?" pulled the
+  // country into a Tanzania question. Never a fuzzy target.
+  "begin begins began beginning").split(/\s+/));
 
 function buildNameIndex() {
   NAME_TO_ISO = {};
@@ -213,12 +226,38 @@ function buildNameIndex() {
         if (g !== short && g.length >= 5 && !(g in NAME_TO_ISO) && !FUZZY_STOPWORDS.has(g)) {
           NAME_TO_ISO[g] = iso;
           GENERATED.add(g);   // catch "kenyan" typed exactly, but never fuzzy-match to it
+          const pl = g + "s"; // and the plural ("kenyans") under the same rule
+          if (!(pl in NAME_TO_ISO) && !FUZZY_STOPWORDS.has(pl)) {
+            NAME_TO_ISO[pl] = iso;
+            GENERATED.add(pl);
+          }
         }
       }
     }
   }
   Object.assign(NAME_TO_ISO, COUNTRY_ALIASES);
   Object.assign(NAME_TO_ISO, DEMONYMS);      // explicit demonyms win over generated
+  // Demonym plurals: "How many Nigerians are online?" names its country only
+  // through "Nigerians", which no index entry covered — the engine refused a
+  // question with the country in plain sight. Exact-match only (GENERATED),
+  // so plurals never widen the fuzzy-matching surface.
+  for (const [k, iso] of Object.entries(DEMONYMS)) {
+    const pl = k + "s";
+    // Explicit plurals must WIN over machine-generated ones, exactly like
+    // their singulars do: Niger's generated "nigerian"+s claimed "nigerians"
+    // first, sending "How many Nigerians are online?" to Niger.
+    if (!FUZZY_STOPWORDS.has(pl) && (!(pl in NAME_TO_ISO) || GENERATED.has(pl))) {
+      NAME_TO_ISO[pl] = iso;
+      GENERATED.add(pl);
+    }
+  }
+  // Irregular plurals ride the same exact-match-only rule
+  for (const [k, iso] of Object.entries(IRREGULAR_PLURAL_DEMONYMS)) {
+    if (!(k in NAME_TO_ISO) || GENERATED.has(k)) {
+      NAME_TO_ISO[k] = iso;
+      GENERATED.add(k);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -286,6 +325,9 @@ const ASIA_SUBREGIONS = ["Eastern Asia", "South-Eastern Asia", "Southern Asia", 
 const BALKANS = ["ALB", "BIH", "BGR", "GRC", "HRV", "MKD", "MNE", "ROU", "SRB", "SVN"];
 const SCANDINAVIA = ["DNK", "NOR", "SWE"];
 const GCC = ["SAU", "ARE", "QAT", "KWT", "BHR", "OMN"];
+const SIDS = ["ATG", "BHS", "BHR", "BRB", "BLZ", "CPV", "COM", "CUB", "DMA", "DOM", "FJI", "GRD",
+  "GNB", "GUY", "HTI", "JAM", "KIR", "MDV", "MHL", "FSM", "MUS", "NRU", "PLW", "PNG", "WSM",
+  "STP", "SGP", "SYC", "SLB", "KNA", "LCA", "VCT", "SUR", "TLS", "TON", "TTO", "TUV", "VUT"];
 
 const REGION_MAP = {
   "east africa": { subregion: "Eastern Africa" }, "eastern africa": { subregion: "Eastern Africa" },
@@ -361,11 +403,20 @@ const REGION_MAP = {
   "pacific islands": { isos: ["FJI", "PNG", "SLB", "VUT", "WSM", "TON", "KIR", "FSM", "MHL", "PLW", "NRU", "TUV"] },
   "the pacific islands": { isos: ["FJI", "PNG", "SLB", "VUT", "WSM", "TON", "KIR", "FSM", "MHL", "PLW", "NRU", "TUV"] },
   "latam": { subregions: ["South America", "Central America", "Caribbean"] },
+  // UN-OHRLLS Small Island Developing States — UN member states only (the
+  // Atlas's 195), so Cook Islands and Niue are not listed
+  "small island states": { isos: SIDS }, "small island developing states": { isos: SIDS },
+  "sids": { isos: SIDS }, "island states": { isos: SIDS }, "island nations": { isos: SIDS },
 };
 
 // Pretty display names for region keys whose key text is an adjective or
 // lowercase phrase ("african" must never render as a region heading).
 const REGION_DISPLAY = {
+  "small island states": "Small island developing states (SIDS)",
+  "small island developing states": "Small island developing states (SIDS)",
+  "sids": "Small island developing states (SIDS)",
+  "island states": "Small island developing states (SIDS)",
+  "island nations": "Small island developing states (SIDS)",
   "african": "Africa", "european": "Europe", "asian": "Asia", "oceanian": "Oceania",
   "eastern european": "Eastern Europe", "western european": "Western Europe",
   "northern european": "Northern Europe", "southern european": "Southern Europe",
@@ -449,48 +500,85 @@ const TOPIC_SYNONYMS = {
 // Attributes the analyst can rank, look up, and compare on.
 const ATTRIBUTES = {
   internet:   { label: "Internet penetration", unit: "%", get: f => f.internet,
-                words: ["internet", "internet penetration", "internet access", "connectivity", "connected", "online access"],
+                words: ["internet", "internet penetration", "internet access", "connectivity", "connected", "online access",
+                        // people-verb phrasings: "how many Nigerians are online?"
+                        // NOT "is online": it substring-matches across
+                        // "where IS ONLINE news use highest" and hijacks
+                        // online-news questions into internet penetration
+                        "are online", "everyone online", "people online", "get online",
+                        "use the internet", "uses the internet", "using the internet", "have internet",
+                        "has internet", "internet users", "on the internet", "time online"],
                 source: "World Bank (ITU data)" },
   // Every smartphone figure in the data is DataReportal's; GSMA supplies the
   // separate Mobile Connectivity Index below, not this number. Naming GSMA
   // here sent readers to a source that does not publish these figures.
   smartphone: { label: "Smartphone adoption", unit: "%", get: f => f.smartphone,
-                words: ["smartphone", "smartphones", "phone ownership"],
+                words: ["smartphone", "smartphones", "phone ownership", "own a smartphone", "smartphone ownership"],
                 source: "DataReportal 2024 estimate — GSMA's Mobile Connectivity Index is the measured companion signal" },
   radio:      { label: "Radio as weekly news source", unit: "%", get: f => f.radio,
                 words: ["radio"], source: "Afrobarometer R9 / national surveys", surveyMix: true },
   tv:         { label: "TV as weekly news source", unit: "%", get: f => f.tv,
                 words: ["tv", "television", "broadcast tv"], source: "Reuters DNR 2026 / barometers", surveyMix: true },
   online:     { label: "Online news use (weekly)", unit: "%", get: f => f.online,
-                words: ["online news", "digital news", "news websites"], source: "Reuters DNR 2026 / barometers", surveyMix: true },
+                words: ["online news", "digital news", "news websites", "news online", "read news online",
+                        "reads news online", "get news online", "gets news online"],
+                source: "Reuters DNR 2026 / barometers", surveyMix: true },
   social:     { label: "Social media as news source", unit: "%", get: f => f.social,
                 words: ["social media", "social networks", "social platforms"], source: "Reuters DNR 2026 / barometers", surveyMix: true },
   trust:      { label: "Trust in news", unit: "%", get: f => f.trust,
                 words: ["trust", "trusts", "trusted", "trust in news", "news trust", "credibility", "believe the news",
-                        "skepticism", "skeptical", "scepticism"], source: "Reuters DNR 2026 / barometers", surveyMix: true },
+                        "skepticism", "skeptical", "scepticism",
+                        // "where do people distrust the media?" is a trust question too
+                        "distrust", "distrusts", "distrusted", "distrustful", "don't trust", "do not trust",
+                        "believe journalists", "believe what journalists", "believe the media",
+                        "faith in the media", "faith in the news", "confidence in the news", "confidence in the media"],
+                source: "Reuters DNR 2026 / barometers", surveyMix: true },
   press:      { label: "Press freedom (RSF, 0–100)", unit: "/100", get: f => f.rsf,
                 words: ["press freedom", "media freedom", "rsf", "journalist safety", "press freedom score",
                         "journalists", "journalist", "reporters", "state controlled media", "state controlled",
-                        "state media", "media control"],
+                        "state media", "media control", "press free", "free press"],
                 source: "RSF World Press Freedom Index 2025" },
   netfreedom: { label: "Internet freedom (FOTN, 0–100)", unit: "/100", get: f => f.fotn,
                 words: ["internet freedom", "online freedom", "censorship", "internet censorship"],
                 source: "Freedom House FOTN 2025 (70 countries)" },
   medianage:  { label: "Median age", unit: " years", get: f => f.medianAge,
-                words: ["median age", "average age", "age"], source: "UN DESA WPP 2024" },
+                words: ["median age", "average age", "age", "how old", "oldest", "youngest", "aging", "ageing"],
+                source: "UN DESA WPP 2024" },
   under15:    { label: "Population under 15", unit: "%", get: f => f.under15,
                 words: ["under 15", "children", "under-15"], source: "World Bank" },
   urban:      { label: "Urban population", unit: "%", get: f => f.urban,
-                words: ["urban", "urbanisation", "urbanization", "cities"], source: "World Bank" },
+                words: ["urban", "urbanisation", "urbanization", "urbanised", "urbanized", "cities",
+                        "live in cities", "living in cities"], source: "World Bank" },
   literacy:   { label: "Adult literacy", unit: "%", get: f => f.literacy,
-                words: ["literacy", "literate", "literacy rate"], source: "World Bank (UNESCO UIS data)" },
+                words: ["literacy", "literate", "literacy rate", "read and write", "reading and writing",
+                        "able to read", "illiteracy", "illiterate"], source: "World Bank (UNESCO UIS data)" },
   population: { label: "Population", unit: "", get: f => f.pop, fmt: v => fmtPop(v),
-                words: ["population", "biggest country", "largest country", "most populous"], source: "World Bank" },
+                words: ["population", "biggest country", "largest country", "most populous",
+                        "how many people live", "number of people"], source: "World Bank" },
   mci:        { label: "Mobile connectivity index", unit: "/100", get: f => f.mci,
                 words: ["mobile connectivity", "mobile internet", "mci"], source: "GSMA MCI 2025" },
   finaccount: { label: "Financial account ownership", unit: "%", get: f => f.finAccount,
-                words: ["financial account", "bank account", "mobile money", "financial inclusion", "digital payments"],
+                words: ["financial account", "bank account", "bank accounts", "mobile money", "financial inclusion",
+                        "digital payments", "banked", "unbanked"],
                 source: "World Bank Global Findex" },
+  // ITU DataHub layer (2026-08-17, via the verified World Bank Data360
+  // mirror) as first-class askable measures. Household reach is OWNERSHIP,
+  // not news use — the labels carry that distinction.
+  tvhouseholds: { label: "Households with a TV", unit: "%", get: f => f.tvHouseholds,
+                words: ["tv households", "households with a tv", "households with tv", "households have a tv",
+                        "tv ownership", "own a tv", "have a tv", "television ownership"],
+                source: "ITU DataHub (World Bank Data360 mirror)" },
+  radiohouseholds: { label: "Households with a radio", unit: "%", get: f => f.radioHouseholds,
+                words: ["radio households", "households with a radio", "households with radio",
+                        "radio ownership", "own a radio", "have a radio"],
+                source: "ITU DataHub (World Bank Data360 mirror)" },
+  coverage4g: { label: "4G population coverage", unit: "%", get: f => f.coverage4g,
+                words: ["4g", "4g coverage", "mobile coverage", "network coverage", "mobile network coverage"],
+                source: "ITU DataHub (World Bank Data360 mirror)" },
+  datacost:   { label: "Mobile data cost (% of monthly income)", unit: "%", get: f => f.dataCost,
+                words: ["data affordability", "afford mobile data", "afford data", "mobile data price",
+                        "mobile data prices", "cost of mobile data", "price of mobile data", "data prices"],
+                source: "ITU DataHub (World Bank Data360 mirror) — data-only mobile basket priced as a share of monthly GNI per capita; lower is more affordable" },
   english:    { label: "English speakers", unit: "%", get: f => f.englishPct,
                 words: ["english", "english speakers", "english speaking", "english-speaking", "anglophone"],
                 source: "Unicode CLDR territory-language data (speaker capability — shares overlap with other languages)" },
@@ -580,6 +668,10 @@ const GAPS = [
     re: /\b(francophone|anglophone|north vs south|subnational|within (the )?country|by (province|state|region)s?\b)/,
     standalone: false,
     note: "**All Atlas figures are national-level** — it holds no subnational or language-community splits within a country. Language shares (below, where available) are the nearest signal for linguistic segmentation; treat any within-country split as needing local data." },
+  { key: "institution-age",
+    re: /\b(oldest|newest|first|longest running) .{0,24}(broadcasters?|newspapers?|stations?|channels?|outlets?|networks?)\b/,
+    standalone: true,
+    note: "**The Atlas doesn't record founding dates** — it cannot say which outlet, broadcaster or newspaper is the oldest anywhere. What it holds instead: each country's leading TV, radio, online and social outlets as they stand today (on the country profiles), plus an extended Wikidata-verified TV-station list." },
   { key: "source-conflicts",
     re: /\b(sources? disagree|disagree about|conflict\w* between sources|differ between sources|discrepanc\w+)\b/,
     standalone: true,
@@ -603,6 +695,8 @@ function normalize(question) {
     .replace(/\bu\.k\.?/g, " united kingdom ")
     .replace(/\bthe us\b/g, " the usa ")        // 2-letter aliases are ambiguous with
     .replace(/\bthe uk\b/g, " the united kingdom ")  // the pronoun "us" — resolve safe forms only
+    .replace(/\buk\b/g, " united kingdom ")     // bare "uk" is unambiguous (unlike bare "us")
+    .replace(/\b(um+|uh+|erm+|hmm+)\b/g, " ")   // spoken-style filler never carries meaning
     .replace(/\bindian ocean\b/g, " the ocean ")     // geography ≠ the country India
     .replace(/\bniger delta\b/g, " the delta ")
     .replace(/[-/]/g, " ")                      // "radio-dependent", "A/B test"
@@ -689,8 +783,51 @@ export function detectEntities(question) {
     if (attr.words.some(w => q.includes(" " + w + " "))) found.attributes.push(key);
   }
   // "age" alone is too weak — require a stronger cue
-  if (found.attributes.includes("medianage") && !/median age|average age|how old/.test(q)) {
+  if (found.attributes.includes("medianage") && !/median age|average age|how old|oldest|youngest|ag(e)?ing/.test(q)) {
     found.attributes = found.attributes.filter(a => a !== "medianage");
+  }
+  // "oldest/youngest" only means median age when the question is about
+  // PEOPLE — "the oldest public broadcaster in Europe" is an institution's
+  // founding date, which no Atlas measure holds.
+  if (found.attributes.includes("medianage") && /\b(oldest|youngest)\b/.test(q)
+      && !/median age|average age|how old|ag(e)?ing|population|people|societ\w+|demograph\w+|audiences?/.test(q)) {
+    found.attributes = found.attributes.filter(a => a !== "medianage");
+  }
+  // --- attribute shadowing: a specific phrase must not drag in the broad
+  // measure it happens to contain ---
+  // "internet freedom" is the FOTN score, not internet penetration — but
+  // "freedom vs usage" style questions genuinely want both measures
+  if (found.attributes.includes("netfreedom") && found.attributes.includes("internet")
+      && !/\binternet (penetration|access|users|usage)\b|\b(are|is|get) online\b|\busage\b/.test(q))
+    found.attributes = found.attributes.filter(a => a !== "internet");
+  // "which countries lead in mobile connectivity" must rank the GSMA index,
+  // not internet penetration — but only REORDER (a lookup should still show
+  // the share-of-people figure alongside the composite index)
+  if (found.attributes.includes("mci") && found.attributes.includes("internet")
+      && /mobile connectivity|\bmci\b/.test(q) && !/\binternet (penetration|access|users|usage)\b/.test(q))
+    found.attributes = ["mci", ...found.attributes.filter(a => a !== "mci")];
+  // "online news use" questions must never rank internet penetration instead
+  if (found.attributes.includes("online") && found.attributes.includes("internet")
+      && !/\binternet\b|\bconnectivity\b|\bconnected\b/.test(q))
+    found.attributes = found.attributes.filter(a => a !== "internet");
+  // "4G population coverage" is network coverage, not a headcount ranking
+  if (found.attributes.includes("coverage4g") && found.attributes.includes("population")
+      && /population coverage/.test(q) && !/\bpopulous\b|\bpopulation (size|of)\b|how many people/.test(q))
+    found.attributes = found.attributes.filter(a => a !== "population");
+  // "households with a TV/radio" is ownership, not news use
+  if (found.attributes.includes("tvhouseholds") && !/\btv news\b|\bwatch/.test(q))
+    found.attributes = found.attributes.filter(a => a !== "tv");
+  if (found.attributes.includes("radiohouseholds") && !/\bradio news\b|\blisten/.test(q))
+    found.attributes = found.attributes.filter(a => a !== "radio");
+  // "youngest/oldest population" asks about age structure, not headcount
+  if (found.attributes.includes("medianage") && found.attributes.includes("population")
+      && /\b(youngest|oldest|ag(e)?ing)\b/.test(q) && !/\bpopulous\b|\bpopulation (size|of)\b|how many people/.test(q))
+    found.attributes = found.attributes.filter(a => a !== "population");
+  // "young people as a share of the population" is the under-15 measure
+  if (/\byoung (people|adults|populations?)\b/.test(q)
+      && /\b(share|proportion|percentage) of (the )?population\b|\bdominat\w+ the population\b/.test(q)) {
+    found.attributes = found.attributes.filter(a => a !== "population");
+    if (!found.attributes.includes("under15")) found.attributes.unshift("under15");
   }
   // "english" is both the GBR demonym and the language attribute. When the
   // question is about the LANGUAGE ("produce English content for Nigeria"),
@@ -723,16 +860,44 @@ export function detectEntities(question) {
   }
 
   // --- intents ---
-  found.wantsTrends = /\b(trend|trending|rising|right now|this week|currently|interest(ed)? in|care about|popular topic|talking about|paying attention|hot topic|buzz|resonat\w*|most read|top topics?|biggest topics?|concern\w* people|growing or declining)\b/.test(q);
+  found.wantsTrends = /\b(trend|trending|rising|right now|this week|currently|interest(ed)? in|care about|popular topic|talking about|paying attention|hot topic|buzz|resonat\w*|most read|top topics?|biggest topics?|concern\w* people|growing or declining|reading about|are following|talk of the town|on \w+ minds?|these days)\b/.test(q);
   found.wantsCompare = /\b(compare|versus|vs|difference between|better than|or)\b/.test(q) && found.countries.length >= 2
     || /\b(compare|versus|vs|difference between)\b/.test(q) || found.countries.length >= 2;
 
-  const rankMatch = q.match(/\b(top|highest|most|best|largest|greatest|leading|lowest|least|worst|smallest|bottom)\b/);
+  // Direction resolution, shared by both rank triggers below. Two layers:
+  // a LOW cue ("lowest", but also plain "low", "poor", "worse" — "which
+  // countries have low literacy" must never return the HIGHEST table), and
+  // a NEGATED measure ("distrust", "skeptical"), which flips the meaning:
+  // "where do people distrust the media" = lowest trust (asc), but "where
+  // is distrust lowest" = HIGHEST trust (desc). One XOR handles both.
+  const lowCue = /\b(lowest|least|worst|worse|smallest|bottom|weakest|fewest|youngest|low|poor(ly)?|bad(ly)?|barely|hardly any(?:one)?|almost no(?:body| one)?|struggl\w+)\b/.test(q);
+  const negatedMeasure = /\b(distrust\w*|skeptic\w*|sceptic\w*)\b/.test(q);
+  const resolvedDir = (negatedMeasure ? !lowCue : lowCue) ? "asc" : "desc";
+  const rankMatch = q.match(/\b(top|highest|most|best|largest|greatest|leading|leads?|lowest|least|worst|smallest|bottom|strongest|weakest|fewest|youngest|oldest|king|dominat(?:e|es|ing)|everywhere|widespread|barely|hardly any(?:one)?|almost (?:no(?:body| one)?|everyone|all)|nearly everyone|struggl\w+)\b/);
   if (rankMatch && (found.attributes.length || /\b(top|bottom) \d+\b/.test(q))) {
-    found.rankDir = /\b(lowest|least|worst|smallest|bottom)\b/.test(q) ? "asc" : "desc";
+    found.rankDir = resolvedDir;
     const n = q.match(/\b(?:top|bottom|first)\s+(\d{1,2})\b/);
     found.rankN = n ? Math.min(15, Math.max(1, parseInt(n[1], 10))) : 5;
     found.intents.push("rank");
+  }
+  // "Where is TV still king?", "Which countries barely use the internet?" —
+  // a measure inside a where/which-countries frame IS a ranking ask even
+  // with no rank word. Never when a specific country is named (that question
+  // is about the place), and never for change-over-time asks ("where is
+  // press freedom getting worse") — the Atlas holds current editions only,
+  // so a leaderboard would answer a question that wasn't asked.
+  if (!found.intents.includes("rank") && found.attributes.length && !found.countries.length
+      && (/\b(which|what) (\w+ ){0,2}(countries|country|markets|places|nations)\b/.test(q) || /\bwhere\b/.test(q))
+      && !/\b(getting (worse|better)|improv\w+|declin\w+|deteriorat\w+|falling|rising)\b/.test(q)) {
+    found.rankDir = resolvedDir;
+    found.intents.push("rank");
+  }
+  // A single named country with a bare superlative ("Do most Mexicans live
+  // in cities?") wants that country's figure, not a world leaderboard.
+  if (found.intents.includes("rank") && found.countries.length === 1 && !found.regions.length
+      && !/\b(top|bottom|rank\w*|which|countries|compared?|versus|vs)\b/.test(q)) {
+    found.intents = found.intents.filter(i => i !== "rank");
+    found.rankDir = null;
   }
 
   if (/\b(recommend|should we|should i|how (do|can|should) we|best (way|channel|platform|format)|where (do|can|should)|how to reach|reach|engage|publish|promote|communicat\w*|campaign|advis\w*|strateg\w*)\b/.test(q)
@@ -863,6 +1028,12 @@ function facts(iso) {
     fotn: inf.internet_freedom_score, electoral: inf.electoral_democracy,
     under15: dem.age_0_14_pct, urban: dem.urban_pct, literacy: dem.literacy_pct,
     finAccount: conn.financial_account_pct,
+    // ITU DataHub layer (Data360 mirror): household reach is ownership, not
+    // news use; data cost is % of monthly GNI per capita (lower = affordable)
+    tvHouseholds: (c.media || {}).tv_households_pct,
+    radioHouseholds: (c.media || {}).radio_households_pct,
+    coverage4g: conn.mobile_4g_coverage_pct,
+    dataCost: conn.mobile_data_price_pct_income,
     outlets: c.media || {}, languages: c.languages || [],
     // Extended station list (Wikipedia lists gated through Wikidata) — a
     // breadth layer; the curated top_tv line stays the leading-stations claim
@@ -1475,14 +1646,20 @@ function composeLookup(ents, ev, qNorm) {
     const regionAvg = regionAll.length ? regionAll.reduce((s, x) => s + attr.get(x), 0) / regionAll.length : null;
 
     lines.push(`**${f.name}: ${attr.label.toLowerCase()} is ${attr.fmt ? attr.fmt(v) : fmt(v, attr.unit)}** — ranked ${rank} of ${all.length} countries with data.`);
+    // Data cost is an inverted measure — "ranked 1" would read as a win
+    // when it is the world's LEAST affordable data. Say which way is up.
+    if (attrKey === "datacost")
+      lines.push(`- *Lower is more affordable: rank 1 of ${all.length} is the world's most expensive mobile data relative to income.*`);
     // name the exact source for THIS number — "what's the source for X" is a
     // first-class question for an evidence-first tool
     const srcField = { radio: "news_radio", trust: "news_consumption", tv: "news_consumption", online: "news_consumption",
       social: "news_consumption", internet: "internet_pct", press: "press_freedom_rank", netfreedom: "internet_freedom",
       literacy: "literacy_pct", medianage: "median_age", finaccount: "financial_account_pct", smartphone: "smartphone_pct",
-      mci: "mobile_connectivity_index", urban: "urban_pct", under15: "age_0_14_pct", population: "population" }[attrKey];
+      mci: "mobile_connectivity_index", urban: "urban_pct", under15: "age_0_14_pct", population: "population",
+      tvhouseholds: "tv_households_pct", radiohouseholds: "radio_households_pct",
+      coverage4g: "mobile_4g_coverage_pct", datacost: "mobile_data_price_pct_income" }[attrKey];
     const rawSrc = srcField ? f.sourcesMap[srcField] : null;
-    const srcLabel = rawSrc ? String(rawSrc).replace(/\s*[—–-]?\s*https?:\/\/\S+/, "").trim() : attr.source;
+    const srcLabel = rawSrc ? String(rawSrc).replace(/\s*[—–|-]?\s*https?:\/\/\S+/, "").trim() : attr.source;
     lines.push(`- Source: ${srcLabel}${f.retrievedOn ? ` *(record refreshed ${f.retrievedOn})*` : ""}`);
     if (qNorm) {
       const named = ["afrobarometer", "reuters", "dnr", "rsf", "freedom house", "world bank", "gsma"].find(sname => qNorm.includes(sname));
@@ -1518,6 +1695,12 @@ function composePlatform(ents, ev) {
   lines.push(`**${pretty} is the #1 social platform in ${leaders.length} of 195 Atlas markets**${present.length ? ` and appears in the top platforms of ${present.length} more` : ""}.`);
   if (leaders.length) {
     lines.push(`\nLargest markets where it leads: ${leaders.slice(0, 8).map(([iso]) => COUNTRIES[iso].name).join(", ")}.`);
+    lines.push(`\n*Note: platform lists are editorially compiled per country — they show market presence, not measured reach percentages.*`);
+  } else if (present.length) {
+    // "#1 in 0 markets" alone answers a "where?" question with no places at
+    // all — name where it DOES appear instead.
+    present.sort((a, b) => b[1] - a[1]);
+    lines.push(`\nIt leads nowhere in the Atlas, but its biggest markets by presence are: ${present.slice(0, 8).map(([iso]) => COUNTRIES[iso].name).join(", ")}.`);
     lines.push(`\n*Note: platform lists are editorially compiled per country — they show market presence, not measured reach percentages.*`);
   }
   return lines.join("\n");
@@ -2747,10 +2930,14 @@ function composeGlobalInsight(ev) {
  * about the world rather than the tool.
  */
 function composeSelfKnowledge(qNorm, ev) {
-  const capability = /\b(what can (you|the atlas|this) do|what do you do|how can you help|what are you|who are you|what questions can i ask|how do i use|what should i ask|help me|^ *help *$|capabilities)\b/.test(qNorm);
+  // "what is this" must be the END of the question ("What is this thing?"),
+  // never a prefix — "What is this week's biggest story?" is a world
+  // question, and swallowing it here cost the trends answer.
+  const capability = /\b(what can (you|the atlas|this) do|what do you do|how can you help|what are you|who are you|what questions can i ask|how do i use|what should i ask|help me(?! (reach|plan|find|pick|choose|decide|with|understand))|^ *help *$|capabilities|what does this (thing|tool|site|atlas) (actually )?do|what kinds? of questions|what questions work|how do i ask|first time using|not sure what to ask|no idea what to ask|who (made|built|created) you|is this an? (ai|chatbot|bot)\b|are you an? (ai|chatbot|bot|human)\b|how does this work)\b/.test(qNorm)
+    || /\bwhat is this( thing| tool| site| atlas)? ?$/.test(qNorm);
   // No trailing \b on this one: it would fail on the plural — "difference
   // between the surveys" is the commonest phrasing of the question.
-  const methodology = /\b(how (does|do) (the atlas|this|you) work|how do you know|what (data|sources) do you (have|use)|where does (your|the) data come from|explain .{0,24}(survey|method|source)|difference .{0,24}(survey|source)|how are .{0,20}(figures|numbers) (measured|collected)|methodology)/.test(qNorm);
+  const methodology = /\b(how (does|do) (the atlas|this|you) work|how do you know|what (data|sources) do you (have|use)|where does (your|the) data come from|where .{0,24}data comes? from|where do you get .{0,16}(data|numbers|figures)|how (does )?this atlas works?|what (does|do) (this|the) atlas (cover|hold|know)|explain .{0,24}(survey|method|source)|difference .{0,24}(survey|source)|how are .{0,20}(figures|numbers) (measured|collected)|methodology)/.test(qNorm);
   const trust = /\b(how (accurate|reliable|confident|trustworthy)|how confident are you|can i trust|how sure are you|margin of error|how good is (the|this) data|what (can.?t|cannot|don.?t) you (tell|do|know|answer)|what are your (limits|limitations|gaps)|what don.?t you (have|know|cover))\b/.test(qNorm);
   // Open-ended asks with no country, topic or measure attached — "anything
   // interesting?", "summarise the opportunities". Answerable from live data,
@@ -2796,7 +2983,43 @@ export function answerQuestion(question) {
   let ents = detectEntities(question);
 
   const qNorm = normalize(question);
-  const gaps = detectGaps(qNorm);
+  // Any cost/affordability wording next to "data" is the ITU data-cost
+  // measure — word lists can't hold every arrangement ("mobile data cost",
+  // "data most affordable"), so a proximity check backstops them. Without
+  // this, answerable questions fell into the FALSE "no media prices" gap.
+  if (!ents.attributes.includes("datacost")
+      && (/\b(mobile )?data\b.{0,20}\b(afford\w+|cheap\w+|expensive|costs?|pric\w+)\b/.test(qNorm)
+          || /\b(afford\w+|cheap\w+|expensive|cost of|price of)\b.{0,16}\b(mobile )?data\b/.test(qNorm)))
+    ents.attributes.unshift("datacost");
+  // The proximity match above lands AFTER intent detection, so the intents
+  // it would have earned are re-derived here
+  if (ents.attributes[0] === "datacost") {
+    if (ents.countries.length === 1 && !ents.intents.includes("rank") && !ents.intents.includes("lookup"))
+      ents.intents.push("lookup");
+    if (!ents.countries.length && !ents.intents.includes("rank")
+        && /\b(which|what) (\w+ ){0,2}(countries|country|markets|places|nations)\b|\bwhere\b|\btop \d+\b/.test(qNorm)) {
+      ents.intents.push("rank");
+      ents.rankDir = ents.rankDir || "desc";
+    }
+  }
+  // Affordability language names the BURDEN, not the number: "worst prices"
+  // means the highest cost share, "most affordable" the lowest. The generic
+  // direction words can't know that, so data-cost rankings resolve here.
+  if (ents.attributes[0] === "datacost" && ents.rankDir) {
+    if (/\b(worst|least affordable|struggl\w+|most expensive|priciest|highest)\b/.test(qNorm)) ents.rankDir = "desc";
+    else if (/\b(most affordable|cheap\w+|best|lowest|affordab\w+)\b/.test(qNorm)) ents.rankDir = "asc";
+  }
+  let gaps = detectGaps(qNorm);
+  // "afford mobile data" has a real measure now (ITU data-cost basket) — the
+  // no-ad-prices gap note must not ride on top of an answerable question
+  if (ents.attributes.includes("datacost")) gaps = gaps.filter(g => g.key !== "media-cost");
+  // Founding-date questions ("the oldest broadcaster in Europe") must never
+  // be answered with a reach or median-age leaderboard — no measure applies
+  if (gaps.some(g => g.key === "institution-age")) {
+    ents.attributes = [];
+    ents.intents = ents.intents.filter(i => i !== "rank" && i !== "lookup");
+    ents.rankDir = null;
+  }
 
   // theme filter for attention profiles ("what HEALTH topics concern Egypt")
   const THEMES = { health: /\bhealth\b|disease|medical/, climate: /\bclimate\b|environment\w*/,
@@ -2819,15 +3042,17 @@ export function answerQuestion(question) {
   if (ents.attributes.length === 1 && ents.attributes[0] === "urban" && ents.audiences.length)
     ents.intents = ents.intents.filter(i => i !== "lookup");
 
-  // "trusted OUTLETS to partner with" wants the outlet lists, not a trust number
-  if (/\b(outlets?|broadcasters?|stations?|newspapers?|partner with)\b/.test(qNorm) && ents.countries.length)
+  // "trusted OUTLETS to partner with" wants the outlet lists, not a trust
+  // number — and "which apps do people use" wants the platform lists, not
+  // the social-as-news-source percentage
+  if (/\b(outlets?|broadcasters?|stations?|newspapers?|partner with|apps?|platforms?)\b/.test(qNorm) && ents.countries.length)
     ents.intents = ents.intents.filter(i => i !== "lookup");
 
   // Full strategy-brief intent (DGC advisory mode): distribution/campaign/
   // strategy language anchored to a place → the who/what/where/when/how memo
   // A "decision-shaped" question: the user is deciding what to DO, not asking
   // what a number is. These all route to the consulting brief.
-  const decisionVerb = /\b(strateg\w+|campaign|distribut\w+|roll ?out|launch\w*|opportunit\w+|memo|brief\b|content plan|media plan|outreach|disseminat\w+|amplif\w+|promote|publish|advertis\w+|marketing|communicat\w+|messag\w+|engag\w+|counter(ing|ed|s)?|combat\w*|raise awareness)\b/.test(qNorm);
+  const decisionVerb = /\b(strateg\w+|campaign|distribut\w+|roll ?out|launch\w*|opportunit\w+|memo|brief\b|content plan|media plan|outreach|disseminat\w+|amplif\w+|promote|publish|advertis\w+|marketing|communicat\w+|messag\w+|engag\w+|counter(ing|ed|s)?|combat\w*|raise awareness|get\w* (the )?word out|spread\w* the word|make (some )?noise|get\w* traction|drum\w* up|eyes on|raise (the )?profile)\b/.test(qNorm);
   // These three are decision-shaped only sometimes. "Reach", "target" and
   // "market" are verbs in "how do we reach rural women in Mali", but ordinary
   // nouns in "what is the radio reach in Kenya?" — and on their own they were
@@ -2837,8 +3062,9 @@ export function answerQuestion(question) {
   // asking for a comparison is not a decision question, however many domain
   // nouns it happens to carry.
   const factualAsk = ents.intents.includes("lookup") || ents.intents.includes("rank")
-    || (/\b(compare|compared|versus|vs|difference between)\b/.test(qNorm) && ents.countries.length >= 2);
-  const decisionFrame = /\b(how (do|should|would|can) (we|i|they|dgc|the un)|where should|what.{0,15}best (way|platform|channel|approach|mix)|what should (we|i|dgc)|help (us|me) (reach|plan|decide)|recommend\w*|advise|advice on|plan for)\b/.test(qNorm);
+    || (ents.countries.length >= 2
+        && /\b(compare|compared|versus|vs|difference between|or|between|better|stack\w* up|more \w+ than|who \w+ more)\b/.test(qNorm));
+  const decisionFrame = /\b(how (do|should|would|can) (we|i|they|dgc|the un)|where should|what.{0,15}best (way|platform|channel|approach|mix)|what should (we|i|dgc)|help (us|me) (reach|plan|decide)|recommend\w*|advise|advice on|plan for|where (do|should) (we|i) (even )?(begin|start)|any ideas|where to (start|begin))\b/.test(qNorm);
   // Market-discovery ("WHICH countries/markets for this campaign?") outranks
   // both the strategy briefs (which answer HOW for a place already chosen)
   // and attribute rankings — but only when no specific country is named and
@@ -2851,7 +3077,16 @@ export function answerQuestion(question) {
     ents.intents = ents.intents.filter(i => i !== "rank" && i !== "lookup");
   }
   const strategyIntent = !discovery && (decisionVerb || decisionFrame || (decisionNoun && !factualAsk))
-    && (ents.countries.length > 0 || ents.regionCountries.length > 0);
+    && (ents.countries.length > 0 || ents.regionCountries.length > 0)
+    // "Japan or South Korea for reaching people online?" wants the two side
+    // by side — an explicit either/or between named countries beats a
+    // single-country memo. But an explicit decision FRAME ("how should we
+    // split our campaign budget between Kenya and Tanzania") is still a
+    // memo request, however many countries it names.
+    && !(ents.countries.length >= 2 && factualAsk && !decisionFrame)
+    // "X (Twitter) reach in the United States?" — a platform plus only the
+    // noun "reach"/"market" is a footprint question, not a memo request
+    && !(ents.platforms.length && !decisionVerb && !decisionFrame);
   if (strategyIntent) {
     ents.intents = ents.intents.filter(i => i !== "lookup");
     if (!ents.intents.includes("strategy")) ents.intents.push("strategy");
@@ -2927,6 +3162,42 @@ export function answerQuestion(question) {
     return { answer: metaAns, evidence: ev.list(), followups: buildFollowups(ents, "help"),
              clarify: null, entities: ents,
              reasoning: reasoningTrace(question, ents, "meta", ev) };
+  }
+
+  // Questions about the TOOL itself must be answered before anything can
+  // hijack them: "Is this an AI chatbot?" is not an AI-topic question, and
+  // "Can I trust these numbers?" is not a trust-in-news lookup needing a
+  // country. Only when no place is named — a place makes it a question
+  // about the world. And when the question carries a topic or a trends ask
+  // ("help me understand climate change", "what is this week's biggest
+  // story"), the world routes must win — unless it is unmistakably about
+  // the tool ("is this an AI?").
+  const toolAsk = /\b(is this an? (ai|chatbot|bot)|are you an? (ai|chatbot|bot|human)|who (made|built|created) you)\b/.test(qNorm);
+  if (!ents.countries.length && !ents.regions.length
+      && (toolAsk || (!ents.topics.length && !ents.wantsTrends))) {
+    const selfEarly = composeSelfKnowledge(qNorm, ev);
+    if (selfEarly) {
+      return {
+        answer: selfEarly, evidence: ev.list(),
+        followups: ["What's trending worldwide right now?", "Media habits in Indonesia",
+                    "Which countries should we prioritise for a radio campaign?"],
+        clarify: null, entities: ents,
+        reasoning: reasoningTrace(question, ents, "self", ev),
+      };
+    }
+  }
+
+  // A bare "press freedom" is genuinely two different questions — the RSF
+  // index or the attention topic. Ask, with both as one-tap options.
+  if (ents.attributes.includes("press") && ents.topics.some(t => t.label === "Freedom of the press")
+      && !ents.countries.length && !ents.regions.length && !ents.intents.length
+      && qNorm.trim().split(" ").length <= 4) {
+    return {
+      answer: null, evidence: [], followups: [],
+      clarify: { question: "Press freedom — as the RSF index scores, or as a news topic people follow?",
+        options: ["Which countries score lowest on press freedom?", "How is attention to press freedom trending worldwide?"] },
+      entities: ents,
+    };
   }
 
   // Known-gap questions with nothing else to anchor on: answer honestly
@@ -3091,7 +3362,54 @@ export function answerQuestion(question) {
       reasoning: reasoningTrace(question, ents, "gap", ev),
     };
   }
+  // Near-miss rescue: before conceding "couldn't match", look for what the
+  // question ALMOST said — a country a couple of edits off, a measure named
+  // through a word the vocabulary stores inside a longer phrase, a topic one
+  // typo away — and ASK, with one-tap options. Suggestions only: a loose
+  // match is never answered as if it were certain.
   if (!parts.length) {
+    const options = [];
+    const seen = new Set();
+    const addOpt = (o) => { if (!seen.has(o) && options.length < 3) { seen.add(o); options.push(o); } };
+    const looseCap = (len) => len >= 9 ? 3 : len >= 7 ? 2 : len >= 5 ? 1 : 0;
+    const near = (tok, keys, canon) => {
+      const cap = looseCap(tok.length);
+      if (!cap) return null;
+      let best = null, bestD = cap + 1, conflict = false;
+      for (const k of keys) {
+        const d = levenshtein(tok, k, cap);
+        if (d < bestD) { bestD = d; best = k; conflict = false; }
+        else if (d === bestD && best && canon(k) !== canon(best)) conflict = true;
+      }
+      return (best && bestD <= cap && !conflict) ? best : null;
+    };
+    const countryKeys = Object.keys(NAME_TO_ISO).filter(n => n.length >= 5 && !GENERATED.has(n));
+    const topicKeys = REGISTRY.map(([l]) => l.toLowerCase()).filter(l => l.length >= 6);
+    for (const tok of qNorm.trim().split(" ").filter(t => t.length >= 4).slice(0, 12)) {
+      // exact word inside a measure's phrase vocabulary ("mobile" lives only
+      // inside "mobile connectivity"/"mobile money") — no stopword filter
+      // here, an exact word match carries no fuzzy risk. The option is
+      // phrased from the measure's own vocabulary, NOT its display label:
+      // the label "4G population coverage" would re-parse as a population
+      // ranking, and "mobile data cost (% of monthly income)" parses as
+      // nothing at all — the engine must always understand its own chips.
+      for (const attr of Object.values(ATTRIBUTES))
+        if (attr.words.some(w => w === tok || w.split(" ").includes(tok)))
+          addOpt(`Top 5 countries by ${attr.words.find(w => w.length >= 8) || attr.words[0]}`);
+      if (tok.length < 5 || FUZZY_STOPWORDS.has(tok)) continue;
+      const c = near(tok, countryKeys, (k) => NAME_TO_ISO[k]);
+      if (c) { const nm = (COUNTRIES[NAME_TO_ISO[c]] || {}).name; if (nm) { addOpt(`Media habits in ${nm}`); continue; } }
+      const t = near(tok, topicKeys, (k) => k);
+      if (t) { const entry = REGISTRY.find(([l]) => l.toLowerCase() === t); if (entry) addOpt(`What's happening with ${entry[0]}?`); }
+    }
+    if (options.length) {
+      return {
+        answer: null, evidence: [], followups: [],
+        clarify: { question: "I didn't quite catch that — is one of these what you meant?",
+                   options: [...options, "What can I ask you?"] },
+        entities: ents,
+      };
+    }
     return {
       answer: `I couldn't match that to the Atlas's data — but I likely *can* help if we rephrase. I know **${META ? META.country_count : 195} countries** and **${REGISTRY.length} topics**, and I can compare, rank, and track trends across them.\n\nTry naming a **country** ("media habits in Indonesia"), a **region** ("East Africa"), a **topic** ("climate change"), or a **measure** ("trust in news", "radio reach").`,
       evidence: [], followups: buildFollowups(ents, "help"), clarify: null, entities: ents,
