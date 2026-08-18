@@ -418,7 +418,10 @@ async function setRange(startISO, endISO) {
       }
       // (clamping pushed the start into the live store — fall through)
     } else {
-      startISO = minStart;   // archive unavailable: the pre-archive clamp
+      // Archive unavailable (fetch failed / file absent): snap the window
+      // into the live store rather than leaving a dead pre-2026 sliver.
+      startISO = minStart;
+      if (endISO < startISO) endISO = startISO;
     }
   }
   if (startISO > endISO) startISO = endISO;
