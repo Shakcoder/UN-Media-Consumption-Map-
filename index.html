@@ -10,6 +10,7 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="assets/atlas-csv.js"></script>
 
 <style>
 
@@ -275,7 +276,8 @@
   body.rtl-text .modal-body,
   body.rtl-text #stats-strip .stat,
   body.rtl-text #detail-name,
-  body.rtl-text #detail-subline {
+  body.rtl-text #detail-subline,
+  body.rtl-text #detail-csv {
     direction: rtl;
     text-align: right;
   }
@@ -290,6 +292,7 @@
   .detail-header .flag-big { font-size: 44px; line-height: 1; margin-bottom: 10px; }
   .detail-header h2 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
   .detail-header .subline { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .detail-header #detail-csv { margin-top: 10px; }
   .detail-header .close {
     position: absolute; top: 16px; inset-inline-end: 16px;
     background: #fff; border: 1px solid var(--border);
@@ -603,6 +606,7 @@
     <div class="flag-big" id="detail-flag" aria-hidden="true"></div>
     <h2 id="detail-name"></h2>
     <div class="subline" id="detail-subline"></div>
+    <button type="button" class="btn-quiet" id="detail-csv" data-i18n="download_csv" hidden>Download data (CSV)</button>
   </div>
   <!-- One panel (#detail-body) is re-filled for whichever tab is selected, so
        every tab points at that same panel and the panel names the selected tab
@@ -1093,6 +1097,7 @@ window.TRANSLATIONS = {
     sub_people: "{r} · {n}M people",
     tab_overview: "Overview", tab_economy: "Economy", tab_media: "Media",
     tab_society: "Society", tab_sources: "Sources",
+    download_csv: "Download data (CSV)",
     section_overview: "Overview", section_languages: "Languages",
     section_focus_areas: "Focus areas", section_at_a_glance: "At a glance",
     section_dominant_industries: "Dominant industries",
@@ -1178,6 +1183,7 @@ window.TRANSLATIONS = {
     sub_people: "{r} · {n}M habitants",
     tab_overview: "Aperçu", tab_economy: "Économie", tab_media: "Médias",
     tab_society: "Société", tab_sources: "Sources",
+    download_csv: "Télécharger les données (CSV)",
     section_overview: "Aperçu", section_languages: "Langues",
     section_focus_areas: "Domaines prioritaires", section_at_a_glance: "En bref",
     section_dominant_industries: "Industries dominantes",
@@ -1262,6 +1268,7 @@ window.TRANSLATIONS = {
     sub_people: "{r} · {n}M habitantes",
     tab_overview: "Resumen", tab_economy: "Economía", tab_media: "Medios",
     tab_society: "Sociedad", tab_sources: "Fuentes",
+    download_csv: "Descargar datos (CSV)",
     section_overview: "Resumen", section_languages: "Idiomas",
     section_focus_areas: "Áreas de enfoque", section_at_a_glance: "De un vistazo",
     section_dominant_industries: "Industrias dominantes",
@@ -1346,6 +1353,7 @@ window.TRANSLATIONS = {
     sub_people: "{r} · {n} مليون نسمة",
     tab_overview: "نظرة عامة", tab_economy: "الاقتصاد", tab_media: "الإعلام",
     tab_society: "المجتمع", tab_sources: "المصادر",
+    download_csv: "تنزيل البيانات (CSV)",
     section_overview: "نظرة عامة", section_languages: "اللغات",
     section_focus_areas: "محاور التركيز", section_at_a_glance: "لمحة سريعة",
     section_dominant_industries: "الصناعات المهيمنة",
@@ -1430,6 +1438,7 @@ window.TRANSLATIONS = {
     sub_people: "{r} · {n} 百万人口",
     tab_overview: "概览", tab_economy: "经济", tab_media: "媒体",
     tab_society: "社会", tab_sources: "来源",
+    download_csv: "下载数据 (CSV)",
     section_overview: "概览", section_languages: "语言",
     section_focus_areas: "关注领域", section_at_a_glance: "一览",
     section_dominant_industries: "主导行业",
@@ -1514,6 +1523,7 @@ window.TRANSLATIONS = {
     sub_people: "{r} · {n} млн жителей",
     tab_overview: "Обзор", tab_economy: "Экономика", tab_media: "СМИ",
     tab_society: "Общество", tab_sources: "Источники",
+    download_csv: "Скачать данные (CSV)",
     section_overview: "Обзор", section_languages: "Языки",
     section_focus_areas: "Приоритеты", section_at_a_glance: "Кратко",
     section_dominant_industries: "Доминирующие отрасли",
@@ -2226,6 +2236,49 @@ document.addEventListener("keydown", (e) => {
   if (panel.classList.contains("open")) closeDetail();
 });
 
+/* ---- Country-profile CSV export (2026-08-18) ----
+ * Flattens the country's ENTIRE countries.json record into a two-column
+ * spreadsheet (field path, value). Flattening the whole record — rather
+ * than hand-picking fields — means a field added to the dataset later
+ * appears in the export automatically instead of being silently missed.
+ * The *_source fields the dataset carries inline become the citation rows
+ * sitting right next to the value they document. Scope is the dataset
+ * record ONLY: the Media tab's live daily blocks (TV stations, web-traffic
+ * shares, reading lists, searches, press, trends) live in separate files
+ * and are not in it — the CSV's own Note row says so. */
+function flattenCountry(obj, prefix, rows) {
+  for (const [k, v] of Object.entries(obj)) {
+    const key = prefix ? prefix + "." + k : k;
+    if (v == null) continue;
+    if (Array.isArray(v)) {
+      if (!v.length) continue;
+      if (typeof v[0] === "object" && v[0] !== null) {
+        v.forEach((item, i) => flattenCountry(item, key + "." + (i + 1), rows));
+      } else {
+        rows.push([key, v.join("; ")]);
+      }
+    } else if (typeof v === "object") {
+      flattenCountry(v, key, rows);
+    } else {
+      rows.push([key, typeof v === "boolean" ? (v ? "yes" : "no") : v]);
+    }
+  }
+}
+
+document.getElementById("detail-csv").addEventListener("click", () => {
+  const d = currentActiveIso && window.COUNTRY_DATA[currentActiveIso];
+  if (!d) return;
+  if (!window.AtlasCSV) { console.error("atlas-csv.js did not load"); return; }
+  const rows = [
+    ["Audience Intelligence Atlas · country profile: " + d.name + " (" + currentActiveIso + ")"],
+    ["Note", "Every field in the Atlas country dataset (data/countries.json) for this country, flattened into field-path / value pairs. Fields ending in _source or _note carry the citation or caveat for the value they sit under. The live daily blocks on the Media tab (extended TV-station directory, social web-traffic shares, most-read Wikipedia pages, trending searches, UN-in-the-press, and trending topics) come from separate data files and are not part of this record. Values are in English, the language the dataset is maintained in; the site's interface language translates only the page, never the data."],
+    [],
+    ["field", "value"],
+  ];
+  flattenCountry(d, "", rows);
+  AtlasCSV.download("atlas-" + currentActiveIso + "-profile.csv", rows);
+});
+
 function openDetail(iso) {
   currentActiveIso = iso;
   selectTab("overview");
@@ -2267,6 +2320,8 @@ function openDetail(iso) {
     panelName.textContent = lookupName(iso);
     panelSubline.textContent = t("no_data_subline");
   }
+  // the export button only shows when there is a profile to export
+  document.getElementById("detail-csv").hidden = !d;
   renderDetail(iso);
   const wasOpen = panel.classList.contains("open");
   panel.classList.add("open");

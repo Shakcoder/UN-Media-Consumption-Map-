@@ -11,8 +11,8 @@ An interactive, source-cited public resource showing **where and how the world g
 
 | Page | What it answers |
 |---|---|
-| **Map** (`index.html`) | "What does Country X's media landscape look like?" — platforms, trust, connectivity, press freedom, demographics, with a citation on every number |
-| **Topic Explorer** (`topics.html`) | "What is the world paying attention to this week?" — daily attention trends for 183 topics across 22 languages |
+| **Map** (`index.html`) | "What does Country X's media landscape look like?" — platforms, trust, connectivity, press freedom, demographics, with a citation on every number, and a one-click CSV download of any country's full profile |
+| **Topic Explorer** (`topics.html`) | "What is the world paying attention to this week?" — daily attention trends for 183 topics across 22 languages, with custom date ranges, side-by-side topic comparison on one chart, CSV downloads of every table, and an RSS feed of the daily movers list for feed readers, Outlook or Teams |
 | **Market Finder** (`finder.html`) | "We have a campaign — **which countries** should get it?" — a disclosed, deterministic screen over every country with verified media data; countries without the required survey are listed as excluded, never silently ranked low. Screenings are shareable by link, exportable to CSV (exclusions included), and printable |
 | **AI Analyst** (`ask.html`) | Any question in plain English — comparisons, rankings, campaign guidance, live trends. Understands typos and follow-ups, asks clarifying questions, cites all sources per answer. Every answer has a shareable link and prints as a cited one-pager |
 

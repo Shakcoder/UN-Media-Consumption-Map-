@@ -267,6 +267,14 @@ jobs:
       - name: Compute topic intelligence
         run: python scripts/compute_topic_intelligence.py
 
+      # The movers list as an RSS feed (published figures verbatim; one item
+      # per measurement day). continue-on-error: the feed is a convenience
+      # layer — its failure must never block the day's data commit, it only
+      # leaves the feed one day older.
+      - name: Build the movers RSS feed
+        continue-on-error: true
+        run: python scripts/build_movers_feed.py
+
       - name: Commit updated trend data (if changed)
         id: commit
         run: |
@@ -298,6 +306,9 @@ jobs:
           if [ -f data/trends/attention_archive.json ]; then
             git add data/trends/attention_archive.json
           fi
+          if [ -f data/trends/movers_feed.xml ]; then
+            git add data/trends/movers_feed.xml
+          fi
           if git diff --cached --quiet; then
             echo "No changes — trend data already up to date."
           else
@@ -313,6 +324,7 @@ jobs:
             # rebase, the commit being replayed — ours — is "--theirs".)
             if ! git pull --rebase origin main; then
               git checkout --theirs -- data/trends/*.json || true
+              git checkout --theirs -- data/trends/movers_feed.xml || true
               git add data/trends/
               GIT_EDITOR=true git rebase --continue
             fi

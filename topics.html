@@ -6,6 +6,7 @@
 <meta name="description" content="Live topic intelligence for UN communications: what the world is looking up, tracked daily across 22 language editions of Wikipedia and the GDELT news monitor.">
 <link rel="icon" href="assets/un_emblem.png" type="image/png">
 <link rel="stylesheet" href="assets/atlas.css">
+<link rel="alternate" type="application/rss+xml" title="Topic movers · Audience Intelligence Atlas" href="data/trends/movers_feed.xml">
 <title>Topic Explorer · Audience Intelligence Atlas</title>
 <style>
     * { margin: 0; padding: 0; }
@@ -70,6 +71,33 @@
   .movers .topic-row { border: 1px solid var(--border-soft); }
   .empty { color: var(--muted-2); font-size: 13px; padding: 8px; }
 
+  /* section heading with an action on its right (the CSV download) */
+  .sect-head { display: flex; align-items: baseline; justify-content: space-between;
+               gap: 10px; flex-wrap: wrap; margin: 18px 0 8px; }
+  .sect-head h3.sect { margin: 0; }
+  a.btn-quiet { text-decoration: none; display: inline-block; }
+  .mover-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+                 margin: 10px 0 2px; }
+
+  /* topic-comparison overlay (2026-08-18) */
+  .cmp-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 8px; }
+  .cmp-bar .cmp-label { font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
+    color: var(--muted-2); text-transform: uppercase; }
+  .cmp-bar select { font: inherit; font-size: 12px; padding: 4px 6px;
+    border: 1px solid var(--border); border-radius: var(--r-sm);
+    color: var(--ink); background: var(--surface); max-width: 220px; }
+  .cmp-bar .btn-quiet[aria-pressed="true"] { background: var(--accent-soft);
+    color: var(--un-blue-dark); border-color: var(--un-blue); font-weight: 600; }
+  .cmp-chip { display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+    font-size: 12px; padding: 3px 10px; border-radius: var(--r-pill); }
+  .cmp-chip button { border: 0; background: none; font: inherit; cursor: pointer;
+    color: var(--muted); padding: 0 2px; line-height: 1; }
+  .cmp-chip button:hover { color: var(--danger); }
+  .cmp-legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+    font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .cmp-legend .key { display: inline-flex; align-items: center; gap: 6px; }
+
 </style>
 </head>
 <body>
@@ -114,6 +142,7 @@
 </footer>
 
 <script src="assets/date-range.js"></script>
+<script src="assets/atlas-csv.js"></script>
 <script>
 const LANG_NAMES = {en:"English", fr:"French", es:"Spanish", ar:"Arabic", pt:"Portuguese",
   ru:"Russian", zh:"Chinese", hi:"Hindi", bn:"Bengali", id:"Indonesian", sw:"Swahili",
@@ -534,6 +563,317 @@ function momentumBadge(m) {
   return `<span class="badge ${known}">${sym}</span>`;
 }
 
+/* ==========================================================================
+   COMPARISON OVERLAY (2026-08-18). Up to two extra topics drawn on the
+   attention chart, from the SAME published daily series the single-topic
+   chart uses — no new data, no recomputation of any published figure.
+
+   Honesty rules:
+   - series are aligned by calendar date, never by array position (editions'
+     stored history does not all start on the same day);
+   - each line's style differs (solid / dashed / dotted), so color is never
+     the only cue — and the legend carries each topic's real views/day, so
+     the indexed view can never hide how different the volumes are;
+   - the indexed scale (100 = a topic's own average over the shown days) is
+     labeled on the chart, in the heading and in the CSV, which always
+     exports the real values;
+   - a day the pipeline withheld (too little of the topic's usual traffic
+     reporting) stays a GAP in the line, never a bridge or a zero.
+   ========================================================================== */
+const CMP_STYLES = [
+  { color: "var(--un-blue)", dash: "", word: "solid" },
+  { color: "var(--series-2)", dash: "6 4", word: "dashed" },
+  { color: "var(--series-3)", dash: "2 3", word: "dotted" },
+];
+let COMPARE = [];          // qids overlaid on the chart (max 2)
+let CMP_SCALE = "indexed"; // "indexed" | "absolute"
+let CMP_DRAWN = false;     // whether the LAST buildChartSection call actually
+                           // drew comparison lines (footnote renders only then)
+
+const seriesEnd = (t) => dAdd(t.series_start, (t.global_series || []).length - 1);
+
+/* The topic's daily values for the `days` calendar days ending endISO —
+   date-aligned, null where the series has no data. */
+function seriesByDate(t, endISO, days) {
+  const out = [];
+  for (let k = days - 1; k >= 0; k--) {
+    const d = dAdd(endISO, -k);
+    const idx = dDiff(t.series_start, d);
+    out.push(idx >= 0 && idx < t.global_series.length ? t.global_series[idx] : null);
+  }
+  return out;
+}
+
+function winMean(vals) {
+  const xs = vals.filter(v => v != null);
+  return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+}
+
+/* Multi-line chart. Unlike the single-topic sparkline, a null day splits the
+   line into separate segments — with several lines on one chart, a bridge
+   across missing days would read as a real trajectory. */
+function overlayChart(defs, hi0, hi1) {
+  const w = 600, h = 130, pad = 4;
+  const n = Math.max(...defs.map(d => d.vals.length), 0);
+  const all = [];
+  for (const d of defs) for (const v of d.vals) if (v != null) all.push(v);
+  if (all.length < 2 || n < 2) return "";
+  const mx = Math.max(...all), mn = Math.min(...all);
+  const range = (mx - mn) || 1;
+  const px = (i) => pad + i * (w - 2 * pad) / (n - 1);
+  const py = (v) => h - pad - ((v - mn) / range) * (h - 2 * pad);
+  const band = (hi0 != null && hi1 != null && hi1 >= 0 && hi0 < n)
+    ? `<rect x="${px(Math.max(0, hi0)).toFixed(1)}" y="0" width="${Math.max(2, px(Math.min(n - 1, hi1)) - px(Math.max(0, hi0))).toFixed(1)}" height="${h}" fill="var(--accent-soft)"/>`
+    : "";
+  let lines = "";
+  for (const d of defs) {
+    let seg = [];
+    const flush = () => {
+      if (seg.length > 1) {
+        lines += `<polyline points="${seg.join(" ")}" fill="none" stroke="${d.style.color}" stroke-width="2"${d.style.dash ? ` stroke-dasharray="${d.style.dash}"` : ""}/>`;
+      } else if (seg.length === 1) {
+        const [x, y] = seg[0].split(",");
+        lines += `<circle cx="${x}" cy="${y}" r="2" fill="${d.style.color}"/>`;
+      }
+      seg = [];
+    };
+    d.vals.forEach((v, i) => { if (v == null) flush(); else seg.push(`${px(i).toFixed(1)},${py(v).toFixed(1)}`); });
+    flush();
+  }
+  const names = defs.map(d => d.label).join(", ");
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img"
+    aria-label="Line chart comparing daily Wikipedia attention for ${esc(names)}${CMP_SCALE === "indexed" ? ", each indexed to its own average (100 = its usual level)" : ", on one shared views-per-day scale"}${hi0 != null ? ", selected window shaded" : ""}">
+    ${band}${lines}</svg>`;
+}
+
+const legendKey = (style, width) =>
+  `<svg width="${width}" height="8" aria-hidden="true"><line x1="1" y1="4" x2="${width - 1}" y2="4" stroke="${style.color}" stroke-width="2"${style.dash ? ` stroke-dasharray="${style.dash}"` : ""}/></svg>`;
+
+function cmpBar() {
+  const opts = Object.entries(DATA.topics)
+    .filter(([q, tt]) => q !== activeQid && !COMPARE.includes(q)
+                         && (tt.global_series || []).some(v => v != null))
+    .sort((a, b) => a[1].label_en.localeCompare(b[1].label_en));
+  const chips = COMPARE.map((q, i) => {
+    const tt = DATA.topics[q];
+    return `<span class="cmp-chip">${legendKey(CMP_STYLES[i + 1], 18)}${esc(tt.label_en)}
+      <button type="button" data-cmp-del="${esc(q)}" aria-label="Remove ${esc(tt.label_en)} from the comparison">✕</button></span>`;
+  }).join("");
+  const add = COMPARE.length < 2 && opts.length
+    ? `<select id="cmp-add" aria-label="Topic to compare on this chart">
+        <option value="">Compare with…</option>
+        ${opts.map(([q, tt]) => `<option value="${esc(q)}">${esc(tt.label_en)}</option>`).join("")}</select>
+      <button type="button" class="btn-quiet" id="cmp-add-go" title="Add the selected topic to the chart">Add</button>`
+    : "";
+  const scale = COMPARE.length
+    ? `<button type="button" class="btn-quiet" id="cmp-scale" aria-pressed="${CMP_SCALE === "indexed"}"
+        title="On: 100 = each topic's own average over its measured days in the shown window, so shapes are comparable across very different volumes. Off: one shared views-per-day scale.">Indexed scale</button>`
+    : "";
+  return `<div class="cmp-bar"><span class="cmp-label">Compare</span>${chips}${add}${scale}</div>`;
+}
+
+/* The chart section of the detail pane: heading + compare bar + chart (+
+   legend and scale note when comparing). With no comparison topics chosen
+   this renders EXACTLY the chart the page always drew — the overlay is
+   strictly additive. */
+function buildChartSection(t, daily) {
+  const anchor = daily || t;
+  const have = (anchor.global_series || []).some(v => v != null);
+  COMPARE = COMPARE.filter(q => q !== activeQid && DATA.topics[q]
+                                && (DATA.topics[q].global_series || []).some(v => v != null));
+  const cmpActive = have && COMPARE.length > 0;
+  CMP_DRAWN = cmpActive;
+  const units = cmpActive && CMP_SCALE === "indexed"
+    ? "indexed: 100 = each topic's own average over its measured days"
+    : "Wikipedia views/day, all tracked languages";
+  const heading = `<div class="sect-head"><h3 class="sect">Global attention: last ${RANGE_VM ? 120 : TE_RANGE_DAYS} days (${units})</h3>
+    ${have ? `<button type="button" class="btn-quiet" data-csv="series" title="Download this chart's daily values${COMPARE.length ? " and the comparison topics" : ""} as a spreadsheet (always real views/day)">Download CSV</button>` : ""}</div>`;
+  // the bar also renders when no chart can be drawn but a comparison is
+  // active, so the selected topics stay visible and removable there too
+  const bar = have || COMPARE.length ? cmpBar() : "";
+  let chart, legend = "", scaleNote = "";
+  if (!cmpActive) {
+    chart = RANGE_VM && daily
+      ? sparkline(daily.global_series || [],
+          dDiff(daily.series_start, RANGE.start), dDiff(daily.series_start, RANGE.end))
+      : sparkline(((daily || t).global_series || []).slice(-TE_RANGE_DAYS));
+  } else {
+    const endISO = seriesEnd(anchor);
+    const days = RANGE_VM ? anchor.global_series.length
+                          : Math.min(TE_RANGE_DAYS, anchor.global_series.length);
+    const sel = [[activeQid, anchor], ...COMPARE.map(q => [q, DATA.topics[q]])];
+    const defs = [], legends = [];
+    sel.forEach(([, tt], i) => {
+      const vals = seriesByDate(tt, endISO, days);
+      const mean = winMean(vals);
+      const style = CMP_STYLES[i];
+      if (mean == null) { legends.push({ label: tt.label_en, style, missing: true }); return; }
+      defs.push({
+        label: tt.label_en, style,
+        vals: CMP_SCALE === "indexed" ? vals.map(v => v == null ? null : v * 100 / mean) : vals,
+      });
+      legends.push({ label: tt.label_en, style, mean });
+    });
+    const hi0 = RANGE_VM ? days - 1 - dDiff(RANGE.start, endISO) : null;
+    const hi1 = RANGE_VM ? days - 1 - dDiff(RANGE.end, endISO) : null;
+    chart = overlayChart(defs, hi0, hi1);
+    legend = `<div class="cmp-legend">` + legends.map(l =>
+      `<span class="key">${legendKey(l.style, 26)}${esc(l.label)}${l.missing
+        ? " (no data in these days)"
+        : ` · avg ${Math.round(l.mean).toLocaleString()} views/day (measured days)`}</span>`).join("") + `</div>`;
+    scaleNote = `<div class="note" style="margin-top:2px">${CMP_SCALE === "indexed"
+      ? "Indexed scale: 100 = each topic's own average over its measured days in this window (days the pipeline withheld stay gaps and are not averaged), so differently sized topics can be compared by shape. The legend keeps each topic's real level; the CSV always carries real values."
+      : "One shared scale (views/day): a lower-traffic topic can look flat next to a high-traffic one. The Indexed view compares shapes instead."}</div>`;
+  }
+  const noDaily = RANGE_VM && !daily ? `<div class="note">No daily chart: this topic is not scored in today's
+      daily view, so no published series exists to draw. The window figures above are computed
+      from its raw per-language series.</div>` : "";
+  return heading + bar + `<div id="te-range-slot"></div>` + chart + legend + scaleNote + noDaily;
+}
+
+/* Archive windows draw from the long-term archive's one global total per
+   topic, not the live per-language series the comparison overlay is built
+   on — so archive mode keeps its own chart and offers no overlay. */
+function archiveChartSection() {
+  CMP_DRAWN = false;
+  return `<h3 class="sect">Global attention: ${esc(dAdd(RANGE.start, -RANGE_RULES.BASE_DAYS))} to ${esc(RANGE.end)} (Wikipedia views/day, tracked languages summed)</h3>
+    <div id="te-range-slot"></div>
+    ${archiveSpark(activeQid)}`;
+}
+
+/* ---------- CSV downloads (shared helper: assets/atlas-csv.js) ---------- */
+const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-")
+  .replace(/^-+|-+$/g, "") || "topic";
+
+/* One extraction for both the on-screen table and the CSV, so the two can
+   never drift apart. */
+function detailDemandRows(t) {
+  return RANGE_VM && !RANGE_VM.published
+    ? (t.demand || []).map(d => [d.lang, d.mean, d.velocity])
+    : Object.entries(t.demand_by_language || {}).map(([l, st]) => [l, st.weekly_daily_avg_views, st.velocity]);
+}
+
+function csvMovers() {
+  const sorted = Object.entries(viewTopics()).sort((a, b) => b[1].global_velocity - a[1].global_velocity);
+  const asOf = DATA.measured_as_of || DATA.generated;
+  const windowLine = RANGE_VM
+    ? `${RANGE.start} to ${RANGE.end} vs the 30 days before it` + (RANGE_VM.published
+        ? " (the daily engine's own window; published figures verbatim)"
+        : RANGE_VM.archive
+        ? " (computed in the browser from the long-term archive's global daily totals; per-language detail and the non-organic-traffic screen exist only inside the live 120-day window)"
+        : " (recomputed in the browser under the daily engine's rules)")
+    : `7 days to ${asOf} vs the prior 30 days (published daily figures)`;
+  const withNews = !RANGE_VM || RANGE_VM.published;
+  const head = ["topic", "category", "velocity", "velocity_pct_as_shown", "momentum",
+                "top_edition", "top_edition_share", "single_edition_note"];
+  if (withNews) head.push("news_articles_7d");
+  head.push("qid");
+  const rows = [
+    ["Audience Intelligence Atlas · topic movers (decision support, not a measure of media coverage or public opinion)"],
+    ["Window", windowLine],
+    ["Method", RANGE_VM && RANGE_VM.archive
+      ? "Velocity = attention in the window vs the 30 days before it, measured from the archive's one global daily total per topic (Wikipedia views per day, tracked language editions summed); topics averaging under the include floor in the window are not scored. Every scored topic is listed, not only the top five."
+      : "Velocity = attention in the window vs the 30 days before it, from Wikipedia reading patterns per language edition, volume-weighted, with the daily engine's floors and quarantine exclusions. Every scored topic is listed, not only the top five."],
+    [],
+    head,
+  ];
+  for (const [qid, t] of sorted) {
+    const te = t.top_edition || {};
+    const row = [
+      t.label_en, CAT_LABELS[t.category] || t.category, t.global_velocity,
+      Math.round(t.global_velocity * 100), t.momentum,
+      LANG_NAMES[te.lang] || te.lang || "", te.share != null ? te.share : "",
+      te.share >= 0.7 ? `driven by ${LANG_NAMES[te.lang] || te.lang} Wikipedia` : "",
+    ];
+    if (withNews) row.push(t.news_articles_7d != null ? t.news_articles_7d : "");
+    row.push(qid);
+    rows.push(row);
+  }
+  // The exclusions travel WITH the figures — a spreadsheet without them
+  // would silently look like the whole tracked universe. The 7-day preset
+  // snaps to the published figures, so it carries the same appendix as the
+  // daily view.
+  if ((!RANGE_VM || RANGE_VM.published) && (DATA.topics_unscored || []).length) {
+    rows.push([]);
+    rows.push(["Tracked but not scored today (excluded rather than scored from stale or too-thin data)"]);
+    rows.push(["topic", "category", "reason", "qid"]);
+    for (const u of DATA.topics_unscored) {
+      rows.push([u.label_en, CAT_LABELS[u.category] || u.category, u.reason, u.qid]);
+    }
+  } else if (RANGE_VM && !RANGE_VM.published && RANGE_VM.excluded) {
+    rows.push([]);
+    rows.push([`${RANGE_VM.excluded} tracked topics had too little data in this window to measure (excluded, not scored low)`]);
+  }
+  const name = RANGE_VM ? `atlas-topic-movers-${RANGE.start}_${RANGE.end}.csv`
+                        : `atlas-topic-movers-${asOf}.csv`;
+  AtlasCSV.download(name, rows);
+}
+
+function csvSeries(t, daily) {
+  const anchor = daily || t;
+  if (!(anchor.global_series || []).length) return;
+  const endISO = seriesEnd(anchor);
+  const days = RANGE_VM ? anchor.global_series.length
+                        : Math.min(TE_RANGE_DAYS, anchor.global_series.length);
+  const cols = [[activeQid, anchor], ...COMPARE.map(q => [q, DATA.topics[q]])];
+  const rows = [
+    ["Audience Intelligence Atlas · daily global attention (Wikipedia views/day, summed across all tracked language editions)"],
+    ["Note", "An empty cell is a day the pipeline withheld: the editions reporting that day carried too little of the topic's usual traffic to state a global figure. Missing data, never zero attention."],
+  ];
+  if (COMPARE.length) {
+    rows.push(["Scale", "This file always carries real views/day; the chart's indexed view is a display device only."]);
+  }
+  rows.push([]);
+  rows.push(["date", ...cols.map(([, tt]) => `${tt.label_en} views/day`)]);
+  const series = cols.map(([, tt]) => seriesByDate(tt, endISO, days));
+  for (let k = 0; k < days; k++) {
+    rows.push([dAdd(endISO, -(days - 1 - k)), ...series.map(s => (s[k] != null ? s[k] : ""))]);
+  }
+  AtlasCSV.download(`atlas-${slug(t.label_en)}-attention-${endISO}.csv`, rows);
+}
+
+function csvDemand(t) {
+  const win = RANGE_VM && !RANGE_VM.published
+    ? `${RANGE.start} to ${RANGE.end}`
+    : `7 days to ${DATA.measured_as_of || DATA.generated}`;
+  const rows = [
+    [`Audience Intelligence Atlas · demand by language: ${t.label_en}`],
+    ["Window", `${win}: daily average views of this topic's article, per Wikipedia language edition; velocity compares the window with the 30 days before it`],
+    [],
+    ["language", "code", "views_per_day", "velocity", "velocity_pct_as_shown"],
+  ];
+  for (const [lang, mean, vel] of detailDemandRows(t)) {
+    rows.push([LANG_NAMES[lang] || lang, lang, mean, vel, Math.round(vel * 100)]);
+  }
+  AtlasCSV.download(`atlas-${slug(t.label_en)}-demand.csv`, rows);
+}
+
+function csvMedia(t) {
+  const list = t.media_intensity_by_country || [];
+  if (!list.length) return;
+  const rows = [
+    [`Audience Intelligence Atlas · media coverage intensity: ${t.label_en} (GDELT, 14 days)`],
+    ["Note", "pct_of_country_news_volume is the share of THAT COUNTRY'S OWN monitored news output matching this topic; read it as editorial focus, not a share of world coverage. A small media market covering the topic heavily ranks above a large one publishing more articles in absolute terms. Full list; the page shows the top 8."],
+    [],
+    ["outlet_country_iso3", "pct_of_country_news_volume"],
+  ];
+  for (const c of list) rows.push([c.iso3, c.pct_of_country_news_volume]);
+  AtlasCSV.download(`atlas-${slug(t.label_en)}-media-intensity.csv`, rows);
+}
+
+function bindCsvButtons(scope) {
+  scope.querySelectorAll("[data-csv]").forEach(b => b.addEventListener("click", () => {
+    if (!window.AtlasCSV) { console.error("atlas-csv.js did not load"); return; }
+    const kind = b.dataset.csv;
+    if (kind === "movers") return csvMovers();
+    const t = viewTopics()[activeQid];
+    if (!t) return;
+    if (kind === "series") csvSeries(t, DATA.topics[activeQid]);
+    else if (kind === "demand") csvDemand(t);
+    else if (kind === "media") csvMedia(t);
+  }));
+}
+
 function renderList(filter) {
   if (!DATA) return;                    // typing before the data arrives
   const body = document.getElementById("list-body");
@@ -646,6 +986,7 @@ function renderGlobalMovers() {
       daily engine's floors and quarantine exclusions. Select any topic on the left for detail.`;
     return `<h1 tabindex="-1">Topic movers, ${esc(RANGE.start)} to ${esc(RANGE.end)}</h1>
       <div class="range-banner">${banner}</div>
+      <div class="mover-tools"><button type="button" class="btn-quiet" data-csv="movers" title="Download every topic scored in this window as a spreadsheet: velocity, momentum, and how many tracked topics the window could not measure">Download CSV</button></div>
       <h3 class="sect">Rising in this window</h3><div class="movers">${sorted.filter(([, t]) => t.global_velocity > 0).slice(0, 5).map(row).join("") || '<div class="empty">Nothing rising sharply in this window.</div>'}</div>
       <h3 class="sect">Falling in this window</h3><div class="movers">${sorted.filter(([, t]) => t.global_velocity < 0).slice(-5).reverse().map(row).join("") || '<div class="empty">Nothing falling sharply in this window.</div>'}</div>
       ${bskyNames.length ? `<h3 class="sect">Open social web during this window (Bluesky, global)</h3>
@@ -665,6 +1006,10 @@ function renderGlobalMovers() {
   // given focus by script when the pane is replaced (see bindMoverClicks)
   return `<h1 tabindex="-1">Global topic movers</h1>
     <div class="sub">${scored} topics measured in 22 languages · attention data through ${esc(asOf)}${coverageNote}</div>
+    <div class="mover-tools">
+      <a class="btn-quiet" href="data/trends/movers_feed.xml" title="An RSS feed of this movers list, updated once a day by the trend engine. Paste the address into Outlook, Teams or any feed reader to get each day's risers and fallers delivered instead of having to visit this page.">Subscribe (RSS)</a>
+      <button type="button" class="btn-quiet" data-csv="movers" title="Download every scored topic (velocity, momentum, and the tracked-but-unscored list) as a spreadsheet, not only the top five below">Download CSV</button>
+    </div>
     <h3 class="sect">Rising this week</h3><div class="movers">${risers.map(row).join("") || '<div class="empty">No topics rising sharply this week.</div>'}</div>
     <h3 class="sect">Falling this week</h3><div class="movers">${fallers.map(row).join("") || '<div class="empty">No topics falling sharply this week.</div>'}</div>
     ${bskyPulse()}
@@ -706,7 +1051,7 @@ let TE_RANGE_DAYS = 120;
 
 function renderDetail() {
   const el = document.getElementById("detail");
-  if (!activeQid) { el.innerHTML = renderGlobalMovers(); bindMoverClicks(el); return; }
+  if (!activeQid) { el.innerHTML = renderGlobalMovers(); bindMoverClicks(el); bindCsvButtons(el); return; }
   const t = viewTopics()[activeQid];
   if (!t && RANGE_VM) {
     const meta = DATA.topics[activeQid] || (DATA.topics_unscored || []).find(u => u.qid === activeQid) || {};
@@ -721,10 +1066,9 @@ function renderDetail() {
   const velCls = pct >= 0 ? "up" : "down";
 
   // In range mode the demand rows come from the in-browser recompute; the
-  // daily view renders the pipeline's published rows untouched.
-  const demandRows = RANGE_VM && !RANGE_VM.published
-    ? (t.demand || []).map(d => [d.lang, d.mean, d.velocity])
-    : Object.entries(t.demand_by_language || {}).map(([l, st]) => [l, st.weekly_daily_avg_views, st.velocity]);
+  // daily view renders the pipeline's published rows untouched. The same
+  // extraction feeds the CSV download (detailDemandRows).
+  const demandRows = detailDemandRows(t);
   let langRows = "";
   for (const [lang, mean, vel] of demandRows) {
     const v = Math.round(vel * 100);
@@ -762,28 +1106,18 @@ function renderDetail() {
       : `<div class="range-banner"><b>Range view</b> ${esc(RANGE.start)} to ${esc(RANGE.end)}:
       figures computed in your browser from the same daily series and rules as the daily engine.
       The shaded band on the chart marks the window. Daily figures are unchanged.</div>`) : ""}
-    <h3 class="sect">${RANGE_VM && RANGE_VM.archive
-      ? `Global attention: ${esc(dAdd(RANGE.start, -RANGE_RULES.BASE_DAYS))} to ${esc(RANGE.end)} (Wikipedia views/day, tracked languages summed)`
-      : `Global attention: last ${RANGE_VM ? 120 : TE_RANGE_DAYS} days (Wikipedia views/day, all tracked languages)`}</h3>
-    <div id="te-range-slot"></div>
-    ${RANGE_VM && RANGE_VM.archive
-      ? archiveSpark(activeQid)
-      : RANGE_VM && daily
-      ? sparkline(daily.global_series || [],
-          dDiff(daily.series_start, RANGE.start), dDiff(daily.series_start, RANGE.end))
-      : sparkline(((daily || t).global_series || []).slice(-TE_RANGE_DAYS))}
-    ${RANGE_VM && !RANGE_VM.archive && !daily ? `<div class="note">No daily chart: this topic is not scored in today's
-      daily view, so no published series exists to draw. The window figures above are computed
-      from its raw per-language series.</div>` : ""}
+    ${RANGE_VM && RANGE_VM.archive ? archiveChartSection() : buildChartSection(t, daily)}
     ${RANGE_VM && RANGE_VM.archive
       ? `<h3 class="sect">Demand by language (what people look up)</h3>
     <div class="note" style="margin-top:0">Not available for archive windows. The Atlas stores
       per-language series only for the live 120-day window; this window's figures come from the
       one global daily total the archive keeps per topic. Pick a start date within the last
       120 days to see the per-language breakdown.</div>`
-      : `<h3 class="sect">Demand by language (what people look up)</h3>
+      : `<div class="sect-head"><h3 class="sect">Demand by language (what people look up)</h3>
+      ${demandRows.length ? `<button type="button" class="btn-quiet" data-csv="demand" title="Download this table as a spreadsheet">Download CSV</button>` : ""}</div>
     <table><tr><th>Language</th><th style="text-align:right">${RANGE_VM ? "Views/day (window)" : "Views/day (7d avg)"}</th><th style="text-align:right">Velocity</th></tr>${langRows}</table>`}
-    ${mediaRows ? `<h3 class="sect">Where this topic gets the most airtime (GDELT, 14d)</h3>
+    ${mediaRows ? `<div class="sect-head"><h3 class="sect">Where this topic gets the most airtime (GDELT, 14d)</h3>
+      <button type="button" class="btn-quiet" data-csv="media" title="Download the full list as a spreadsheet (the page shows the top 8)">Download CSV</button></div>
     <table><tr><th>Outlet country</th><th style="text-align:right">% of that country's news output</th></tr>${mediaRows}</table>
     <div class="note">This is coverage <em>intensity</em>, not a share of world coverage: it is how much of
     each country's own monitored news output matches this topic, attributed to where the outlet is based.
@@ -809,6 +1143,10 @@ function renderDetail() {
         (data/trends/wiki_pageviews.json) with the daily engine's formula, floors and
         quarantine exclusions; the media-coverage intensity table appears only in the daily
         view because it is a fixed 14-day pipeline measure.</li>`) : ""}
+      ${CMP_DRAWN ? `<li>Comparison lines are drawn from the same published daily series as the
+        main chart, aligned by calendar date. The indexed view scales each topic to its own
+        average over its measured days shown (100 = its usual level): it compares shapes,
+        never sizes; the legend and the CSV keep every topic's real views/day.</li>` : ""}
     </ol></div>`;
 
   // Mount the shared range control after the innerHTML swap. The velocity
@@ -827,6 +1165,38 @@ function renderDetail() {
       onChange: (k) => { TE_RANGE_DAYS = parseInt(k, 10) || 120; renderDetail(); },
     });
   }
+
+  // Comparison-overlay controls (rebuilt with every innerHTML swap above).
+  // Each handler re-renders the pane, which destroys the control that held
+  // keyboard focus — so each one hands focus to that control's successor,
+  // the same discipline the topic list and mover rows follow. Adding is an
+  // explicit Add button rather than the select's change event: on some
+  // platforms arrowing through a closed select fires change on every step,
+  // which would re-render mid-browse and yank the keyboard away.
+  const addGo = document.getElementById("cmp-add-go");
+  if (addGo) addGo.addEventListener("click", () => {
+    const addSel = document.getElementById("cmp-add");
+    if (addSel && addSel.value && COMPARE.length < 2 && DATA.topics[addSel.value]) {
+      COMPARE.push(addSel.value);
+      renderDetail();
+      const next = document.getElementById("cmp-add") || document.getElementById("cmp-scale");
+      if (next) next.focus({ preventScroll: true });
+    }
+  });
+  const scaleBtn = document.getElementById("cmp-scale");
+  if (scaleBtn) scaleBtn.addEventListener("click", () => {
+    CMP_SCALE = CMP_SCALE === "indexed" ? "absolute" : "indexed";
+    renderDetail();
+    const next = document.getElementById("cmp-scale");
+    if (next) next.focus({ preventScroll: true });
+  });
+  el.querySelectorAll("[data-cmp-del]").forEach(b => b.addEventListener("click", () => {
+    COMPARE = COMPARE.filter(q => q !== b.dataset.cmpDel);
+    renderDetail();
+    const next = document.getElementById("cmp-add") || document.getElementById("cmp-scale");
+    if (next) next.focus({ preventScroll: true });
+  }));
+  bindCsvButtons(el);
 }
 
 function bindMoverClicks(scope) {
