@@ -50,7 +50,10 @@ MODES
                ~7-hour trickle no politeness setting can fix. So the
                fetch shards across GitHub runners exactly like the daily
                pageviews fetch does (each runner = its own IP = its own
-               budget), via attention-archive-backfill.yml:
+               budget). Runner IPs are shared, so a shard may inherit a
+               part-spent budget: failed pairs retry in rounds with
+               growing pauses while the bucket refills. Via
+               attention-archive-backfill.yml:
     --shard K N      fetch only every Nth pair (K of N, 1-based, from the
                      deterministically sorted pair list), writing the
                      per-pair checkpoint only — combine with --fetch-only.
@@ -492,9 +495,18 @@ def backfill_fetch(checkpoint: Path, workers: int,
                 fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
             reusable[rec["k"]] = rec
 
-    for round_no in (1, 2):
-        if not todo:
-            break
+    # PATIENT RETRY ROUNDS (2026-08-18, learned from run 1): a shard shares
+    # its runner IP's hourly request budget with whoever else used that IP —
+    # ~28 pairs per shard still 429-starved after a single 30s-pause retry.
+    # The budget REFILLS over minutes, so failed pairs are retried in rounds
+    # with growing pauses (the adaptive delay is reset after each pause —
+    # a refilled bucket deserves a fresh start). The wall-clock guard leaves
+    # room for the artifact upload inside the job's 50-minute timeout.
+    global _throttle_delay
+    pauses = [30, 60, 120, 240, 300, 300]
+    round_no = 0
+    while todo:
+        round_no += 1
         n_done = 0
         with ThreadPoolExecutor(max_workers=workers) as pool:
             futures = [pool.submit(run, j) for j in todo]
@@ -507,10 +519,16 @@ def backfill_fetch(checkpoint: Path, workers: int,
                           f"{rate:.1f} req/s, {N_429} throttle hits, "
                           f"{N_ERR} errors)", flush=True)
         todo, failures = failures, []
-        if todo and round_no == 1:
-            print(f"  round 1: {len(todo)} pair(s) failed — retrying once "
-                  f"after a pause", flush=True)
-            time.sleep(30)
+        if not todo:
+            break
+        if round_no > len(pauses) or time.time() - t0 > 40 * 60:
+            break
+        pause = pauses[round_no - 1]
+        print(f"  round {round_no}: {len(todo)} pair(s) failed — waiting {pause}s "
+              f"for the per-IP budget to refill, then retrying", flush=True)
+        time.sleep(pause)
+        with _throttle_lock:
+            _throttle_delay = 0.0
     if todo:
         names = ", ".join(f"{q}/{l}" for q, l, _ in todo[:10])
         print(f"INCOMPLETE: {len(todo)} pair(s) still unfetched after retries "

@@ -13,7 +13,12 @@ name: Attention archive backfill (manual, rare)
 # politely it paces itself. The daily pageviews fetch hit the same wall on
 # 2026-08-10 and the answer is the same one trend-engine.yml uses: several
 # runners in parallel, each with its own IP, each spending its own budget.
-# Eight shards of ~420 requests finish comfortably inside one bucket each.
+# Twelve shards of ~280 requests fit comfortably inside one bucket each —
+# and because runner IPs are shared (a shard can inherit a part-spent
+# budget; run 1 ended with ~28 starved pairs per shard), the fetcher also
+# retries failed pairs in rounds with growing pauses while the bucket
+# refills, and the assemble job still refuses to build from anything less
+# than the complete pair set.
 #
 # WHEN TO RUN IT: once at launch; again only if topics are added to the
 # registry (new topics otherwise archive from their live window on, with
@@ -29,6 +34,7 @@ on:
 
 permissions:
   contents: write
+  issues: write      # failure-alert step opens an issue
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -44,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false          # one starved shard must not cancel the rest
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
     steps:
       - name: Check out repository
@@ -58,7 +64,7 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Fetch history (shard ${{ matrix.shard }} of 8)
+      - name: Fetch history (shard ${{ matrix.shard }} of 12)
         # continue-on-error so a starved shard still uploads what it saved;
         # the assemble job refuses to build from an incomplete pair set, so
         # a red assemble (not a silent gap) is the worst case.
@@ -66,7 +72,7 @@ jobs:
         run: >
           python scripts/update_attention_archive.py
           --backfill --fetch-only
-          --shard ${{ matrix.shard }} 8
+          --shard ${{ matrix.shard }} 12
           --checkpoint ${{ runner.temp }}/backfill_ck_${{ matrix.shard }}.jsonl
 
       - name: Upload shard checkpoint
