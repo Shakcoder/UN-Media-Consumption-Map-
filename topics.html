@@ -894,6 +894,7 @@ function bindCsvButtons(scope) {
     if (!window.AtlasCSV) { console.error("atlas-csv.js did not load"); return; }
     const kind = b.dataset.csv;
     if (kind === "movers") return csvMovers();
+    if (kind === "wow") return csvWow();
     const t = viewTopics()[activeQid];
     if (!t) return;
     if (kind === "series") csvSeries(t, DATA.topics[activeQid]);
@@ -968,9 +969,14 @@ function renderGlobalMovers() {
   const risers = sorted.filter(([, t]) => t.global_velocity > 0).slice(0, 5);
   const fallers = sorted.filter(([, t]) => t.global_velocity < 0).slice(-5).reverse();
   const row = ([qid, t]) => {
+    // a velocity that rounds to zero renders flat, never "+0%" in green:
+    // Math.round of a small negative is -0, and -0 >= 0 would color a
+    // genuine decline as a rise (2026-08-18 review finding, fixed at every
+    // percentage site on this page)
     const pct = Math.round(t.global_velocity * 100);
-    const cls = pct >= 0 ? "up" : "down";
-    const sym = pct >= 0 ? "+" : "";
+    const flat = pct === 0;
+    const cls = flat ? "" : pct > 0 ? "up" : "down";
+    const sym = !flat && pct > 0 ? "+" : "";
     // A "global" mover carried >=70% by one language edition is a regional
     // or single-community wave — say so in the row itself (a ja-only burst
     // once headlined this list at +1121% with no cue).
@@ -1042,11 +1048,116 @@ function renderGlobalMovers() {
     </div>
     <h3 class="sect">Rising this week</h3><div class="movers">${risers.map(row).join("") || '<div class="empty">No topics rising sharply this week.</div>'}</div>
     <h3 class="sect">Falling this week</h3><div class="movers">${fallers.map(row).join("") || '<div class="empty">No topics falling sharply this week.</div>'}</div>
+    ${weekDiffSection()}
     ${bskyPulse()}
     <div class="note">Velocity = attention in the 7 days to ${esc(asOf)} vs. the prior 30 days, measured from
     Wikipedia reading patterns (Wikimedia Pageviews API: a measure of what people <em>look up</em>,
     not what media publish). Topics whose series hold no data in that window are left out rather than
     scored from older figures. <span class="screen-only">Select any topic on the left for detail.</span></div>`;
+}
+
+/* ==========================================================================
+   WEEK-OVER-WEEK (2026-08-18, shortlist item 6). "What changed since last
+   week": each scored topic's average daily attention over the 7 days to
+   measured_as_of vs the 7 days before that, computed from the SAME
+   published global_series the charts draw. No new data and no recomputation
+   of any published figure: both weeks sit inside the 120-day series the
+   pipeline already ships, and a day it withheld stays missing, never zero.
+
+   This answers a DIFFERENT question from velocity. Velocity compares the
+   week with the topic's own prior month (is it above its usual level?);
+   this compares it with last week alone (did it move since last week?).
+   A topic that spiked twelve days ago can be "rising" on velocity while
+   firmly down on last week - both are true, and the notes say which
+   question each number answers.
+
+   Comparison rules mirror the pipeline's own discipline: at least 4
+   measured days in EACH week (the 4-of-7 rule), and the 25-views/day
+   global include floor in at least one week; a last week measured at zero
+   cannot honestly yield a percentage, so such topics are excluded and
+   counted rather than shown as infinite.
+   ========================================================================== */
+function wowStats(t) {
+  const s = t.global_series || [];
+  const thisW = s.slice(-7).filter(v => v != null);
+  const lastW = s.slice(-14, -7).filter(v => v != null);
+  if (thisW.length < 4 || lastW.length < 4) return null;
+  const a = thisW.reduce((x, y) => x + y, 0) / thisW.length;
+  const b = lastW.reduce((x, y) => x + y, 0) / lastW.length;
+  if (Math.max(a, b) < RANGE_RULES.INCLUDE_FLOOR) return null;
+  if (!(b > 0)) return null;
+  return { thisMean: a, lastMean: b, chg: (a - b) / b,
+           thisDays: thisW.length, lastDays: lastW.length };
+}
+
+function weekOverWeek() {
+  const rows = [];
+  let excluded = 0;
+  for (const [qid, t] of Object.entries(DATA.topics)) {
+    const st = wowStats(t);
+    if (!st) { excluded++; continue; }
+    rows.push({ qid, label: t.label_en, category: t.category, ...st });
+  }
+  rows.sort((x, y) => y.chg - x.chg);
+  return { rows, excluded };
+}
+
+function weekDiffSection() {
+  if (RANGE_VM) return "";
+  const asOf = DATA.measured_as_of || DATA.generated;
+  const { rows, excluded } = weekOverWeek();
+  if (!rows.length) return "";
+  const up = rows.filter(r => r.chg > 0).slice(0, 5);
+  const down = rows.filter(r => r.chg < 0).slice(-5).reverse();
+  const fmt = (v) => Math.round(v).toLocaleString();
+  const row = (r) => {
+    // a change that rounds to zero is shown as flat, never as "+0%" in
+    // green: Math.round(-0.4) is -0, and -0 >= 0 would color a genuine
+    // decline as a rise (2026-08-18 review finding)
+    const pct = Math.round(r.chg * 100);
+    const flat = pct === 0;
+    const cls = flat ? "" : pct > 0 ? "up" : "down";
+    const sym = !flat && pct > 0 ? "+" : "";
+    return `<div class="topic-row" data-qid="${esc(r.qid)}" role="button" tabindex="0"
+      aria-label="${esc(r.label)}, ${sym}${pct}% on last week, from ${fmt(r.lastMean)} to ${fmt(r.thisMean)} views per day">
+      <span>${esc(r.label)} <span class="drive-note">${fmt(r.lastMean)} → ${fmt(r.thisMean)}/day</span></span>
+      <span class="${cls}">${sym}${pct}%</span></div>`;
+  };
+  const body = [...up, ...down].map(row).join("")
+    || '<div class="empty">Little changed since last week.</div>';
+  return `<div class="sect-head"><h3 class="sect">Changed since last week (average views/day)</h3>
+    <button type="button" class="btn-quiet" data-csv="wow" title="Download every comparable topic's week-over-week change as a spreadsheet, not only the largest moves below">Download CSV</button></div>
+    <div class="movers">${body}</div>
+    <div class="note">Average daily attention, ${esc(dAdd(asOf, -6))} to ${esc(asOf)} vs ${esc(dAdd(asOf, -13))} to ${esc(dAdd(asOf, -7))},
+    from the same published series as the charts. A different question from the velocity lists above:
+    velocity compares each topic with its own prior month; this compares it with last week alone.
+    A topic needs at least 4 measured days in each week to be compared${excluded
+      ? `; ${excluded} scored ${excluded === 1 ? "topic" : "topics"} could not be compared this week`
+      : ""}.</div>`;
+}
+
+function csvWow() {
+  const asOf = DATA.measured_as_of || DATA.generated;
+  const { rows, excluded } = weekOverWeek();
+  const out = [
+    ["Audience Intelligence Atlas · week-over-week attention change (decision support, not a measure of media coverage or public opinion)"],
+    ["Windows", `${dAdd(asOf, -6)} to ${asOf} vs ${dAdd(asOf, -13)} to ${dAdd(asOf, -7)} (average daily Wikipedia views, all tracked language editions summed, from the published daily series)`],
+    ["Method", "A different question from velocity: velocity compares each topic with its own prior month; this compares it with last week alone. A topic needs at least 4 measured days in each week and the 25-views/day floor in one of them; days the pipeline withheld are missing, never zero."],
+    [],
+    ["topic", "category", "last_week_avg_views_day", "last_week_measured_days",
+     "this_week_avg_views_day", "this_week_measured_days", "change", "change_pct_as_shown", "qid"],
+  ];
+  for (const r of rows) {
+    out.push([r.label, CAT_LABELS[r.category] || r.category,
+      Math.round(r.lastMean * 10) / 10, r.lastDays,
+      Math.round(r.thisMean * 10) / 10, r.thisDays,
+      Math.round(r.chg * 1000) / 1000, Math.round(r.chg * 100), r.qid]);
+  }
+  if (excluded) {
+    out.push([]);
+    out.push([`${excluded} scored ${excluded === 1 ? "topic" : "topics"} could not be compared (fewer than 4 measured days in a week, under the traffic floor, or a zero-attention base week)`]);
+  }
+  AtlasCSV.download(`atlas-week-over-week-${asOf}.csv`, out);
 }
 
 /* Global open-social pulse (Bluesky) — a second live signal next to the
@@ -1093,7 +1204,11 @@ function renderDetail() {
   }
   if (!t) { el.innerHTML = `<div class="empty">This topic is not scored today.</div>`; return; }
   const pct = Math.round(t.global_velocity * 100);
-  const velCls = pct >= 0 ? "up" : "down";
+  // rounded zero renders flat (no sign, no color): -0 >= 0 would paint a
+  // small genuine decline green (2026-08-18 review finding)
+  const velFlat = pct === 0;
+  const velCls = velFlat ? "" : pct > 0 ? "up" : "down";
+  const velSym = !velFlat && pct > 0 ? "+" : "";
 
   // In range mode the demand rows come from the in-browser recompute; the
   // daily view renders the pipeline's published rows untouched. The same
@@ -1120,12 +1235,27 @@ function renderDetail() {
     <div class="sub">${esc(CAT_LABELS[t.category] || t.category)} · ${momentumBadge(t.momentum)}</div>
     <div class="mover-tools"><button type="button" class="btn-quiet" data-print="1" title="Prints this topic's full page (chart, tables and sources) as a clean document; choose 'Save as PDF' in the print window to download it">Print / save PDF</button></div>
     <div class="kpis">
-      <div class="kpi"><div class="v ${velCls}">${pct >= 0 ? "+" : ""}${pct}%</div><div class="l">${RANGE_VM && !RANGE_VM.published ? `range velocity (${rangeDays}d vs prior 30d)` : "global velocity (7d vs 30d)"}</div></div>
+      <div class="kpi"><div class="v ${velCls}">${velSym}${pct}%</div><div class="l">${RANGE_VM && !RANGE_VM.published ? `range velocity (${rangeDays}d vs prior 30d)` : "global velocity (7d vs 30d)"}</div></div>
       ${RANGE_VM && RANGE_VM.archive && t.window_mean != null
         ? `<div class="kpi"><div class="v">${Math.round(t.window_mean).toLocaleString()}</div><div class="l">global views/day in window (${t.days_measured} of ${rangeDays} days measured)</div></div>` : ""}
       ${RANGE_VM && !RANGE_VM.published
         ? (rangeNews != null ? `<div class="kpi"><div class="v">${rangeNews.toLocaleString()}</div><div class="l">news articles in window (GDELT)</div></div>` : "")
         : (t.news_articles_7d != null ? `<div class="kpi"><div class="v">${t.news_articles_7d.toLocaleString()}</div><div class="l">news articles, 7 days (GDELT)</div></div>` : "")}
+      ${(() => {
+        // Week-over-week level shift, daily view only - a different question
+        // from velocity (see weekDiffSection); same published series. The
+        // label carries the measured-day basis (a withheld day is missing,
+        // never zero) so the figure keeps its caveat on this pane and in
+        // print, matching the archive window-mean KPI above. A change that
+        // rounds to zero renders flat, never "+0%" (Math.round(-0.4) is -0).
+        if (RANGE_VM) return "";
+        const w = wowStats(t);
+        if (!w) return "";
+        const wp = Math.round(w.chg * 100);
+        const flat = wp === 0;
+        return `<div class="kpi"><div class="v ${flat ? "" : wp > 0 ? "up" : "down"}">${!flat && wp > 0 ? "+" : ""}${wp}%</div>
+          <div class="l">vs last week (avg views/day, ${w.thisDays} and ${w.lastDays} of 7 days measured)</div></div>`;
+      })()}
     </div>
     ${RANGE_VM ? (RANGE_VM.archive
       ? `<div class="range-banner"><b>Archive view</b> ${esc(RANGE.start)} to ${esc(RANGE.end)}:
