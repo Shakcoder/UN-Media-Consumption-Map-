@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Two countries' full media profiles side by side: connectivity, news habits, press freedom, demographics and languages, with the source named on every row and every gap shown honestly.">
+<link rel="icon" href="assets/un_emblem.png" type="image/png">
+<link rel="stylesheet" href="assets/atlas.css">
+<title>Compare countries · Audience Intelligence Atlas</title>
+<style>
+
+  main { max-width: 1060px; margin: 0 auto; padding: 22px 18px 60px; }
+  .lead { color: var(--muted); margin: 4px 0 18px; max-width: 70ch; }
+
+  .picker { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px; display: flex; gap: 14px 16px; align-items: end; flex-wrap: wrap; }
+  .picker .field { flex: 1 1 220px; }
+  .picker label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted-2); margin-bottom: 5px; }
+  .picker select { width: 100%; padding: 9px 10px; border: 1px solid var(--border);
+    border-radius: var(--r-sm); font: inherit; background: #fff; color: var(--ink); }
+  .hint { font-size: 12px; color: var(--muted-2); }
+
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 16px 0 4px; }
+  .toolbar[hidden] { display: none; }   /* author display beats the UA hidden rule otherwise */
+  #copy-done { font-size: 12px; color: var(--positive); }
+  /* screen-reader announcement of each rendered comparison (offscreen) */
+  #cmp-status { position: absolute; left: -9999px; }
+
+  .cmp-section { background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px; margin-top: 16px; }
+  .cmp-section h2 { font-size: 15px; margin: 0 0 4px; }
+  .cmp-section .sect-note { font-size: 11px; color: var(--muted-2); margin-bottom: 8px; line-height: 1.5; }
+  table.data th.cname { font-size: 12px; text-transform: none; letter-spacing: 0;
+    color: var(--ink); font-weight: 600; }
+  table.data td.num, table.data th.num { text-align: right; }
+  table.data td.val { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.data td.txt { max-width: 320px; }
+  .rowsrc { display: block; font-size: 11px; color: var(--muted-2); font-weight: 400; margin-top: 1px; }
+  .rowsrc a { color: var(--un-blue-dark); text-decoration: none; }
+  .rowsrc a:hover, .rowsrc a:focus-visible { text-decoration: underline; }
+  .warn-line { font-size: 12px; color: var(--warn); margin: 8px 0 0; line-height: 1.5; }
+  .prelim { font-size: 11px; color: var(--warn); font-weight: 600; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill { background: var(--accent-soft); color: var(--un-blue-ink); border-radius: var(--r-pill);
+    padding: 3px 10px; font-size: 12px; }
+  .empty-state { color: var(--muted-2); padding: 28px 8px; text-align: center; }
+
+  /* Print / save-as-PDF: the picker and toolbar are controls, the printed
+     document carries provenance and the decision-support register instead
+     (same pattern as the other pages); source links print their URLs. */
+  @media print {
+    header.site, footer.site, .picker, .toolbar, .hint { display: none !important; }
+    main { max-width: none; padding: 0; }
+    .cmp-section { border: 0; box-shadow: none; padding: 10px 0; margin-top: 8px; }
+    main::before { content: "Audience Intelligence Atlas · United Nations · country comparison. Figures are aggregated from the named institutional sources; differing surveys are flagged and gaps are shown rather than estimated.";
+      display: block; font-size: 11px; color: #555;
+      border-bottom: 1px solid #ccc; padding-bottom: 6px; margin-bottom: 8px; }
+    .sources a::after { content: " (" attr(href) ")"; }
+    body { background: #fff; }
+    table.data tr, .cmp-section h2 { break-inside: avoid; }
+  }
+
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#picker">Skip to the country picker</a>
+<header class="site">
+  <div class="brand">
+    <a href="index.html" aria-label="United Nations emblem, back to the map" style="display:block; line-height:0;">
+      <img class="logo" src="assets/un_emblem.png" alt="United Nations emblem" width="40" height="33">
+    </a>
+    <div>
+      <div class="un">United Nations</div>
+      <h1 class="title">Compare countries</h1>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <nav aria-label="Atlas pages">
+    <a href="index.html">Map</a>
+    <a href="topics.html">Topic Explorer</a>
+    <a href="finder.html">Market Finder</a>
+    <a href="compare.html" aria-current="page">Compare</a>
+    <a href="ask.html">AI Analyst</a>
+  </nav>
+</header>
+
+<main>
+  <p class="lead">Two countries' full media profiles in one view: connectivity, news habits, press
+  freedom, demographics and languages, with the source named on every row. A comparison is context,
+  not a ranking; where the two countries are measured by different surveys, the page says so. For a
+  recommendation, ask the <a href="ask.html">AI Analyst</a>.</p>
+
+  <div class="picker" id="picker" tabindex="-1">
+    <div class="field"><label for="sel-a">First country</label>
+      <select id="sel-a"><option value="">Choose a country…</option></select></div>
+    <div class="field"><label for="sel-b">Second country</label>
+      <select id="sel-b"><option value="">Choose a country…</option></select></div>
+    <button type="button" class="btn-quiet" id="swap" title="Swap the two columns">Swap</button>
+    <span class="hint">The address bar updates as you choose, so any comparison can be shared as a link.</span>
+  </div>
+
+  <div class="toolbar" id="toolbar" hidden>
+    <button type="button" class="btn-quiet" id="copy-link" title="Copy a link that reopens this exact comparison">Copy link</button>
+    <button type="button" class="btn-quiet" id="export-csv" title="Download every row of this comparison as a spreadsheet, sources and caveats included">Download CSV</button>
+    <button type="button" class="btn-quiet" id="print-page" title="Prints this comparison as a clean document; choose 'Save as PDF' in the print window to download it">Print / save PDF</button>
+    <span id="copy-done" role="status" aria-live="polite"></span>
+  </div>
+
+  <div id="cmp-status" role="status" aria-live="polite"></div>
+  <div id="result" tabindex="-1"><div class="empty-state">Choose two countries above to compare them.</div></div>
+</main>
+
+<footer class="site">
+  <div>© 2026 · United Nations · Audience Intelligence Atlas</div>
+  <div>A comparison is decision support, not a ranking; validate with local teams.</div>
+  <div><a href="https://github.com/Shakcoder/UN-Media-Consumption-Map-/issues/new" target="_blank" rel="noopener">Report an error</a></div>
+</footer>
+
+<script src="assets/atlas-csv.js"></script>
+<script>
+"use strict";
+
+let DATA = null;          // countries.json keyed by ISO3
+let A = "", B = "";       // selected ISO3 codes
+
+const esc = (s) => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+const NONE = "—";         // the site-wide empty marker: no data, never zero
+
+/* ---------- formatters ---------- */
+const fPct = (v) => v == null ? null : `${v}%`;
+const fNum = (v) => v == null ? null : Number(v).toLocaleString();
+const fMoney = (v) => v == null ? null : `$${Number(v).toLocaleString()}`;
+const fPlain = (v) => v == null || v === "" ? null : String(v);
+const fYesNo = (v) => v == null ? null : (v ? "yes" : "no");
+const fRank = (v) => v == null ? null : `#${v}`;
+
+/* ==========================================================================
+   ROW SPEC. Each row: label, get(c) -> display value or null, and optional
+   src(c) -> the source attribution for THAT country's value. Wherever the
+   dataset carries a per-field citation (the country's own `sources` block,
+   in "Organisation, detail | URL" form), the row reads THAT rather than a
+   hand-written attribution, so this page can never contradict the data's
+   own citations. A source is only ever shown beside a value that exists;
+   a null value renders as the site's standard "no data" marker. Sections
+   may add warnings (differing surveys, per-country survey notes).
+   ========================================================================== */
+const srcField = (key) => (c) => (c.sources || {})[key] || null;
+const joinList = (v) => Array.isArray(v) && v.length ? v.join(", ") : null;
+
+const SECTIONS = [
+  { title: "At a glance",
+    note: null,
+    rows: [
+      { label: "Region", get: c => fPlain([c.region, c.subregion].filter(Boolean).join(" · ")) },
+      { label: "Capital", get: c => fPlain(c.capital) },
+      { label: "Government", get: c => fPlain(c.government) },
+      { label: "Currency", get: c => fPlain(c.currency) },
+      { label: "Population", get: c => fNum(c.population), src: srcField("population") },
+      { label: "Area", get: c => c.area_km2 == null ? null : `${fNum(c.area_km2)} km²`, src: srcField("area_km2") },
+      { label: "GDP per capita", get: c => fMoney(c.gdp_per_capita_usd), src: srcField("gdp_per_capita_usd") },
+      { label: "In brief", text: true, get: c => fPlain(c.overview) },
+      { label: "Dominant industries", text: true, get: c => joinList(c.dominant_industries) },
+      { label: "Strategic focus areas", text: true, get: c => joinList(c.focus_areas) },
+      { label: "Topics of interest", text: true, get: c => joinList(c.topics_of_interest) },
+    ] },
+  { title: "Media landscape",
+    note: "Leading outlets are the country's best-known names, not a market-share ranking.",
+    rows: [
+      { label: "Leading TV", text: true, get: c => fPlain((c.media || {}).top_tv) },
+      { label: "Leading radio", text: true, get: c => fPlain((c.media || {}).top_radio) },
+      { label: "Leading online news", text: true, get: c => fPlain((c.media || {}).top_online_news) },
+      { label: "Most-used social platforms", text: true, get: c => fPlain((c.media || {}).top_social) },
+      { label: "Landscape in brief", text: true, get: c => fPlain((c.media || {}).landscape_note),
+        src: c => (c.media || {}).landscape_note_source },
+      { label: "TV in households", get: c => fPct((c.media || {}).tv_households_pct), src: srcField("tv_households_pct") },
+      { label: "Radio in households", get: c => fPct((c.media || {}).radio_households_pct), src: srcField("radio_households_pct") },
+    ] },
+  { title: "How people get news (survey)",
+    note: "Shares of survey respondents naming each channel as a news source. Survey methods and populations differ between programmes; treat cross-country gaps as indicative, never as precise.",
+    surveyKey: "news_consumption",
+    rows: [
+      { label: "Trust in news", get: c => fPct((c.news_consumption || {}).trust_in_news_pct) },
+      { label: "TV as a news source", get: c => fPct((c.news_consumption || {}).tv_as_news_source_pct) },
+      { label: "Radio as a news source", get: c => fPct((c.news_consumption || {}).radio_as_news_source_pct),
+        src: c => (c.news_consumption || {}).radio_source },
+      { label: "Online as a news source", get: c => fPct((c.news_consumption || {}).online_as_news_source_pct) },
+      { label: "Social media as a news source", get: c => fPct((c.news_consumption || {}).social_as_news_source_pct) },
+    ] },
+  { title: "News attention (survey, Americas only)",
+    note: "How often people follow the news at all: a deliberately separate question from the channel shares above, measured only by the AmericasBarometer.",
+    optional: true, surveyKey: "news_attention",
+    rows: [
+      { label: "Follows news daily", get: c => fPct((c.news_attention || {}).daily_pct) },
+      { label: "At least weekly", get: c => fPct((c.news_attention || {}).weekly_plus_pct) },
+      { label: "Never", get: c => fPct((c.news_attention || {}).never_pct) },
+    ] },
+  { title: "Social platform use (survey)",
+    note: "Share of survey respondents who use each platform. Available only where a survey measures it.",
+    optional: true, surveyKey: "platform_use",
+    rows: [
+      { label: "WhatsApp", get: c => fPct((c.platform_use || {}).whatsapp) },
+      { label: "Facebook", get: c => fPct((c.platform_use || {}).facebook) },
+      { label: "Instagram", get: c => fPct((c.platform_use || {}).instagram) },
+      { label: "TikTok", get: c => fPct((c.platform_use || {}).tiktok) },
+      { label: "YouTube", get: c => fPct((c.platform_use || {}).youtube) },
+      { label: "X", get: c => fPct((c.platform_use || {}).x) },
+      { label: "Uses none of these", get: c => fPct((c.platform_use || {}).none) },
+    ] },
+  { title: "Connectivity",
+    note: null,
+    rows: [
+      { label: "Internet users (share of population)", get: c => fPct((c.connectivity || {}).internet_pct), src: srcField("internet_pct") },
+      { label: "Mobile subscriptions per 100", get: c => fNum((c.connectivity || {}).mobile_per_100), src: srcField("mobile_per_100") },
+      { label: "Smartphone adoption", get: c => fPct((c.connectivity || {}).smartphone_pct), src: srcField("smartphone_pct") },
+      { label: "Fixed broadband per 100", get: c => fNum((c.connectivity || {}).fixed_broadband_per_100), src: srcField("fixed_broadband_per_100") },
+      { label: "4G+ mobile coverage (share of population)", get: c => fPct((c.connectivity || {}).mobile_4g_coverage_pct), src: srcField("mobile_4g_coverage_pct") },
+      { label: "Mobile data price (share of monthly income; lower is cheaper)", get: c => (c.connectivity || {}).mobile_data_price_pct_income == null ? null
+          : `${(c.connectivity || {}).mobile_data_price_pct_income}% of income`,
+        src: srcField("mobile_data_price_pct_income") },
+      { label: "Mobile connectivity index", get: c => (c.connectivity || {}).mobile_connectivity_index == null ? null
+          : `${(c.connectivity || {}).mobile_connectivity_index}/100`,
+        src: c => (c.connectivity || {}).mobile_connectivity_index_source },
+      { label: "Financial account ownership (adults 15+)", get: c => fPct((c.connectivity || {}).financial_account_pct), src: srcField("financial_account_pct") },
+    ] },
+  { title: "Information freedom",
+    note: "Environment scores from independent monitors. Rankings cover the countries each monitor assesses, not all 195.",
+    rows: [
+      { label: "Press-freedom rank", get: c => fRank((c.information_freedom || {}).press_freedom_rank),
+        src: srcField("press_freedom_rank") },
+      { label: "Press-freedom score", get: c => (c.information_freedom || {}).press_freedom_score == null ? null
+          : `${(c.information_freedom || {}).press_freedom_score}/100`,
+        src: srcField("press_freedom_rank") },
+      { label: "Internet freedom", get: c => {
+          const f = c.information_freedom || {};
+          if (f.internet_freedom_score == null && !f.internet_freedom_status) return null;
+          return [f.internet_freedom_score != null ? `${f.internet_freedom_score}/100` : null,
+                  f.internet_freedom_status].filter(Boolean).join(" · ");
+        }, src: srcField("internet_freedom") },
+      { label: "Political freedom", get: c => {
+          const f = c.information_freedom || {};
+          if (f.political_freedom_score == null && !f.political_freedom_status) return null;
+          return [f.political_freedom_score != null ? `${f.political_freedom_score}/100` : null,
+                  f.political_freedom_status].filter(Boolean).join(" · ");
+        }, src: srcField("political_freedom") },
+      { label: "Electoral democracy", get: c => fYesNo((c.information_freedom || {}).electoral_democracy),
+        src: srcField("political_freedom") },
+    ] },
+  { title: "Society",
+    note: null,
+    rows: [
+      { label: "Median age", get: c => (c.demographics || {}).median_age == null ? null : `${(c.demographics || {}).median_age} years`,
+        src: c => (c.demographics || {}).median_age_source },
+      { label: "Urban population", get: c => fPct((c.demographics || {}).urban_pct), src: srcField("urban_pct") },
+      { label: "Literacy", get: c => fPct((c.demographics || {}).literacy_pct), src: srcField("literacy_pct") },
+      { label: "Life expectancy", get: c => (c.demographics || {}).life_expectancy == null ? null : `${(c.demographics || {}).life_expectancy} years`,
+        src: srcField("life_expectancy") },
+      { label: "Electricity access", get: c => fPct((c.demographics || {}).electricity_pct), src: srcField("electricity_pct") },
+      { label: "Education spending", get: c => (c.demographics || {}).edu_spending_gdp_pct == null ? null
+          : `${(c.demographics || {}).edu_spending_gdp_pct}% of GDP`, src: srcField("edu_spending_gdp_pct") },
+      { label: "Under 15", get: c => fPct((c.demographics || {}).age_0_14_pct), src: srcField("age_0_14_pct") },
+      { label: "15 to 64", get: c => fPct((c.demographics || {}).age_15_64_pct), src: srcField("age_15_64_pct") },
+      { label: "65 and over", get: c => fPct((c.demographics || {}).age_65_plus_pct), src: srcField("age_65_plus_pct") },
+    ] },
+];
+
+/* ---------- rendering ---------- */
+
+/* Dataset citations follow the repo convention "Organisation, detail | URL"
+   (any part optional). The URL becomes a link, never dead text, matching
+   the Map's own citation renderer. */
+function parseCite(s) {
+  if (!s) return null;
+  const m = String(s).match(/https?:\/\/\S+/);
+  const url = m ? m[0] : null;
+  const text = String(s).replace(/https?:\/\/\S+/, "")
+    .split("|").map(t => t.trim()).filter(Boolean).join(" · ");
+  return { text: text || url || "", url };
+}
+const citeLink = (url, title) => url
+  ? ` <a href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="${esc(title)}" aria-label="${esc(title)}">↗</a>`
+  : "";
+
+/* A source is only ever attributed to a value that exists: a monitor that
+   does not assess a country must not be cited beside that country's gap. */
+function sourceLine(row, ca, cb, va, vb) {
+  if (!row.src) return "";
+  const sa = va == null ? null : row.src(ca);
+  const sb = vb == null ? null : row.src(cb);
+  if (!sa && !sb) return "";
+  const pa = parseCite(sa), pb = parseCite(sb);
+  let inner;
+  if (pa && pb) {
+    if (pa.text === pb.text) {
+      inner = esc(pa.text)
+        + (pa.url === pb.url
+          ? citeLink(pa.url, "Source")
+          : citeLink(pa.url, `Source for ${ca.name}`) + citeLink(pb.url, `Source for ${cb.name}`));
+    } else {
+      inner = `${esc(ca.name)}: ${esc(pa.text)}${citeLink(pa.url, `Source for ${ca.name}`)}`
+        + ` · ${esc(cb.name)}: ${esc(pb.text)}${citeLink(pb.url, `Source for ${cb.name}`)}`;
+    }
+  } else {
+    const p = pa || pb, cn = pa ? ca : cb;
+    inner = `${esc(cn.name)}: ${esc(p.text)}${citeLink(p.url, `Source for ${cn.name}`)}`;
+  }
+  return `<span class="rowsrc">${inner}</span>`;
+}
+
+function sectionHtml(sec, ca, cb) {
+  // optional sections appear only when at least one country has any value
+  const cells = sec.rows.map(r => [r, r.get(ca), r.get(cb)]);
+  if (sec.optional && cells.every(([, va, vb]) => va == null && vb == null)) return "";
+  const body = cells.map(([r, va, vb]) => `
+    <tr><th scope="row">${esc(r.label)}${sourceLine(r, ca, cb, va, vb)}</th>
+      <td class="${r.text ? "txt" : "val"}">${va == null ? NONE : esc(va)}</td>
+      <td class="${r.text ? "txt" : "val"}">${vb == null ? NONE : esc(vb)}</td></tr>`).join("");
+
+  // survey-bearing sections: name the programme(s), flag a mismatch, and
+  // carry each country's own survey caveat
+  let warns = "";
+  if (sec.surveyKey) {
+    const sa = (ca[sec.surveyKey] || {}).source, sb = (cb[sec.surveyKey] || {}).source;
+    if (sa && sb && sa !== sb) {
+      warns += `<p class="warn-line">⚠ Different surveys measure these two countries (${esc(ca.name)}: ${esc(sa)} · ${esc(cb.name)}: ${esc(sb)}). Their methods, years and populations differ; read gaps between the columns as indicative only.</p>`;
+    } else if (sa || sb) {
+      const one = sa && sb ? sa : (sa || sb);
+      const who = sa && sb ? "" : ` (${esc(sa ? ca.name : cb.name)} only)`;
+      warns += `<p class="sect-note" style="margin:8px 0 0">Source: ${esc(one)}${who}.</p>`;
+    }
+    for (const c of [ca, cb]) {
+      const n = (c[sec.surveyKey] || {}).survey_note;
+      if (n) warns += `<p class="warn-line">⚠ ${esc(c.name)}: ${esc(n)}</p>`;
+    }
+  }
+
+  return `<section class="cmp-section">
+    <h2>${esc(sec.title)}</h2>
+    ${sec.note ? `<p class="sect-note">${esc(sec.note)}</p>` : ""}
+    <table class="data">
+      <thead><tr><th style="width:34%">Indicator</th>
+        <th class="cname">${esc(ca.flag || "")} ${esc(ca.name)}</th>
+        <th class="cname">${esc(cb.flag || "")} ${esc(cb.name)}</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table>${warns}</section>`;
+}
+
+function languagesHtml(ca, cb) {
+  const pills = (c) => (c.languages_detail || []).length
+    ? `<div class="pills">${c.languages_detail.map(l =>
+        `<span class="pill">${esc(l.language)} · ${esc(l.pct)}%${l.official ? " · official" : ""}</span>`).join("")}</div>`
+    : `<span>${NONE}</span>`;
+  return `<section class="cmp-section">
+    <h2>Languages</h2>
+    <p class="sect-note">Unicode CLDR territory data: share of population, largest first.</p>
+    <table class="data">
+      <thead><tr><th style="width:34%">Indicator</th>
+        <th class="cname">${esc(ca.flag || "")} ${esc(ca.name)}</th>
+        <th class="cname">${esc(cb.flag || "")} ${esc(cb.name)}</th></tr></thead>
+      <tbody><tr><th scope="row">Languages spoken</th>
+        <td class="txt">${pills(ca)}</td><td class="txt">${pills(cb)}</td></tr></tbody>
+    </table></section>`;
+}
+
+function render() {
+  const el = document.getElementById("result");
+  const tb = document.getElementById("toolbar");
+  const status = document.getElementById("cmp-status");
+  if (!DATA || !A || !B || !DATA[A] || !DATA[B]) {
+    el.innerHTML = `<div class="empty-state">Choose two countries above to compare them.</div>`;
+    tb.hidden = true;
+    status.textContent = "";
+    return;
+  }
+  if (A === B) {
+    el.innerHTML = `<div class="empty-state">Those are the same country. Choose two different countries to compare.</div>`;
+    tb.hidden = true;
+    status.textContent = "Both selections are the same country; choose two different countries.";
+    return;
+  }
+  const ca = DATA[A], cb = DATA[B];
+  let prelim = "";
+  for (const c of [ca, cb]) {
+    if (c.confidence === "preliminary") {
+      prelim += `<p class="warn-line">⚠ ${esc(c.name)}'s profile is preliminary: no media survey backs it yet, so several rows will show no data.</p>`;
+    }
+  }
+  el.innerHTML = prelim
+    + SECTIONS.map(s => sectionHtml(s, ca, cb)).join("")
+    + languagesHtml(ca, cb)
+    + `<div class="sources"><span class="fn-label">Sources and method</span><ol>
+      <li>Every row names its source beside the indicator or beneath the section; the full citation
+        list for each country is on its profile on the <a href="index.html">Map</a> (Sources tab).</li>
+      <li>A ${NONE} means no approved source measures it; the Atlas shows the gap rather than
+        estimating. Survey-based rows keep each survey's own caveats, and a comparison across two
+        different survey programmes is flagged as indicative.</li>
+      <li>This page compares the country dataset (data/countries.json, refreshed weekly). Live daily
+        layers such as trending searches and reading lists are on each country's Map profile.</li>
+    </ol></div>`;
+  tb.hidden = false;
+  // announce the swap to screen readers (the selects keep focus, so the
+  // injected comparison would otherwise arrive silently)
+  const nWarn = el.querySelectorAll(".warn-line").length;
+  const nSect = el.querySelectorAll(".cmp-section").length;
+  status.textContent = `Comparing ${ca.name} and ${cb.name}: ${nSect} sections`
+    + (nWarn ? `, ${nWarn} caveat ${nWarn === 1 ? "warning" : "warnings"}.` : ".");
+}
+
+/* ---------- CSV ---------- */
+function exportCsv() {
+  if (!A || !B || A === B || !DATA[A] || !DATA[B]) return;
+  const ca = DATA[A], cb = DATA[B];
+  const rows = [
+    [`Audience Intelligence Atlas · country comparison: ${ca.name} (${A}) and ${cb.name} (${B})`],
+    ["Note", "A comparison is context, not a ranking. An empty cell means no approved source measures it; survey rows carry their programme and caveats, and figures from different survey programmes are indicative when compared across countries."],
+    [],
+    ["section", "indicator", ca.name, cb.name, "source"],
+  ];
+  for (const sec of SECTIONS) {
+    const cells = sec.rows.map(r => [r, r.get(ca), r.get(cb)]);
+    if (sec.optional && cells.every(([, va, vb]) => va == null && vb == null)) continue;
+    for (const [r, va, vb] of cells) {
+      let src = "";
+      if (r.src) {
+        // same guard as the page: no citation beside a value that is absent
+        const sa = va == null ? null : r.src(ca);
+        const sb = vb == null ? null : r.src(cb);
+        src = sa && sb
+          ? (sa === sb ? sa : `${ca.name}: ${sa}; ${cb.name}: ${sb}`)
+          : (sa ? `${ca.name}: ${sa}` : sb ? `${cb.name}: ${sb}` : "");
+      }
+      rows.push([sec.title, r.label, va == null ? "" : va, vb == null ? "" : vb, src]);
+    }
+    if (sec.surveyKey) {
+      const sa = (ca[sec.surveyKey] || {}).source, sb = (cb[sec.surveyKey] || {}).source;
+      if (sa || sb) rows.push([sec.title, "survey source", sa || "", sb || "",
+        sa && sb && sa !== sb ? "DIFFERENT SURVEYS: cross-country gaps are indicative only" : ""]);
+      for (const [c, name] of [[ca, ca.name], [cb, cb.name]]) {
+        const n = (c[sec.surveyKey] || {}).survey_note;
+        if (n) rows.push([sec.title, "survey caveat", name === ca.name ? n : "", name === cb.name ? n : "", ""]);
+      }
+    }
+  }
+  const langs = (c) => (c.languages_detail || [])
+    .map(l => `${l.language} ${l.pct}%${l.official ? " (official)" : ""}`).join("; ");
+  rows.push(["Languages", "languages spoken", langs(ca), langs(cb), "Unicode CLDR: share of population"]);
+  AtlasCSV.download(`atlas-compare-${A}-${B}.csv`, rows);
+}
+
+/* ---------- wiring ---------- */
+function setUrl() {
+  const p = new URLSearchParams();
+  if (A) p.set("a", A);
+  if (B) p.set("b", B);
+  history.replaceState(null, "", p.toString() ? `?${p}` : location.pathname);
+}
+
+(async function init() {
+  const selA = document.getElementById("sel-a"), selB = document.getElementById("sel-b");
+  try {
+    const r = await fetch("data/countries.json", { cache: "no-cache" });
+    if (!r.ok) throw new Error(`the dataset request returned HTTP ${r.status}`);
+    const all = await r.json();
+    DATA = {};
+    for (const [iso, c] of Object.entries(all)) {
+      if (c && typeof c === "object" && c.name) DATA[iso] = c;   // skip file metadata keys
+    }
+  } catch (err) {
+    document.getElementById("result").innerHTML =
+      `<div class="empty-state">The country dataset could not be loaded. (${esc(err.message)})</div>`;
+    return;
+  }
+  const opts = Object.entries(DATA).sort((x, y) => x[1].name.localeCompare(y[1].name))
+    .map(([iso, c]) => `<option value="${esc(iso)}">${esc(c.flag ? c.flag + " " : "")}${esc(c.name)}</option>`)
+    .join("");
+  selA.innerHTML = `<option value="">Choose a country…</option>` + opts;
+  selB.innerHTML = `<option value="">Choose a country…</option>` + opts;
+
+  const q = new URLSearchParams(location.search);
+  const qa = (q.get("a") || "").toUpperCase(), qb = (q.get("b") || "").toUpperCase();
+  if (DATA[qa]) { A = qa; selA.value = qa; }
+  if (DATA[qb]) { B = qb; selB.value = qb; }
+
+  selA.addEventListener("change", () => { A = selA.value; setUrl(); render(); });
+  selB.addEventListener("change", () => { B = selB.value; setUrl(); render(); });
+  document.getElementById("swap").addEventListener("click", () => {
+    [A, B] = [B, A]; selA.value = A; selB.value = B; setUrl(); render();
+  });
+  document.getElementById("copy-link").addEventListener("click", async () => {
+    const done = document.getElementById("copy-done");
+    try {
+      await navigator.clipboard.writeText(location.href);
+      done.textContent = "Link copied.";
+    } catch (e) {
+      done.textContent = "Copy the address bar: the link is already up to date.";
+    }
+    setTimeout(() => { done.textContent = ""; }, 4000);
+  });
+  document.getElementById("export-csv").addEventListener("click", exportCsv);
+  document.getElementById("print-page").addEventListener("click", () => window.print());
+
+  render();
+})();
+</script>
+</body>
+</html>

@@ -29,7 +29,7 @@ These files ARE the site. Every page loads them straight from the repo — nothi
 
 | File | Written by | Cadence | Which pages read it |
 |---|---|---|---|
-| `data/countries.json` | weekly refresh | Mondays (or minutes after you upload a changed script/static file) | Map, AI Analyst, Market Finder |
+| `data/countries.json` | weekly refresh | Mondays (or minutes after you upload a changed script/static file) | Map, AI Analyst, Market Finder, Compare |
 | `data/trends/topic_intelligence.json` | daily trend engine | daily, after the 16:05 UTC run (plus intraday pulse snapshots for searches/Bluesky) | Topic Explorer, Map, AI Analyst |
 | `data/topics.json` | `scripts/build_topic_registry.py` (manual, rare) | only when the topic list changes | AI Analyst, Market Finder (the topic list) |
 | `data/platform_web_shares.json` | weekly refresh, via `scripts/fetch_statcounter.py` | Mondays | Map — the "social web-traffic share" block on a country's Media tab |

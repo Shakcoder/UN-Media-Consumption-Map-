@@ -10,7 +10,7 @@ what actually needs a human.*
 ## What this is
 
 The Atlas answers one question for UN communications officers: **where and how
-should we communicate, in any of 195 countries?** It is a static website — four
+should we communicate, in any of 195 countries?** It is a static website — five
 pages, no server, no database, no login, total running cost **$0**:
 
 | Page | What it does |
@@ -18,6 +18,7 @@ pages, no server, no database, no login, total running cost **$0**:
 | **Map** (`index.html`) | Country profiles: media landscape, connectivity, press freedom, demographics — every figure cited |
 | **Topic Explorer** (`topics.html`) | What the world is looking up, tracked daily across 22 languages |
 | **Market Finder** (`finder.html`) | "We have a campaign — which countries should get it?" |
+| **Compare** (`compare.html`) | Two countries' full profiles side by side, source named on every row, differing surveys flagged |
 | **AI Analyst** (`ask.html`) | Free-text questions, evidence-backed answers. Deterministic — it computes answers from the Atlas's own data in the visitor's browser and cannot invent figures |
 
 **Sharing what the Atlas produces.** Analyst answers and Market Finder screenings
