@@ -196,6 +196,16 @@ function buildNameIndex() {
     if (!c || !c.name) continue;
     const full = c.name.toLowerCase().trim();
     NAME_TO_ISO[full] = iso;
+    // the display convention uses name_full ("Democratic People's Republic
+    // of Korea") — questions built from displayed names must resolve too
+    if (c.name_full && c.name_full.toLowerCase() !== full) {
+      NAME_TO_ISO[c.name_full.toLowerCase().trim()] = iso;
+      // questions pass through normalize() (which strips "'s"), so the
+      // normalized form must be indexed too or "People's Republic" can
+      // never match and the stray "korea" alias wins instead
+      const nrm = normalize(c.name_full).trim();
+      if (nrm && !(nrm in NAME_TO_ISO)) NAME_TO_ISO[nrm] = iso;
+    }
     // normalize() turns hyphens into spaces, so hyphenated names need a
     // space-separated variant too ("guinea-bissau" → "guinea bissau")
     if (full.includes("-")) NAME_TO_ISO[full.replace(/-/g, " ")] = iso;

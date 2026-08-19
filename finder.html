@@ -488,11 +488,15 @@ $("print-screen").addEventListener("click", () => { window.print(); });
 /* ---------- "Why is country X (not) here?" ---------- */
 function renderCheck() {
   if (!LAST_RES) return;
-  const q = $("check-country").value.trim().toLowerCase();
+  // Accept whatever form the page itself shows: "Seychelles (SYC)" from
+  // the lists and autocomplete, the plain name, or the bare ISO3 code.
+  // The display convention added the code — the matcher must speak it too.
+  const stripCode = (s) => s.toLowerCase().replace(/\s*\([a-z]{3}\)\s*$/, "").trim();
+  const q = stripCode($("check-country").value);
   const out = $("check-answer");
   if (!q) { out.innerHTML = ""; return; }
   const { res, language, langLabel } = LAST_RES;
-  const ri = res.ranked.findIndex(r => r.name.toLowerCase() === q || r.iso.toLowerCase() === q);
+  const ri = res.ranked.findIndex(r => r.name.toLowerCase() === q || r.iso.toLowerCase() === q || stripCode(r.label || "") === q);
   if (ri >= 0) {
     const r = res.ranked[ri];
     const parts = [];
@@ -511,7 +515,7 @@ function renderCheck() {
     out.innerHTML = parts.join("<br>");
     return;
   }
-  const ex = res.excluded.find(x => x.name.toLowerCase() === q || x.iso.toLowerCase() === q);
+  const ex = res.excluded.find(x => x.name.toLowerCase() === q || x.iso.toLowerCase() === q || stripCode(x.name) === q);
   if (ex) {
     out.innerHTML = `<strong>${esc(ex.name)} (${esc(ex.iso)})</strong> is <strong>not ranked</strong>: ${esc(ex.reason)}. ` +
       `A country with no data is not a country that scored badly; it is excluded by name so the gap stays visible.`;
