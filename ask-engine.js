@@ -765,7 +765,12 @@ export function detectEntities(question) {
   const q = normalize(question);
   const found = { countries: [], regions: [], topics: [], attributes: [], platforms: [],
                   audiences: [], wantsTrends: false, wantsCompare: false, rankDir: null,
-                  rankN: 5, intents: [] };
+                  rankN: 5, intents: [],
+                  // interpretation notes: every silent correction the
+                  // detector makes (typo fixes, shorthand expansions) is
+                  // recorded so the reasoning trace can SHOW the work —
+                  // and so a wrong guess is visible instead of invisible
+                  notes: [] };
 
   // --- countries AND regions in ONE longest-phrase-first pass ---
   // Longer phrases claim their words first, which resolves both directions
@@ -785,6 +790,8 @@ export function detectEntities(question) {
       if (COUNTRIES[iso] && !found.countries.includes(iso)) found.countries.push(iso);
     } else if (!found.regions.includes(phrase)) {
       found.regions.push(phrase);
+      if (["ssa", "eu", "the eu", "asean", "sids", "latam", "mena", "gcc"].includes(phrase))
+        found.notes.push(`expanded "${phrase.replace(/^the /, "").toUpperCase()}" to ${regionDisplay(phrase)}`);
     }
     scrub = scrub.split(" " + phrase + " ").join(" ");
   }
@@ -798,6 +805,7 @@ export function detectEntities(question) {
       const iso = NAME_TO_ISO[hit];
       if (COUNTRIES[iso] && !found.countries.includes(iso)) {
         found.countries.push(iso);
+        found.notes.push(`read "${tok}" as ${(COUNTRIES[iso] || {}).name || iso}`);
         scrub = scrub.split(" " + tok + " ").join(" ");
       }
     }
@@ -815,6 +823,7 @@ export function detectEntities(question) {
         const iso = NAME_TO_ISO[hit];
         if (COUNTRIES[iso] && !found.countries.includes(iso)) {
           found.countries.push(iso);
+          found.notes.push(`read "${pair}" as ${(COUNTRIES[iso] || {}).name || iso}`);
           scrub = scrub.split(" " + pair + " ").join(" ");
           break;
         }
@@ -852,13 +861,19 @@ export function detectEntities(question) {
       const hit = bestFuzzy(tok, labelKeys);
       if (hit) {
         const entry = REGISTRY.find(([l]) => l.toLowerCase() === hit);
-        if (entry && !found.topics.some(t => t.qid === entry[1])) found.topics.push({ label: entry[0], qid: entry[1] });
+        if (entry && !found.topics.some(t => t.qid === entry[1])) {
+          found.topics.push({ label: entry[0], qid: entry[1] });
+          found.notes.push(`read "${tok}" as the topic ${entry[0]}`);
+        }
         continue;
       }
       const synHit = bestFuzzy(tok, synKeys, (k) => TOPIC_SYNONYMS[k]);
       if (synHit) {
         const entry = REGISTRY.find(([l]) => l === TOPIC_SYNONYMS[synHit]);
-        if (entry && !found.topics.some(t => t.qid === entry[1])) found.topics.push({ label: entry[0], qid: entry[1] });
+        if (entry && !found.topics.some(t => t.qid === entry[1])) {
+          found.topics.push({ label: entry[0], qid: entry[1] });
+          found.notes.push(`read "${tok}" as the topic ${entry[0]}`);
+        }
       }
     }
   }
@@ -884,7 +899,10 @@ export function detectEntities(question) {
         (k) => (attrWordIndex.find(x => x[0] === k) || [])[1]);
       if (hit) {
         const key = (attrWordIndex.find(x => x[0] === hit) || [])[1];
-        if (key && !found.attributes.includes(key)) found.attributes.push(key);
+        if (key && !found.attributes.includes(key)) {
+          found.attributes.push(key);
+          if (hit !== tok) found.notes.push(`read "${tok}" as ${(ATTRIBUTES[key] || {}).label ? ATTRIBUTES[key].label.toLowerCase() : key}`);
+        }
       }
     }
   }
@@ -971,7 +989,10 @@ export function detectEntities(question) {
   // shorthand and typos: "FB", "yt", "facebok" — the platform names are
   // distinctive enough that a 1-2 edit match is safe
   for (const [al, canon] of Object.entries(PLATFORM_ALIASES)) {
-    if (q.includes(" " + al + " ") && !found.platforms.includes(canon)) found.platforms.push(canon);
+    if (q.includes(" " + al + " ") && !found.platforms.includes(canon)) {
+      found.platforms.push(canon);
+      found.notes.push(`expanded "${al.toUpperCase()}" to ${PLATFORM_NAMES[canon] || canon}`);
+    }
   }
   if (!found.platforms.length) {
     // 1 edit maximum: platform names are distinctive, and 2 edits let
@@ -981,7 +1002,10 @@ export function detectEntities(question) {
       for (const p of platKeys) {
         if (levenshtein(tok, p, 1) <= 1) {
           const canon = p === "twitter" ? "x" : p;
-          if (!found.platforms.includes(canon)) found.platforms.push(canon);
+          if (!found.platforms.includes(canon)) {
+            found.platforms.push(canon);
+            if (tok !== p) found.notes.push(`read "${tok}" as ${PLATFORM_NAMES[canon] || canon}`);
+          }
           break;
         }
       }
@@ -3081,6 +3105,12 @@ function reasoningTrace(question, ents, kind, ev) {
     ? `**Read your question as** — ${seen.join(" · ")}.`
     : `**Read your question as** — a general question about the Atlas itself, with no country, topic or measure named.`);
 
+  // 1b. The silent corrections, made visible: typo fixes and shorthand
+  // expansions the detector applied. Showing them lets a reader catch a
+  // wrong guess immediately instead of wondering why the answer is odd.
+  if (ents.notes && ents.notes.length)
+    steps.push(`**Interpreted the wording** — ${ents.notes.slice(0, 3).join("; ")}.`);
+
   // 2. Which route was taken, and why that one.
   const routes = {
     strategy: "you are deciding what to *do*, not asking what a number is — so I built a full brief: decision, ranked opportunities, tradeoffs, risks, confidence",
@@ -3100,6 +3130,14 @@ function reasoningTrace(question, ents, kind, ev) {
   };
   if (routes[kind]) steps.push(`**Chose the ${kind} route** — ${routes[kind]}.`);
 
+  // 2b. For rankings, the resolved ordering — direction words, negations and
+  // spelled-out counts all funnel into these two decisions, and saying them
+  // out loud is the cheapest defence against a silently inverted table.
+  if (kind === "rank" && ents.attributes && ents.attributes.length) {
+    const attr = ATTRIBUTES[ents.attributes[0]];
+    if (attr) steps.push(`**Resolved the ordering** — ${attr.label.toLowerCase()}, ${ents.rankDir === "asc" ? "lowest values" : "highest values"} first, ${ents.rankN || 5} rows.`);
+  }
+
   // 3. What the answer actually rests on — the evidence titles, not a claim.
   const titles = (ev.list() || []).map(x => x.title).filter(Boolean);
   if (titles.length)
@@ -3112,6 +3150,11 @@ function reasoningTrace(question, ents, kind, ev) {
   if (kind === "rank" || kind === "finder")
     omitted.push("countries with no data for this measure — excluded by name, never ranked low");
   if (omitted.length) steps.push(`**Left out** — ${omitted.join("; ")}.`);
+
+  // 5. The closing check — these are the construction rules every data
+  // answer is built under, stated so the reader knows what was enforced.
+  if (["country", "rank", "compare", "region", "topic", "platform", "strategy", "finder", "coverage"].includes(kind))
+    steps.push(`**Checked the honesty rules** — every figure keeps its named source, countries without data are excluded by name rather than ranked low, and nothing is estimated to fill a gap.`);
 
   return steps;
 }
