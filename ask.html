@@ -47,7 +47,14 @@
   .thinking span { animation: blink 1.2s infinite; } .thinking span:nth-child(2) { animation-delay: .2s; }
   .thinking span:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0%,100% { opacity: .2; } 50% { opacity: 1; } }
-  @media (prefers-reduced-motion: reduce) { .thinking span { animation: none; } }
+  /* Live reasoning replay: the engine's own trace, one step at a time */
+  .think-step { animation: stepIn .3s ease; color: var(--muted-2); font-size: 12.5px;
+    line-height: 1.5; padding-left: 14px; position: relative; }
+  .think-step::before { content: "▸"; position: absolute; left: 0; font-size: 10px; top: 2px; }
+  .think-step.done::before { content: "✓"; color: var(--un-blue); }
+  .think-step:not(.done)::after { content: "…"; animation: blink 1.2s infinite; }
+  @keyframes stepIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .thinking span, .think-step { animation: none; } }
 
   .suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
   .chip { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-pill);
@@ -412,8 +419,67 @@ function addThinking() {
   el.setAttribute("aria-hidden", "true");
   el.innerHTML = "Consulting the Atlas<span>.</span><span>.</span><span>.</span>";
   chat.appendChild(el); el.scrollIntoView({ behavior: "smooth" });
+  // The replay is decorative (aria-hidden), so assistive tech must still
+  // hear that work is happening — one polite announcement, not step spam
+  const sr = document.createElement("div");
+  sr.id = "thinking-sr"; sr.setAttribute("role", "status");
+  sr.style.cssText = "position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)";
+  sr.textContent = "Working on the answer";
+  chat.appendChild(sr);
 }
-function removeThinking() { const el = document.getElementById("thinking"); if (el) el.remove(); }
+function removeThinking() {
+  const el = document.getElementById("thinking"); if (el) el.remove();
+  const sr = document.getElementById("thinking-sr"); if (sr) sr.remove();
+}
+
+/* ---------- Live reasoning replay ----------
+ * Before an answer appears, its reasoning trace plays step by step in the
+ * thinking bubble. Nothing here is invented or padded: these are exactly
+ * the steps the engine recorded for THIS answer — the same ones kept under
+ * "How I got this" — replayed at reading pace so the analyst's work is
+ * visible rather than instant. Honesty rule: never animate steps that
+ * didn't happen, and never delay longer than it takes to show real ones.
+ * Reduced-motion readers get the answer immediately, as before. */
+const REDUCED_MOTION = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function liveStepText(step) {
+  let plain = step.replace(/\*/g, "");
+  const swaps = [
+    [/^Read your question as/, "Reading your question"],
+    [/^Interpreted the wording/, "Interpreting the wording"],
+    [/^Chose the (\w+) route/, "Choosing the $1 route"],
+    [/^Resolved the ordering/, "Resolving the ordering"],
+    [/^Drew on/, "Gathering evidence"],
+    [/^Left out/, "Deciding what to leave out"],
+    [/^Checked the honesty rules/, "Checking the honesty rules"],
+  ];
+  for (const [re, to] of swaps) { if (re.test(plain)) { plain = plain.replace(re, to); break; } }
+  return plain.length > 130 ? plain.slice(0, 127) + "…" : plain;
+}
+async function playThinking(reasoning) {
+  const el = document.getElementById("thinking");
+  // A hidden tab throttles timers — the replay must NEVER hold a computed
+  // answer hostage for a viewer who isn't there. Same for the hard cap:
+  // if anything slows the timers, the answer wins over the animation.
+  if (!el || REDUCED_MOTION || document.hidden || !reasoning || !reasoning.length) return;
+  const deadline = performance.now() + 6500;
+  el.innerHTML = "";
+  const steps = reasoning.slice(0, 6).map(liveStepText);
+  let first = true;
+  for (const s of steps) {
+    const row = document.createElement("div");
+    row.className = "think-step"; row.textContent = s;
+    el.appendChild(row);
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (document.hidden || performance.now() > deadline) { row.classList.add("done"); break; }
+    // reading pace: a beat to read each line, a touch longer for the
+    // meatier middle steps — all of it real work being replayed
+    await new Promise(r => setTimeout(r, first ? 550 : 850));
+    first = false;
+    row.classList.add("done");
+  }
+  if (!document.hidden && performance.now() < deadline)
+    await new Promise(r => setTimeout(r, 250));
+}
 
 /* ---------- Ask flow: local engine first, worker as optional upgrade ---------- */
 async function askLocal(question) {
@@ -433,6 +499,7 @@ async function askLocal(question) {
   logQuestion(question, r.clarify ? "clarify"
     : /couldn't match that to the Atlas/.test(r.answer || "") ? "no-match" : "answered");
   if (r.clarify) { addClarify(r.clarify); return; }
+  await playThinking(r.reasoning);
   addAnalyst(r.answer, r.evidence, "", r.followups, question, r.reasoning);
 }
 

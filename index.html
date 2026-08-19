@@ -2375,12 +2375,17 @@ function openDetail(iso) {
         // Wrap-band copies get the highlight too, but only the PRIMARY
         // feature steers the flight — flying to a ±360° copy would hurl
         // the camera across the world.
+        // The flight can throw ("Invalid LatLng (NaN, NaN)") if the map
+        // hasn't settled yet — e.g. openDetail on page load or mid-flyTo.
+        // A failed camera move must never stop the panel from opening.
         if (!layer.feature.properties._worldCopy) {
-          const b = layer.getBounds(), o = { maxZoom: 4, padding: [50, 50] };
-          if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
-            map.fitBounds(b, o);
-          else
-            map.flyToBounds(b, { ...o, duration: 0.7, easeLinearity: 0.2 });
+          try {
+            const b = layer.getBounds(), o = { maxZoom: 4, padding: [50, 50] };
+            if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+              map.fitBounds(b, o);
+            else
+              map.flyToBounds(b, { ...o, duration: 0.7, easeLinearity: 0.2 });
+          } catch(e) {}
         }
       } else {
         try { countryLayer.resetStyle(layer); } catch(e) {}
