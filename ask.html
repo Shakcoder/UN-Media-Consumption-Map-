@@ -417,8 +417,18 @@ function addThinking() {
   el.setAttribute("aria-hidden", "true");
   el.innerHTML = "Consulting the Atlas<span>.</span><span>.</span><span>.</span>";
   chat.appendChild(el); el.scrollIntoView({ behavior: "smooth" });
+  // The replay is decorative (aria-hidden), so assistive tech must still
+  // hear that work is happening — one polite announcement, not step spam
+  const sr = document.createElement("div");
+  sr.id = "thinking-sr"; sr.setAttribute("role", "status");
+  sr.style.cssText = "position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)";
+  sr.textContent = "Working on the answer";
+  chat.appendChild(sr);
 }
-function removeThinking() { const el = document.getElementById("thinking"); if (el) el.remove(); }
+function removeThinking() {
+  const el = document.getElementById("thinking"); if (el) el.remove();
+  const sr = document.getElementById("thinking-sr"); if (sr) sr.remove();
+}
 
 /* ---------- Live reasoning replay ----------
  * Before an answer appears, its reasoning trace plays step by step in the

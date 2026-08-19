@@ -177,6 +177,7 @@ const FUZZY_STOPWORDS = new Set(("about media radio trust trends trend where whi
   "target young youth women rural urban digital internet mobile phone television broadcast press freedom score " +
   "data source sources right now week today please thanks hello focus strategy channel channels format formats " +
   "highest lowest largest smallest better worse worst rising falling popular attention interest interested local " +
+  "rank ranked ranks " +
   "national levels level rates rate percent percentage share tell show give list find help plan advice info " +
   "trending comparing ranking targeting reaching publishing measuring growing changing " +
   "child children woman women man men adult adults human humans person little large small major minor " +
@@ -747,7 +748,9 @@ function normalize(question) {
     .replace(/\bnz\b/g, " new zealand ")
     .replace(/\brok\b/g, " south korea ")
     .replace(/\baus\b/g, " australia ")
-    .replace(/\bthe car\b/g, " central african republic ")
+    // NO "the car" mapping: normalize lowercases first, so it also caught
+    // "listen to the radio in the car" — ordinary in-car media use. The
+    // country stays reachable by name and by "centrafrique".
     .replace(/\b(both|the) koreas\b/g, " south korea and north korea ")
     .replace(/\bmob(?= (internet|data|penetration|subs\w*|coverage))\b/g, " mobile ")
     .replace(/\bw\//g, " with ")
@@ -876,7 +879,7 @@ export function detectEntities(question) {
     for (const [key, attr] of Object.entries(ATTRIBUTES))
       for (const w of attr.words)
         if (!w.includes(" ") && w.length >= 6) attrWordIndex.push([w, key]);
-    for (const tok of scrub.trim().split(" ").filter(t => t.length >= 6)) {
+    for (const tok of scrub.trim().split(" ").filter(t => t.length >= 6 && !FUZZY_STOPWORDS.has(t))) {
       const hit = bestFuzzy(tok, attrWordIndex.map(x => x[0]),
         (k) => (attrWordIndex.find(x => x[0] === k) || [])[1]);
       if (hit) {
@@ -971,15 +974,25 @@ export function detectEntities(question) {
     if (q.includes(" " + al + " ") && !found.platforms.includes(canon)) found.platforms.push(canon);
   }
   if (!found.platforms.length) {
+    // 1 edit maximum: platform names are distinctive, and 2 edits let
+    // "telegraph" (the newspaper) become Telegram
     const platKeys = PLATFORMS.filter(p => p.length >= 6);
     for (const tok of scrub.trim().split(" ").filter(t => t.length >= 6 && !FUZZY_STOPWORDS.has(t))) {
-      const hit = bestFuzzy(tok, platKeys);
-      if (hit) {
-        const canon = hit === "twitter" ? "x" : hit;
-        if (!found.platforms.includes(canon)) found.platforms.push(canon);
+      for (const p of platKeys) {
+        if (levenshtein(tok, p, 1) <= 1) {
+          const canon = p === "twitter" ? "x" : p;
+          if (!found.platforms.includes(canon)) found.platforms.push(canon);
+          break;
+        }
       }
     }
   }
+  // order platforms as the QUESTION orders them — composePlatform answers
+  // for platforms[0], and entity order must not silently swap the subject
+  found.platforms.sort((a, b) => {
+    const pos = (p) => { const i = q.indexOf(" " + (p === "x" ? "x" : p) + " "); return i < 0 ? 999 : i; };
+    return pos(a) - pos(b);
+  });
 
   // --- audiences ---
   for (const [aud, words] of Object.entries(AUDIENCES)) {
@@ -997,17 +1010,26 @@ export function detectEntities(question) {
   // a NEGATED measure ("distrust", "skeptical"), which flips the meaning:
   // "where do people distrust the media" = lowest trust (asc), but "where
   // is distrust lowest" = HIGHEST trust (desc). One XOR handles both.
-  // A NEGATED ask ("where is TV not popular", "countries without internet",
-  // "which countries lack 4G") points at the LOW end of the table exactly
-  // like "lowest" does — inverting it served the best-connected countries
-  // to someone asking about the least-connected.
-  const lowCue = /\b(lowest|least|worst|worse|smallest|bottom|weakest|fewest|youngest|low|poor(ly)?|bad(ly)?|barely|hardly any(?:one)?|almost no(?:body| one)?|struggl\w+|not|no|never|without|lack\w*|absent|don'?t|do not|doesn'?t|does not|isn'?t|aren'?t|avoid\w*)\b/.test(q);
+  // Direction resolution with PRECEDENCE. Three signal strengths:
+  //   1. explicit direction words ("lowest", "top", "highest") — strongest;
+  //   2. "not bad/poor/low" — a negated low is a HIGH ask;
+  //   3. bare negation ("not popular", "without internet", "lack 4G") —
+  //      counts only when NO explicit direction word is present, because
+  //      "I don't have much time — top 5 by internet?" is a HIGH ask and an
+  //      incidental "don't" must never invert an explicit "top".
+  // A negated measure ("distrust") then flips whatever direction resolved.
+  const notGood = /\bnot (bad|poor|low|weak|terrible)\b/.test(q);
+  const dirLow = !notGood && /\b(lowest|least|worst|worse|smallest|bottom|weakest|fewest|youngest|low|poor(ly)?|bad(ly)?|barely|hardly any(?:one)?|almost no(?:body| one)?|struggl\w+|offline|not online|aren'?t online)\b/.test(q);
+  const dirHigh = /\b(highest|most|best|top|largest|greatest|strongest|leading|leads?|king|dominat\w+|everywhere|widespread|nearly everyone|almost (?:everyone|all))\b/.test(q);
+  const negationCue = /\b(not|no|never|without|lack\w*|absent|don'?t|do not|doesn'?t|does not|isn'?t|aren'?t|avoid\w*)\b/.test(q);
+  const lowAsk = dirLow ? true : (dirHigh || notGood) ? false : negationCue;
   const negatedMeasure = /\b(distrust\w*|skeptic\w*|sceptic\w*)\b/.test(q);
-  const resolvedDir = (negatedMeasure ? !lowCue : lowCue) ? "asc" : "desc";
+  const resolvedDir = (negatedMeasure ? !lowAsk : lowAsk) ? "asc" : "desc";
   // Spelled-out counts ("top ten", "a dozen") count as much as digits do
   const WORD_NUMS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8,
     nine: 9, ten: 10, eleven: 11, twelve: 12, dozen: 12, thirteen: 13, fourteen: 14, fifteen: 15,
-    twenty: 20, "twenty five": 25, "twenty-five": 25 };
+    sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20,
+    "twenty five": 25, "twenty-five": 25, thirty: 30 };
   const parseCount = () => {
     const d = q.match(/\b(?:top|bottom|first|last)\s+(\d{1,2})\b/) || q.match(/\b(\d{1,2})\s+(?:least|most|best|worst|highest|lowest)\b/);
     if (d) return parseInt(d[1], 10);
@@ -1023,7 +1045,8 @@ export function detectEntities(question) {
   if (rankMatch && (found.attributes.length || /\b(top|bottom) \d+\b/.test(q))) {
     found.rankDir = resolvedDir;
     const n = parseCount();
-    found.rankN = n ? Math.min(25, Math.max(1, n)) : 5;
+    found.rankN = n ? Math.min(30, Math.max(1, n)) : 5;
+    found.rankCapped = !!(n && n > 30);   // say so, never truncate silently
     found.intents.push("rank");
   }
   // "Where is TV still king?", "Which countries barely use the internet?",
@@ -1778,6 +1801,8 @@ function composeRanking(ents, ev) {
     lines.push(`*Methodology note: news-consumption figures mix different surveys (Reuters DNR, Afrobarometer, national barometers) — treat cross-country gaps under ~5 points as noise.*`);
   if (attr.caveat)
     lines.push(`*${attr.caveat}*`);
+  if (ents.rankCapped)
+    lines.push(`*Showing 30 rows — the table is capped there to stay readable.*`);
   return lines.join("\n");
 }
 
@@ -1826,6 +1851,7 @@ function composeLookup(ents, ev, qNorm) {
     const rawSrc = srcField ? f.sourcesMap[srcField] : null;
     const srcLabel = rawSrc ? String(rawSrc).replace(/\s*[—–|-]?\s*https?:\/\/\S+/, "").trim() : attr.source;
     lines.push(`- Source: ${srcLabel}${f.retrievedOn ? ` *(record refreshed ${f.retrievedOn})*` : ""}`);
+    if (attr.caveat) lines.push(`- *${attr.caveat}*`);
     if (qNorm) {
       const named = ["afrobarometer", "reuters", "dnr", "rsf", "freedom house", "world bank", "gsma"].find(sname => qNorm.includes(sname));
       if (named && !srcLabel.toLowerCase().includes(named))
@@ -1843,9 +1869,11 @@ function composeLookup(ents, ev, qNorm) {
 function composePlatform(ents, ev, qNorm) {
   const p = ents.platforms[0];
   const pretty = PLATFORM_NAMES[p] || (p.charAt(0).toUpperCase() + p.slice(1));
-  // "Countries that DON'T use WhatsApp" asks for the absence set — answering
-  // with the platform's strongholds inverts the question
-  const negated = qNorm && /\b(don'?t|do not|not|no|never|without|isn'?t|aren'?t|lack\w*|unpopular)\b/.test(qNorm);
+  // "Countries that DON'T use WhatsApp" asks for the absence set — but the
+  // negation must modify USE/POPULARITY of THIS platform, or a stray "not"
+  // in another clause ("popular but not Facebook") inverts the question.
+  const negated = qNorm && ents.platforms.length === 1
+    && /\b(don'?t|do not|never) use\b|\bnot (popular|big|huge|used|leading|present)\b|\bisn'?t (popular|big|used|leading)\b|\bunpopular\b|\bwithout (whatsapp|facebook|tiktok|instagram|youtube|telegram|snapchat|viber|wechat)\b/.test(qNorm);
   // a region scopes the pool ("top LatAm countries by Facebook use")
   const spec = ents.regions.length ? REGION_MAP[ents.regions[0]] : null;
   const leaders = [], present = [], absent = [];
@@ -1895,13 +1923,17 @@ function composePlatform(ents, ev, qNorm) {
  * leading-platform list. An ordering is all the data honestly supports —
  * the answer says so instead of inventing user counts.
  */
-function composePlatformDuel(ents, ev) {
+function composePlatformDuel(ents, ev, qNorm) {
   const iso = ents.countries[0];
   const c = COUNTRIES[iso];
   if (!c) return null;
   const socials = ((c.media || {}).top_social || "").toLowerCase();
   if (!socials) return null;
   const list = socials.split(",").map(s => s.trim());
+  // "Is Facebook more TRUSTED than TikTok?" cannot be answered by a
+  // presence ordering — trust is measured for news overall, never per
+  // platform, and presenting the ordering as the answer would mislead
+  const trustAsk = qNorm && /\btrust\w*|credib\w*/.test(qNorm);
   const [a, b] = ents.platforms;
   const names = [PLATFORM_NAMES[a] || a, PLATFORM_NAMES[b] || b];
   const ia = list.findIndex(s => platformMatches(s, a));
@@ -1910,6 +1942,11 @@ function composePlatformDuel(ents, ev) {
     `The Atlas's per-country leading-platform list: an editorial ordering cross-referenced with national media directories, not measured audience share. No free source publishes per-platform user counts per country.`,
     countryLinks(iso));
   const lines = [];
+  if (trustAsk) {
+    const f = facts(iso);
+    lines.push(`**Trust is measured for news overall, not per platform** — the Atlas cannot say which platform people in ${c.name} trust more.${f && f.trust != null ? ` Overall trust in news there is ${fmt(f.trust)}.` : ""} What it does hold is the leading-platform ordering below — market presence, not trust.`);
+    lines.push("");
+  }
   if (ia < 0 && ib < 0) {
     lines.push(`**Neither ${names[0]} nor ${names[1]} appears in ${c.name}'s leading-platform list** (${(c.media || {}).top_social || "no list held"}).`);
   } else if (ia >= 0 && ib >= 0) {
@@ -3058,6 +3095,7 @@ function reasoningTrace(question, ents, kind, ev) {
     greeting: "you said hello rather than asking anything, so there was nothing to look up",
     self: "you asked about the Atlas itself rather than about the world, so I answered from what is actually loaded — the counts below are read from the data at the moment you asked, not written in advance",
     gap: "the measure you asked for is one no free source publishes, so instead of guessing I named what is missing and what the Atlas holds nearest to it",
+    coverage: "you asked which countries LACK this data, so I listed the excluded set by name — nothing was ranked",
     help: "nothing in it mapped to a country, topic or measure, so I answered about what I can do instead",
   };
   if (routes[kind]) steps.push(`**Chose the ${kind} route** — ${routes[kind]}.`);
@@ -3234,8 +3272,9 @@ export function answerQuestion(question) {
   // means the highest cost share, "most affordable" the lowest. The generic
   // direction words can't know that, so data-cost rankings resolve here.
   if (ents.attributes[0] === "datacost" && ents.rankDir) {
-    if (/\b(worst|least affordable|struggl\w+|most expensive|priciest|highest)\b/.test(qNorm)) ents.rankDir = "desc";
-    else if (/\b(most affordable|cheap\w+|best|lowest|affordab\w+)\b/.test(qNorm)) ents.rankDir = "asc";
+    // negated affordability first — "not affordable" is the expensive end
+    if (/\b(not|isn'?t|barely|least|can'?t|cannot) afford\w*|\bunafford\w+|\b(worst|struggl\w+|most expensive|priciest|highest)\b/.test(qNorm)) ents.rankDir = "desc";
+    else if (/\b(most affordable|cheap\w+|best|lowest|afford\w*)\b/.test(qNorm)) ents.rankDir = "asc";
   }
   let gaps = detectGaps(qNorm);
   // "afford mobile data" has a real measure now (ITU data-cost basket) — the
@@ -3261,7 +3300,7 @@ export function answerQuestion(question) {
     return {
       answer: `**${missing.length} of 195 countries have no ${attr.label.toLowerCase()} value in the Atlas** (underlying source: ${attr.source}). They are excluded from every ranking by name — never ranked low.\n\n${names.length ? (names.length <= 40 ? names.join(", ") + "." : names.slice(0, 40).join(", ") + `, and ${names.length - 40} more.`) : "None — coverage is complete."}`,
       evidence: ev.list(), followups: buildFollowups(ents, "rank"), clarify: null, entities: ents,
-      reasoning: reasoningTrace(question, ents, "rank", ev),
+      reasoning: reasoningTrace(question, ents, "coverage", ev),
     };
   }
 
@@ -3523,7 +3562,7 @@ export function answerQuestion(question) {
   // that one country's leading-platform list beats a generic lookup, so it
   // routes ahead of one
   else if (!parts.length && ents.platforms.length === 2 && ents.countries.length === 1) {
-    const r = composePlatformDuel(ents, ev);
+    const r = composePlatformDuel(ents, ev, qNorm);
     if (r) { parts.push(r); kind = "platform"; }
     else {
       const l = composeLookup(ents, ev, qNorm);
