@@ -2363,13 +2363,14 @@ export function findMarkets(opts = {}) {
   const audience = opts.audience || null;               // "youth" | "rural" | null
   const language = opts.language || null;               // CLDR code, e.g. "en"
   const topicQid = opts.topicQid || null;
+  const themeKey = opts.themeKey || null;               // "health"|"climate"|... — a topic CATEGORY
   const channelOverride = opts.channel || null;         // "radio"|"TV"|"online news"|"social media"
   const limit = opts.limit || 15;
 
   // active criteria and renormalized weights
   const active = { reach: true, openness: true, language: !!language,
                    audience: audience === "youth" || audience === "rural",
-                   momentum: !!(topicQid && TRENDS) };
+                   momentum: !!((topicQid || themeKey) && TRENDS) };
   const totalW = Object.entries(FINDER_WEIGHTS).filter(([k]) => active[k]).reduce((a, [, w]) => a + w, 0);
   const W = {}; for (const [k, w] of Object.entries(FINDER_WEIGHTS)) W[k] = active[k] ? w / totalW : 0;
 
@@ -2403,10 +2404,19 @@ export function findMarkets(opts = {}) {
       comp.audience = f.under15 != null ? Math.max(0, Math.min(100, ((f.under15 - 12) / (47 - 12)) * 100)) : 0;
     else if (audience === "rural")
       comp.audience = f.urban != null ? (100 - f.urban) : 0;
-    let risingHit = null;
+    let risingHit = null, themeRising = null, themeStanding = null;
     if (active.momentum) {
-      risingHit = (f.rising || []).find(r => r.qid === topicQid) || null;
-      comp.momentum = risingHit ? 100 : 0;
+      if (topicQid) {
+        risingHit = (f.rising || []).find(r => r.qid === topicQid) || null;
+        comp.momentum = risingHit ? 100 : 0;
+      } else {
+        // a theme ("healthcare") credits any of its category's topics:
+        // rising = full credit, standing top attention = half, absent = none
+        const catOf = (qid) => (TRENDS.topics[qid] || {}).category || "";
+        themeRising = (f.rising || []).find(r => catOf(r.qid) === themeKey) || null;
+        themeStanding = (f.topTopics || []).find(t => catOf(t.qid) === themeKey) || null;
+        comp.momentum = themeRising ? 100 : themeStanding ? 50 : 0;
+      }
     }
 
     const score = Object.entries(comp).reduce((a, [k, v]) => a + (W[k] || 0) * v, 0);
@@ -2423,12 +2433,12 @@ export function findMarkets(opts = {}) {
       components: comp, lead: { name: lead.name, effective: lead.effective, measured: lead.measured, capped: lead.capped },
       langPct, under15: f.under15, urban: f.urban, internet: f.internet,
       population: f.pop, reachPeople: f.pop != null ? Math.round((lead.effective / 100) * f.pop) : null,
-      risingHit, flags, survey: f.survey, constructNote, rsf: f.rsf, fh: f.fh,
+      risingHit, themeRising, themeStanding, flags, survey: f.survey, constructNote, rsf: f.rsf, fh: f.fh,
     });
   }
   ranked.sort((a, b) => b.score - a.score);
   return {
-    objective, audience, language, topicQid, channel: channelOverride,
+    objective, audience, language, topicQid, themeKey, channel: channelOverride,
     weights: Object.fromEntries(Object.entries(W).filter(([, v]) => v > 0)
       .map(([k, v]) => [k, Math.round(v * 100)])),
     ranked, top: ranked.slice(0, limit), excluded,
@@ -2485,9 +2495,12 @@ function composeMarketFinder(ents, ev, qNorm) {
     isos = Object.keys(COUNTRIES).filter(iso => inRegionSpec(REGION_MAP[regionKey], iso, COUNTRIES[iso]));
     scopeName = regionDisplay(regionKey);
   }
+  // a SUBJECT with no single tracked topic ("healthcare") screens by its
+  // topic CATEGORY — the attention data is per-country and real
+  const themeKey = !topic && ents.themeFilter ? ents.themeFilter[0] : null;
   const res = findMarkets({
     objectiveKey: objective.key, audience, language, channel,
-    topicQid: topic ? topic.qid : null, isos, limit: 10,
+    topicQid: topic ? topic.qid : null, themeKey, isos, limit: 10,
   });
   if (!res.ranked.length) {
     // Say WHICH data is missing. "All lack a news-channel survey" was false
@@ -2501,7 +2514,11 @@ function composeMarketFinder(ents, ev, qNorm) {
   }
 
   const L = [];
-  L.push(`**Market screening — ${objective.label}${topic ? ` · ${topic.label}` : ""}${channel ? ` · ${channel}-led` : ""}${language ? ` · ${LANG_NAMES_FINDER[language]} content` : ""}${audience ? ` · ${audience} audience` : ""} · ${scopeName}**`);
+  L.push(`**Market screening — ${objective.label}${topic ? ` · ${topic.label}` : ""}${themeKey ? ` · ${titleCase(themeKey)} content` : ""}${channel ? ` · ${channel}-led` : ""}${language ? ` · ${LANG_NAMES_FINDER[language]} content` : ""}${audience ? ` · ${audience} audience` : ""} · ${scopeName}**`);
+  if (themeKey) {
+    L.push("");
+    L.push(`*This screens where ${themeKey} COMMUNICATION can land — media reach plus measured attention to ${themeKey} topics — not ${themeKey}-sector need. The Atlas holds no ${themeKey}-system indicators, so "should focus on ${themeKey}" in a policy sense is outside its data.*`);
+  }
   L.push("");
   L.push(`*How this ranking works: ${Object.entries(res.weights).map(([k, w]) => `${k} ${w}%`).join(" · ")} — weights fixed and disclosed; every input figure is cited in the country's profile. [method]*`);
   L.push("");
@@ -2527,6 +2544,8 @@ function composeMarketFinder(ents, ev, qNorm) {
     }
     if (audience === "rural" && r.urban != null) why.push(`${fmt(100 - r.urban)} rural population [measured]`);
     if (r.risingHit) why.push(`attention to ${topic.label} is currently rising in this market (+${Math.round(r.risingHit.velocity * 100)}% vs baseline) [measured, ~120-day window]`);
+    if (r.themeRising) why.push(`attention to ${r.themeRising.label_en} (a ${themeKey} topic) is currently rising in this market (+${Math.round(r.themeRising.velocity * 100)}% vs baseline) [measured, ~120-day window]`);
+    else if (r.themeStanding) why.push(`${r.themeStanding.label_en} holds standing attention here (${r.themeStanding.attention_share_pct}% of measured attention) [measured]`);
     if (r.flags.length) why.push(`caution: ${r.flags.join("; ")} [measured]`);
     L.push(`${i + 1}. **${r.name}** — ${why.join("; ")}.`);
     ev.add(`${r.name} — screening inputs`, `Score ${r.score}/100. Survey: ${r.survey || "n/a"}. All inputs from the Atlas country record.`, countryLinks(r.iso));
@@ -3553,7 +3572,7 @@ export function answerQuestion(question) {
   }
 
   // theme filter for attention profiles ("what HEALTH topics concern Egypt")
-  const THEMES = { health: /\bhealth\b|disease|medical/, climate: /\bclimate\b|environment\w*/,
+  const THEMES = { health: /\bhealth\b|healthcare|health care|disease|medical|medicine/, climate: /\bclimate\b|environment\w*/,
     rights: /\brights\b|governance|democracy/, technology: /\btech\w*/, humanitarian: /humanitarian/,
     education: /\beducation\w*/, peace: /\bpeace\b|security topics/, development: /development topics|economy topics/ };
   ents.themeFilter = Object.keys(THEMES).filter(k => THEMES[k].test(qNorm));
@@ -3623,7 +3642,7 @@ export function answerQuestion(question) {
   // a campaign verb makes the screening intent unambiguous.
   const discovery = ents.countries.length === 0
     && /\b(countries|markets|market)\b/.test(qNorm)
-    && /\b(campaign|launch\w*|prioriti[sz]e|expand\w*|distribute|roll ?out|invest\w*|focus|pilot|deploy\w*|screen\w*|best fit)\b/.test(qNorm);
+    && /\b(campaigns?|launch\w*|prioriti[sz]e|expand\w*|distribute|roll ?out|invest\w*|focus|pilot|deploy\w*|screen\w*|best fit)\b/.test(qNorm);
   if (discovery) {
     ents.discovery = true;
     ents.intents = ents.intents.filter(i => i !== "rank" && i !== "lookup");
