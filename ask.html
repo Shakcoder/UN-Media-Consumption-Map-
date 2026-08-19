@@ -442,17 +442,23 @@ function liveStepText(step) {
 }
 async function playThinking(reasoning) {
   const el = document.getElementById("thinking");
-  if (!el || REDUCED_MOTION || !reasoning || !reasoning.length) return;
+  // A hidden tab throttles timers — the replay must NEVER hold a computed
+  // answer hostage for a viewer who isn't there. Same for a hard 4s cap:
+  // if anything slows the timers, the answer wins over the animation.
+  if (!el || REDUCED_MOTION || document.hidden || !reasoning || !reasoning.length) return;
+  const deadline = performance.now() + 4000;
   el.innerHTML = "";
   for (const s of reasoning.slice(0, 4).map(liveStepText)) {
     const row = document.createElement("div");
     row.className = "think-step"; row.textContent = s;
     el.appendChild(row);
     el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (document.hidden || performance.now() > deadline) { row.classList.add("done"); break; }
     await new Promise(r => setTimeout(r, 600));
     row.classList.add("done");
   }
-  await new Promise(r => setTimeout(r, 200));
+  if (!document.hidden && performance.now() < deadline)
+    await new Promise(r => setTimeout(r, 200));
 }
 
 /* ---------- Ask flow: local engine first, worker as optional upgrade ---------- */
