@@ -47,7 +47,13 @@
   .thinking span { animation: blink 1.2s infinite; } .thinking span:nth-child(2) { animation-delay: .2s; }
   .thinking span:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0%,100% { opacity: .2; } 50% { opacity: 1; } }
-  @media (prefers-reduced-motion: reduce) { .thinking span { animation: none; } }
+  /* Live reasoning replay: the engine's own trace, one step at a time */
+  .think-step { animation: stepIn .3s ease; color: var(--muted-2); font-size: 12.5px;
+    line-height: 1.5; padding-left: 14px; position: relative; }
+  .think-step::before { content: "▸"; position: absolute; left: 0; font-size: 10px; top: 2px; }
+  .think-step.done::before { content: "✓"; color: var(--un-blue); }
+  @keyframes stepIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .thinking span, .think-step { animation: none; } }
 
   .suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
   .chip { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-pill);
@@ -414,6 +420,41 @@ function addThinking() {
 }
 function removeThinking() { const el = document.getElementById("thinking"); if (el) el.remove(); }
 
+/* ---------- Live reasoning replay ----------
+ * Before an answer appears, its reasoning trace plays step by step in the
+ * thinking bubble. Nothing here is invented or padded: these are exactly
+ * the steps the engine recorded for THIS answer — the same ones kept under
+ * "How I got this" — replayed at reading pace so the analyst's work is
+ * visible rather than instant. Honesty rule: never animate steps that
+ * didn't happen, and never delay longer than it takes to show real ones.
+ * Reduced-motion readers get the answer immediately, as before. */
+const REDUCED_MOTION = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function liveStepText(step) {
+  let plain = step.replace(/\*/g, "");
+  const swaps = [
+    [/^Read your question as/, "Reading your question"],
+    [/^Chose the (\w+) route/, "Choosing the $1 route"],
+    [/^Drew on/, "Gathering evidence"],
+    [/^Left out/, "Deciding what to leave out"],
+  ];
+  for (const [re, to] of swaps) { if (re.test(plain)) { plain = plain.replace(re, to); break; } }
+  return plain.length > 110 ? plain.slice(0, 107) + "…" : plain;
+}
+async function playThinking(reasoning) {
+  const el = document.getElementById("thinking");
+  if (!el || REDUCED_MOTION || !reasoning || !reasoning.length) return;
+  el.innerHTML = "";
+  for (const s of reasoning.slice(0, 4).map(liveStepText)) {
+    const row = document.createElement("div");
+    row.className = "think-step"; row.textContent = s;
+    el.appendChild(row);
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    await new Promise(r => setTimeout(r, 600));
+    row.classList.add("done");
+  }
+  await new Promise(r => setTimeout(r, 200));
+}
+
 /* ---------- Ask flow: local engine first, worker as optional upgrade ---------- */
 async function askLocal(question) {
   if (!engineReady) {
@@ -432,6 +473,7 @@ async function askLocal(question) {
   logQuestion(question, r.clarify ? "clarify"
     : /couldn't match that to the Atlas/.test(r.answer || "") ? "no-match" : "answered");
   if (r.clarify) { addClarify(r.clarify); return; }
+  await playThinking(r.reasoning);
   addAnalyst(r.answer, r.evidence, "", r.followups, question, r.reasoning);
 }
 
