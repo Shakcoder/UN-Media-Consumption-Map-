@@ -167,6 +167,13 @@
 <script src="assets/date-range.js"></script>
 <script src="assets/atlas-csv.js"></script>
 <script>
+let COUNTRY_NAMES = {};   // iso3 -> display name, loaded from static_countries.json
+fetch("data/static_countries.json").then(r => r.ok ? r.json() : {}).then(d => {
+  for (const [iso, c] of Object.entries(d))
+    if (c && typeof c === "object" && c.name) COUNTRY_NAMES[iso] = c.name_full || c.name;
+}).catch(() => {});
+const countryLabel = (iso3) => COUNTRY_NAMES[iso3] ? `${COUNTRY_NAMES[iso3]} (${iso3})` : iso3;
+
 const LANG_NAMES = {en:"English", fr:"French", es:"Spanish", ar:"Arabic", pt:"Portuguese",
   ru:"Russian", zh:"Chinese", hi:"Hindi", bn:"Bengali", id:"Indonesian", sw:"Swahili",
   ha:"Hausa", am:"Amharic", ur:"Urdu", fa:"Persian", tr:"Turkish", vi:"Vietnamese",
@@ -1227,9 +1234,15 @@ function renderDetail() {
   const rangeNews = RANGE_VM && !RANGE_VM.published ? rangeGdeltCount(activeQid) : null;
 
   let mediaRows = "";
-  for (const c of ((RANGE_VM && !RANGE_VM.published ? null : t.media_intensity_by_country) || []).slice(0, 8)) {
-    mediaRows += `<tr><td>${esc(c.iso3)}</td><td class="num">${Number(c.pct_of_country_news_volume).toFixed(1)}%</td></tr>`;
+  const mediaTop = ((RANGE_VM && !RANGE_VM.published ? null : t.media_intensity_by_country) || []).slice(0, 8);
+  for (const c of mediaTop) {
+    mediaRows += `<tr><td>${esc(countryLabel(c.iso3))}</td><td class="num">${Number(c.pct_of_country_news_volume).toFixed(1)}%</td></tr>`;
   }
+  // topic → action: hand the top-airtime countries to the analyst, which
+  // carries the full activation specifics (broadcasters, platform order,
+  // audience structure) for a campaign there
+  const actLinks = mediaTop.slice(0, 3).map(c =>
+    `<a href="ask.html?q=${encodeURIComponent(`How should we run ${t.label_en} content in ${COUNTRY_NAMES[c.iso3] || c.iso3}?`)}">${esc(countryLabel(c.iso3))}</a>`).join(" · ");
 
   el.innerHTML = `
     <h1 tabindex="-1">${esc(t.label_en)}</h1>
@@ -1284,7 +1297,8 @@ function renderDetail() {
     <div class="note">This is coverage <em>intensity</em>, not a share of world coverage: it is how much of
     each country's own monitored news output matches this topic, attributed to where the outlet is based.
     A small media market covering a topic heavily therefore ranks above a large one publishing more
-    articles about it in absolute terms.</div>` : ""}
+    articles about it in absolute terms.</div>
+    ${actLinks ? `<div class="note"><strong>Act on it:</strong> ask the AI Analyst for a campaign plan with named broadcasters, platform order and audience structure — ${actLinks}.</div>` : ""}` : ""}
     <div class="note">Demand (Wikipedia lookups) and supply (news coverage) are deliberately separate
     signals: a gap between them can mean an under-served information need.</div>
     <div class="sources"><span class="fn-label">Sources</span><ol>

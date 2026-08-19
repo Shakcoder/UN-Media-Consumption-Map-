@@ -1503,6 +1503,13 @@ function composeCountryBrief(f, ev, ents) {
   // --- Audience note qualifies the headline, so it sits directly under it ---
   const aud = audienceNote(ents.audiences, f);
   if (aud) { out.push(`**Audience note:** ${aud}`); out.push(""); }
+  // A recommendation without names is half an answer: the specific
+  // broadcasters, platform order and audience structure ride directly
+  // under it (full lists further down and on the profile).
+  if (ents.intents.includes("recommend")) {
+    const focus = activationLine(f);
+    if (focus) { out.push(`**Focus:** ${focus} *(presence-ranked outlets; population-level structure)*`); out.push(""); }
+  }
 
   // --- Trending now ---
   const trend = [];
@@ -2441,6 +2448,7 @@ export function findMarkets(opts = {}) {
       langPct, under15: f.under15, urban: f.urban, internet: f.internet,
       population: f.pop, reachPeople: f.pop != null ? Math.round((lead.effective / 100) * f.pop) : null,
       risingHit, themeRising, themeStanding, flags, survey: f.survey, constructNote, rsf: f.rsf, fh: f.fh,
+      activation: activationLine(f),
     });
   }
   ranked.sort((a, b) => b.score - a.score);
@@ -2554,6 +2562,9 @@ function composeMarketFinder(ents, ev, qNorm) {
     if (r.themeRising) why.push(`attention to ${r.themeRising.label_en} (a ${themeKey} topic) is currently rising in this market (+${Math.round(r.themeRising.velocity * 100)}% vs baseline) [measured, ~120-day window]`);
     else if (r.themeStanding) why.push(`${r.themeStanding.label_en} holds standing attention here (${r.themeStanding.attention_share_pct}% of measured attention) [measured]`);
     if (r.flags.length) why.push(`caution: ${r.flags.join("; ")} [measured]`);
+    const rf = facts(r.iso);
+    const act = rf ? activationLine(rf) : null;
+    if (act) why.push(`activate via — ${act} [presence-ranked outlets; population-level structure]`);
     L.push(`${i + 1}. **${r.label}** — ${why.join("; ")}.`);
     ev.add(`${r.name} — screening inputs`, `Score ${r.score}/100. Survey: ${r.survey || "n/a"}. All inputs from the Atlas country record.`, countryLinks(r.iso));
   });
@@ -2709,6 +2720,47 @@ function buildTradeoffs(f, channels, objective) {
 }
 
 /** Ranked, justified opportunities — each one answers "why?". */
+/**
+ * The concrete WHO and WHERE attached to a recommendation: named outlets
+ * per channel, the platform order, and the population structure that
+ * shapes targeting. The honesty rules ride along — outlet lists are market
+ * PRESENCE (never viewership); in restricted environments reach is not
+ * endorsement; demographics are population-level because no free source
+ * splits media use by age or gender.
+ */
+function activationSpecifics(f) {
+  const restricted = f.fh === "Not Free" || (f.rsf != null && f.rsf < 40);
+  const lines = [];
+  const chan = [];
+  if (f.outlets.top_tv) chan.push(`TV — ${f.outlets.top_tv}`);
+  if (f.outlets.top_radio) chan.push(`radio — ${f.outlets.top_radio}`);
+  if (f.outlets.top_online_news) chan.push(`online — ${f.outlets.top_online_news}`);
+  if (chan.length)
+    lines.push(`- **Broadcasters and outlets** (presence-ranked, not audience-measured${restricted ? "; **reach is not endorsement — vet each outlet's independence before approaching**" : ""}): ${chan.join(" · ")}`);
+  if (f.outlets.top_social)
+    lines.push(`- **Platform order:** ${f.outlets.top_social} *(editorial presence ordering)*`);
+  const demo = [];
+  if (f.medianAge != null) demo.push(`median age ${f.medianAge}`);
+  if (f.under15 != null) demo.push(`${fmt(f.under15)} under 15`);
+  if (f.urban != null) demo.push(`${fmt(f.urban)} urban`);
+  if (f.literacy != null) demo.push(`adult literacy ${fmt(f.literacy)}`);
+  if (demo.length)
+    lines.push(`- **Audience structure:** ${demo.join(" · ")} — population-level; no free source splits media use by age or gender, so segment-level targeting needs local research`);
+  return lines;
+}
+
+/** One-line version for tables and per-country tails. */
+function activationLine(f) {
+  const bits = [];
+  const firstOutlets = (s) => s ? s.split(",").slice(0, 2).map(x => x.trim()).join(", ") : null;
+  const tv = firstOutlets(f.outlets.top_tv), ra = firstOutlets(f.outlets.top_radio);
+  if (tv) bits.push(`TV: ${tv}`);
+  if (ra) bits.push(`radio: ${ra}`);
+  if (f.outlets.top_social) bits.push(`social: ${f.outlets.top_social.split(",").slice(0, 2).map(x => x.trim()).join(", ")}`);
+  if (f.medianAge != null && f.urban != null) bits.push(`median age ${f.medianAge}, ${fmt(f.urban)} urban`);
+  return bits.length ? bits.join(" · ") : null;
+}
+
 function buildOpportunities(f, channels, objective, ev) {
   const ops = [];
   const lead = channels[0];
@@ -2881,6 +2933,12 @@ function composeConsultingBrief(f, ev, ents, qNorm) {
     L.push(`**${o.rank}. ${o.title}** — confidence: ${o.confidence}`);
     o.why.forEach(w => L.push(`   - Why: ${w}`));
   });
+  const act = activationSpecifics(f);
+  if (act.length) {
+    L.push("");
+    L.push(`**Activation specifics for ${f.label}:**`);
+    act.forEach(a => L.push(a));
+  }
   L.push("");
 
   // ---- TRADEOFFS (always emitted — in a data-poor market the absence of a
@@ -2980,6 +3038,13 @@ function composeRegionConsultingBrief(fs, ev, ents, qNorm, regionName) {
   L.push(`   - Why: effective national reach, not survey headline reach, is what determines who actually sees the content. [inferred]`);
   L.push(`**3. Produce per-country language versions** — confidence: High`);
   L.push(`   - Why: ${fs.filter(f => f.languagesDetail.length).slice(0, 3).map(f => `${f.name} (${prettyLang(primaryProductionLanguage(f))})`).join(", ")} — the region has no shared majority language. [measured, Unicode CLDR]`);
+  const actables = fs.filter(f => activationLine(f)).slice(0, 3);
+  if (actables.length) {
+    L.push("");
+    L.push(`**Activation specifics — the region's biggest covered markets:**`);
+    actables.forEach(f => L.push(`- **${f.label}**: ${activationLine(f)}`));
+    L.push(`*(Outlet and platform names are presence-ranked, not audience-measured; full lists on each country profile.)*`);
+  }
   L.push("");
 
   L.push(`### Risks`);
@@ -4192,6 +4257,16 @@ export function answerQuestion(question) {
       evidence: [], followups: buildFollowups(ents, "help"), clarify: null, entities: ents,
       reasoning: reasoningTrace(question, ents, "help", ev),
     };
+  }
+
+  // A comparison that ends at numbers leaves the "so what" to the reader —
+  // close with the concrete starting points in each country compared.
+  if (kind === "compare" && parts.length) {
+    const compFs = isoList.slice(0, 6).map(facts).filter(f => f && activationLine(f));
+    if (compFs.length) {
+      parts.push(`**Where to start in each:**\n` + compFs.map(f => `- **${f.label}**: ${activationLine(f)}`).join("\n")
+        + `\n*(Outlets and platforms are presence-ranked, not audience-measured; audience structure is population-level.)*`);
+    }
   }
 
   // Note for territories the UN lists under China: their media environments

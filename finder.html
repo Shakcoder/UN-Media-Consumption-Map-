@@ -505,6 +505,7 @@ function renderCheck() {
     if (c.momentum != null) bits.push(r.risingHit ? "topic currently rising here" : "no current rise in this topic here (momentum scored 0)");
     if (c.openness != null) bits.push(`press-freedom openness ${Math.round(c.openness)}/100`);
     parts.push(`<span class="why-row">Inputs: ${bits.join(" · ")}.</span>`);
+    if (r.activation) parts.push(`<span class="why-row"><strong>Activate via:</strong> ${esc(r.activation)} <em>(presence-ranked outlets; population-level structure — no per-channel demographics exist in any free source)</em></span>`);
     if (r.flags.length) parts.push(`<span class="risk">⚠ ${esc(r.flags.join("; "))}</span>`);
     parts.push(`<span class="hint">Survey: ${esc(r.survey || "n/a")}${r.constructNote ? " · " + esc(r.constructNote) : ""}</span>`);
     out.innerHTML = parts.join("<br>");
