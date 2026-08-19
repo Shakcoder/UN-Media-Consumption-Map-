@@ -348,7 +348,7 @@ function runScreening() {
 
   LAST_RES = { res, language, langLabel: ($("f-language").selectedOptions[0] || {}).textContent || "" };
   $("check-list").innerHTML = [...res.ranked, ...res.excluded]
-    .map(r => `<option value="${esc(r.name)}">`).join("");
+    .map(r => `<option value="${esc(r.label || r.name)}">`).join("");
   $("check-country").value = ""; $("check-answer").innerHTML = "";
   const langCol = !!language;
   // The momentum criterion only scores above zero in a country whose own rising
@@ -372,14 +372,14 @@ function runScreening() {
   $("rank-body").innerHTML = res.top.map((r, i) => `
     <tr>
       <td>${i + 1}</td>
-      <td><strong>${r.flag ? esc(r.flag) + " " : ""}${esc(r.name)}</strong>
+      <td><strong>${r.flag ? esc(r.flag) + " " : ""}${esc(r.label || r.name)}</strong>
         <div class="why">${esc(r.survey || "")}${r.constructNote ? " · " + esc(r.constructNote) : ""}</div></td>
       <td><span class="scorebar"><i style="width:${Math.min(100, r.score)}%"></i></span>${r.score}</td>
       <td>${esc(r.lead.name)} ${r.lead.effective}%${r.lead.capped ? " <span class='hint'>(capped at internet)</span>" : ""}</td>
       ${langCol ? `<td>${r.langPct != null ? Math.round(r.langPct) + "%" : "<span class='hint'>no data</span>"}</td>` : ""}
       <td>${r.reachPeople != null ? fmtPeople(r.reachPeople) : "n/a"}</td>
       <td>${r.flags.length ? `<span class="risk">⚠ ${esc(r.flags.join("; "))}</span>` : `<span class="ok">no structural red flags</span>`}</td>
-      <td><a class="profile" href="index.html?country=${esc(r.iso)}" title="Open ${esc(r.name)}'s full profile on the map page">Profile ↗</a></td>
+      <td><a class="profile" href="index.html?country=${esc(r.iso)}" title="Open ${esc(r.label || r.name)}'s full profile on the map page">Profile ↗</a></td>
     </tr>`).join("");
 
   const byReason = {};
@@ -496,7 +496,7 @@ function renderCheck() {
   if (ri >= 0) {
     const r = res.ranked[ri];
     const parts = [];
-    parts.push(`<strong>${esc(r.name)}</strong> is ranked <strong>#${ri + 1}</strong> of ${res.ranked.length} with score ${r.score}.`);
+    parts.push(`<strong>${esc(r.label || r.name)}</strong> is ranked <strong>#${ri + 1}</strong> of ${res.ranked.length} with score ${r.score}.`);
     const c = r.components || {};
     const bits = [];
     if (c.reach != null) bits.push(`${r.lead.name} reaches ${r.lead.effective}%${r.lead.capped ? " (capped at internet access)" : ""}`);
@@ -512,7 +512,7 @@ function renderCheck() {
   }
   const ex = res.excluded.find(x => x.name.toLowerCase() === q || x.iso.toLowerCase() === q);
   if (ex) {
-    out.innerHTML = `<strong>${esc(ex.name)}</strong> is <strong>not ranked</strong>: ${esc(ex.reason)}. ` +
+    out.innerHTML = `<strong>${esc(ex.name)} (${esc(ex.iso)})</strong> is <strong>not ranked</strong>: ${esc(ex.reason)}. ` +
       `A country with no data is not a country that scored badly; it is excluded by name so the gap stays visible.`;
     return;
   }
@@ -653,7 +653,7 @@ function renderLens(D, qid) {
   const risingBlock = risingIn.length
     ? `<h3>Rising in (language-weight attribution)</h3>
        <div class="tl-note" style="margin-top:0">${risingIn.slice(0, 12).map(r =>
-         `${esc(r.name)} (+${Math.round(r.v * 100)}% via ${esc(LENS_LANG_NAMES[r.lang] || r.lang)})`).join(" · ")}</div>
+         `${esc(r.label || r.name)} (+${Math.round(r.v * 100)}% via ${esc(LENS_LANG_NAMES[r.lang] || r.lang)})`).join(" · ")}</div>
        <div class="tl-note">Heuristic: language-edition demand mapped to countries by
        speaker-population weights: an approximation, not a measurement.</div>`
     : "";

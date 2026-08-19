@@ -351,7 +351,7 @@ function sectionHtml(sec, ca, cb) {
 function languagesHtml(ca, cb) {
   const pills = (c) => (c.languages_detail || []).length
     ? `<div class="pills">${c.languages_detail.map(l =>
-        `<span class="pill">${esc(l.language)} · ${esc(l.pct)}%${l.official ? " · official" : ""}</span>`).join("")}</div>`
+        `<span class="pill">${esc(l.language)}${l.code ? ` (${esc(l.code)})` : ""} · ${esc(l.pct)}%${l.official ? " · official" : ""}</span>`).join("")}</div>`
     : `<span>${NONE}</span>`;
   return `<section class="cmp-section">
     <h2>Languages</h2>
@@ -445,7 +445,7 @@ function exportCsv() {
     }
   }
   const langs = (c) => (c.languages_detail || [])
-    .map(l => `${l.language} ${l.pct}%${l.official ? " (official)" : ""}`).join("; ");
+    .map(l => `${l.language}${l.code ? ` (${l.code})` : ""} ${l.pct}%${l.official ? " (official)" : ""}`).join("; ");
   rows.push(["Languages", "languages spoken", langs(ca), langs(cb), "Unicode CLDR: share of population"]);
   AtlasCSV.download(`atlas-compare-${A}-${B}.csv`, rows);
 }
@@ -466,7 +466,12 @@ function setUrl() {
     const all = await r.json();
     DATA = {};
     for (const [iso, c] of Object.entries(all)) {
-      if (c && typeof c === "object" && c.name) DATA[iso] = c;   // skip file metadata keys
+      if (c && typeof c === "object" && c.name) {
+        // display rule: full form first, code visible ("Republic of the
+        // Congo" not "Congo, Rep."); joins stay on ISO3 keys, never names
+        c.name = `${c.name_full || c.name} (${iso})`;
+        DATA[iso] = c;   // skip file metadata keys
+      }
     }
   } catch (err) {
     document.getElementById("result").innerHTML =

@@ -2395,7 +2395,7 @@ function openDetail(iso) {
   const d = window.COUNTRY_DATA[iso];
   if (d) {
     panelFlag.textContent = d.flag || "🌐";
-    panelName.textContent = d.name;
+    panelName.textContent = `${d.name_full || d.name} (${iso})`;
     panelSubline.textContent = [d.subregion,
       d.capital ? `${t("subline_capital")}: ${esc(d.capital)}` : null,
       d.population != null ? `${t("subline_pop")} ${formatPop(d.population)}` : null,
@@ -2403,7 +2403,7 @@ function openDetail(iso) {
     renderCountryStats(iso);
   } else {
     panelFlag.textContent = "🌍";
-    panelName.textContent = lookupName(iso);
+    panelName.textContent = `${lookupName(iso)} (${iso})`;
     panelSubline.textContent = t("no_data_subline");
   }
   // the export buttons only show when there is a profile to export
@@ -2487,7 +2487,7 @@ function tabOverview(d) {
       <div class="kv"><div class="label">${t("label_currency")}</div><div class="value">${esc(d.currency || "—")}</div></div>
     </div>
     ${(d.languages_detail || []).length ? `<h3>${t("section_languages")} <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted-2);">Unicode CLDR: share of population</span></h3>
-    <div class="pills">${d.languages_detail.map(l => `<div class="pill">${esc(l.language)} · ${l.pct}%${l.official ? " · official" : ""}</div>`).join("")}</div>`
+    <div class="pills">${d.languages_detail.map(l => `<div class="pill">${esc(l.language)}${l.code ? ` (${esc(l.code)})` : ""} · ${l.pct}%${l.official ? " · official" : ""}</div>`).join("")}</div>`
     : (d.languages || []).length ? `<h3>${t("section_languages")}</h3>
     <div class="pills">${d.languages.map(l => `<div class="pill">${esc(l)}</div>`).join("")}</div>` : ""}
     ${(d.focus_areas || []).length ? `<h3>${t("section_focus_areas")}</h3>

@@ -1264,6 +1264,12 @@ const TREND_LINKS = [
 // ---------------------------------------------------------------------------
 // Facts
 // ---------------------------------------------------------------------------
+/** "Full name (ISO3)" — the display form for headers, tables and listings. */
+function countryLabel(iso) {
+  const c = COUNTRIES[iso] || {};
+  return `${c.name_full || c.name || iso} (${iso})`;
+}
+
 function facts(iso) {
   const c = COUNTRIES[iso];
   if (!c) return null;
@@ -1271,7 +1277,8 @@ function facts(iso) {
         conn = c.connectivity || {}, dem = c.demographics || {};
   const tr = TRENDS && TRENDS.countries ? TRENDS.countries[iso] : null;
   return {
-    iso, name: c.name, pop: c.population, region: c.region, subregion: c.subregion,
+    iso, name: c.name_full || c.name, label: `${c.name_full || c.name} (${iso})`,
+    pop: c.population, region: c.region, subregion: c.subregion,
     trust: nc.trust_in_news_pct, tv: nc.tv_as_news_source_pct,
     online: nc.online_as_news_source_pct, social: nc.social_as_news_source_pct,
     radio: nc.radio_as_news_source_pct, radioSource: nc.radio_source || null, surveyNote: nc.survey_note || null,
@@ -1469,7 +1476,7 @@ function composeCountryBrief(f, ev, ents) {
     out.push("");
   };
 
-  out.push(`## ${f.name} — media brief`);
+  out.push(`## ${f.label} — media brief`);
   out.push("");
 
   // --- The headline answer comes first: recommendation or profile lead ---
@@ -1575,7 +1582,7 @@ function composeCountryBrief(f, ev, ents) {
   if (f.under15 != null || f.urban != null || f.medianAge != null)
     conn.push(`- Audience structure: ${f.medianAge != null ? `median age ${f.medianAge}, ` : ""}${f.under15 != null ? `${fmt(f.under15)} under 15, ` : ""}${f.urban != null ? `${fmt(f.urban)} urban` : ""}${f.literacy != null ? `, ${fmt(f.literacy)} literacy` : ""}`);
   if (f.languagesDetail.length)
-    conn.push(`- Languages (share of population): ${langsByShare(f).slice(0, 5).map(l => `${prettyLang(l)} ${Math.round(l.pct)}%${l.official ? " (official)" : ""}`).join(", ")} *(Unicode CLDR)*`);
+    conn.push(`- Languages (share of population): ${langsByShare(f).slice(0, 5).map(l => `${prettyLang(l)}${l.code ? ` (${l.code})` : ""} ${Math.round(l.pct)}%${l.official ? " (official)" : ""}`).join(", ")} *(Unicode CLDR)*`);
   section("Connectivity & audience", conn);
 
   // --- Information environment ---
@@ -1644,7 +1651,7 @@ function composeComparison(fs, ev, ents) {
   fs.forEach(f => addCountryEvidence(f, ev));
   const lines = [];
   // Same report layout as the country brief: a titled document, not a blob.
-  lines.push(`## ${fs.map(f => f.name).join(" vs ")} — comparison`);
+  lines.push(`## ${fs.map(f => f.label).join(" vs ")} — comparison`);
   lines.push("");
 
   // headline: use the asked-about attribute if there is one, else trust
@@ -1658,7 +1665,7 @@ function composeComparison(fs, ev, ents) {
       lines.push(`**${hi.name} leads on ${attr.label.toLowerCase()} (${fmt(attr.get(hi), attr.unit)} vs ${lo.name}'s ${fmt(attr.get(lo), attr.unit)}).**\n`);
   }
 
-  lines.push(`| | ${fs.map(f => f.name).join(" | ")} |`);
+  lines.push(`| | ${fs.map(f => f.label).join(" | ")} |`);
   lines.push(`|---|${fs.map(() => "---").join("|")}|`);
   const row = (label, key, suffix = "%") =>
     `| ${label} | ${fs.map(f => f[key] == null ? "no data" : Math.round(f[key] * 10) / 10 + suffix).join(" | ")} |`;
@@ -1887,7 +1894,7 @@ function composeRanking(ents, ev) {
   lines.push(`|---|---|---|`);
   top.forEach((f, i) => {
     const v = attr.get(f);
-    lines.push(`| ${i + 1} | ${f.name} | ${attr.fmt ? attr.fmt(v) : fmt(v, attr.unit)} |`);
+    lines.push(`| ${i + 1} | ${f.label} | ${attr.fmt ? attr.fmt(v) : fmt(v, attr.unit)} |`);
   });
   if (missing > 0)
     lines.push(`\n*${missing} countries in ${scope} have no ${attr.label.toLowerCase()} data in the Atlas — they are excluded, not ranked low.*`);
@@ -1928,7 +1935,7 @@ function composeLookup(ents, ev, qNorm) {
     const regionAll = all.filter(x => x.subregion === f.subregion && x.iso !== iso);
     const regionAvg = regionAll.length ? regionAll.reduce((s, x) => s + attr.get(x), 0) / regionAll.length : null;
 
-    lines.push(`**${f.name}: ${attr.label.toLowerCase()} is ${attr.fmt ? attr.fmt(v) : fmt(v, attr.unit)}** — ranked ${rank} of ${all.length} countries with data.`);
+    lines.push(`**${f.label}: ${attr.label.toLowerCase()} is ${attr.fmt ? attr.fmt(v) : fmt(v, attr.unit)}** — ranked ${rank} of ${all.length} countries with data.`);
     // Data cost is an inverted measure — "ranked 1" would read as a win
     // when it is the world's LEAST affordable data. Say which way is up.
     if (attrKey === "datacost")
@@ -1990,7 +1997,7 @@ function composePlatform(ents, ev, qNorm) {
     const lines = [];
     lines.push(`**${pretty} does not appear among the leading social platforms in ${absent.length} of ${leaders.length + present.length + absent.length} ${scopeName === "195 Atlas markets" ? "Atlas markets with platform data" : scopeName + " markets with platform data"}.**`);
     if (absent.length)
-      lines.push(`\nLargest of them: ${absent.slice(0, 10).map(([iso]) => COUNTRIES[iso].name).join(", ")}.`);
+      lines.push(`\nLargest of them: ${absent.slice(0, 10).map(([iso]) => countryLabel(iso)).join(", ")}.`);
     lines.push(`\n*Absent from the leading-platform list does not mean unused — the lists are editorially compiled and show market presence, not measured reach.*`);
     return lines.join("\n");
   }
@@ -2001,13 +2008,13 @@ function composePlatform(ents, ev, qNorm) {
   const lines = [];
   lines.push(`**${pretty} is the #1 social platform in ${leaders.length} of ${spec ? leaders.length + present.length + absent.length + " " + scopeName : "195 Atlas"} markets**${present.length ? ` and appears in the top platforms of ${present.length} more` : ""}.`);
   if (leaders.length) {
-    lines.push(`\nLargest markets where it leads: ${leaders.slice(0, 8).map(([iso]) => COUNTRIES[iso].name).join(", ")}.`);
+    lines.push(`\nLargest markets where it leads: ${leaders.slice(0, 8).map(([iso]) => countryLabel(iso)).join(", ")}.`);
     lines.push(`\n*Note: platform lists are editorially compiled per country — they show market presence, not measured reach percentages.*`);
   } else if (present.length) {
     // "#1 in 0 markets" alone answers a "where?" question with no places at
     // all — name where it DOES appear instead.
     present.sort((a, b) => b[1] - a[1]);
-    lines.push(`\nIt leads nowhere in the Atlas, but its biggest markets by presence are: ${present.slice(0, 8).map(([iso]) => COUNTRIES[iso].name).join(", ")}.`);
+    lines.push(`\nIt leads nowhere in the Atlas, but its biggest markets by presence are: ${present.slice(0, 8).map(([iso]) => countryLabel(iso)).join(", ")}.`);
     lines.push(`\n*Note: platform lists are editorially compiled per country — they show market presence, not measured reach percentages.*`);
   }
   return lines.join("\n");
@@ -2033,7 +2040,7 @@ const SEARCH_LAYERS = [
           ? `**Languages in ${f.name}:** ${f.languages.join(", ")} *(no speaker-share breakdown held for this country)*`
           : null;
       const rows = f.languagesDetail.slice(0, 6).map(l =>
-        `- **${l.language}** — ${l.pct != null ? l.pct + "% of the population" : "share not held"}${l.official ? " *(official)*" : ""}`);
+        `- **${l.language}${l.code ? ` (${l.code})` : ""}** — ${l.pct != null ? l.pct + "% of the population" : "share not held"}${l.official ? " *(official)*" : ""}`);
       return [`**Languages in ${f.name}** (Unicode CLDR speaker capability — shares overlap, people speak several):`, ...rows].join("\n");
     },
     srcField: null, sourceNote: "Unicode CLDR territory-language data" },
@@ -2429,7 +2436,7 @@ export function findMarkets(opts = {}) {
       : /World Values/.test(f.survey || "") ? "daily+weekly construct" : null;
 
     ranked.push({
-      iso, name: f.name, flag: c.flag || "", score: Math.round(score * 10) / 10,
+      iso, name: f.name, label: f.label, flag: c.flag || "", score: Math.round(score * 10) / 10,
       components: comp, lead: { name: lead.name, effective: lead.effective, measured: lead.measured, capped: lead.capped },
       langPct, under15: f.under15, urban: f.urban, internet: f.internet,
       population: f.pop, reachPeople: f.pop != null ? Math.round((lead.effective / 100) * f.pop) : null,
@@ -2525,7 +2532,7 @@ function composeMarketFinder(ents, ev, qNorm) {
   L.push(`| # | Country | Score | Lead channel (effective reach) |${language ? ` ${LANG_NAMES_FINDER[language]} |` : ""} Est. people reachable | Risk notes |`);
   L.push(`|---|---|---|---|${language ? "---|" : ""}---|---|`);
   res.top.forEach((r, i) => {
-    L.push(`| ${i + 1} | ${r.name} | ${r.score} | ${r.lead.name} ${fmt(r.lead.effective)}${r.lead.capped ? " *(capped at internet access)*" : ""} |${language ? ` ${r.langPct != null ? Math.round(r.langPct) + "%" : "no data"} |` : ""} ${r.reachPeople != null ? fmtPop(r.reachPeople) : "n/a"} | ${r.flags.length ? r.flags[0] : "—"} |`);
+    L.push(`| ${i + 1} | ${r.label} | ${r.score} | ${r.lead.name} ${fmt(r.lead.effective)}${r.lead.capped ? " *(capped at internet access)*" : ""} |${language ? ` ${r.langPct != null ? Math.round(r.langPct) + "%" : "no data"} |` : ""} ${r.reachPeople != null ? fmtPop(r.reachPeople) : "n/a"} | ${r.flags.length ? r.flags[0] : "—"} |`);
   });
   L.push("");
   L.push(`**Why the top picks:**`);
@@ -2547,7 +2554,7 @@ function composeMarketFinder(ents, ev, qNorm) {
     if (r.themeRising) why.push(`attention to ${r.themeRising.label_en} (a ${themeKey} topic) is currently rising in this market (+${Math.round(r.themeRising.velocity * 100)}% vs baseline) [measured, ~120-day window]`);
     else if (r.themeStanding) why.push(`${r.themeStanding.label_en} holds standing attention here (${r.themeStanding.attention_share_pct}% of measured attention) [measured]`);
     if (r.flags.length) why.push(`caution: ${r.flags.join("; ")} [measured]`);
-    L.push(`${i + 1}. **${r.name}** — ${why.join("; ")}.`);
+    L.push(`${i + 1}. **${r.label}** — ${why.join("; ")}.`);
     ev.add(`${r.name} — screening inputs`, `Score ${r.score}/100. Survey: ${r.survey || "n/a"}. All inputs from the Atlas country record.`, countryLinks(r.iso));
   });
   L.push("");
@@ -2782,7 +2789,7 @@ function composeConsultingBrief(f, ev, ents, qNorm) {
   const L = [];
   const lead = channels[0];
 
-  L.push(`**Strategic brief — ${t ? `${t.label_en} in ` : topic ? `${topic.label} in ` : ""}${f.name}**`);
+  L.push(`**Strategic brief — ${t ? `${t.label_en} in ` : topic ? `${topic.label} in ` : ""}${f.label}**`);
   L.push(`*Decision being addressed: ${objective.label}${objective.inferred ? " (inferred from your question — say the goal explicitly if it's different)" : ""}.*`);
   L.push("");
 
@@ -3563,7 +3570,7 @@ export function answerQuestion(question) {
       .sort((a, b) => (b.pop || 0) - (a.pop || 0));
     ev.add(`Coverage: ${attr.label}`,
       `Counted live from Atlas records — countries whose record holds no value for this indicator. Underlying source: ${attr.source}.`, []);
-    const names = missing.map(f => f.name);
+    const names = missing.map(f => f.label);
     return {
       answer: `**${missing.length} of 195 countries have no ${attr.label.toLowerCase()} value in the Atlas** (underlying source: ${attr.source}). They are excluded from every ranking by name — never ranked low.\n\n${names.length ? (names.length <= 40 ? names.join(", ") + "." : names.slice(0, 40).join(", ") + `, and ${names.length - 40} more.`) : "None — coverage is complete."}`,
       evidence: ev.list(), followups: buildFollowups(ents, "rank"), clarify: null, entities: ents,
@@ -3789,7 +3796,7 @@ export function answerQuestion(question) {
     const rows = Object.entries(COUNTRIES)
       .filter(([iso, c]) => ((c.information_freedom || {}).political_freedom_status || "") === want
         && (!spec || inRegionSpec(spec, iso, c)))
-      .map(([iso, c]) => ({ name: c.name, pop: c.population || 0 }))
+      .map(([iso, c]) => ({ name: countryLabel(iso), pop: c.population || 0 }))
       .sort((a, b) => b.pop - a.pop);
     if (rows.length) {
       ev.add(`Freedom House political status: ${want}`,
@@ -3815,7 +3822,7 @@ export function answerQuestion(question) {
       .filter(([iso, o]) => (o.confirmed || 0) > 0 && COUNTRIES[iso]
         && (!ooniSpec || inRegionSpec(ooniSpec, iso, COUNTRIES[iso]))
         && (!ents.statusFilter || (COUNTRIES[iso].information_freedom || {}).political_freedom_status === ents.statusFilter))
-      .map(([iso, o]) => ({ iso, name: COUNTRIES[iso].name, confirmed: o.confirmed }))
+      .map(([iso, o]) => ({ iso, name: countryLabel(iso), confirmed: o.confirmed }))
       .sort((a, b) => b.confirmed - a.confirmed);
     if (rows.length) {
       const meta = OONI._meta || {};
@@ -3850,7 +3857,7 @@ export function answerQuestion(question) {
       .filter(([iso, p]) => p && p.share_pct != null && COUNTRIES[iso]
         && (!spec || inRegionSpec(spec, iso, COUNTRIES[iso]))
         && (!ents.statusFilter || (COUNTRIES[iso].information_freedom || {}).political_freedom_status === ents.statusFilter))
-      .map(([iso, p]) => ({ name: COUNTRIES[iso].name, share: p.share_pct }))
+      .map(([iso, p]) => ({ name: countryLabel(iso), share: p.share_pct }))
       .sort((a, b) => asc ? a.share - b.share : b.share - a.share);
     if (rows.length) {
       ev.add("UN coverage in national press — ranking",
@@ -3879,7 +3886,7 @@ export function answerQuestion(question) {
       .filter(([iso, c]) => c.news_attention && c.news_attention.daily_pct != null
         && (!spec || inRegionSpec(spec, iso, c))
         && (!ents.statusFilter || (c.information_freedom || {}).political_freedom_status === ents.statusFilter))
-      .map(([iso, c]) => ({ name: c.name, daily: c.news_attention.daily_pct }))
+      .map(([iso, c]) => ({ name: countryLabel(iso), daily: c.news_attention.daily_pct }))
       .sort((a, b) => asc ? a.daily - b.daily : b.daily - a.daily);
     if (rows.length) {
       ev.add("News-attention frequency (LAPOP)",
