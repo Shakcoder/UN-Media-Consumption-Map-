@@ -553,7 +553,7 @@ const ATTRIBUTES = {
                 words: ["press freedom", "media freedom", "rsf", "journalist safety", "press freedom score",
                         "journalists", "journalist", "reporters", "state controlled media", "state controlled",
                         "state media", "media control", "press free", "free press",
-                        "press not free", "press isn't free", "unfree press"],
+                        "press not free", "press isn't free", "unfree press", "the press"],
                 source: "RSF World Press Freedom Index 2025" },
   netfreedom: { label: "Internet freedom (FOTN, 0–100)", unit: "/100", get: f => f.fotn,
                 words: ["internet freedom", "online freedom", "censorship", "internet censorship"],
@@ -972,12 +972,18 @@ export function detectEntities(question) {
   const langContext = /\b(speak\w*|spoken|language|languages|bilingual|content in|campaign in|broadcast\w* in|publish\w* in|main language|official language)\b/.test(q)
     || /\b(french|spanish|portuguese|arabic|german|russian|italian|chinese|ukrainian) (use|usage|speakers?)\b/.test(q);
   if (langContext || /\b(french|spanish|portuguese|arabic|german|russian) speaking\b/.test(q)) {
+    const HOME_NAMES = { FRA: /\bfrance\b/, ESP: /\bspain\b/, PRT: /\bportugal\b/, DEU: /\bgermany\b/,
+      RUS: /\brussia\b/, ITA: /\bitaly\b/, TUR: /\bturkey|turkiye\b/, CHN: /\bchina\b/, JPN: /\bjapan\b/,
+      KOR: /\bkorea\b/, UKR: /\bukraine\b/, SWE: /\bsweden\b/, NLD: /\bnetherlands|holland\b/ };
     for (const [lang, iso] of Object.entries(LANG_HOME)) {
       if (!new RegExp("\\b" + lang + "\\b").test(q)) continue;
+      // a country the user NAMED is never dropped — only the language word's
+      // implicit hitchhiker is ("Spanish use in Mexico" drops Spain;
+      // "Spanish use in Mexico vs Spain" keeps it)
+      if (HOME_NAMES[iso] && HOME_NAMES[iso].test(q)) continue;
       const others = found.countries.filter(c => c !== iso);
-      // keep the home country only when it is the sole subject
       if (others.length && found.countries.includes(iso)) found.countries = others;
-      if (/\bspeaking\b/.test(q) && !others.length) found.countries = found.countries.filter(c => c !== iso || new RegExp("\\b(france|spain|portugal|germany|russia|italy)\\b").test(q));
+      else if (/\bspeaking\b/.test(q)) found.countries = found.countries.filter(c => c !== iso);
     }
   }
   // "english" is both the GBR demonym and the language attribute. When the
@@ -1055,11 +1061,19 @@ export function detectEntities(question) {
   // Freedom House status as a FILTER: "Not Free countries with high internet
   // use" filters the ranking pool; "democratic countries" and "authoritarian
   // regimes" map to the nearest held category (said out loud in the answer).
-  found.statusFilter = /\bnot free\b/.test(q) ? "Not Free"
+  // "the press is not free" NEGATES a measure; "Not Free countries" FILTERS
+  // by FH status — the same words, opposite machinery
+  const measureNotFree = /\b(press|media|internet|online|journalists?)\b.{0,14}\bnot free\b/.test(q);
+  found.statusFilter = measureNotFree ? null
+    : /\bnot free\b/.test(q) ? "Not Free"
     : /\bpartly free\b/.test(q) ? "Partly Free"
     : /\b(rated free|free countries|among free|free markets)\b/.test(q) ? "Free"
     : /\b(democratic countries|democracies)\b/.test(q) ? "Free"
     : /\b(authoritarian|autocra\w+)\b/.test(q) ? "Not Free" : null;
+  // synonym-derived filters (authoritarian/democratic) describe the MEASURE
+  // when political freedom itself is being ranked — "least authoritarian"
+  // must search all 195 countries, not only the Not Free ones
+  found.statusFilterSynonym = !!found.statusFilter && !/\b(not free|partly free|rated free|free countries|among free|free markets)\b/.test(q);
   if (found.statusFilter) found.notes.push(`treated "${found.statusFilter === "Free" && /\b(democratic|democracies)\b/.test(q) ? "democratic" : found.statusFilter === "Not Free" && /\b(authoritarian|autocra\w+)\b/.test(q) ? "authoritarian" : found.statusFilter.toLowerCase()}" as Freedom House's "${found.statusFilter}" rating — the nearest category the Atlas holds`);
   // "most authoritarian countries" with no other measure ranks political freedom
   if (/\b(authoritarian|autocra\w+|freest)\b/.test(q) && !found.attributes.length)
@@ -1076,10 +1090,14 @@ export function detectEntities(question) {
   const notGood = /\bnot (bad|poor|low|weak|terrible)\b/.test(q);
   const dirLow = !notGood && /\b(lowest|least|worst|worse|smallest|bottom|weakest|fewest|youngest|low|poor(ly)?|bad(ly)?|barely|hardly any(?:one)?|almost no(?:body| one)?|struggl\w+|offline|not online|aren'?t online)\b/.test(q);
   const dirHigh = /\b(highest|high|most|best|top|largest|greatest|strongest|leading|leads?|king|dominat\w+|everywhere|widespread|nearly everyone|almost (?:everyone|all)|freest)\b/.test(q);
-  const qDir = q.replace(/\b(not free|partly free)\b/g, " ");   // status names are filters, not directions
+  const qDir = measureNotFree ? q : q.replace(/\b(not free|partly free)\b/g, " ");   // status names are filters, not directions
   const negationCue = /\b(not|no|never|without|lack\w*|absent|don'?t|do not|doesn'?t|does not|isn'?t|aren'?t|avoid\w*)\b/.test(qDir);
   const lowAsk = dirLow ? true : (dirHigh || notGood) ? false : negationCue;
-  const negatedMeasure = /\b(distrust\w*|skeptic\w*|sceptic\w*|authoritarian|autocra\w+)\b/.test(q);
+  // "authoritarian" inverts polfreedom ("most authoritarian" = lowest score)
+  // but must NEVER invert a different ranked measure ("highest internet use
+  // in authoritarian countries" ranks internet, descending)
+  const negatedMeasure = /\b(distrust\w*|skeptic\w*|sceptic\w*)\b/.test(q)
+    || (/\b(authoritarian|autocra\w+)\b/.test(q) && found.attributes[0] === "polfreedom");
   const resolvedDir = (negatedMeasure ? !lowAsk : lowAsk) ? "asc" : "desc";
   // Spelled-out counts ("top ten", "a dozen") count as much as digits do
   const WORD_NUMS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8,
@@ -1846,7 +1864,7 @@ function composeRanking(ents, ev) {
     scope = regionDisplay(ents.regions[0]);
   }
 
-  if (ents.statusFilter) {
+  if (ents.statusFilter && !(ents.statusFilterSynonym && attrKey === "polfreedom")) {
     pool = pool.filter(iso => ((COUNTRIES[iso].information_freedom || {}).political_freedom_status || "") === ents.statusFilter);
     scope = (scope === "all 195 countries" ? "countries" : scope) + ` rated "${ents.statusFilter}" (Freedom House)`;
   }
@@ -3558,9 +3576,13 @@ export function answerQuestion(question) {
     ents.intents = ents.intents.filter(i => i !== "lookup" && i !== "rank");
     ents.attributes = ents.attributes.filter(a => a !== "internet" && a !== "online");
   }
-  // "How free is the internet in X?" is the FOTN score, not political freedom
+  // "How free is the internet/press in X?" names its own measure — FOTN or
+  // RSF — and must never collapse into the political-freedom score
   if (/\bhow free\b/.test(qNorm) && /\b(internet|online)\b/.test(qNorm)) {
     ents.attributes = ["netfreedom", ...ents.attributes.filter(a => a !== "netfreedom" && a !== "polfreedom" && a !== "internet")];
+    if (ents.countries.length === 1 && !ents.intents.includes("lookup")) ents.intents.push("lookup");
+  } else if (/\bhow free\b/.test(qNorm) && /\b(press|media|journalists?)\b/.test(qNorm)) {
+    ents.attributes = ["press", ...ents.attributes.filter(a => a !== "press" && a !== "polfreedom")];
     if (ents.countries.length === 1 && !ents.intents.includes("lookup")) ents.intents.push("lookup");
   }
 
@@ -3571,10 +3593,10 @@ export function answerQuestion(question) {
   // "trusted OUTLETS to partner with" wants the outlet lists, not a trust
   // number — and "which apps do people use" wants the platform lists, not
   // the social-as-news-source percentage
-  if (/\b(outlets?|broadcasters?|stations?|newspapers?|partner with|apps?|platforms?|channels?|websites?|sites|networks?)\b/.test(qNorm) && ents.countries.length) {
+  if (/\b(outlets?|broadcasters?|stations?|newspapers?|partner with|apps?|platforms?|channels?|websites?|sites|tv networks?|news networks?)\b/.test(qNorm) && ents.countries.length) {
     ents.intents = ents.intents.filter(i => i !== "lookup");
     // "top news websites in India" wants the outlet LIST, not a use-% ranking
-    if (/\b(outlets?|stations?|channels?|websites?|sites|networks?)\b/.test(qNorm))
+    if (/\b(outlets?|stations?|channels?|websites?|sites|tv networks?|news networks?)\b/.test(qNorm))
       ents.intents = ents.intents.filter(i => i !== "rank");
   }
 
@@ -3769,17 +3791,21 @@ export function answerQuestion(question) {
   // Measured news-site blocking (OONI): "which countries block news sites?"
   if (/\b(block\w*|censor\w*)\b/.test(qNorm) && /\b(news sites?|news websites?|websites?|which countries|where|not free|partly free)\b/.test(qNorm)
       && !ents.countries.length && OONI && OONI.countries) {
+    const ooniSpec = ents.regions.length ? REGION_MAP[ents.regions[0]] : null;
     const rows = Object.entries(OONI.countries)
-      .filter(([iso, o]) => (o.confirmed || 0) > 0
-        && (!ents.statusFilter || ((COUNTRIES[iso] || {}).information_freedom || {}).political_freedom_status === ents.statusFilter))
-      .map(([iso, o]) => ({ iso, name: (COUNTRIES[iso] || {}).name || iso, confirmed: o.confirmed }))
+      .filter(([iso, o]) => (o.confirmed || 0) > 0 && COUNTRIES[iso]
+        && (!ooniSpec || inRegionSpec(ooniSpec, iso, COUNTRIES[iso]))
+        && (!ents.statusFilter || (COUNTRIES[iso].information_freedom || {}).political_freedom_status === ents.statusFilter))
+      .map(([iso, o]) => ({ iso, name: COUNTRIES[iso].name, confirmed: o.confirmed }))
       .sort((a, b) => b.confirmed - a.confirmed);
     if (rows.length) {
       const meta = OONI._meta || {};
       ev.add("OONI measured news-site censorship",
         `OONI web_connectivity measurements against the Citizen Lab news-site test list, rolling 28-day window. "Confirmed" is OONI's strong blocking signal; countries with no measurements are UNKNOWN, never "open".`, []);
       const lines = [];
-      lines.push(`**${rows.length} countries have OONI-confirmed blocking of news sites** in the current 28-day measurement window:`);
+      const ooniScope = [ents.regions.length ? regionDisplay(ents.regions[0]) : null,
+        ents.statusFilter ? `rated "${ents.statusFilter}" (Freedom House)` : null].filter(Boolean).join(", ");
+      lines.push(`**${rows.length} ${ooniScope ? ooniScope + " " : ""}${rows.length === 1 ? "country has" : "countries have"} OONI-confirmed blocking of news sites** in the current 28-day measurement window${ooniScope ? " (a filtered subset — 26 countries show confirmed blocking worldwide)" : ""}:`);
       lines.push("");
       for (const r of rows.slice(0, 15))
         lines.push(`- **${r.name}** — ${r.confirmed.toLocaleString("en-US")} confirmed blocked measurements`);
