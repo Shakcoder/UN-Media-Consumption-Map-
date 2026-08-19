@@ -172,7 +172,12 @@ fetch("data/static_countries.json").then(r => r.ok ? r.json() : {}).then(d => {
   for (const [iso, c] of Object.entries(d))
     if (c && typeof c === "object" && c.name) COUNTRY_NAMES[iso] = c.name_full || c.name;
 }).catch(() => {});
-const countryLabel = (iso3) => COUNTRY_NAMES[iso3] ? `${COUNTRY_NAMES[iso3]} (${iso3})` : iso3;
+// GDELT attributes some outlets to territories outside the Atlas's 195
+// UN members — name them for display, but never link them to the analyst
+// (it has no data for them and would answer something else)
+const TERRITORY_NAMES = { GUM: "Guam", HKG: "Hong Kong", MYT: "Mayotte", TWN: "Taiwan" };
+const countryLabel = (iso3) => COUNTRY_NAMES[iso3] ? `${COUNTRY_NAMES[iso3]} (${iso3})`
+  : TERRITORY_NAMES[iso3] ? `${TERRITORY_NAMES[iso3]} (${iso3}, territory — outside the Atlas's 195)` : iso3;
 
 const LANG_NAMES = {en:"English", fr:"French", es:"Spanish", ar:"Arabic", pt:"Portuguese",
   ru:"Russian", zh:"Chinese", hi:"Hindi", bn:"Bengali", id:"Indonesian", sw:"Swahili",
@@ -1241,8 +1246,8 @@ function renderDetail() {
   // topic → action: hand the top-airtime countries to the analyst, which
   // carries the full activation specifics (broadcasters, platform order,
   // audience structure) for a campaign there
-  const actLinks = mediaTop.slice(0, 3).map(c =>
-    `<a href="ask.html?q=${encodeURIComponent(`How should we run ${t.label_en} content in ${COUNTRY_NAMES[c.iso3] || c.iso3}?`)}">${esc(countryLabel(c.iso3))}</a>`).join(" · ");
+  const actLinks = mediaTop.filter(c => COUNTRY_NAMES[c.iso3]).slice(0, 3).map(c =>
+    `<a href="ask.html?q=${encodeURIComponent(`How should we run ${t.label_en} content in ${COUNTRY_NAMES[c.iso3]}?`)}">${esc(countryLabel(c.iso3))}</a>`).join(" · ");
 
   el.innerHTML = `
     <h1 tabindex="-1">${esc(t.label_en)}</h1>

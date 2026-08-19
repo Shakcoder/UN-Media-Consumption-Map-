@@ -414,7 +414,7 @@ function exportCsv() {
   if (!A || !B || A === B || !DATA[A] || !DATA[B]) return;
   const ca = DATA[A], cb = DATA[B];
   const rows = [
-    [`Audience Intelligence Atlas · country comparison: ${ca.name} (${A}) and ${cb.name} (${B})`],
+    [`Audience Intelligence Atlas · country comparison: ${ca.name} and ${cb.name}`],
     ["Note", "A comparison is context, not a ranking. An empty cell means no approved source measures it; survey rows carry their programme and caveats, and figures from different survey programmes are indicative when compared across countries."],
     [],
     ["section", "indicator", ca.name, cb.name, "source"],

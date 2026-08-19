@@ -1676,6 +1676,9 @@ function setLanguage(lang) {
 
   // Re-render dynamic content
   refreshMapAnnotations();
+  // the open panel's subline carries translated labels — rebuild it
+  if (currentActiveIso && window.COUNTRY_DATA[currentActiveIso])
+    panelSubline.textContent = buildPanelSubline(window.COUNTRY_DATA[currentActiveIso]);
   if (currentActiveIso) {
     renderCountryStats(currentActiveIso);
     renderDetail(currentActiveIso);
@@ -2178,6 +2181,10 @@ function renderList() {
     .filter(([iso, d]) => activeFilter === "all" || d.region === activeFilter)
     .filter(([iso, d]) => !searchTerm
       || foldName(d.name).includes(searchTerm)
+      // the site DISPLAYS "name_full (ISO3)" — the search must accept what
+      // the site itself shows, including the code
+      || (d.name_full && foldName(d.name_full).includes(searchTerm))
+      || iso.toLowerCase() === searchTerm.trim()
       || (SEARCH_ALIASES[iso] || []).some(alias => alias.includes(searchTerm)));
   shown.sort((a, b) => a[1].name.localeCompare(b[1].name));
   let html = `<div class="section-heading" id="country-list-heading">${t("pilot_countries_count", { n: shown.length })}</div>`;
@@ -2360,6 +2367,13 @@ window.addEventListener("afterprint", () => {
   document.getElementById("print-profile").innerHTML = "";
 });
 
+function buildPanelSubline(d) {
+  return [d.subregion,
+    d.capital ? `${t("subline_capital")}: ${esc(d.capital)}` : null,
+    d.population != null ? `${t("subline_pop")} ${formatPop(d.population)}` : null,
+  ].filter(Boolean).join(" · ");
+}
+
 function openDetail(iso) {
   currentActiveIso = iso;
   selectTab("overview");
@@ -2396,10 +2410,7 @@ function openDetail(iso) {
   if (d) {
     panelFlag.textContent = d.flag || "🌐";
     panelName.textContent = `${d.name_full || d.name} (${iso})`;
-    panelSubline.textContent = [d.subregion,
-      d.capital ? `${t("subline_capital")}: ${esc(d.capital)}` : null,
-      d.population != null ? `${t("subline_pop")} ${formatPop(d.population)}` : null,
-    ].filter(Boolean).join(" · ");
+    panelSubline.textContent = buildPanelSubline(d);
     renderCountryStats(iso);
   } else {
     panelFlag.textContent = "🌍";

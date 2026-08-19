@@ -196,6 +196,12 @@ function buildNameIndex() {
     if (!c || !c.name) continue;
     const full = c.name.toLowerCase().trim();
     NAME_TO_ISO[full] = iso;
+    // questions pass through normalize() (commas, periods and "'s" gone) —
+    // the engine's own emissions and legacy names must survive that: index
+    // the normalized form of every stored name ("st. lucia" → "st lucia",
+    // "korea, dem. people's rep." → its normalized phrase)
+    const fullNrm = normalize(c.name).trim();
+    if (fullNrm && fullNrm !== full && !(fullNrm in NAME_TO_ISO)) NAME_TO_ISO[fullNrm] = iso;
     // the display convention uses name_full ("Democratic People's Republic
     // of Korea") — questions built from displayed names must resolve too
     if (c.name_full && c.name_full.toLowerCase() !== full) {
@@ -863,7 +869,13 @@ export function detectEntities(question) {
   }
   for (const [label, qid] of REGISTRY) {
     const l = label.toLowerCase();
-    if (l.length >= 4 && q.includes(l)) topicCandidates.push({ label, qid, matched: l });
+    if (l.length >= 4 && q.includes(l)) { topicCandidates.push({ label, qid, matched: l }); continue; }
+    // the question passed through normalize() (apostrophes, hyphens gone) —
+    // labels must be matched in that same form or "Children's rights" and
+    // "Same-sex marriage" can never be asked about
+    const ln = normalize(label).trim();
+    if (ln.length >= 4 && ln !== l && q.includes(" " + ln + " "))
+      topicCandidates.push({ label, qid, matched: ln });
   }
   topicCandidates.sort((a, b) => b.matched.length - a.matched.length);
   for (const cand of topicCandidates) {
@@ -1057,6 +1069,15 @@ export function detectEntities(question) {
     if (words.some(w => q.includes(" " + w + " "))) found.audiences.push(aud);
   }
 
+  // an audience word INSIDE a matched topic label ("Women's rights",
+  // "Youth unemployment") names the topic, not a target audience — keeping
+  // it made the engine clarify "which audience?" against its own chips
+  if (found.topics.length && found.audiences.length) {
+    const labelText = found.topics.map(t => t.label.toLowerCase()).join(" ");
+    found.audiences = found.audiences.filter(aud =>
+      !(AUDIENCES[aud] || []).some(w => labelText.includes(w)));
+  }
+
   // --- intents ---
   found.wantsTrends = /\b(trend|trending|rising|right now|this week|currently|interest(ed)? in|care about|popular topic|talking about|paying attention|hot topic|buzz|resonat\w*|most read|top topics?|biggest topics?|concern\w* people|growing or declining|reading about|are following|talk of the town|on \w+ minds?|these days)\b/.test(q);
   found.wantsCompare = /\b(compare|versus|vs|difference between|better than|or)\b/.test(q) && found.countries.length >= 2
@@ -1073,7 +1094,7 @@ export function detectEntities(question) {
   // regimes" map to the nearest held category (said out loud in the answer).
   // "the press is not free" NEGATES a measure; "Not Free countries" FILTERS
   // by FH status — the same words, opposite machinery
-  const measureNotFree = /\b(press|media|internet|online|journalists?)\b.{0,14}\bnot free\b/.test(q);
+  const measureNotFree = /\b(press|media|internet|online|journalists?) (is |are )?not free\b/.test(q);
   found.statusFilter = measureNotFree ? null
     : /\bnot free\b/.test(q) ? "Not Free"
     : /\bpartly free\b/.test(q) ? "Partly Free"
@@ -2400,7 +2421,14 @@ export function findMarkets(opts = {}) {
 
   let pool = Object.keys(COUNTRIES);
   if (opts.isos && opts.isos.length) pool = pool.filter(iso => opts.isos.includes(iso));
-  else if (opts.region) pool = pool.filter(iso => (COUNTRIES[iso].region || "") === opts.region);
+  else if (opts.region) {
+    // the raw `region` field is the World Bank grouping (Central Asia and
+    // the Caucasus filed under "Europe") — REGION_MAP's subregion-based
+    // specs carry the corrected continent membership
+    const spec = REGION_MAP[String(opts.region).toLowerCase()];
+    pool = spec ? pool.filter(iso => inRegionSpec(spec, iso, COUNTRIES[iso]))
+      : pool.filter(iso => (COUNTRIES[iso].region || "") === opts.region);
+  }
 
   const ranked = [], excluded = [];
   for (const iso of pool) {
@@ -2685,7 +2713,7 @@ function assessConfidence(f, channels, objective) {
   const conflictAffected = ["SDN", "AFG", "MMR", "SYR", "YEM", "HTI", "MLI", "BFA", "NER", "SSD", "COD", "SOM", "LBY", "UKR", "PSE"];
   if (conflictAffected.includes(f.iso)) {
     level = "Low";
-    reasons.push(`${f.name} has experienced major conflict or displacement since the survey fieldwork — pre-crisis media habits are a weak guide to current reach, and infrastructure may have changed materially`);
+    reasons.push(`${f.name} has experienced major conflict or displacement since ${f.survey ? "the survey fieldwork" : "the most recent underlying data was collected"} — ${f.survey ? "pre-crisis media habits are a weak guide to current reach, and" : ""} infrastructure may have changed materially`);
   }
   // A question about an elite/occupational/city audience cannot be answered by
   // national population data at High confidence, however good that data is.
@@ -3176,19 +3204,23 @@ function neighbourOf(iso) {
 function buildFollowups(ents, kind) {
   const chips = [];
   const iso = ents.countries[0] || ents.regionCountries[0];
-  const cName = iso && COUNTRIES[iso] ? COUNTRIES[iso].name.replace(/,.*$/, "") : null;
+  // chip names must survive the round trip: comma-stripping "Korea, Dem.
+  // People's Rep." to "Korea" made the engine's own chips answer for the
+  // WRONG country (the korea→KOR alias). Full display names always parse.
+  const chipName = (i) => COUNTRIES[i] ? (COUNTRIES[i].name_full || COUNTRIES[i].name.replace(/,.*$/, "")) : null;
+  const cName = iso ? chipName(iso) : null;
 
   if (kind === "country" && cName) {
     if (!ents.wantsTrends) chips.push(`What's trending in ${cName}?`);
     const nb = neighbourOf(iso);
-    if (nb && COUNTRIES[nb]) chips.push(`Compare ${cName} with ${COUNTRIES[nb].name.replace(/,.*$/, "")}`);
+    if (nb && COUNTRIES[nb]) chips.push(`Compare ${cName} with ${chipName(nb)}`);
     chips.push(`How do we reach rural audiences in ${cName}?`);
   } else if (kind === "compare" && ents.countries.length >= 2) {
-    const names = ents.countries.slice(0, 2).map(i => COUNTRIES[i].name.replace(/,.*$/, ""));
+    const names = ents.countries.slice(0, 2).map(chipName);
     chips.push(`What's trending in ${names[0]}?`);
     chips.push(`Press freedom risks in ${names.join(" and ")}`);
     const nb = neighbourOf(ents.countries[0]);
-    if (nb) chips.push(`Add ${COUNTRIES[nb].name.replace(/,.*$/, "")} to the comparison`);
+    if (nb) chips.push(`Add ${chipName(nb)} to the comparison`);
   } else if (kind === "region" && ents.regions.length) {
     const r = regionDisplay(ents.regions[0]);
     chips.push(`Top 5 countries by internet access in ${r}`);
@@ -3211,7 +3243,7 @@ function buildFollowups(ents, kind) {
   } else if (kind === "strategy" && cName) {
     chips.push(`Which languages should content use in ${cName}?`);
     const nb = neighbourOf(iso);
-    if (nb && COUNTRIES[nb]) chips.push(`Same strategy brief for ${COUNTRIES[nb].name.replace(/,.*$/, "")}`);
+    if (nb && COUNTRIES[nb]) chips.push(`Same strategy brief for ${chipName(nb)}`);
     chips.push(`What's trending in ${cName}?`);
   } else {
     chips.push("What data do you have?");
@@ -3873,6 +3905,25 @@ export function answerQuestion(question) {
         && (!spec || inRegionSpec(spec, iso, c)))
       .map(([iso, c]) => ({ name: countryLabel(iso), pop: c.population || 0 }))
       .sort((a, b) => b.pop - a.pop);
+    if (!rows.length && ents.regions.length) {
+      // an empty filtered set is an ANSWER ("no GCC country is rated
+      // Free"), never a fall-through to an unrelated overview
+      const scopeName = regionDisplay(ents.regions[0]);
+      const spec = REGION_MAP[ents.regions[0]];
+      const counts = {};
+      for (const [iso, c] of Object.entries(COUNTRIES)) {
+        if (spec && !inRegionSpec(spec, iso, c)) continue;
+        const s = (c.information_freedom || {}).political_freedom_status || "unrated";
+        counts[s] = (counts[s] || 0) + 1;
+      }
+      ev.add("Freedom House political status", `Freedom in the World 2026 status flags, read live from Atlas records.`, []);
+      return {
+        answer: `**No ${scopeName.replace(/^the /, "")} country is rated "${want}"** in Freedom House's Freedom in the World 2026. The ${scopeName.replace(/^the /, "")} statuses: ${Object.entries(counts).map(([s, n]) => `${n} ${s}`).join(", ")}.`,
+        evidence: ev.list(), followups: ["Which countries are rated Not Free?", "Which countries score lowest on political freedom?"],
+        clarify: null, entities: ents,
+        reasoning: reasoningTrace(question, ents, "coverage", ev),
+      };
+    }
     if (rows.length) {
       ev.add(`Freedom House political status: ${want}`,
         `Freedom in the World 2026 status flags, read live from Atlas records. Status is FH's categorical rating; the 0–100 political-freedom score is separate and rankable.`, []);
@@ -3899,6 +3950,17 @@ export function answerQuestion(question) {
         && (!ents.statusFilter || (COUNTRIES[iso].information_freedom || {}).political_freedom_status === ents.statusFilter))
       .map(([iso, o]) => ({ iso, name: countryLabel(iso), confirmed: o.confirmed }))
       .sort((a, b) => b.confirmed - a.confirmed);
+    if (!rows.length) {
+      const scopeBits = [ents.regions.length ? regionDisplay(ents.regions[0]) : null,
+        ents.statusFilter ? `rated "${ents.statusFilter}"` : null].filter(Boolean).join(", ");
+      ev.add("OONI measured news-site censorship", `OONI web_connectivity vs the Citizen Lab news-site list, rolling 28-day window.`, []);
+      return {
+        answer: `**No ${scopeBits || "matching"} country shows OONI-confirmed news-site blocking in the current 28-day window** (26 countries do worldwide). Absence of a confirmed measurement is not proof of an open internet — some countries have no measurements at all, which the Atlas treats as unknown.`,
+        evidence: ev.list(), followups: ["Which countries block news sites?", "Which countries score lowest on internet freedom?"],
+        clarify: null, entities: ents,
+        reasoning: reasoningTrace(question, ents, "coverage", ev),
+      };
+    }
     if (rows.length) {
       const meta = OONI._meta || {};
       ev.add("OONI measured news-site censorship",
@@ -3934,6 +3996,14 @@ export function answerQuestion(question) {
         && (!ents.statusFilter || (COUNTRIES[iso].information_freedom || {}).political_freedom_status === ents.statusFilter))
       .map(([iso, p]) => ({ name: countryLabel(iso), share: p.share_pct }))
       .sort((a, b) => asc ? a.share - b.share : b.share - a.share);
+    if (!rows.length) {
+      return {
+        answer: `**No ${ents.regions.length ? regionDisplay(ents.regions[0]) + " " : ""}country has a quotable UN-coverage share this week** — either the weekly story volume is below the honesty floor or no national collection is measured there. 168 countries carry measurable shares worldwide.`,
+        evidence: [], followups: ["Where does national media cover the UN most?"],
+        clarify: null, entities: ents,
+        reasoning: reasoningTrace(question, ents, "coverage", ev),
+      };
+    }
     if (rows.length) {
       ev.add("UN coverage in national press — ranking",
         `Media Cloud national collections, rolling week. Share is a phrase-match FLOOR (acronyms mostly excluded); countries whose weekly volume is too small for an honest share are excluded here, not shown as zero.`, []);
@@ -3963,6 +4033,14 @@ export function answerQuestion(question) {
         && (!ents.statusFilter || (c.information_freedom || {}).political_freedom_status === ents.statusFilter))
       .map(([iso, c]) => ({ name: countryLabel(iso), daily: c.news_attention.daily_pct }))
       .sort((a, b) => asc ? a.daily - b.daily : b.daily - a.daily);
+    if (!rows.length) {
+      return {
+        answer: `**No news-attention frequency data covers ${ents.regions.length ? regionDisplay(ents.regions[0]) : "that scope"}** — LAPOP's AmericasBarometer measures the Americas only (23 countries). No equivalent cross-country attention-frequency survey is freely available elsewhere.`,
+        evidence: [], followups: ["Which country in Latin America follows the news most closely?"],
+        clarify: null, entities: ents,
+        reasoning: reasoningTrace(question, ents, "coverage", ev),
+      };
+    }
     if (rows.length) {
       ev.add("News-attention frequency (LAPOP)",
         `LAPOP AmericasBarometer: share who follow the news daily. One question, ALL media combined — a separate construct from the per-channel figures, held for the Americas only (${rows.length} countries).`, []);
@@ -4202,6 +4280,22 @@ export function answerQuestion(question) {
         reasoning: reasoningTrace(question, ents, "search", ev),
       };
     }
+  }
+
+  // A continuation chip ("Show the bottom 5 instead") opened WITHOUT its
+  // conversation — a shared link, a fresh tab — must say what it needs,
+  // not shrug. The chip is ours; the dead end would be ours too.
+  if (!parts.length && noFollowContext()
+      && /^\s*(show the )?(top|bottom) \d+ instead\s*$|^\s*same ranking\b/.test(qNorm.trim())) {
+    return {
+      answer: null, evidence: [], followups: [],
+      clarify: {
+        question: "That's a follow-up to a previous ranking, and this conversation doesn't have one yet — what would you like ranked?",
+        options: ["Top 5 countries by radio reliance", "Lowest trust in news worldwide",
+                  "Which countries score lowest on press freedom?"],
+      },
+      entities: ents,
+    };
   }
 
   // Near-miss rescue: before conceding "couldn't match", look for what the

@@ -343,7 +343,7 @@ function addAnalyst(answer, evidence, note, followups, forQuestion, reasoning) {
   if (!forQuestion) tools.hidden = true;   // status notices have nothing to share
   const copy = document.createElement("button");
   copy.type = "button"; copy.className = "tool"; copy.textContent = "Copy link";
-  copy.title = "Copy a link that re-asks this question; the recipient's browser computes the same answer from the same published data";
+  copy.title = "Copy a link that re-asks this question from scratch in the recipient's browser. Follow-up questions (\"what about radio there?\") depend on this conversation — the link will ask for the missing context rather than guess";
   // The link is built from THIS answer's own question, captured when the
   // answer was created. Reading the address bar instead would hand out a link
   // to whatever was asked most recently — so copying from an earlier answer in
