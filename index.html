@@ -498,8 +498,9 @@
 
 
   /* Beyond the world's edge the container shows through — a designed soft
-     fade instead of a flat grey void. Tiles cover everything inside the
-     world, so this only paints the polar/edge margins. */
+     fade instead of a flat grey void. The drawn ocean (OCEAN_COLOUR in the
+     map script) covers everything inside the world, so this only paints the
+     polar/edge margins and the moment before the map has loaded. */
   .leaflet-container { font-family: inherit;
     background: linear-gradient(180deg, #E9F2F9 0%, #DFE8F0 45%, #D5E2ED 100%); }
   .leaflet-interactive:focus { outline: none; }
@@ -513,8 +514,8 @@
     border-bottom: 1px solid #EDF2F7 !important; transition: background .15s, color .15s; }
   .leaflet-control-zoom a:last-child { border-bottom: none !important; }
   .leaflet-control-zoom a:hover { background: #FFFFFF !important; color: var(--un-blue-dark) !important; }
-  /* The country layer mounts ~1s after the tiles on first load — fade it in
-     instead of popping (class added by script when the layer is ready). */
+  /* The ocean and country layer mount once the boundary file arrives — fade
+     them in instead of popping (class added by script when ready). */
   .leaflet-overlay-pane { opacity: 0; transition: opacity .45s ease; }
   .leaflet-overlay-pane.layer-ready { opacity: 1; }
   @media (prefers-reduced-motion: reduce) {
@@ -619,10 +620,10 @@
     <div id="map"></div>
     <div class="map-legend">
       <div class="legend-title" data-i18n="legend_title">Data status</div>
-      <div class="row"><div class="swatch" style="background:#009EDB"></div><span data-i18n="legend_profiled">Media data verified (survey-backed)</span></div>
-      <div class="row"><div class="swatch" style="background:#F2A9A9"></div><span data-i18n="legend_limited">Profile only, no media survey yet</span></div>
-      <div class="row"><div class="swatch" style="background:#8FCBEA"></div><span data-i18n="legend_territory">Territory (see sovereign state)</span></div>
-      <div class="row"><div class="swatch" style="background:#E4D9BE"></div><span data-i18n="legend_not_profiled">Non-sovereign area (no data)</span></div>
+      <div class="row"><div class="swatch" style="background:#3FB5E2"></div><span data-i18n="legend_profiled">Media data verified (survey-backed)</span></div>
+      <div class="row"><div class="swatch" style="background:#F5C5C5"></div><span data-i18n="legend_limited">Profile only, no media survey yet</span></div>
+      <div class="row"><div class="swatch" style="background:#BFE0F0"></div><span data-i18n="legend_territory">Territory (see sovereign state)</span></div>
+      <div class="row"><div class="swatch" style="background:#EBE3CF"></div><span data-i18n="legend_not_profiled">Non-sovereign area (no data)</span></div>
     </div>
   </div>
 </main>
@@ -1729,12 +1730,19 @@ document.addEventListener("click", () => {
    inside scripts/build_boundaries.py, re-run it, and check the map still
    colours in. */
 const COUNTRY_BOUNDARIES_URL = "data/boundaries/countries.geojson";
-/* light_nolabels: same clean CARTO cartography but WITHOUT baked-in place
-   labels (which appear in each country's local script — e.g. China in
-   Chinese). We render our own English country labels instead. */
-const BASE_TILES = "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png";
-const BASE_TILES_ATTRIB =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> · Boundaries: <a href="https://www.naturalearthdata.com/">Natural Earth</a>, generalized for display; boundaries and names shown do not imply official endorsement or acceptance by the United Nations';
+/* NO BASEMAP TILES (2026-10-06). The map used to sit on CARTO's keyless
+   light_nolabels tiles; on 2026-09-23 CARTO made API keys mandatory and
+   every keyless tile became an "API KEY REQUIRED" watermark. The tiles
+   were only ever a backdrop — the boundary file paints every piece of
+   land in the world (Antarctica and disputed areas included) — so the map
+   now draws its own ocean and needs no key, account, or third-party tile
+   host. Do not add a tile provider back without a plan for who owns its
+   key and terms after handover. The country colours are the old
+   semi-transparent fills pre-blended over CARTO's land colour (#FAFAF8),
+   and OCEAN_COLOUR is CARTO's water colour, so the map looks as before. */
+const OCEAN_COLOUR = "#D4DADC";
+const MAP_ATTRIB =
+  'Boundaries: <a href="https://www.naturalearthdata.com/">Natural Earth</a>, generalized for display; boundaries and names shown do not imply official endorsement or acceptance by the United Nations';
 
 /* If the Leaflet CDN is unreachable (offline, blocked network), the map is
    lost but the sidebar, stats, panel, and search must keep working. */
@@ -1764,7 +1772,7 @@ if (window.L) {
     if (Math.abs(c.lng) > 180)
       map.panTo([c.lat, c.lng - Math.sign(c.lng) * 360], { animate: false, noMoveStart: true });
   });
-  L.tileLayer(BASE_TILES, { attribution: BASE_TILES_ATTRIB, subdomains: "abcd", maxZoom: 19 }).addTo(map);
+  map.attributionControl.addAttribution(MAP_ATTRIB);
   // A drag that starts over a country never delivers its mouseout, leaving
   // a stray hover highlight stuck on the map — clear it when panning starts.
   map.on("movestart", () => {
@@ -1822,23 +1830,26 @@ function featureKind(feature) {
 
 function styleCountry(feature) {
   const kind = featureKind(feature);
+  // Opaque since 2026-10-06 (no tiles underneath any more): each colour is
+  // the former fill pre-blended over #FAFAF8 — e.g. #3FB5E2 is #009EDB at
+  // 75%. The legend swatches use these same values.
   if (kind === "covered")
-    return { fillColor: "#009EDB", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.75 };
+    return { fillColor: "#3FB5E2", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 1 };
   if (kind === "profiled")
-    return { fillColor: "#F2A9A9", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.65 };
+    return { fillColor: "#F5C5C5", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 1 };
   if (kind === "territory")
-    return { fillColor: "#8FCBEA", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.55 };
-  return { fillColor: "#E4D9BE", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 0.7 };
+    return { fillColor: "#BFE0F0", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 1 };
+  return { fillColor: "#EBE3CF", weight: 0.6, opacity: 1, color: "#FFFFFF", fillOpacity: 1 };
 }
 function styleCountryHover(feature) {
   const kind = featureKind(feature);
   if (kind === "covered")
-    return { fillColor: "#0072BC", weight: 1.5, color: "#003D6B", fillOpacity: 0.9 };
+    return { fillColor: "#1980C2", weight: 1.5, color: "#003D6B", fillOpacity: 1 };
   if (kind === "profiled")
-    return { fillColor: "#C81E1E", weight: 1.5, color: "#7A1212", fillOpacity: 0.85 };
+    return { fillColor: "#D03F3F", weight: 1.5, color: "#7A1212", fillOpacity: 1 };
   if (kind === "territory")
-    return { fillColor: "#5FB3DF", weight: 1.5, color: "#003D6B", fillOpacity: 0.75 };
-  return { fillColor: "#D3C49B", weight: 1.5, color: "#8A7A50", fillOpacity: 0.85 };
+    return { fillColor: "#86C5E5", weight: 1.5, color: "#003D6B", fillOpacity: 1 };
+  return { fillColor: "#D9CCA9", weight: 1.5, color: "#8A7A50", fillOpacity: 1 };
 }
 
 let countryLayer;
@@ -1894,17 +1905,43 @@ if (map) fetch(COUNTRY_BOUNDARIES_URL)
     // WRAP BAND (2026-08-17). Vector layers do not repeat across the
     // antimeridian, so continuous scrolling needs the geometry that can
     // come into view beyond ±180° to exist as real (clickable, hoverable)
-    // features. worldCopyJump re-centres once a drag crosses half a world,
-    // so only features within 90° of the date line can ever be seen on a
-    // neighbouring copy — duplicating just that Pacific band costs ~25%
-    // extra points instead of 200% for full copies. Copies carry
-    // _worldCopy so selection flight targets the primary feature.
+    // features. worldCopyJump keeps the view centre within ±180°, so a
+    // neighbouring copy is only ever seen as far past the date line as
+    // half the map's width at the minimum zoom — duplicating just that
+    // band is far cheaper than full copies. Copies carry _worldCopy so
+    // selection flight targets the primary feature.
     // Shift PER POLYGON-PART, never per feature: countries that span the
     // date line (USA via the Aleutians, Russia via Chukotka, Chile via
     // Easter Island) have parts on both sides, and whole-feature shifting
     // turned their copies into 360°-wide monsters (a USA copy spanning
     // lng 181→540 was the first symptom). Each part (outer ring + its
     // holes) qualifies by its own outer ring and shifts alone.
+    // BAND WIDTH (2026-10-06): the band was a fixed 90°, which only holds
+    // for a map under 512px wide. On a laptop a Pacific-centred view
+    // reaches ~125° past the date line, and Central America, the
+    // Caribbean and half of Antarctica fell off its edge — hidden while
+    // CARTO tiles painted grey land underneath, open sea once the map drew
+    // its own ocean. The band is now sized to the widest map this screen
+    // can show (+5° margin), so phones keep the light 90° band while wide
+    // screens copy as much as they can actually display.
+    // Copying that much at full detail nearly doubles the points the map
+    // re-projects on every zoom (253k → 473k on a laptop screen), so the
+    // band has two tiers — measured 133ms → 157ms of work per zoom. Parts within 90° of the
+    // date line can be seen at every zoom and are copied as they are.
+    // Parts further out are only ever on screen at zooms 2-3 (a view
+    // reaches under 90° past the date line from zoom 4 on any map up to
+    // 2048px wide), where Leaflet's smoothFactor drops sub-1.5px detail at
+    // draw time anyway — so they are pre-simplified once, at 1px on the
+    // zoom-3 grid, which draws the same and keeps zooming fast.
+    const FULL_DETAIL_DEG = 90;
+    const worldPx = 256 * Math.pow(2, map.getMinZoom());
+    const viewPx = Math.max(screen.width || 0, window.innerWidth);
+    const reachDeg = Math.min(360, Math.max(FULL_DETAIL_DEG, (viewPx / 2) * 360 / worldPx + 5));
+    const simplifyRing = ring => {
+      const pts = L.LineUtil.simplify(ring.map(([x, y]) => map.project([y, x], 3)), 1);
+      if (pts.length < 4) return ring;             // tiny island: keep as is
+      return pts.map(p => { const ll = map.unproject(p, 3); return [ll.lng, ll.lat]; });
+    };
     const copies = [];
     for (const f of features) {
       const g = f.geometry || {};
@@ -1913,15 +1950,16 @@ if (map) fetch(COUNTRY_BOUNDARIES_URL)
       const shifted = { "-360": [], "360": [] };
       for (const unit of units) {
         const outerLngs = unit[0].map(([x]) => x);
-        // pole-encircling rings (Antarctica) span all longitudes — the
-        // primary copy already fills every view; shifted copies would be
-        // full-width duplicates
-        if (Math.max(...outerLngs) - Math.min(...outerLngs) > 350) continue;
+        let simplified = null;
+        // pole-encircling rings (Antarctica) span all longitudes, so they
+        // always qualify: a Pacific-centred view shows the copy's half
         for (const dx of [-360, 360]) {
-          const qualifies = dx < 0 ? outerLngs.some(x => x >= 90)
-                                   : outerLngs.some(x => x <= -90);
-          if (qualifies)
-            shifted[String(dx)].push(unit.map(r => r.map(([x, y]) => [x + dx, y])));
+          // how far past the date line this part sits on that copy
+          const past = dx < 0 ? 180 - Math.max(...outerLngs) : 180 + Math.min(...outerLngs);
+          if (past > reachDeg) continue;
+          if (past > FULL_DETAIL_DEG && !simplified) simplified = unit.map(simplifyRing);
+          const src = past <= FULL_DETAIL_DEG ? unit : simplified;
+          shifted[String(dx)].push(src.map(r => r.map(([x, y]) => [x + dx, y])));
         }
       }
       for (const dx of ["-360", "360"]) {
@@ -1934,6 +1972,15 @@ if (map) fetch(COUNTRY_BOUNDARIES_URL)
       }
     }
     geojson = { type: "FeatureCollection", features: [...features, ...copies] };
+
+    // One canvas for ocean and countries: the ocean is added first so it
+    // paints underneath, and as a non-interactive layer it never takes a
+    // hover or click. It spans the primary world plus both neighbouring
+    // copies; past the poles the .leaflet-container fade still shows.
+    const mapRenderer = L.canvas({ padding: 0.75, tolerance: 3 });
+    L.rectangle([[-85.0511, -540], [85.0511, 540]], {
+      renderer: mapRenderer, stroke: false, fillColor: OCEAN_COLOUR, fillOpacity: 1, interactive: false,
+    }).addTo(map);
 
     countryLayer = L.geoJSON(geojson, {
       // CANVAS RENDERER (2026-08-17). Two eras of fixes led here: the
@@ -1948,7 +1995,7 @@ if (map) fetch(COUNTRY_BOUNDARIES_URL)
       // smoothFactor trims sub-pixel points per zoom at render time only
       // (the boundary FILE, with its UN-position adjustments, is
       // untouched).
-      renderer: L.canvas({ padding: 0.75, tolerance: 3 }),
+      renderer: mapRenderer,
       smoothFactor: 1.5,
       style: styleCountry,
       onEachFeature: (feature, layer) => {

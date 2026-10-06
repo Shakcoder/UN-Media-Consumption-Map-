@@ -14,7 +14,7 @@
 | Map | Map legend (4 rows: Media data verified / Profile only / Territory / Non-sovereign) | curated | Static labels in index.html (data-i18n legend_* keys) | Explains the derived choropleth classes |
 | Map | Country hover tooltip (name; 'see sovereign state' note; 'not covered' note) | open-source | data/boundaries/countries.geojson feature.properties.name — Natural Earth via geo-countries, self-hosted, generalized by scripts/build_boundaries.py; territory note derived from inline TERRITORY_OF | Names are the boundary dataset's English names |
 | Map | On-map English country labels (3 zoom tiers) | open-source | data/boundaries/countries.geojson properties.name — Natural Earth; label position derived (centroid of largest polygon) |  |
-| Map | Attribution line (OSM / CARTO / Natural Earth + UN boundary disclaimer) | curated | Static BASE_TILES_ATTRIB constant in index.html; tiles from CARTO light_nolabels CDN |  |
+| Map | Attribution line (Natural Earth + UN boundary disclaimer) | curated | Static MAP_ATTRIB constant in index.html. No basemap tiles since 2026-10-06 (CARTO made API keys mandatory on 2026-09-23); the ocean is drawn in OCEAN_COLOUR on the map canvas |  |
 | Stats strip (no country selected) | Pilot countries (count) | derived | Count of entries in data/countries.json (inline 10-country fallback if fetch fails), filtered by active region chip |  |
 | Stats strip (no country selected) | 'across N continents' delta | derived | Distinct region values across shown countries — countries.json region key (curated regional classification) |  |
 | Stats strip (no country selected) | People covered (X.XX B) | derived | Sum of countries.json population over shown countries — World Bank SP.POP.TOTL |  |
