@@ -121,10 +121,16 @@ jobs:
 
   press:
     # Media Cloud national-press UN shares — its own small lane: it spends a
-    # per-KEY quota (not an IP budget), needs the repo secret, and finishes
-    # in minutes, so it must never queue behind the Wikimedia steps.
+    # per-KEY quota (not an IP budget), needs the repo secret, and must
+    # never queue behind the Wikimedia steps.
+    # TIMEOUT (2026-10-06): the job limit must cover both step limits
+    # (15 + 10) plus setup. At 20 it did not: by September Media Cloud took
+    # ~13 min and OONI 6-8, so on about one day in three the job limit cut
+    # OONI off and the whole run showed "cancelled". No data was lost (both
+    # fetchers checkpoint stalest-first and write atomically), but a red
+    # run every few days teaches a maintainer to ignore real failures.
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Check out repository

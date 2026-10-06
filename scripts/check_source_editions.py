@@ -62,7 +62,15 @@ INTEGRATED = {
     "fh_fitw": 2026,      # Freedom House — Freedom in the World
     "fh_fotn": 2025,      # Freedom House — Freedom on the Net
     "dnr": 2026,          # Reuters Institute Digital News Report
-    "gsma": 2025,         # GSMA Mobile Connectivity Index
+    # YEAR CONVENTION (2026-10-06, closes the issue-#7 false alarm): GSMA
+    # numbers an edition one year AHEAD of its newest data year. The
+    # "2026 – GSMA Mobile Connectivity Index" (MCI_data_2026.xlsx, and the
+    # September-2026 State of Mobile Internet Connectivity 2026 report that
+    # cites it) carries index scores through data year 2025 — exactly the
+    # GSMA_MCI_2025 table in refresh_data.py, all 173 values verified
+    # against that file on 2026-10-06. So the edition integrated is 2026;
+    # the next genuine reminder fires when the "2027" report appears.
+    "gsma": 2026,         # GSMA Mobile Connectivity Index (edition; data year 2025)
     "afrobarometer": 9,   # Afrobarometer survey round (not a year)
     "wpp": 2024,          # UN DESA World Population Prospects (biennial)
     # YEAR CONVENTION (2026-08-17, closes the issue-#3 phantom): the number
@@ -167,7 +175,10 @@ SOURCES = [
             "1. Open https://www.mobileconnectivityindex.com and check the latest data year.\n"
             "2. Download the new country scores (free download on the site).\n"
             "3. Update the MCI table/year labels in scripts/refresh_data.py.\n"
-            "4. Bump the 'gsma' year in scripts/check_source_editions.py.\n"
+            "4. Bump the 'gsma' year in scripts/check_source_editions.py to the EDITION\n"
+            "   year (GSMA's edition is one year ahead of its newest data year).\n"
+            "   If the newest data year in the download has NOT moved on, the Atlas is\n"
+            "   already current: just bump the edition year to stop this reminder.\n"
             "5. Commit and push the changed files together (git add … && git commit && git push)."
         ),
     },
