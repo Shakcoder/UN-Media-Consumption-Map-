@@ -41,16 +41,25 @@ again. When in doubt, showing "no data" is always correct. Estimates are not.
 
 ## What runs by itself
 
-Five workflows (GitHub → **Actions** tab), all with a manual "Run workflow"
+Seven workflows (GitHub → **Actions** tab), all with a manual "Run workflow"
 button. Full detail: [docs/AUTOMATION.md](docs/AUTOMATION.md).
 
 | Workflow | When | What it does |
 |---|---|---|
-| Trend engine | daily 05:30 UTC | Refreshes topic attention (Wikipedia) + news coverage (GDELT) |
-| Refresh country data | Mondays 03:00 UTC | Pulls 15 World Bank indicators + language data, rebuilds `countries.json` — **will not publish if validation fails** |
+| Trend engine | daily 16:05 UTC | Refreshes topic attention (Wikipedia), news coverage (GDELT), national-press UN coverage (Media Cloud), news-site censorship (OONI), trending searches and reading lists |
+| Trends pulse | 3× daily | Extra snapshots of the "trending right now" feeds, which forget everything within hours |
+| Refresh country data | Mondays 03:00 UTC | Pulls the World Bank / ITU indicators + language data, rebuilds `countries.json` — **will not publish if validation fails** |
 | TV-station refresh | 12th of each month | Rebuilds the extended TV-station lists (Wikipedia lists gated through Wikidata) — **refuses to publish a thin result** |
-| Source watchdog | 3rd of each month | Checks whether annual sources published a new edition; opens an Issue with instructions when one has |
-| Code gates | every push + daily 12:00 UTC | Runs the validator and all three eval suites; a red X means don't trust the live site until fixed |
+| Source watchdog | 3rd of each month | Checks whether annual sources published a new edition and opens an Issue with instructions when one has; also resets GitHub's 60-day sleep clock on every workflow (see below) |
+| Code gates | every push + daily 12:00 UTC | Runs the validator and all four eval suites; a red X means don't trust the live site until fixed |
+| Attention archive backfill | manual only | Rebuilds the Topic Explorer's long-term archive; ran once at launch, needed again only after adding topics |
+
+**The live site loads nothing from any third party.** Since 2026-10-06 the
+map draws its own ocean (CARTO, the old background-map provider, started
+requiring a personal API key on 2026-09-23 and showed "API KEY REQUIRED"
+across the map) and the map library is served from this repository. Every
+page reads only files in this repository, so no outside company can break
+the site by changing its terms.
 
 **None of this needs a paid service, an AI subscription, or a password.** The
 workflows are ordinary Python and JavaScript scripts running on GitHub's free
@@ -80,7 +89,7 @@ emails the repository owner). One failed day is normal noise. The
 [troubleshooting section of AUTOMATION.md](docs/AUTOMATION.md#troubleshooting)
 walks through the known failure modes in plain English.
 
-## The four gates (run these after ANY change)
+## The five gates (run these after ANY change)
 
 ```bash
 python3 scripts/validate_atlas.py
@@ -91,7 +100,7 @@ node scripts/run_eval.mjs selfknowledge
 ```
 
 Expected: `0 error(s)`, `0 CRASHED`, `18/18`, `73/73`, `28/28 routed (0 dead ends)`. The Code gates workflow
-runs the same four automatically on every push — so even if you forget, a
+runs the same five automatically on every push — so even if you forget, a
 broken change shows a red X on the commit instead of silently breaking the
 site. What the suites check: [eval/README.md](eval/README.md).
 
@@ -107,7 +116,7 @@ instructions. Rough publication months:
 | June | Reuters Institute Digital News Report | hand-update the DNR table in `scripts/refresh_data.py` |
 | October | Freedom House — Freedom on the Net | follow the Issue's steps |
 | December | WPP Media + Dentsu ad forecasts | hand-update `data/ad_market.json` |
-| When published | Afrobarometer Round 10, new barometer waves | see the matching `scripts/compute_*.py` docstring |
+| When published | Afrobarometer, new barometer waves | see the matching `scripts/compute_*.py` docstring. **Afrobarometer Round 10 (38 countries) is out and not yet integrated** (checked 2026-10-06; open Issue #6 tracks it, needs a free Afrobarometer registration to download) |
 
 Also once a year: skim `data/static_countries.json` for stale political facts
 (capitals, forms of government) — nothing refreshes that file automatically.
@@ -174,7 +183,7 @@ disappear with it.** Move it to an account or organisation the UN controls:
 
 *After the transfer, check two things:* that the `MEDIACLOUD_API_KEY` secret is
 still listed under Settings → Secrets and variables → Actions (re-add it from
-the Media Cloud account page if not), and that the five workflows still show as
+the Media Cloud account page if not), and that the seven workflows still show as
 enabled under the Actions tab.
 
 **One honest consequence:** the public web address changes. A GitHub Pages
@@ -208,7 +217,11 @@ GitHub's built-in token), and **GitHub does not reliably count a bot's own
 commits as "activity"** for this rule. Treat the safe assumption as the true
 one: *the jobs may fall asleep even while they appear to be working.*
 
-Two cheap defences, either is enough:
+**This is now handled automatically (added 2026-10-06).** Once a month the
+Source watchdog's `keepalive` job re-enables every workflow, which resets the
+60-day clock whether or not anyone has committed. It never switches back on a
+workflow a person turned off deliberately. Two backup defences remain worth
+knowing:
 
 1. **A human touches the repository at least once every couple of months** —
    any real commit, comment, or edit through the website resets the clock. In
@@ -260,5 +273,5 @@ one item worth doing this week rather than in September.**
 
 1. **The site publishes itself; your job is to read the Issues** the
    automation opens and follow their instructions.
-2. **Run the four gates** (or just check the commit's ✓/✗) after any change.
+2. **Run the five gates** (or just check the commit's ✓/✗) after any change.
 3. **"No data" is always an acceptable answer.** An invented number never is.
