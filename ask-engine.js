@@ -1935,7 +1935,7 @@ function composeRanking(ents, ev) {
     lines.push(`| ${i + 1} | ${f.label} | ${attr.fmt ? attr.fmt(v) : fmt(v, attr.unit)} |`);
   });
   if (missing > 0)
-    lines.push(`\n*${missing} countries in ${scope} have no ${attr.label.toLowerCase()} data in the Atlas — they are excluded, not ranked low.*`);
+    lines.push(`\n*${missing} ${missing === 1 ? "country" : "countries"} in ${scope} ${missing === 1 ? "has" : "have"} no ${attr.label.toLowerCase()} data in the Atlas — ${missing === 1 ? "it is" : "they are"} excluded, not ranked low.*`);
   if (attr.surveyMix)
     lines.push(`*Methodology note: news-consumption figures mix different surveys (Reuters DNR, Afrobarometer, national barometers) — treat cross-country gaps under ~5 points as noise.*`);
   if (attr.caveat)
