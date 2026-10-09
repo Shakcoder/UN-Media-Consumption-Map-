@@ -548,7 +548,7 @@ const ATTRIBUTES = {
                 words: ["smartphone", "smartphones", "phone ownership", "own a smartphone", "smartphone ownership"],
                 source: "DataReportal 2024 estimate — GSMA's Mobile Connectivity Index is the measured companion signal" },
   radio:      { label: "Radio as weekly news source", unit: "%", get: f => f.radio,
-                words: ["radio"], source: "Afrobarometer R9 / national surveys", surveyMix: true },
+                words: ["radio"], source: "Afrobarometer Round 10 (Round 9 where not resurveyed) / national surveys", surveyMix: true },
   tv:         { label: "TV as weekly news source", unit: "%", get: f => f.tv,
                 words: ["tv", "television", "broadcast tv"], source: "Reuters DNR 2026 / barometers", surveyMix: true },
   online:     { label: "Online news use (weekly)", unit: "%", get: f => f.online,
@@ -1599,7 +1599,11 @@ function composeCountryBrief(f, ev, ents) {
   // --- News consumption ---
   const news = [];
   if (f.radio != null) {
-    const cap = f.radioSource === "Afrobarometer Round 9 (2023)" ? "Afrobarometer Round 9 — the leading channel in much of Africa" : (f.radioSource || "source unspecified");
+    // Any Afrobarometer round (Round 10, or Round 9 where a country was not
+    // resurveyed) gets the caption; the round and year stay, the n is dropped.
+    const cap = /^Afrobarometer Round \d+ /.test(f.radioSource || "")
+      ? `${f.radioSource.replace(/, weighted microdata.*$/, "")} — the leading channel in much of Africa`
+      : (f.radioSource || "source unspecified");
     news.push(`- Radio as a weekly news source: ${fmt(f.radio)} *(${cap})*`);
   }
   if (f.tv == null && f.online == null && f.social == null && f.radio == null) {
@@ -2707,9 +2711,10 @@ function assessConfidence(f, channels, objective) {
     reasons.push(`channel figures come from ${src || "an unnamed source"}, whose sampling frame the Atlas cannot verify`);
   }
 
-  // Afrobarometer fieldwork is 2023; in countries that have since entered
-  // large-scale conflict or displacement, pre-crisis media habits are not a
-  // safe basis for a crisis plan.
+  // Survey fieldwork here is 2023-2024 (Afrobarometer Round 9, or Round 10
+  // for Mali); in countries that have since seen large-scale conflict or
+  // displacement, earlier media habits are not a safe basis for a crisis plan.
+  // A fixed country list, deliberately: it does not read the survey label.
   const conflictAffected = ["SDN", "AFG", "MMR", "SYR", "YEM", "HTI", "MLI", "BFA", "NER", "SSD", "COD", "SOM", "LBY", "UKR", "PSE"];
   if (conflictAffected.includes(f.iso)) {
     level = "Low";
@@ -3532,7 +3537,7 @@ function composeGlobalInsight(ev) {
   if (radioLed.length) {
     radioLed.sort((a, b) => (b.pop || 0) - (a.pop || 0));
     L.push(`**Radio still out-reaches every other channel in ${radioLed.length} countries**, including ${radioLed.slice(0, 3).map(f => `${f.name} (${fmt(f.radio)})`).join(", ")}. Radio is the only channel that works without electricity, data or literacy — which is why the Atlas never recommends digital-only in these markets.`);
-    ev.add("Radio-led markets", `Counted where measured radio reach meets or exceeds TV, online and social in the same survey. Source per country: Afrobarometer Round 9 and the barometer surveys named on each profile.`, []);
+    ev.add("Radio-led markets", `Counted where measured radio reach meets or exceeds TV, online and social in the same survey. Source per country: Afrobarometer (Round 10, or Round 9 where a country was not resurveyed) and the barometer surveys named on each profile.`, []);
     L.push("");
   }
 

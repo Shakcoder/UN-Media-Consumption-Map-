@@ -71,7 +71,7 @@ INTEGRATED = {
     # against that file on 2026-10-06. So the edition integrated is 2026;
     # the next genuine reminder fires when the "2027" report appears.
     "gsma": 2026,         # GSMA Mobile Connectivity Index (edition; data year 2025)
-    "afrobarometer": 9,   # Afrobarometer survey round (not a year)
+    "afrobarometer": 10,  # Afrobarometer survey round (not a year); Round 10 integrated 2026-10-08
     "wpp": 2024,          # UN DESA World Population Prospects (biennial)
     # YEAR CONVENTION (2026-08-17, closes the issue-#3 phantom): the number
     # here is the FORECAST year in the publishers' own titles, not the
@@ -188,11 +188,15 @@ SOURCES = [
         "check_url": "https://www.afrobarometer.org/surveys-and-methods/",
         "pattern": r"[Rr]ound (\d{1,2})",
         "instructions": (
-            "1. Check https://www.afrobarometer.org/surveys-and-methods/ for the newest completed round.\n"
-            "2. Register (free) and download the new round's merged microdata.\n"
-            "3. Re-run the radio/news-source computation and update scripts/refresh_data.py.\n"
-            "4. Bump the 'afrobarometer' round in scripts/check_source_editions.py.\n"
-            "5. Upload via GitHub → Add file → Upload files (one batch)."
+            "1. Open https://www.afrobarometer.org/data/merged-data/ and check the newest round has a\n"
+            "   MERGED data file (country reports often come out months earlier).\n"
+            "2. Download the English merged .sav (free; Round 10 needed no registration).\n"
+            "3. Copy scripts/compute_afrobarometer.py's approach to the new round: update the\n"
+            "   question codes, file name and the published-table check, run it, and paste its\n"
+            "   output into AFRO_RADIO / NEWS_CONSUMPTION in scripts/refresh_data.py.\n"
+            "4. Add the new round's label and country roster to scripts/validate_atlas.py, and\n"
+            "   bump the 'afrobarometer' round in scripts/check_source_editions.py.\n"
+            "5. Commit and push the changed files together (git add … && git commit && git push)."
         ),
     },
     {

@@ -317,8 +317,8 @@ if (process.argv[2] === "market") {
   const radio = engine.findMarkets({ objectiveKey: "behaviour", channel: "radio" });
   const french = engine.findMarkets({ language: "fr" });
   const youth = engine.findMarkets({ objectiveKey: "youth", audience: "youth" });
-  const scoped = engine.findMarkets({ isos: ["KEN", "NGA", "GHA", "TCD"] });
-  const nodata = engine.findMarkets({ isos: ["TCD", "SSD", "ERI"] }); // none has a news-channel survey
+  const scoped = engine.findMarkets({ isos: ["KEN", "NGA", "GHA", "CAF"] });
+  const nodata = engine.findMarkets({ isos: ["CAF", "SSD", "ERI"] }); // none has a news-channel survey (Chad did until Afrobarometer Round 10)
 
   check("determinism: identical opts give identical results",
     JSON.stringify(base) === JSON.stringify(base2));
@@ -356,11 +356,11 @@ if (process.argv[2] === "market") {
     notFree.every(r => r.flags.some(fl => /Not Free/.test(fl))));
 
   // scoping is exact: nothing outside the requested pool, in either list
-  const inScope = new Set(["KEN", "NGA", "GHA", "TCD"]);
+  const inScope = new Set(["KEN", "NGA", "GHA", "CAF"]);
   check("iso scope respected in ranked+excluded",
     [...scoped.ranked, ...scoped.excluded].every(r => inScope.has(r.iso)));
-  check("iso scope: unsurveyed Chad excluded, surveyed Kenya ranked",
-    scoped.excluded.some(x => x.iso === "TCD") && scoped.ranked.some(r => r.iso === "KEN"));
+  check("iso scope: unsurveyed Central African Republic excluded, surveyed Kenya ranked",
+    scoped.excluded.some(x => x.iso === "CAF") && scoped.ranked.some(r => r.iso === "KEN"));
   check("all-unsurveyed pool: zero ranked, all three excluded",
     nodata.ranked.length === 0 && nodata.excluded.length === 3);
 

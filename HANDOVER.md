@@ -116,7 +116,7 @@ instructions. Rough publication months:
 | June | Reuters Institute Digital News Report | hand-update the DNR table in `scripts/refresh_data.py` |
 | October | Freedom House — Freedom on the Net | follow the Issue's steps |
 | December | WPP Media + Dentsu ad forecasts | hand-update `data/ad_market.json` |
-| When published | Afrobarometer, new barometer waves | see the matching `scripts/compute_*.py` docstring. **Afrobarometer Round 10 (38 countries) is out and not yet integrated** (checked 2026-10-06; open Issue #6 tracks it, needs a free Afrobarometer registration to download) |
+| When published | Afrobarometer, new barometer waves | see the matching `scripts/compute_*.py` docstring. **Afrobarometer Round 10 (38 countries) was integrated 2026-10-08** with `scripts/compute_afrobarometer.py`; the next round follows the same script |
 
 Also once a year: skim `data/static_countries.json` for stale political facts
 (capitals, forms of government) — nothing refreshes that file automatically.
@@ -250,7 +250,7 @@ one item worth doing this week rather than in September.**
 - **The Cloudflare worker** (`worker/`) is experimental and switched off. The
   site does not need it. Do not deploy it without reading
   [worker/DEPLOY_GUIDE.md](worker/DEPLOY_GUIDE.md) — it has no test coverage.
-- **No estimates for the 69 uncovered countries.** No free nationally
+- **No estimates for the 66 uncovered countries.** No free nationally
   representative survey exists for them. They show as "profile only" and are
   excluded from rankings *by name, with the reason stated* — that honesty is a
   feature, not a gap to fill.

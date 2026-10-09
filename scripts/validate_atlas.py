@@ -55,6 +55,7 @@ INFOS: list[str] = []
 # ONLY when a new integration lands with a real, checkable source behind it.
 NEWS_SOURCE_WHITELIST = [
     r"^Reuters Institute DNR 2026$",
+    r"^Afrobarometer Round 10 \(202[4-5](-202[5-6])?\), weighted microdata \(n=[\d,]+\)$",
     r"^Afrobarometer Round 9 \(2023\)$",
     r"^Arab Barometer Wave VIII \(2023-2024\) microdata$",
     r"^Arab Barometer Wave VII \(2021-2022\) microdata$",
@@ -71,6 +72,7 @@ PLATFORM_USE_SOURCE_WHITELIST = [
 ]
 
 RADIO_SOURCE_WHITELIST = [
+    r"^Afrobarometer Round 10 \(202[4-5](-202[5-6])?\), weighted microdata \(n=[\d,]+\)$",
     r"^Afrobarometer Round 9 \(2023\)$",
     r"^Arab Barometer Wave VIII \(2023-2024\) microdata$",
     r"^Arab Barometer Wave VII \(2021-2022\) microdata$",
@@ -88,10 +90,19 @@ RADIO_SOURCE_WHITELIST = [
 # exist. When a new wave lands, update the roster from the new script in the
 # same commit as the new label.
 #
-# Afrobarometer Round 9 — the 39 keys of AFRO_RADIO_2023 in refresh_data.py.
-# Every one was computed from the Round 9 file itself, so the list is the
-# round's real country roster (the Atlas publishes news figures for 35 of
-# them; the other four are covered by Reuters DNR instead).
+# Afrobarometer Round 10 — the ISO roster printed by
+# scripts/compute_afrobarometer.py, i.e. the 38 countries the Round 10 merged
+# file actually contains (2026-10-08). Note who is NOT here: Burkina Faso,
+# Ethiopia, Niger and Sudan (still on Round 9) and the DRC (never surveyed).
+AFROBAROMETER_R10 = frozenset("""
+AGO BEN BWA CIV CMR COG COM CPV GAB GHA GIN GMB GNB KEN LBR LSO MAR MDG MLI MOZ
+MRT MUS MWI NAM NGA SEN SLE STP SWZ SYC TCD TGO TUN TZA UGA ZAF ZMB ZWE
+""".split())
+
+# Afrobarometer Round 9 — the 39 countries of the Round 9 merged file (they
+# were the keys of the old AFRO_RADIO_2023 table, every one computed from that
+# file). Since Round 10 the Atlas still shows Round 9 only for BFA ETH NER SDN,
+# but the roster stays the round's real one.
 AFROBAROMETER_R9 = frozenset("""
 AGO BEN BFA BWA CIV CMR COG CPV ETH GAB GHA GIN GMB KEN LBR LSO MAR MDG MLI MOZ
 MRT MUS MWI NAM NER NGA SDN SEN SLE STP SWZ SYC TGO TUN TZA UGA ZAF ZMB ZWE
@@ -133,6 +144,7 @@ ARG BOL BRA CHL COL CRI DOM ECU GTM HND MEX PAN PER PRY SLV URY VEN
 # only, so a wrong country under them is still possible; if a published roster
 # for either becomes available, add it here.
 SURVEY_COVERAGE = [
+    (r"^Afrobarometer Round 10 ", AFROBAROMETER_R10),
     (r"^Afrobarometer Round 9 ", AFROBAROMETER_R9),
     # the trailing space keeps "Wave VIII" from matching the "Wave VII" pattern
     (r"^Arab Barometer Wave VIII ", ARAB_BAROMETER_W8),

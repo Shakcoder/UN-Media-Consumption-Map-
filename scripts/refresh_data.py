@@ -9,8 +9,8 @@ Primary sources (all free, no API key):
   - Freedom House: Freedom in the World (193 countries — Freedom House rates
     neither Palestine nor the Holy See, manual annual)
   - Reuters Institute Digital News Report (46 of 48 markets, manual annual)
-  - Afrobarometer (35 of 39 surveyed African countries, manual per wave —
-    the one survey here with no compute script yet; see AFRO_RADIO_2023)
+  - Afrobarometer Round 10 (38 African countries, scripts/compute_afrobarometer.py;
+    Round 9 kept for the 4 countries Round 10 did not survey — see AFRO_RADIO)
   - Arab Barometer (Wave VIII: Iraq, Kuwait, Palestine; Wave VII: Algeria —
     real microdata, computed by scripts/compute_arabbarometer_w8.py / _w7.py)
   - World Values Survey Wave 7 (28 countries, scripts/compute_wvs_news.py)
@@ -345,25 +345,61 @@ def _freedom_status(score: int) -> str:
         return "Partly Free"
     return "Not Free"
 
-# Radio as a weekly news source (%), computed from Afrobarometer Round 9
-# microdata (Q74A, weighted, values 3-4 = weekly or more). Radio is the
-# leading news channel in much of Africa — a channel the digital-first
-# sources miss entirely. 39 surveyed countries.
-# NO COMPUTE SCRIPT EXISTS for these figures (unlike every other survey in
-# this file, which has one in scripts/). They were computed once from the R9
-# merged microdata and pasted in. To update them for Round 10 — or to check
-# them — someone must first write scripts/compute_afrobarometer.py following
-# the pattern of scripts/compute_wvs_news.py, against the free merged-round
-# file from afrobarometer.org/data. Do not hand-type replacement numbers.
-AFRO_RADIO_2023: dict[str, float] = {
-    "AGO": 60.1, "BEN": 72.2, "BFA": 70.8, "BWA": 67.7, "CIV": 56.8,
-    "CMR": 53.7, "COG": 59.0, "CPV": 48.8, "ETH": 44.9, "GAB": 51.0,
-    "GHA": 79.6, "GIN": 72.0, "GMB": 67.7, "KEN": 85.1, "LBR": 78.9,
-    "LSO": 72.0, "MAR": 44.9, "MDG": 65.0, "MLI": 72.8, "MOZ": 54.3,
-    "MRT": 36.9, "MUS": 96.2, "MWI": 57.6, "NAM": 78.1, "NER": 52.9,
-    "NGA": 65.0, "SDN": 45.1, "SEN": 68.8, "SLE": 67.3, "STP": 72.1,
-    "SWZ": 67.0, "SYC": 81.2, "TGO": 75.4, "TUN": 39.1, "TZA": 74.4,
-    "UGA": 78.8, "ZAF": 74.8, "ZMB": 66.2, "ZWE": 64.8,
+# Radio as a weekly news source (%), from Afrobarometer microdata: weighted
+# share hearing news on the radio "a few times a week" or "every day".
+# Radio is the leading news channel in much of Africa — a channel the
+# digital-first sources miss entirely. Each entry carries its own label.
+# ROUND 10 (2024-2025, 38 countries; integrated 2026-10-08) is computed by
+# scripts/compute_afrobarometer.py (Q65A, withinwt_hh), which re-checks itself
+# against Afrobarometer's published South Africa tables on every run. Paste
+# its output; do not hand-type replacement numbers.
+# ROUND 9 (2023) stays ONLY for the four countries Round 10 did not survey
+# (Burkina Faso, Ethiopia, Niger, Sudan). Those four were computed once from
+# the Round 9 merged file (Q74A, values 3-4), before any script existed —
+# replace each with a newer round's figure as soon as one covers it.
+AFRO_RADIO: dict[str, tuple[float, str]] = {
+    "AGO": (51.9, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "BEN": (72.2, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "BWA": (59.4, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "CIV": (44.1, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "CMR": (52.1, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "COG": (43.3, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "COM": (31.4, "Afrobarometer Round 10 (2025), weighted microdata (n=1,200)"),
+    "CPV": (37.9, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "GAB": (39.7, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "GHA": (70.4, "Afrobarometer Round 10 (2024), weighted microdata (n=2,400)"),
+    "GIN": (67.9, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "GMB": (66.5, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "GNB": (70.8, "Afrobarometer Round 10 (2025), weighted microdata (n=1,034)"),
+    "KEN": (79.1, "Afrobarometer Round 10 (2024), weighted microdata (n=2,400)"),
+    "LBR": (75.9, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "LSO": (59.1, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "MAR": (41.1, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "MDG": (58.2, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "MLI": (66.6, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "MOZ": (53.3, "Afrobarometer Round 10 (2025), weighted microdata (n=1,199)"),
+    "MRT": (33.0, "Afrobarometer Round 10 (2024-2025), weighted microdata (n=1,200)"),
+    "MUS": (94.3, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "MWI": (56.4, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "NAM": (76.7, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "NGA": (58.1, "Afrobarometer Round 10 (2024), weighted microdata (n=1,600)"),
+    "SEN": (57.0, "Afrobarometer Round 10 (2025), weighted microdata (n=1,200)"),
+    "SLE": (53.6, "Afrobarometer Round 10 (2025), weighted microdata (n=1,200)"),
+    "STP": (71.4, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "SWZ": (55.2, "Afrobarometer Round 10 (2025), weighted microdata (n=1,200)"),
+    "SYC": (74.7, "Afrobarometer Round 10 (2025), weighted microdata (n=1,200)"),
+    "TCD": (42.9, "Afrobarometer Round 10 (2025), weighted microdata (n=1,128)"),
+    "TGO": (64.1, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "TUN": (37.4, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "TZA": (66.6, "Afrobarometer Round 10 (2024), weighted microdata (n=2,400)"),
+    "UGA": (77.5, "Afrobarometer Round 10 (2024), weighted microdata (n=2,400)"),
+    "ZAF": (69.3, "Afrobarometer Round 10 (2025), weighted microdata (n=1,600)"),
+    "ZMB": (59.5, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "ZWE": (60.9, "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"),
+    "BFA": (70.8, "Afrobarometer Round 9 (2023)"),
+    "ETH": (44.9, "Afrobarometer Round 9 (2023)"),
+    "NER": (52.9, "Afrobarometer Round 9 (2023)"),
+    "SDN": (45.1, "Afrobarometer Round 9 (2023)"),
 }
 
 # Median age of population, 2025 estimates. Source: UN DESA, World
@@ -533,53 +569,66 @@ NEWS_CONSUMPTION: dict[str, dict[str, Any]] = {
     "MAR": {"trust": 28, "tv": 41, "online": 83, "social": 62, "src": "Reuters Institute DNR 2026"},
     "NGA": {"trust": 68, "tv": 59, "online": 94, "social": 79, "src": "Reuters Institute DNR 2026"},
     "ZAF": {"trust": 50, "tv": 56, "online": 89, "social": 74, "src": "Reuters Institute DNR 2026"},
-    # ---- Afrobarometer Round 9 (2023) — 35 countries, computed from microdata ----
-    # Weighted "weekly or more" usage (Q74 values 3-4) for TV/internet/social.
-    # No comparable media-trust question in R9; trust intentionally left unset.
-    # These figures, like AFRO_RADIO_2023 above, have no compute script in
-    # scripts/ yet — see the note on that table before updating either.
-    "AGO": {"trust": None, "tv": 62.3, "online": 39.2, "social": 40.8, "src": "Afrobarometer Round 9 (2023)"},
-    "BEN": {"trust": None, "tv": 33.2, "online": 27.0, "social": 34.6, "src": "Afrobarometer Round 9 (2023)"},
+    # ---- Afrobarometer Round 10 (2024-2025) — 34 countries, computed from microdata ----
+    # scripts/compute_afrobarometer.py: weighted (withinwt_hh) share using each
+    # source "a few times a week" or "every day" — Q65B TV, Q65E "other Internet
+    # sources" (online), Q65D social media. Round 10 asks about other Internet
+    # sources separately from social media (Round 9 just said "Internet"), so a
+    # drop in "online" between rounds partly reflects that sharper wording.
+    # No comparable media-trust question in Round 10; trust intentionally unset.
+    # Kenya, Morocco, Nigeria and South Africa are in Round 10 too, but their
+    # news figures come from Reuters DNR above (only their radio is Afrobarometer).
+    # Chad, Comoros and Guinea-Bissau are new: Round 10 is their first survey here.
+    "AGO": {"trust": None, "tv": 57.5, "online": 39.0, "social": 44.1, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "BEN": {"trust": None, "tv": 36.5, "online": 29.1, "social": 46.3, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "BWA": {"trust": None, "tv": 44.9, "online": 34.0, "social": 55.7, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "CIV": {"trust": None, "tv": 75.1, "online": 44.6, "social": 57.1, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "CMR": {"trust": None, "tv": 66.5, "online": 49.2, "social": 61.0, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "COG": {"trust": None, "tv": 57.9, "online": 40.0, "social": 46.8, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "COM": {"trust": None, "tv": 53.8, "online": 53.4, "social": 63.1, "src": "Afrobarometer Round 10 (2025), weighted microdata (n=1,200)",
+            "note": "Online-news use (53.4%) exceeds the internet-access figure because the two count different people: Afrobarometer interviews adults (18+), and 66.6% of adults in this 2025 survey use the internet at least weekly; the World Bank/ITU figure is a share of the whole population, children included. Treat the access figure as a lower bound for adults."},
+    "CPV": {"trust": None, "tv": 83.7, "online": 56.0, "social": 66.9, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "GAB": {"trust": None, "tv": 87.6, "online": 63.6, "social": 80.0, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "GHA": {"trust": None, "tv": 69.0, "online": 38.9, "social": 49.8, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=2,400)"},
+    "GIN": {"trust": None, "tv": 38.0, "online": 12.9, "social": 31.4, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "GMB": {"trust": None, "tv": 60.4, "online": 32.7, "social": 71.5, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "GNB": {"trust": None, "tv": 30.2, "online": 53.8, "social": 59.8, "src": "Afrobarometer Round 10 (2025), weighted microdata (n=1,034)",
+            "note": "Online-news use (53.8%) exceeds the internet-access figure because the two count different people: Afrobarometer interviews adults (18+), and 61.6% of adults in this 2025 survey use the internet at least weekly; the World Bank/ITU figure is a share of the whole population, children included. Treat the access figure as a lower bound for adults."},
+    "LBR": {"trust": None, "tv": 26.7, "online": 34.0, "social": 40.1, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "LSO": {"trust": None, "tv": 37.5, "online": 20.3, "social": 43.5, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "MDG": {"trust": None, "tv": 24.5, "online": 4.2, "social": 12.5, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "MLI": {"trust": None, "tv": 41.5, "online": 21.5, "social": 34.3, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "MOZ": {"trust": None, "tv": 42.2, "online": 29.6, "social": 35.3, "src": "Afrobarometer Round 10 (2025), weighted microdata (n=1,199)"},
+    "MRT": {"trust": None, "tv": 41.9, "online": 30.6, "social": 50.1, "src": "Afrobarometer Round 10 (2024-2025), weighted microdata (n=1,200)"},
+    "MUS": {"trust": None, "tv": 96.2, "online": 79.4, "social": 87.9, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "MWI": {"trust": None, "tv": 16.3, "online": 17.3, "social": 23.1, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "NAM": {"trust": None, "tv": 43.9, "online": 42.6, "social": 49.9, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "SEN": {"trust": None, "tv": 63.5, "online": 46.5, "social": 66.4, "src": "Afrobarometer Round 10 (2025), weighted microdata (n=1,200)"},
+    "SLE": {"trust": None, "tv": 12.4, "online": 21.8, "social": 38.7, "src": "Afrobarometer Round 10 (2025), weighted microdata (n=1,200)"},
+    "STP": {"trust": None, "tv": 79.7, "online": 56.3, "social": 62.9, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "SWZ": {"trust": None, "tv": 55.4, "online": 47.7, "social": 58.7, "src": "Afrobarometer Round 10 (2025), weighted microdata (n=1,200)"},
+    "SYC": {"trust": None, "tv": 90.1, "online": 53.3, "social": 64.0, "src": "Afrobarometer Round 10 (2025), weighted microdata (n=1,200)"},
+    "TCD": {"trust": None, "tv": 18.3, "online": 16.7, "social": 21.5, "src": "Afrobarometer Round 10 (2025), weighted microdata (n=1,128)"},
+    "TGO": {"trust": None, "tv": 38.6, "online": 26.8, "social": 48.1, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "TUN": {"trust": None, "tv": 76.0, "online": 36.9, "social": 57.0, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "TZA": {"trust": None, "tv": 54.3, "online": 21.7, "social": 27.2, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=2,400)"},
+    "UGA": {"trust": None, "tv": 37.0, "online": 18.5, "social": 22.8, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=2,400)"},
+    "ZMB": {"trust": None, "tv": 33.1, "online": 20.1, "social": 32.2, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    "ZWE": {"trust": None, "tv": 30.2, "online": 23.7, "social": 39.1, "src": "Afrobarometer Round 10 (2024), weighted microdata (n=1,200)"},
+    # ---- Afrobarometer Round 9 (2023) — kept for the 4 countries Round 10 did not survey ----
+    # Computed once from the Round 9 merged file (Q74 values 3-4, weighted) before
+    # any script existed. Replace each with a newer round's figure when one lands.
     "BFA": {"trust": None, "tv": 46.3, "online": 22.4, "social": 27.2, "src": "Afrobarometer Round 9 (2023)"},
-    "BWA": {"trust": None, "tv": 41.1, "online": 37.0, "social": 47.3, "src": "Afrobarometer Round 9 (2023)"},
-    "CIV": {"trust": None, "tv": 70.7, "online": 55.3, "social": 54.5, "src": "Afrobarometer Round 9 (2023)"},
-    "CMR": {"trust": None, "tv": 73.9, "online": 63.7, "social": 67.1, "src": "Afrobarometer Round 9 (2023)"},
-    "COG": {"trust": None, "tv": 57.0, "online": 40.9, "social": 41.9, "src": "Afrobarometer Round 9 (2023)"},
-    "CPV": {"trust": None, "tv": 87.8, "online": 68.4, "social": 69.1, "src": "Afrobarometer Round 9 (2023)"},
     "ETH": {"trust": None, "tv": 37.0, "online": 19.3, "social": 20.2, "src": "Afrobarometer Round 9 (2023)"},
-    "GAB": {"trust": None, "tv": 85.3, "online": 76.2, "social": 77.8, "src": "Afrobarometer Round 9 (2023)"},
-    "GHA": {"trust": None, "tv": 71.4, "online": 41.9, "social": 43.2, "src": "Afrobarometer Round 9 (2023)"},
-    "GIN": {"trust": None, "tv": 45.9, "online": 27.9, "social": 35.5, "src": "Afrobarometer Round 9 (2023)"},
-    "GMB": {"trust": None, "tv": 57.7, "online": 47.5, "social": 61.4, "src": "Afrobarometer Round 9 (2023)"},
-    "LBR": {"trust": None, "tv": 21.2, "online": 33.4, "social": 34.6, "src": "Afrobarometer Round 9 (2023)"},
-    "LSO": {"trust": None, "tv": 41.6, "online": 31.2, "social": 41.9, "src": "Afrobarometer Round 9 (2023)"},
-    "MDG": {"trust": None, "tv": 28.6, "online": 7.0, "social": 13.8, "src": "Afrobarometer Round 9 (2023)"},
-    "MLI": {"trust": None, "tv": 50.2, "online": 30.2, "social": 38.8, "src": "Afrobarometer Round 9 (2023)"},
-    "MOZ": {"trust": None, "tv": 45.3, "online": 25.7, "social": 26.9, "src": "Afrobarometer Round 9 (2023)"},
-    "MRT": {"trust": None, "tv": 44.5, "online": 38.8, "social": 43.9, "src": "Afrobarometer Round 9 (2023)"},
-    "MUS": {"trust": None, "tv": 96.4, "online": 82.0, "social": 80.9, "src": "Afrobarometer Round 9 (2023)"},
-    "MWI": {"trust": None, "tv": 18.7, "online": 10.6, "social": 18.6, "src": "Afrobarometer Round 9 (2023)"},
-    "NAM": {"trust": None, "tv": 50.2, "online": 49.1, "social": 49.6, "src": "Afrobarometer Round 9 (2023)"},
     "NER": {"trust": None, "tv": 17.3, "online": 17.4, "social": 23.6, "src": "Afrobarometer Round 9 (2023)"},
     "SDN": {"trust": None, "tv": 58.6, "online": 45.5, "social": 45.4, "src": "Afrobarometer Round 9 (2023)",
             "note": "Online-news use (45.5%, 2023 face-to-face survey) exceeds the internet-access figure because Sudan's World Bank/ITU internet series last reported in 2017: a stale denominator, not a survey error. Treat the access figure as a lower bound."},
-    "SEN": {"trust": None, "tv": 71.9, "online": 46.0, "social": 55.1, "src": "Afrobarometer Round 9 (2023)"},
-    "SLE": {"trust": None, "tv": 14.9, "online": 27.2, "social": 33.4, "src": "Afrobarometer Round 9 (2023)"},
-    "STP": {"trust": None, "tv": 75.9, "online": 57.1, "social": 55.9, "src": "Afrobarometer Round 9 (2023)"},
-    "SWZ": {"trust": None, "tv": 67.6, "online": 62.1, "social": 61.9, "src": "Afrobarometer Round 9 (2023)"},
-    "SYC": {"trust": None, "tv": 96.4, "online": 70.1, "social": 68.4, "src": "Afrobarometer Round 9 (2023)"},
-    "TGO": {"trust": None, "tv": 49.8, "online": 39.7, "social": 49.7, "src": "Afrobarometer Round 9 (2023)"},
-    "TUN": {"trust": None, "tv": 72.1, "online": 51.0, "social": 56.0, "src": "Afrobarometer Round 9 (2023)"},
-    "TZA": {"trust": None, "tv": 47.3, "online": 19.0, "social": 20.4, "src": "Afrobarometer Round 9 (2023)"},
-    "UGA": {"trust": None, "tv": 35.4, "online": 16.5, "social": 16.4, "src": "Afrobarometer Round 9 (2023)"},
-    "ZMB": {"trust": None, "tv": 45.9, "online": 32.4, "social": 36.3, "src": "Afrobarometer Round 9 (2023)"},
-    "ZWE": {"trust": None, "tv": 28.2, "online": 25.5, "social": 41.4, "src": "Afrobarometer Round 9 (2023)"},
     # DRC: REMOVED 2026-07-22. The old entry ("Estimate (DataReportal 2024)",
     # trust 47 / tv 38 / online 22 / social 18) had no checkable source —
     # DataReportal measures neither trust nor news-source mix. Same class as
     # the 15 fabricated entries removed earlier today, just labeled "estimate".
-    # Afrobarometer Round 10 (releasing 2025-2026) is expected to cover DRC —
-    # integrate the real figures when that lands.
+    # Afrobarometer Round 10 (checked 2026-10-08) did NOT survey the DRC, so it
+    # stays without news figures until a real survey covers it.
     # ---- Arab Barometer Wave VIII (2023-2024), weighted from real microdata ----
     # Wave VIII is the only Arab Barometer edition with public data (Wave IX's
     # fieldwork runs through May 2026; nothing is released yet). Q421 asks
@@ -1360,14 +1409,17 @@ def build_country(
         elif nc.get("note"):
             values["news_survey_note"] = nc["note"]
 
-    # Radio (Afrobarometer R9 microdata — independent of the dicts above,
+    # Radio (Afrobarometer microdata — independent of the dicts above,
     # because DNR reports radio only per-brand, not as a single reach figure)
     radio_source_label = None
-    radio = AFRO_RADIO_2023.get(iso3)
-    if radio is not None:
+    afro_radio = AFRO_RADIO.get(iso3)
+    if afro_radio is not None:
+        radio, radio_source_label = afro_radio
         values["news_radio_pct"] = radio
-        radio_source_label = "Afrobarometer Round 9 (2023)"
-        sources["news_radio"] = "Afrobarometer Round 9 (2023), computed from weighted microdata | https://www.afrobarometer.org/data/"
+        # Round 10 labels already say "weighted microdata"; the four Round 9
+        # carry-overs get the wording they always had.
+        detail = "" if "microdata" in radio_source_label else ", computed from weighted microdata"
+        sources["news_radio"] = f"{radio_source_label}{detail} | https://www.afrobarometer.org/data/"
     elif nc and nc.get("radio") is not None:
         values["news_radio_pct"] = nc["radio"]
         radio_source_label = nc["src"]
@@ -1636,7 +1688,7 @@ def main() -> int:
             "Freedom House: Freedom on the Net 2025 (70 countries)",
             "Freedom House: Freedom in the World 2026, official FH data files incl. PR/CL scores & electoral democracy (193 countries)",
             "Reuters Institute Digital News Report 2026 (46 markets; non-representative samples flagged for IND/KEN/NGA/ZAF/MAR)",
-            "Afrobarometer Round 9 microdata (news sources incl. radio, 35-39 African countries, weighted)",
+            "Afrobarometer Round 10 microdata, 2024-2025 (news sources incl. radio, 38 African countries, weighted, computed by scripts/compute_afrobarometer.py); Round 9 (2023) kept for Burkina Faso, Ethiopia, Niger and Sudan",
             "DataReportal 2024 (smartphone penetration estimates, 50 countries)",
             "Arab Barometer Wave VIII (Iraq, Kuwait, Palestine; real weighted microdata, computed by scripts/compute_arabbarometer_w8.py)",
             "Arab Barometer Wave VII, 2021-2022 (Algeria; real weighted microdata, computed by scripts/compute_arabbarometer_w7.py)",
